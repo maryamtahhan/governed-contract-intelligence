@@ -118,9 +118,10 @@ metrics, in-flight per-model tracking). Re-checked 2026-11-03 against the
 local checkouts: `praxis-proxy/praxis` is the framework (v0.7.5) and
 `praxis-proxy/ai` the gateway (v0.9.0) — the versions in FINDINGS are the
 gateway's; our fork image registry publishes only v0.7.0, so the upgrade is
-a fork rebuild, not a tag bump. llm-d-sc's new gRPC health service is not in
-our pinned image, so the manifest keeps a TCP readiness probe. Status:
-planned, not yet upgraded.
+a fork rebuild, not a tag bump — the configs' keys all still exist at
+v0.9.0, and the fork's `llm_d_sc` filter is the work. llm-d-sc's new gRPC
+health service is not in our pinned image, so the manifest keeps a TCP
+readiness probe. Status: planned, not yet upgraded.
 
 **D13 — CPU requests are physical cores; isolation is node-generated** (Nov 3)
 Trigger: the pool requests were logical CPUs under `full-pcpus-only`.

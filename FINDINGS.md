@@ -691,9 +691,18 @@ that matter to us:
 Upgrade path: the deployed image is `quay.io/rmalone/praxis-ai-llm-d-sc`,
 a fork that carries the `llm_d_sc` filter the upstream gateway does not
 have. Its registry publishes only v0.7.0, so v0.7.0 → v0.9.0 means
-rebuilding that fork on a newer `ai` release, not changing a tag; treat the
-result as a new stack and re-run the config-compatibility checks on the
-simulated stack first (0.x configs may change). The framework releases
+rebuilding that fork on a newer `ai` release, not changing a tag. A static
+check against the v0.9.0 checkout (which pins praxis 0.7.5) found every key
+the four configs use still present — `admin.metrics_address` (binds
+publicly without `allow_public_admin`),
+`insecure_options.allow_private_upstreams`,
+`runtime.subrequest_circuit_breaker`, the
+per-cluster `health_check` fields, and the core filters `request_id`,
+`access_log`, `static_response`, `iterative_request_router` — so the YAML is
+schema-compatible and porting or rebuilding the `llm_d_sc` filter is the
+actual upgrade work. Even so, treat the rebuilt stack as new and re-run the
+measurement arms: routing behaviour can change under an unchanged config.
+The framework releases
 since v0.7.0 also carry security fixes (v0.7.4 redacts credential-looking
 header values from `--dump` and the admin pipelines view; v0.7.5 updates
 rustls-webpki for RUSTSEC-2026-0382 and rustls for ECH/Brotli issues) —
