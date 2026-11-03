@@ -40,6 +40,7 @@ set_arm() {
   for i in $(seq 1 10); do
     curl -s -m 120 -D /tmp/arm-h -o /dev/null "$GATEWAY/v1/chat/completions" \
       -H 'Content-Type: application/json' \
+      -H "Authorization: Bearer ${TRACE_API_TOKEN:-}" \
       -d '{"model":"Semantic-Qwen","messages":[{"role":"user","content":"Say ok."}],"max_tokens":8}'
     grep -qi "^x-demo-classification:" /tmp/arm-h && break
     sleep 2
@@ -47,21 +48,45 @@ set_arm() {
   echo "praxis now running arm $1 ($(arm_config "$1"))"
 }
 
-oc -n "$NS" port-forward svc/trace-ui "$LOCAL_PORT:8080" >/dev/null &
-PF=$!
-trap 'kill $PF 2>/dev/null' EXIT
-oc -n "$NS" port-forward svc/trace-ui "$SENSITIVE_PORT:8083" >/dev/null &
-PF2=$!
-trap 'kill $PF $PF2 2>/dev/null' EXIT
-# Relay ports, for live metrics sampling during the runs.
+# Request path via OpenShift Routes by default: port-forwards tunnel through
+# the API server and die with it (FINDINGS §7 / D10). Port-forwards remain
+# only for the metrics samplers, whose failures cannot corrupt quality
+# records. Set USE_ROUTES=0 to fall back to the port-forwarded path.
+USE_ROUTES="${USE_ROUTES:-1}"
+if [ "$USE_ROUTES" = "1" ]; then
+  ensure_route() {
+    local name=$1 port=$2
+    if ! oc -n "$NS" get route "$name" >/dev/null 2>&1; then
+      oc -n "$NS" expose svc/trace-ui --name "$name" --port "$port" >/dev/null
+    fi
+    # vLLM-class requests exceed the router's default 30s timeout
+    # (http_504 at ~30.2s, measured 2026-11-02); match the pipeline's
+    # 600s client timeout.
+    oc -n "$NS" annotate route "$name" --overwrite \
+      haproxy.router.openshift.io/timeout=600s >/dev/null
+  }
+  ensure_route trace-ui-general 8080
+  ensure_route trace-ui-sensitive 8083
+  GATEWAY="http://$(oc -n "$NS" get route trace-ui-general -o jsonpath='{.spec.host}')"
+  SENSITIVE="http://$(oc -n "$NS" get route trace-ui-sensitive -o jsonpath='{.spec.host}')"
+else
+  oc -n "$NS" port-forward svc/trace-ui "$LOCAL_PORT:8080" >/dev/null &
+  PF=$!
+  trap 'kill $PF 2>/dev/null' EXIT
+  oc -n "$NS" port-forward svc/trace-ui "$SENSITIVE_PORT:8083" >/dev/null &
+  PF2=$!
+  trap 'kill $PF $PF2 2>/dev/null' EXIT
+  GATEWAY="http://127.0.0.1:$LOCAL_PORT"
+  SENSITIVE="http://127.0.0.1:$SENSITIVE_PORT"
+fi
+# Relay ports, for live metrics sampling during the runs (port-forwards by
+# design: a sampler failure loses a metric, never a request).
 oc -n "$NS" port-forward svc/trace-ui 18081:8081 18082:8082 18084:8084 18085:8085 >/dev/null &
 PF3=$!
-trap 'kill $PF $PF2 $PF3 2>/dev/null' EXIT
-for i in $(seq 1 30); do curl -sf "http://127.0.0.1:$LOCAL_PORT/_trace/healthz" >/dev/null 2>&1 && break; sleep 1; done
+trap 'kill ${PF:-} ${PF2:-} $PF3 2>/dev/null' EXIT
+for i in $(seq 1 30); do curl -sf "$GATEWAY/_trace/healthz" >/dev/null 2>&1 && break; sleep 1; done
 
-GATEWAY="http://127.0.0.1:$LOCAL_PORT"
-SENSITIVE="http://127.0.0.1:$SENSITIVE_PORT"
-curl -sf "$GATEWAY/v1/models" | grep -q Semantic-Qwen || { echo "gateway not reachable through trace-ui" >&2; exit 1; }
+curl -sf -H "Authorization: Bearer ${TRACE_API_TOKEN:-}" "$GATEWAY/v1/models" | grep -q Semantic-Qwen || { echo "gateway not reachable through trace-ui" >&2; exit 1; }
 
 for arm in $ARMS; do
   out="$RUNS/arm-$arm"

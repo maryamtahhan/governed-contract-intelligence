@@ -63,13 +63,19 @@ def chunk_document(doc_id: str, text: str, max_tokens: int = 400,
             flush()
             sentences = _split_sentences(para)
             for sent_start, sent_end in sentences:
-                # sentence offsets are paragraph-local: slice para, and
-                # translate to global offsets for the chunk range
-                if current and est_tokens(current) + est_tokens(para[sent_start:sent_end]) > max_tokens:
-                    flush()
-                if current_start is None:
-                    current_start = start + sent_start
-                current += para[sent_start:sent_end]
+                # A single sentence can still exceed the budget (no
+                # punctuation for thousands of characters). Hard-split it so
+                # no chunk is larger than the embedding window.
+                for piece_start, piece_end in _fit_windows(
+                        para[sent_start:sent_end], max_tokens):
+                    piece = para[sent_start:sent_end][piece_start:piece_end]
+                    if current and est_tokens(current) + est_tokens(piece) > max_tokens:
+                        flush()
+                    if current_start is None:
+                        current_start = start + sent_start + piece_start
+                    current += piece
+                    if est_tokens(current) >= max_tokens:
+                        flush()
         else:
             if current_start is None:
                 current_start = start
@@ -78,6 +84,28 @@ def chunk_document(doc_id: str, text: str, max_tokens: int = 400,
             flush()
     flush()
     return chunks
+
+
+def _fit_windows(text: str, max_tokens: int) -> list[tuple[int, int]]:
+    """Split ``text`` into local spans that each fit ``max_tokens``.
+
+    Prefers a whitespace boundary so words are not cut; falls back to a hard
+    character cut when a single token-like run is longer than the budget.
+    """
+    if est_tokens(text) <= max_tokens:
+        return [(0, len(text))]
+    max_chars = max(1, max_tokens * 4)
+    spans: list[tuple[int, int]] = []
+    pos = 0
+    while pos < len(text):
+        end = min(len(text), pos + max_chars)
+        if end < len(text):
+            boundary = text.rfind(" ", pos + 1, end)
+            if boundary > pos:
+                end = boundary + 1
+        spans.append((pos, end))
+        pos = end
+    return spans
 
 
 def _split_sentences(para: str) -> list[tuple[int, int]]:

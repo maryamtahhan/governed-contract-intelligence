@@ -8,11 +8,14 @@ from typing import Any
 import httpx
 
 from ..common import normalize_text
+from ..routes import APPROVED_ROUTES, CPU_ROUTES, GPU_ROUTES
 from . import cost as cost_model
 
-GPU_ROUTES = {"vllm-gpu", "vllm-gpu-approved", "vllm-gpu-small"}
-CPU_ROUTES = {"vllm-cpu"}
-APPROVED_ROUTES = {"vllm-cpu", "vllm-gpu-approved"}
+# Extraction is scored by containment, not span-equality: a prediction is
+# correct when either normalised string contains the other. This rewards a
+# wider quote that includes the annotated clause and penalises a correct
+# paraphrase. Every report must name the metric; do not call it "exact".
+MATCH_METRIC = "containment"
 
 
 def text_matches(predicted: str | None, truth: str | None) -> bool:
@@ -133,6 +136,9 @@ def report_score(records: list[dict], truth_docs: dict[str, dict]) -> float | No
     law_counts: dict[str, int] = {}
     missing_dp = 0
     highest = None
+    has_data_protection = any(
+        "data_protection" in (d.get("clauses") or {}) for d in docs
+    )
     for d in docs:
         risk_counts[d.get("risk", "low")] = risk_counts.get(d.get("risk", "low"), 0) + 1
         law = d.get("clauses", {}).get("governing_law") or "missing"
@@ -144,10 +150,15 @@ def report_score(records: list[dict], truth_docs: dict[str, dict]) -> float | No
     checks = {
         "documents": 1.0 if content.get("documents") == len(docs) else 0.0,
         "risk_counts": _count_closeness(content.get("risk_counts"), risk_counts),
-        "missing_data_protection": 1.0 if content.get("missing_data_protection") == missing_dp else 0.0,
         "highest_risk_ref": 1.0 if content.get("highest_risk_ref") == highest else 0.0,
         "governing_law_counts": _count_closeness(content.get("governing_law_counts"), law_counts),
     }
+    # CUAD does not annotate a data-protection category; scoring a count the
+    # prompt never requested would be a category error.
+    if has_data_protection:
+        checks["missing_data_protection"] = (
+            1.0 if content.get("missing_data_protection") == missing_dp else 0.0
+        )
     return round(sum(checks.values()) / len(checks), 3)
 
 
@@ -299,17 +310,30 @@ def score_run(run: dict, truth_docs: dict[str, dict], cores_per_cpu_replica: int
     }
 
 
+def dataset_description(manifest: dict) -> str:
+    """Provenance from the manifest actually scored, never hardcoded."""
+    source = str(manifest.get("source") or "")
+    count = manifest.get("count", len(manifest.get("documents", [])))
+    seed = manifest.get("seed")
+    if "cuad" in source.lower():
+        return (f"{count} CUAD v1 real contracts ({source}; "
+                f"seed {seed}; licences: CC BY 4.0 - verify before redistribution)")
+    return (f"{count} synthetic documents (seed {seed}, licences: synthetic, "
+            f"no personal data)")
+
+
 def build_report(run_dirs: list[str], data_dir: str, cores_per_cpu_replica: int,
                  rates: dict | None = None) -> tuple[str, dict]:
     manifest = json.loads((Path(data_dir) / "ground_truth.json").read_text())
     truth_docs = {d["doc_id"]: d for d in manifest["documents"]}
     scored = [score_run(load_run(d), truth_docs, cores_per_cpu_replica) for d in run_dirs]
+    dataset = dataset_description(manifest)
 
     lines: list[str] = []
     lines.append("# Hybrid CPU+GPU demo - measurement report")
     lines.append("")
-    lines.append(f"Ground truth: {len(truth_docs)} synthetic documents "
-                 f"(seed {manifest.get('seed')}, licences: synthetic, no personal data).")
+    lines.append(f"Ground truth: {dataset}.")
+    lines.append("Each arm's table row names the number of documents it actually ran.")
     lines.append("Device-time and dollar figures are SIMULATED where the fake pool backends were "
                  "used; against real vLLM pools only request counts, routes and wall-clock hold.")
     lines.append("")
@@ -325,7 +349,8 @@ def build_report(run_dirs: list[str], data_dir: str, cores_per_cpu_replica: int,
 
     lines.append("## Quality vs ground truth")
     lines.append("")
-    lines.append("| arm | extract P | extract R | extract F1 | risk acc | type acc | report acc | docs fully correct |")
+    lines.append(f"| arm | extract P ({MATCH_METRIC}) | extract R ({MATCH_METRIC}) | extract F1 | "
+                 "risk acc | type acc | report acc | docs fully correct |")
     lines.append("|---|---|---|---|---|---|---|---|")
     for s in scored:
         e = s["extraction"]
@@ -339,8 +364,9 @@ def build_report(run_dirs: list[str], data_dir: str, cores_per_cpu_replica: int,
     lines.append("")
     lines.append("- **Extraction** is a copy task: quote the clause. Small models do it as well as")
     lines.append("  (here: better than) large ones, so the CPU pool takes the high-volume steps")
-    lines.append("  without a quality cost. Large models paraphrase, which exact-text scoring")
-    lines.append("  penalises even when the paraphrase is semantically right.")
+    lines.append(f"  without a quality cost. Scoring is {MATCH_METRIC} (normalised substring in")
+    lines.append("  either direction), not span-exact: a wider quote that contains the annotated")
+    lines.append("  clause passes, and a correct paraphrase fails.")
     lines.append("- **Risk accuracy** is rubric-following judgment. Compare it against the majority")
     lines.append(f"  baseline ({baseline} on this document set): a model at the baseline is not")
     lines.append("  applying the rubric at all. A model below it is worse than always guessing")
@@ -365,6 +391,17 @@ def build_report(run_dirs: list[str], data_dir: str, cores_per_cpu_replica: int,
         lines.append(f"| {s['arm']} | {s['classifier']['labelled']} | {s['classifier']['accuracy']} | "
                      f"{tp}/{fp}/{tn}/{fn} | {precision} | {recall} |")
     lines.append("")
+    # Do not let a high CPU-served share imply good routing: when the
+    # classifier labels nearly every step MEDIUM, CPU-first routing produces
+    # that share without separating the classes at all.
+    weak = [s for s in scored if (s["classifier"]["accuracy"] or 0) < 0.6]
+    if weak:
+        lines.append("**Classifier caveat:** " + ", ".join(
+            f"arm {s['arm']} accuracy {s['classifier']['accuracy']}" for s in weak)
+            + ". At this accuracy the label does not separate the step types; a high "
+              "CPU-served share reflects the CPU-first preference, not demonstrated "
+              "complexity routing. Report the confusion matrix, not only the share.")
+        lines.append("")
     confusion = scored[-1]["classifier"]["confusion"] if scored else {}
     if confusion:
         lines.append("Label confusion (truth->predicted, arm D): "
@@ -422,7 +459,7 @@ def build_report(run_dirs: list[str], data_dir: str, cores_per_cpu_replica: int,
         lines.append(f"| {s['arm']} | {s['routing']['fallback']} | {s['routing']['errors']} |")
     lines.append("")
 
-    report_json = {"truth_docs": len(truth_docs), "arms": scored}
+    report_json = {"truth_docs": len(truth_docs), "dataset": dataset, "arms": scored}
     return "\n".join(lines), report_json
 
 
@@ -454,11 +491,28 @@ def governance_check(trace_ui_base: str, run_dir: str | None = None) -> dict:
     if run_dir:
         run = load_run(run_dir)
         mine: dict[str, int] = {}
+        pipeline_sensitive = 0
         for r in run["records"]:
             route = (r.get("headers", {}) or {}).get("x-demo-route")
             if route:
                 mine[route] = mine.get(route, 0) + 1
+            if r.get("true_sensitive") and route:
+                pipeline_sensitive += 1
         result["pipeline_routes"] = mine
+        result["pipeline_sensitive_steps"] = pipeline_sensitive
+        result["trace_sensitive_steps"] = sensitive_total
+        # Raw traces are a rolling window (MAX_TRACES). If the run produced
+        # more sensitive steps than the window retained, "clean" is only a
+        # statement about the retained tail, not the whole run.
+        complete = sensitive_total >= pipeline_sensitive
+        result["trace_window_complete"] = complete
+        if not complete:
+            result["clean"] = False
+            result["reason"] = (
+                f"trace window retained {sensitive_total} of "
+                f"{pipeline_sensitive} sensitive steps; re-run with "
+                "TRACE_MAX_TRACES >= the run's step count before claiming zero"
+            )
     return result
 
 
@@ -490,8 +544,15 @@ def render_html(report_json: dict) -> str:
                      + "".join("<tr>" + "".join(f"<td{r[1][i]}>{r[0][i]}</td>" for i in range(len(headers)))
                                + "</tr>" for r in rows)
                      + "</tbody></table>")
+    dataset = report_json.get("dataset") or f"{report_json.get('truth_docs')} documents"
     note = ("Device-time and dollar figures are SIMULATED where the fake pool backends were used; "
-            f"ground truth: {report_json.get('truth_docs')} synthetic documents.")
+            f"ground truth: {dataset}.")
+    weak = [s for s in report_json.get("arms", [])
+            if (s.get("classifier", {}).get("accuracy") or 0) < 0.6]
+    if weak:
+        note += (" Classifier caveat: accuracy is "
+                 + ", ".join(f"{s['arm']}={s['classifier']['accuracy']}" for s in weak)
+                 + "; the CPU-served share is not evidence of complexity routing.")
     return HTML_PAGE.replace("__NOTE__", note).replace("__BODY__", "\n".join(parts))
 
 
@@ -507,8 +568,8 @@ def _html_tables(report_json: dict) -> list[tuple[str, list[str], list[tuple[lis
                      ["", "", "", "", "", ""]))
     tables.append(("Arms overview", headers, rows))
 
-    headers = ["arm", "extract P", "extract R", "extract F1", "risk acc", "type acc",
-               "report acc", "docs fully correct"]
+    headers = ["arm", f"extract P ({MATCH_METRIC})", f"extract R ({MATCH_METRIC})",
+               "extract F1", "risk acc", "type acc", "report acc", "docs fully correct"]
     rows = []
     for s in arms:
         e = s["extraction"]
@@ -531,7 +592,9 @@ def _html_tables(report_json: dict) -> list[tuple[str, list[str], list[tuple[lis
     for s in arms:
         r = s["routing"]
         rows.append(([s["arm"], r["gpu_seconds_per_doc"], r["cpu_core_seconds_per_doc"]], ["", "", ""]))
-    tables.append(("Cost (device-time; simulated with fake pools)", headers, rows))
+    methods = {s["routing"].get("cost_method", "") for s in arms}
+    source = "measured" if methods and all(m.startswith("measured") for m in methods) else "see device-time source"
+    tables.append((f"Cost (device-time; {source})", headers, rows))
     return tables
 
 

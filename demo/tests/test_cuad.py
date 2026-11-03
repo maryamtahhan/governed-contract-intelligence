@@ -56,7 +56,10 @@ def test_convert_maps_real_annotations(tmp_path):
                 assert len(value) > 5
     for key, count in found.items():
         assert count > 0, f"no {key} annotations mapped at all"
-    assert stats["sensitive"] > 0, "PII screen found nothing in real contracts"
+    assert stats["sensitivity_annotated"] is False
+    for doc in manifest["documents"]:
+        # CUAD has no PII labels; do not invent a screen result.
+        assert doc["sensitive"] is None
 
 
 def test_convert_deterministic_and_filters_long(tmp_path):

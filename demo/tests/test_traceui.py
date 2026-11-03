@@ -17,7 +17,16 @@ def traceui(tmp_path, monkeypatch):
     monkeypatch.setenv("VLLM_GPU_SMALL_UPSTREAM", "http://small:8000")
     monkeypatch.setenv("VLLM_CPU_RELAY_PORT", "18081")
     monkeypatch.setenv("VLLM_GPU_APPROVED_RELAY_PORT", "18084")
+    monkeypatch.setenv("TRACE_STORE_SENSITIVE_CONTENT", "1")
     monkeypatch.delenv("SENSITIVE_UPSTREAM", raising=False)
+    module = importlib.import_module("hybrid_demo.traceui.server")
+    return importlib.reload(module)
+
+
+@pytest.fixture()
+def traceui_redacted(tmp_path, monkeypatch):
+    monkeypatch.setenv("TRACE_DB_PATH", str(tmp_path / "traces.db"))
+    monkeypatch.delenv("TRACE_STORE_SENSITIVE_CONTENT", raising=False)
     module = importlib.import_module("hybrid_demo.traceui.server")
     return importlib.reload(module)
 
@@ -32,7 +41,7 @@ def test_pool_parsing(traceui):
 
 def test_trace_roundtrip_and_summary(traceui):
     traceui.create_trace("t1", "POST", "/v1/chat/completions", "r1", "question?", "sensitive")
-    traceui.record_hop("r1", "vllm-gpu-approved", "REASONING")
+    traceui.record_hop("t1", "vllm-gpu-approved", "REASONING")
     traceui.record_hop_timing("t1", "vllm-gpu-approved", time.time(), 0.0, 120, 200, "150")
     traceui.complete_trace(
         "t1", 200,
@@ -89,3 +98,15 @@ def test_sensitive_ingress_flag(traceui, monkeypatch):
     module = importlib.reload(traceui)
     assert module.SENSITIVE_UPSTREAM == "http://praxis:8083"
     assert module.SENSITIVE_INGRESS_PORT == 8083
+
+
+def test_sensitive_content_redacted_by_default(traceui_redacted):
+    traceui_redacted.create_trace(
+        "t1", "POST", "/v1/chat/completions", "r1", "salary is 90000", "sensitive")
+    traceui_redacted.complete_trace(
+        "t1", 200, {"x-demo-route": "vllm-cpu"}, 0.0,
+        response=('{"answer": "90000"}', 18, False),
+    )
+    row = traceui_redacted.traces()[0]
+    assert row["question"] is None
+    assert row["response"] is None

@@ -37,6 +37,13 @@ MAX_TRACES = int(os.environ.get("TRACE_MAX_TRACES", "250"))
 RESPONSE_CAPTURE_BYTES = int(os.environ.get("TRACE_RESPONSE_CAPTURE_BYTES", str(512 * 1024)))
 RESPONSE_MAX_CHARS = int(os.environ.get("TRACE_RESPONSE_MAX_CHARS", "16000"))
 GPU_LABELS = {"COMPLEX", "REASONING"}
+# Sensitive prompts/responses are not stored by default: the audit trail
+# records routing metadata, not document text. Set to 1 only for a trusted
+# local debugging session.
+STORE_SENSITIVE_CONTENT = os.environ.get("TRACE_STORE_SENSITIVE_CONTENT", "") == "1"
+# Optional bearer token for the /_trace API and dashboard. Unset keeps the
+# laptop demo frictionless; set it on any shared cluster or Route.
+API_TOKEN = os.environ.get("TRACE_API_TOKEN", "")
 HEALTH_PATH = os.environ.get("TRACE_HEALTH_PATH", "/health")
 HEALTH_KEEP = int(os.environ.get("TRACE_HEALTH_KEEP", "300"))
 PROBE_FRESH_SECONDS = float(os.environ.get("TRACE_PROBE_FRESH_SECONDS", "20"))
@@ -198,6 +205,8 @@ def extract_question(path: str, body: bytes) -> str | None:
 
 def create_trace(trace_id: str, method: str, path: str, request_id: str, question: str | None,
                  entry: str) -> None:
+    if entry == "sensitive" and not STORE_SENSITIVE_CONTENT:
+        question = None
     with DB_LOCK, db() as connection:
         connection.execute(
             "INSERT INTO traces (id, started_at, method, path, request_id, fallback, question, entry) "
@@ -206,12 +215,17 @@ def create_trace(trace_id: str, method: str, path: str, request_id: str, questio
         )
 
 
-def record_hop(request_id: str, route: str, classification: str | None) -> None:
+def record_hop(trace_id: str, route: str, classification: str | None) -> None:
+    """Attach a hop to one trace by its server-generated id.
+
+    Never key this on a client-supplied request id: two concurrent clients
+    reusing one id would have their hops written to each other's traces.
+    """
     with DB_LOCK, db() as connection:
         connection.execute(
             "UPDATE traces SET classification=COALESCE(classification, ?), route=COALESCE(route, ?) "
-            "WHERE request_id=? AND completed_at IS NULL",
-            (classification, route, request_id),
+            "WHERE id=? AND completed_at IS NULL",
+            (classification, route, trace_id),
         )
 
 
@@ -236,14 +250,20 @@ def complete_trace(trace_id: str, status: int, headers: dict[str, str], started:
     classification, route, fallback = routing_signal(headers)
     response_text, response_tokens, tokens_estimated = response
     with DB_LOCK, db() as connection:
+        row = connection.execute("SELECT classification, route, entry FROM traces WHERE id=?",
+                                 (trace_id,)).fetchone()
         if classification is None or route is None:
-            row = connection.execute("SELECT classification, route FROM traces WHERE id=?", (trace_id,)).fetchone()
             if row:
                 classification = classification or row[0]
                 route = route or row[1]
-        if classification and route:
-            if (classification.upper() in GPU_LABELS) != ("gpu" in route.lower()):
-                fallback = True
+        if row and row[2] == "sensitive" and not STORE_SENSITIVE_CONTENT:
+            response_text = None
+        # Degradation is an implication, not an equivalence: GPU-tier work on
+        # a non-GPU pool is degraded, but SIMPLE/MEDIUM work on a GPU pool
+        # (arm B's intended split) is not.
+        if classification and route and classification.upper() in GPU_LABELS \
+                and "gpu" not in route.lower():
+            fallback = True
         connection.execute("""UPDATE traces SET completed_at=?, status=?, classification=?, route=?, fallback=?,
             duration_ms=?, response_headers=?, error=?, response=?, response_tokens=?, response_tokens_est=?
             WHERE id=?""", (
@@ -268,7 +288,7 @@ def routing_signal(headers: dict[str, str]) -> tuple[str | None, str | None, boo
                    for key, value in lowered.items())
     if route is None and classification:
         route = "vllm-gpu" if classification.upper() in {"COMPLEX", "REASONING"} else "vllm-cpu"
-    wants_gpu = classification is not None and classification.upper() in {"COMPLEX", "REASONING"}
+    wants_gpu = classification is not None and classification.upper() in GPU_LABELS
     if wants_gpu and route and "gpu" not in route.lower():
         fallback = True
     return classification, route, fallback
@@ -348,11 +368,25 @@ def set_traffic(replicas: int) -> None:
 def read_pools() -> dict:
     namespace = (SA_DIR / "namespace").read_text().strip()
     pools = {}
-    for route, (_upstream, _port, deployment, isvc) in POOLS.items():
+    for route, (upstream, _port, deployment, isvc) in POOLS.items():
+        # The cpu-real overlays point the upstream at a plain Deployment
+        # (cpureal-vllm-*) rather than a KServe predictor. Derive the
+        # deployment name from the upstream host so the dashboard follows the
+        # same wiring the relay uses.
+        host = urlsplit(upstream).hostname or ""
+        looks_like_service = host and host != "localhost" \
+            and not host.replace(".", "").isdigit()
+        if looks_like_service and not host.startswith("vllm-"):
+            deployment = host
         spec = k8s_get(f"/apis/apps/v1/namespaces/{namespace}/deployments/{deployment}")
         items = k8s_get(
             f"/api/v1/namespaces/{namespace}/pods?labelSelector=serving.kserve.io%2Finferenceservice%3D{isvc}"
         )["items"]
+        if not items:
+            # Plain Deployments label their pods with app=<name>.
+            items = k8s_get(
+                f"/api/v1/namespaces/{namespace}/pods?labelSelector=app%3D{deployment}"
+            )["items"]
         pods = []
         for item in sorted(items, key=lambda entry: entry["metadata"]["name"]):
             status = item.get("status", {})
@@ -467,7 +501,11 @@ def trace_summary() -> dict:
         groups.append({"classification": classification, "route": route, "fallback": bool(fallback),
                        "entry": entry, "status": status, "count": count,
                        "avg_duration_ms": round(avg_ms or 0), "tokens": tokens or 0})
-    return {"total": total, "groups": groups, "routes": list(POOLS)}
+    # Raw traces are a rolling window; per-run summaries in the `runs` table
+    # are the durable audit record. Callers must not read `total` as the
+    # whole-run step count when a run exceeded this retention.
+    return {"total": total, "groups": groups, "routes": list(POOLS),
+            "retention": MAX_TRACES}
 
 
 def clear_traces() -> None:
@@ -536,7 +574,15 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, format: str, *args: object) -> None:
         return
 
+    def _needs_auth(self) -> bool:
+        path = self.path.split("?", 1)[0]
+        return (self.server.route is None and API_TOKEN
+                and path != "/_trace/healthz" and not self.authorized())
+
     def do_GET(self) -> None:
+        if self._needs_auth():
+            self.json(401, {"error": "bearer token required"})
+            return
         if self.server.route:
             self.proxy()
         elif self.path in {"/", "/index.html", "/_trace", "/_trace/", "/_trace/index.html"}:
@@ -565,6 +611,9 @@ class Handler(BaseHTTPRequestHandler):
             self.proxy()
 
     def do_POST(self) -> None:
+        if self._needs_auth():
+            self.json(401, {"error": "bearer token required"})
+            return
         if self.server.route is None and self.path == "/_trace/api/traffic":
             self.traffic_action()
         elif self.server.route is None and self.path == "/_trace/api/runs":
@@ -597,15 +646,42 @@ class Handler(BaseHTTPRequestHandler):
             return
         self.json(200, read_traffic())
 
-    def do_PUT(self) -> None: self.proxy()
-    def do_PATCH(self) -> None: self.proxy()
+    def _write_allowed(self) -> bool:
+        # Only relay OpenAI-compatible API methods; arbitrary paths would
+        # turn the public trace UI into an open proxy.
+        return self.path.split("?", 1)[0].startswith("/v1/")
+
+    def _reject_write(self) -> None:
+        self.json(405, {"error": "method not allowed on this path"})
+
+    def do_PUT(self) -> None:
+        if self._write_allowed():
+            self.proxy()
+        else:
+            self._reject_write()
+
+    def do_PATCH(self) -> None:
+        if self._write_allowed():
+            self.proxy()
+        else:
+            self._reject_write()
+
     def do_DELETE(self) -> None:
-        if self.path == "/_trace/api/traces":
+        if self._needs_auth():
+            self.json(401, {"error": "bearer token required"})
+        elif self.path == "/_trace/api/traces":
             clear_traces()
             self.json(200, {"cleared": True})
-        else:
+        elif self._write_allowed():
             self.proxy()
-    def do_OPTIONS(self) -> None: self.proxy()
+        else:
+            self._reject_write()
+
+    def do_OPTIONS(self) -> None:
+        if self._write_allowed():
+            self.proxy()
+        else:
+            self._reject_write()
 
     def json(self, status: int, data: dict) -> None:
         body = json.dumps(data).encode()
@@ -623,30 +699,40 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(raw)
 
+    def authorized(self) -> bool:
+        if not API_TOKEN:
+            return True
+        return self.headers.get("Authorization", "") == f"Bearer {API_TOKEN}"
+
     def proxy(self) -> None:
         route = self.server.route
         upstream = self.server.upstream
         entry = self.server.entry
         trace_id, started = str(uuid.uuid4()), time.monotonic()
-        request_id = self.headers.get("X-Request-Id", trace_id)
+        client_request_id = self.headers.get("X-Request-Id")
+        # Correlate on the server-generated id; the client id is forwarded
+        # upstream but never keys the trace (two clients can reuse one).
+        request_id = trace_id
         body = self.rfile.read(int(self.headers.get("Content-Length", "0")))
         if route is None:
             create_trace(trace_id, self.command, self.path, request_id, extract_question(self.path, body), entry)
+        # Hops arrive with the ingress trace id in the _trace query parameter;
+        # that id, not this relay's own uuid, keys the trace row.
+        tagged = dict(parse_qsl(urlsplit(self.path).query)).get("_trace")
+        hop_trace_id = tagged or trace_id
         is_probe = route is not None and self.command == "GET" and self.path.split("?", 1)[0] == HEALTH_PATH
         if route is not None and not is_probe:
-            record_hop(request_id, route, self.headers.get("X-Llm-D-Sc-Label"))
+            record_hop(hop_trace_id, route, self.headers.get("X-Llm-D-Sc-Label"))
         headers = {key: value for key, value in self.headers.items()
                    if key.lower() not in HOP_BY_HOP and not key.lower().startswith("x-praxis-")}
-        headers["X-Request-Id"] = request_id
+        headers["X-Request-Id"] = client_request_id or trace_id
         timed = route is not None and not is_probe
-        path, hop_trace_id = self.path, trace_id
+        path = self.path
         if route is None and self.command == "POST":
             path += ("&" if "?" in path else "?") + "_trace=" + trace_id
         elif route is not None:
             parts = urlsplit(path)
             query = [(k, v) for k, v in parse_qsl(parts.query, keep_blank_values=True) if k != "_trace"]
-            tagged = dict(parse_qsl(parts.query)).get("_trace")
-            hop_trace_id = tagged or trace_id
             path = parts.path + ("?" + urlencode(query) if query else "")
         arrived_at = time.time()
         classifier_us = self.headers.get("X-Llm-D-Sc-Latency-Us")
@@ -703,6 +789,11 @@ class Handler(BaseHTTPRequestHandler):
 
 
 class RelayServer(ThreadingHTTPServer):
+    # The pipeline fans out concurrent documents; the socketserver default
+    # backlog of 5 makes macOS refuse the overflow at connect time.
+    request_queue_size = 128
+    daemon_threads = True
+
     def __init__(self, address: tuple[str, int], upstream: str, route: str | None = None,
                  entry: str = "general"):
         super().__init__(address, Handler)
@@ -747,7 +838,7 @@ PAGE = r'''<!doctype html>
 
 <section class="traces"><div class="section-heading"><h2>Recent requests <small id="count"></small></h2><div class="actions"><span id="traffic-status" class="traffic-status unknown"><i></i>Traffic: …</span><button id="traffic-toggle" type="button" disabled>Simulate Traffic</button><button id="clear-recents" type="button">Clear Recents</button></div></div><table><thead><tr><th>Time</th><th>Request</th><th>Classification</th><th>Destination</th><th>Status</th><th>Duration</th><th>Response</th></tr></thead><tbody id="traces"><tr><td colspan="6">Waiting for a request…</td></tr></tbody></table></section>
 
-<section class="traces"><div class="section-heading"><h2>Measurement arms <small id="arms-note"></small></h2><a class="small-link" href="/_trace/api/audit.jsonl">audit.jsonl</a></div><table><thead><tr><th>Arm</th><th>Mode</th><th>Docs</th><th>Wall s</th><th>CPU-served</th><th>GPU s/doc</th><th>Fallback</th><th>Errors</th><th>Sensitive violations</th></tr></thead><tbody id="arms"><tr><td colspan="9">No runs posted yet (run scripts/local/arms.sh).</td></tr></tbody></table></section>
+<section class="traces"><div class="section-heading"><h2>Measurement arms <small id="arms-note"></small></h2><a class="small-link" href="/_trace/api/audit.jsonl">audit.jsonl</a></div><table><thead><tr><th>Arm</th><th>Mode</th><th>Docs</th><th>Wall s</th><th>CPU-served</th><th>GPU s/doc</th><th>Fallback</th><th>Errors</th><th>Sensitive violations</th></tr></thead><tbody id="arms"><tr><td colspan="9">No runs posted yet (run scripts/cluster/arms.sh or scripts/linux/arms.sh).</td></tr></tbody></table></section>
 </main><div id="drawer-backdrop" class="drawer-backdrop"></div><aside id="question-drawer" class="drawer" aria-hidden="true" aria-labelledby="question-title"><div class="drawer-header"><h2 id="question-title">Question</h2><button id="drawer-close" type="button" class="drawer-close" aria-label="Close question">×</button></div><div id="question-meta" class="drawer-meta"></div><p id="question-text" class="question-text"></p></aside><script>
 const $=id=>document.getElementById(id),dot=$('request-dot'),paths={source:$('packet-source'),classify:$('packet-classify'),result:$('packet-result'),cpu:$('packet-cpu'),gpu:$('packet-gpu')},flows={source:[$('flow-source')],classify:[$('flow-classify'),$('flow-result')],cpu:[$('flow-cpu'),$('flow-cpu-pod')],gpu:[$('flow-gpu'),$('flow-gpu-pod')]};let last='',lastAnimated='',selectedId='',dismissedThroughId='',traceItems=[],animating=false,animationGeneration=0,openTraces=new Set();
 const questionDrawer=$('question-drawer'),drawerBackdrop=$('drawer-backdrop');
@@ -803,7 +894,7 @@ async function pinState(t){const seq=++pinSeq;try{const d=await fetch('/_trace/a
 function unpinState(){pinSeq++;pinned=false;renderState(liveState,'')}
 load();setInterval(load,2000);loadTraffic();setInterval(loadTraffic,2000);loadState();setInterval(loadState,2000)
 let lastRunsKey=''
-async function loadRuns(){try{const d=await fetch('/_trace/api/runs',{cache:'no-store'}).then(r=>r.json());const runs=d.runs||[];const key=runs.map(x=>x.run_id).join();if(key===lastRunsKey)return;lastRunsKey=key;$('arms').innerHTML=runs.length?runs.map(s=>{const routes=s.routes||{},served=Object.values(routes).reduce((a,b)=>a+b,0)||1,cpu=(routes['vllm-cpu']||0)/served,gpuSdoc=(s.gpu_busy_ms||0)/1000/Math.max(s.docs||1,1),viol=(s.sensitive_violations==null?'—':s.sensitive_violations);return`<tr class="${viol&&viol>0?'bad':''}"><td><b>${esc(s.arm)}</b></td><td>${esc(s.mode||'—')}</td><td>${esc(s.docs??'—')}</td><td>${esc(s.wall_s??'—')}</td><td>${Math.round(cpu*100)}%</td><td>${gpuSdoc.toFixed(2)}</td><td>${esc(s.fallback??0)}</td><td>${esc(s.errors??0)}</td><td>${esc(viol)}</td></tr>`}).join(''):'<tr><td colspan="9">No runs posted yet (run scripts/local/arms.sh).</td></tr>';$('arms-note').textContent=runs.length?`(${runs.length} arm${runs.length>1?'s':''}, latest per arm)`:''}catch(e){}}
+async function loadRuns(){try{const d=await fetch('/_trace/api/runs',{cache:'no-store'}).then(r=>r.json());const runs=d.runs||[];const key=runs.map(x=>x.run_id).join();if(key===lastRunsKey)return;lastRunsKey=key;$('arms').innerHTML=runs.length?runs.map(s=>{const routes=s.routes||{},served=Object.values(routes).reduce((a,b)=>a+b,0)||1,cpu=(routes['vllm-cpu']||0)/served,gpuSdoc=(s.gpu_busy_ms||0)/1000/Math.max(s.docs||1,1),viol=(s.sensitive_violations==null?'—':s.sensitive_violations);return`<tr class="${viol&&viol>0?'bad':''}"><td><b>${esc(s.arm)}</b></td><td>${esc(s.mode||'—')}</td><td>${esc(s.docs??'—')}</td><td>${esc(s.wall_s??'—')}</td><td>${Math.round(cpu*100)}%</td><td>${gpuSdoc.toFixed(2)}</td><td>${esc(s.fallback??0)}</td><td>${esc(s.errors??0)}</td><td>${esc(viol)}</td></tr>`}).join(''):'<tr><td colspan="9">No runs posted yet (run scripts/cluster/arms.sh or scripts/linux/arms.sh).</td></tr>';$('arms-note').textContent=runs.length?`(${runs.length} arm${runs.length>1?'s':''}, latest per arm)`:''}catch(e){}}
 loadRuns();setInterval(loadRuns,5000)
 </script></body></html>'''
 

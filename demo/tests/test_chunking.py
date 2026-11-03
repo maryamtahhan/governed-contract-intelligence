@@ -69,3 +69,15 @@ def test_small_document_single_chunk():
     chunks = chunk_document("doc", text)
     assert len(chunks) == 1
     assert chunks[0].text == text
+
+
+def test_unpunctuated_sentence_is_hard_split_to_budget():
+    from hybrid_demo.common import est_tokens
+
+    text = "prefix " + "x" * 5000 + " suffix"
+    chunks = chunk_document("doc", text, max_tokens=100)
+    assert len(chunks) > 1
+    assert all(est_tokens(c.text) <= 100 for c in chunks)
+    covered = " ".join(c.text for c in chunks)
+    assert covered.replace(" ", "") == text.replace(" ", "")
+    assert all(c.char_start <= c.char_end <= len(text) for c in chunks)

@@ -8,58 +8,19 @@ score before answering.
 """
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 
 import torch
 
-QUESTION_RE = re.compile(r"[Ee]xtract the ([a-z_ -]+?) clause")
-
-# The official CUAD question wording, verbatim: the checkpoints were trained
-# with these exact strings, so fidelity here measurably affects quality.
-CUAD_QUESTIONS = {
-    "termination": ('Highlight the parts (if any) of this contract related to "Termination For '
-                    'Convenience" that should be reviewed by a lawyer. Details: Can a party terminate '
-                    'this  contract without cause (solely by giving a notice and allowing a waiting  '
-                    'period to expire)?'),
-    "governing law": ('Highlight the parts (if any) of this contract related to "Governing Law" that '
-                      'should be reviewed by a lawyer. Details: Which state/country\'s law governs the '
-                      'interpretation of the contract?'),
-    "liability cap": ('Highlight the parts (if any) of this contract related to "Cap On Liability" '
-                      'that should be reviewed by a lawyer. Details: Does the contract include a cap '
-                      'on liability upon the breach of a party’s obligation? This includes time '
-                      'limitation for the counterparty to bring claims or maximum amount for recovery.'),
-    "audit rights": ('Highlight the parts (if any) of this contract related to "Audit Rights" that '
-                     'should be reviewed by a lawyer. Details: Does a party have the right to  audit '
-                     'the books, records, or physical locations of the counterparty to ensure '
-                     'compliance with the contract?'),
-}
-
-CLAUSE_ALIASES = {
-    "termination": "termination",
-    "governing law": "governing law",
-    "governing_law": "governing law",
-    "liability cap": "liability cap",
-    "liability_cap": "liability cap",
-    "audit rights": "audit rights",
-    "audit_rights": "audit rights",
-    "data protection": "audit rights",
-}
-
-
-def clause_from_prompt(messages: list[dict]) -> str | None:
-    """Parse the clause name out of the pipeline's extraction prompt."""
-    for message in reversed(messages or []):
-        content = message.get("content", "") if isinstance(message, dict) else ""
-        m = QUESTION_RE.search(content)
-        if m:
-            clause = m.group(1).strip().lower()
-            return CLAUSE_ALIASES.get(clause, clause)
-    return None
-
-
-def question_for(clause: str) -> str | None:
-    return CUAD_QUESTIONS.get((clause or "").strip().lower())
+# Re-exported so existing imports (`from hybrid_demo.specialist.qa import
+# CUAD_QUESTIONS`) keep working; the definitions live in a torch-free module.
+from .questions import (  # noqa: F401
+    CLAUSE_ALIASES,
+    CUAD_QUESTIONS,
+    QUESTION_RE,
+    clause_from_prompt,
+    question_for,
+)
 
 
 @dataclass

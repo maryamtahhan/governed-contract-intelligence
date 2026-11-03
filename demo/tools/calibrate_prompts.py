@@ -14,22 +14,23 @@ from hybrid_demo.pipeline.review import (
 
 
 async def main(base_url: str, data_dir: str) -> None:
-    docs, texts = load_documents(data_dir, 4)
+    docs, texts, clause_keys = load_documents(data_dir, 4)
+    if not docs:
+        raise SystemExit(f"no documents in {data_dir}")
     text = texts[docs[0]["doc_id"]]
+    has_data_protection = "data_protection" in clause_keys
+    clauses = {key: None for key in clause_keys}
+    clauses.update({
+        "termination": "either party may terminate",
+        "governing_law": "laws of Ireland",
+        "liability_cap": "EUR 1,000,000",
+    })
 
     cases = {
         "classify": classify_body(text),
-        "extract:termination": extract_body(text, "termination"),
-        "extract:data_protection": extract_body(text, "data protection"),
-        "risk": risk_body(
-            {
-                "termination": "either party may terminate",
-                "governing_law": "laws of Ireland",
-                "liability_cap": "EUR 1,000,000",
-                "data_protection": None,
-            },
-            False,
-        ),
+        **{f"extract:{key}": extract_body(text, key.replace("_", " "))
+           for key in clause_keys},
+        "risk": risk_body(clauses, False),
         "report": report_body(
             [
                 "- "
@@ -39,13 +40,16 @@ async def main(base_url: str, data_dir: str) -> None:
                         "type": d["type"],
                         "risk": d["risk"],
                         "governing_law": "laws of Ireland",
-                        "data_protection": True,
-                        "sensitive": d["sensitive"],
+                        "data_protection": bool(
+                            (d.get("clauses") or {}).get("data_protection")
+                        ),
+                        "sensitive": bool(d.get("sensitive")),
                     }
                 )
                 for d in docs
             ],
-            4,
+            len(docs),
+            has_data_protection,
         ),
     }
     async with httpx.AsyncClient(base_url=base_url, timeout=120) as client:

@@ -2,9 +2,9 @@
 
 Ordering follows the plan: an exact-match lookup is always safe (identical
 input, deterministic model); a similarity match is riskier, so it (a) sits
-after the exact lookup and (b) never serves or stores sensitive content -
-the same PII screen the pipeline uses gates both directions, so a wrongly
-inherited answer cannot leak across a sensitive document.
+after the exact lookup and (b) never serves or stores sensitive content.
+Because sensitive content is never stored, there is no sensitive entry to
+serve - the exact path cannot return one either.
 
 False positives are measurable: every served entry records how it was served
 ("exact" / "similarity" in the answer JSON), and a validation run can compare
@@ -25,7 +25,6 @@ class CacheEntry:
     clause: str
     vector: list[float]
     answer: dict
-    sensitive: bool = False
 
 
 @dataclass
@@ -69,7 +68,7 @@ class SemanticCache:
             vector = embed(clause + "\n" + context)
             best, best_score = None, 0.0
             for candidate in self._entries:
-                if candidate.clause != key[0] or candidate.sensitive:
+                if candidate.clause != key[0]:
                     continue
                 score = cosine(vector, candidate.vector)
                 if score > best_score:
@@ -110,9 +109,11 @@ class SemanticCache:
         similarity hit whose answer disagrees with the freshly computed one.
         """
         cached, served_as = self.get(clause, context)
-        self.stats.fp_checks += 1
-        if cached is None:
+        # A miss is not a false positive, and an exact hit is by construction
+        # the same input: only similarity-served answers can be wrong.
+        if cached is None or served_as != "similarity":
             return True
+        self.stats.fp_checks += 1
         same = (
             cached.get("found") == fresh_answer.get("found")
             and cached.get("text") == fresh_answer.get("text")

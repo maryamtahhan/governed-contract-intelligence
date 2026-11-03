@@ -19,8 +19,10 @@ source (that is why the plan pairs CUAD with synthetic PII documents and
 EU/GDPR sources for DP checks). Contracts longer than --max-chars are skipped:
 they would exceed the pools' context windows.
 
-Sensitivity is set by the same PII screen the pipeline uses, so the screen's
-accuracy is measured on real contract text, not only on synthetic schedules.
+CUAD carries no personal-data annotations, so this converter makes no
+sensitivity claim: ``sensitive`` is ``None`` and the screen's accuracy is not
+estimated on CUAD. Measuring PII recall needs an independently labelled set;
+using the pipeline's own screen as truth would be circular.
 """
 from __future__ import annotations
 
@@ -31,7 +33,7 @@ import re
 import zipfile
 from pathlib import Path
 
-from ..classifier import detect_sensitivity
+from .risk import assess_risk
 
 CATEGORY_MAP = {
     "termination": "Termination For Convenience",
@@ -88,11 +90,8 @@ def answer_text(answers: list) -> str | None:
 
 
 def risk_of(clauses: dict, uncapped: bool) -> str:
-    if uncapped or not clauses.get("liability_cap"):
-        return "high"
-    if not clauses.get("termination"):
-        return "medium"
-    return "low"
+    """CUAD truth under the shared rubric; CUAD annotates no DP category."""
+    return assess_risk(clauses, has_data_protection=False, uncapped=uncapped)
 
 
 def convert(cuad_dir: str | Path, out_dir: str | Path, count: int, seed: int,
@@ -133,7 +132,8 @@ def convert(cuad_dir: str | Path, out_dir: str | Path, count: int, seed: int,
         truths.append({
             "doc_id": doc_id,
             "type": None,
-            "sensitive": detect_sensitivity(text),
+            "sensitive": None,
+            "sensitivity_source": "unannotated (CUAD has no PII labels)",
             "initial_term_months": None,
             "clauses": clauses,
             "risk": risk_of(clauses, uncapped),
@@ -154,7 +154,7 @@ def convert(cuad_dir: str | Path, out_dir: str | Path, count: int, seed: int,
     return {
         "count": len(truths),
         "skipped_long": skipped_long,
-        "sensitive": sum(1 for t in truths if t["sensitive"]),
+        "sensitivity_annotated": False,
         "with_all_four_clauses": sum(1 for t in truths if all(t["clauses"].values())),
     }
 

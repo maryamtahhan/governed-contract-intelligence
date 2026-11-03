@@ -20,7 +20,7 @@ spec:
   selector: {matchLabels: {app: fake-vllm-gpu}}
   template:
     metadata:
-      labels: {app: fake-vllm-gpu, demo.openshell.ai/simulated: "true"}
+      labels: {app: fake-vllm-gpu, demo.openshell.ai/pool: vllm-gpu, demo.openshell.ai/simulated: "true"}
     spec:
       automountServiceAccountToken: false
       containers:
@@ -59,7 +59,7 @@ spec:
   selector: {matchLabels: {app: fake-vllm-gpu-approved}}
   template:
     metadata:
-      labels: {app: fake-vllm-gpu-approved, demo.openshell.ai/simulated: "true"}
+      labels: {app: fake-vllm-gpu-approved, demo.openshell.ai/pool: vllm-gpu-approved, demo.openshell.ai/simulated: "true"}
     spec:
       automountServiceAccountToken: false
       containers:
@@ -98,7 +98,7 @@ spec:
   selector: {matchLabels: {app: fake-vllm-gpu-small}}
   template:
     metadata:
-      labels: {app: fake-vllm-gpu-small, demo.openshell.ai/simulated: "true"}
+      labels: {app: fake-vllm-gpu-small, demo.openshell.ai/pool: vllm-gpu-small, demo.openshell.ai/simulated: "true"}
     spec:
       automountServiceAccountToken: false
       containers:

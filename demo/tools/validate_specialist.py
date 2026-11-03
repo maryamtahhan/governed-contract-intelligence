@@ -14,10 +14,14 @@ import torch
 from transformers import AutoModelForQuestionAnswering, AutoTokenizer
 
 from hybrid_demo.common import normalize_text
+from hybrid_demo.pipeline.cuad import CATEGORY_MAP
 from hybrid_demo.specialist.qa import CUAD_QUESTIONS, best_spans
 
 QUESTION_RE = re.compile(r'related to "(.+?)" that should be reviewed')
-ANSWER_RE = re.compile(r'related to "(.+?)"')
+
+# CUAD category -> the key used by CUAD_QUESTIONS (spaces, not underscores).
+CATEGORY_TO_KEY = {category: key.replace("_", " ")
+                   for key, category in CATEGORY_MAP.items()}
 
 
 def text_matches(predicted: str | None, truth: str | None) -> bool:
@@ -56,8 +60,9 @@ def main() -> None:
             m = QUESTION_RE.search(qa["question"])
             if not m:
                 continue
-            key = m.group(1).strip().lower()
-            if key in CUAD_QUESTIONS and key not in truth:
+            category = m.group(1).strip()
+            key = CATEGORY_TO_KEY.get(category)
+            if key and key in CUAD_QUESTIONS and key not in truth:
                 answers = [a["text"] for a in qa.get("answers", []) if a.get("text")]
                 truth[key] = answers[0] if answers else None
 
