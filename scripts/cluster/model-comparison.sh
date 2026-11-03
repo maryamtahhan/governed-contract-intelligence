@@ -47,7 +47,7 @@ if [[ "$VARIANT" == specialist* ]]; then
     # Dockerfile.specialist needs only these files; the checkpoint itself is
     # downloaded from Zenodo inside the build.
     STAGE="$(mktemp -d)"
-    cp demo/Dockerfile.specialist demo/pyproject.toml demo/README.md "$STAGE/"
+    cp demo/Dockerfile.specialist demo/pyproject.toml "$STAGE/"
     cp -R demo/src "$STAGE/src"
     oc -n "$NS" start-build hybrid-specialist --from-dir="$STAGE" --follow 2>&1 | tail -2
     rm -rf "$STAGE"
