@@ -58,18 +58,24 @@ echo "== applying $OVERLAY"
 oc apply -k "$OVERLAY" >/dev/null
 
 echo -n "== waiting for the CPU pool to become healthy (72GB downloads take a while)"
+# specialist variants front a backend pool via forwarding: its health must
+# be verified too, or the warm step 500s against a still-compiling backend
+# (the 2026-11-03 fast-fail)
+HEALTH_DEPLOYS=("$POOL_DEPLOY")
+if [[ "$VARIANT" == specialist* ]]; then
+  HEALTH_DEPLOYS+=("cpureal-vllm-cpu")
+fi
 for i in $(seq 1 480); do
-  # python3, not curl: the specialist image is python-slim and ships no curl
-  if oc -n "$NS" exec deploy/$POOL_DEPLOY -- python3 -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)" >/dev/null 2>&1; then
-    code=200
-  else
-    code=000
-  fi
-  [ "$code" = 200 ] && { echo " healthy"; break; }
+  healthy=1
+  for d in "${HEALTH_DEPLOYS[@]}"; do
+    # python3, not curl: the specialist image is python-slim and ships no curl
+    oc -n "$NS" exec deploy/$d -- python3 -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)" >/dev/null 2>&1 || healthy=0
+  done
+  [ "$healthy" = 1 ] && { echo " healthy"; break; }
   echo -n .
   sleep 10
 done
-[ "$code" = 200 ] || { echo; echo "$POOL_DEPLOY did not become healthy" >&2; exit 1; }
+[ "$healthy" = 1 ] || { echo; echo "pool(s) ${HEALTH_DEPLOYS[*]} did not become healthy" >&2; exit 1; }
 
 echo -n "== warming the pool"
 oc -n "$NS" exec deploy/trace-ui -- python3 -c "

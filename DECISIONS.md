@@ -49,7 +49,8 @@ labels upstream (see D12). Evidence: FINDINGS §3.1, §4.
 
 **D6 — Embedder selection: leaderboard → measured corpus** (Oct 31 – Nov 2)
 Trigger: the MTEB(Law) ordering **inverted** on our within-document task
-(the 0.6B beat the top-scoring 8B, McNemar p = 0.0001), then the 8B won
+(the 0.6B beat the top-scoring 8B, McNemar p = 0.0075, 125/157 vs 113/157
+hit@5), then the 8B won
 the cross-document regime, then the corrected re-measurement showed
 everything ties at the top in both regimes. Change: candidate selection
 became a funnel (leaderboard shortlist → local probe); the tier decision
@@ -113,5 +114,30 @@ Trigger: an upstream review of `llm-d-semantic-classifier` and the
 answers our two open architecture items (multi-signal = two-label
 routing; custom taxonomies = native specialist composition), and praxis
 v0.8/v0.9 carry fixes we want (request-head classification, TTFT
-metrics, in-flight per-model tracking). Status: planned, not yet
-upgraded.
+metrics, in-flight per-model tracking). Re-checked 2026-11-03 against the
+local checkouts: `praxis-proxy/praxis` is the framework (v0.7.5) and
+`praxis-proxy/ai` the gateway (v0.9.0) — the versions in FINDINGS are the
+gateway's; our fork image registry publishes only v0.7.0, so the upgrade is
+a fork rebuild, not a tag bump. llm-d-sc's new gRPC health service is not in
+our pinned image, so the manifest keeps a TCP readiness probe. Status:
+planned, not yet upgraded.
+
+**D13 — CPU requests are physical cores; isolation is node-generated** (Nov 3)
+Trigger: the pool requests were logical CPUs under `full-pcpus-only`.
+That guarantees no other pod takes the sibling but still hands the pod
+both sibling threads, so vLLM's OpenMP binding can put two threads on one
+core; nothing pinned a pod to one NUMA node, so CPU latency depended on
+placement. Change: every measured pool is Guaranteed QoS with an integer
+request counted in **physical cores**, and measurement runs apply an NTO
+PerformanceProfile that offlines the SMT siblings of the isolated cores
+(the `offlined` list is explicit — NTO does not derive it) and enforces
+`single-numa-node`. The profile is generated from the node it runs on,
+not portable: the SNO is a Xeon 6960P with **six 24-core NUMA nodes**, so
+each 24-core 7B pool takes a whole node (74 of 78 isolated cores in the
+base layout, 78 of 78 for MoE/9B). The `full-pcpus-only` KubeletConfig is
+kept only as a documented, non-comparable fallback; hugetlbfs pages are
+not reserved (vLLM's CPU backend has no allocation path for them), and
+transparent hugepages are an opt-in experiment. Evidence:
+`deploy/openshift/cpu-isolation/`; the lists were checked against the
+node's `lscpu` and all three manifests pass `oc apply --dry-run=server`
+on 2026-11-03.

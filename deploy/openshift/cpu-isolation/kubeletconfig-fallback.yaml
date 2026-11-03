@@ -1,0 +1,40 @@
+# FALLBACK ONLY. Use performanceprofile.yaml when the Node Tuning Operator
+# is installed (it is on every OpenShift cluster; this project assumes
+# OpenShift >= 4.19). This file and the PerformanceProfile must not be
+# applied together: NTO owns the kubelet configuration and will overwrite
+# it.
+#
+# Why it is a fallback: `full-pcpus-only` stops another pod from taking the
+# SMT sibling, but it still gives the pod BOTH sibling threads of each core.
+# The pod therefore sees twice as many CPUs as it has physical cores, and
+# vLLM's OpenMP binding can put two threads on one core. The
+# PerformanceProfile path offlines the sibling threads of the isolated
+# cores, so one CPU request is one physical core and the ambiguity is gone.
+#
+# If you use this file instead, the current manifests are sized for the
+# offlined (1 CPU = 1 core) path: double every CPU request (24 -> 48,
+# 12 -> 24, 16 -> 32, specialist 2 -> 4) to get the same physical cores.
+# Anything measured under this configuration is not comparable with a run
+# under the PerformanceProfile; label it separately.
+#
+# NOT part of any kustomization: applying it changes kubelet settings and,
+# on a single-node cluster, reboots that node.
+apiVersion: machineconfiguration.openshift.io/v1
+kind: KubeletConfig
+metadata:
+  name: cpu-isolation-fallback
+spec:
+  # Guaranteed pods with integer CPU requests get exclusive CPU sets.
+  cpuManagerPolicy: static
+  cpuManagerPolicyOptions:
+    # Allocate whole physical cores (both SMT siblings) to a pod. Without
+    # this a Guaranteed pod can receive CPU 3 while its sibling CPU 35 goes
+    # to another pod; vLLM binds threads to physical cores and will not use
+    # the lone sibling, so half the reservation is wasted.
+    full-pcpus-only: "true"
+  # Keep each pod's CPUs, memory and devices on one NUMA node.
+  topologyManagerPolicy: single-numa-node
+  topologyManagerScope: pod
+  machineConfigPoolSelector:
+    matchLabels:
+      pools.operator.machineconfiguration.openshift.io/master: ""

@@ -27,10 +27,11 @@ spec:
           ports: [{containerPort: 8000}]
           readinessProbe: {httpGet: {path: /health, port: 8000}, initialDelaySeconds: 15}
           resources:
-            # Guaranteed QoS (requests == limits) like the pools it fronts:
-            # the specialist and the CPU pool must not compete for cores.
-            requests: {cpu: "4", memory: 4Gi}
-            limits: {cpu: "4", memory: 4Gi}
+            # Guaranteed QoS (requests == limits) like the pools it fronts.
+            # 2 physical cores: the isolation profile offlines the sibling
+            # hyperthreads, so this is one whole core per request.
+            requests: {cpu: "2", memory: 4Gi}
+            limits: {cpu: "2", memory: 4Gi}
           securityContext:
             allowPrivilegeEscalation: false
             capabilities: {drop: [ALL]}

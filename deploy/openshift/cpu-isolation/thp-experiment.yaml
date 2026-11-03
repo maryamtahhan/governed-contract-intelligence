@@ -1,0 +1,52 @@
+# OPT-IN EXPERIMENT, not part of any kustomization.
+#
+# Enables Transparent Huge Pages (THP) system-wide. This is the only
+# hugepage lever that can affect vLLM's CPU backend today: it allocates
+# weights and the KV cache with ordinary anonymous memory, and as of vLLM
+# main the CPU backend has no hugetlbfs allocation path (only the UMBP KV
+# connector and one DeepSeek model call MADV_HUGEPAGE). Reserving explicit
+# `hugepages` in a PerformanceProfile and requesting `hugepages-2Mi` in the
+# pods would therefore strand that memory.
+#
+# Read README.md ("Hugepages") before applying. In short:
+#   - NTO performance profiles set THP to `never` for latency determinism.
+#     This unit runs after tuned.service and sets it back to `always`.
+#     If tuned is reloaded later it may overwrite the setting: re-check.
+#   - THP can reduce TLB misses for the large weight/KV working set, but
+#     khugepaged and direct compaction can add p99 stalls. Measure p99, not
+#     just the mean, and revert if variance worsens.
+#   - Applying this MachineConfig triggers a rollout and reboots the SNO.
+#     Apply it before a measurement series, never during one.
+#
+# Verify:
+#   cat /sys/kernel/mm/transparent_hugepage/enabled     # [always] ...
+#   grep AnonHugePages /proc/meminfo
+#   oc exec deploy/cpureal-vllm-cpu -- \
+#     grep AnonHugePages /proc/1/smaps_rollup
+#
+# Revert: oc delete mc 99-thp-always
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  name: 99-thp-always
+  labels:
+    machineconfiguration.openshift.io/role: master
+spec:
+  config:
+    ignition:
+      version: 3.2.0
+    systemd:
+      units:
+        - name: thp-always.service
+          enabled: true
+          contents: |
+            [Unit]
+            Description=Enable transparent hugepages for large model allocations
+            After=tuned.service
+            [Service]
+            Type=oneshot
+            RemainAfterExit=yes
+            ExecStart=/bin/sh -c 'echo always > /sys/kernel/mm/transparent_hugepage/enabled'
+            ExecStart=/bin/sh -c 'echo defer+madvise > /sys/kernel/mm/transparent_hugepage/defrag'
+            [Install]
+            WantedBy=multi-user.target

@@ -31,12 +31,15 @@ patches:
           - {name: XDG_CACHE_HOME, value: /cache/xdg}
           - {name: VLLM_ENGINE_READY_TIMEOUT_S, value: "1800"}
           - {name: VLLM_USE_RUST_FRONTEND, value: "1"}
+          - {name: VLLM_CPU_OMP_THREADS_BIND, value: auto}
       - op: replace
         path: /spec/template/spec/containers/0/resources
         value:
-          # Guaranteed QoS, matching the other pools (see cpu-real/pools.yaml).
-          requests: {cpu: "32", memory: 64Gi}
-          limits: {cpu: "32", memory: 64Gi}
+          # Guaranteed QoS, physical cores, matching the other pools (see
+          # cpu-real/pools.yaml). 16 CPUs = 16 whole cores under the
+          # isolation profile; one NUMA node holds the pod.
+          requests: {cpu: "16", memory: 64Gi}
+          limits: {cpu: "16", memory: 64Gi}
       - op: replace
         path: /spec/template/spec/containers/0/readinessProbe
         value: {httpGet: {path: /health, port: 8000}, initialDelaySeconds: 360, periodSeconds: 15}

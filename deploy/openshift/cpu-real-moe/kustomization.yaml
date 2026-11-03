@@ -37,14 +37,15 @@ patches:
           - {name: HOME, value: /cache}
           - {name: XDG_CACHE_HOME, value: /cache/xdg}
           - {name: VLLM_ENGINE_READY_TIMEOUT_S, value: "3600"}
+          - {name: VLLM_CPU_OMP_THREADS_BIND, value: auto}
       - op: replace
         path: /spec/template/spec/containers/0/resources
         value:
-          # Guaranteed QoS: an integer request equal to the limit lets the
-          # static CPU manager give the MoE an exclusive CPU set, so its
-          # latency is not measured against the other three pools.
-          requests: {cpu: "32", memory: 128Gi}
-          limits: {cpu: "32", memory: 128Gi}
+          # Guaranteed QoS, physical cores: the isolation profile offlines
+          # the sibling hyperthreads, so 16 CPUs = 16 whole cores, and
+          # single-numa-node keeps the pod inside one 24-core NUMA node.
+          requests: {cpu: "16", memory: 128Gi}
+          limits: {cpu: "16", memory: 128Gi}
       - op: replace
         path: /spec/template/spec/containers/0/readinessProbe
         value: {httpGet: {path: /health, port: 8000}, initialDelaySeconds: 600, periodSeconds: 15}
