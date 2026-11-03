@@ -1,0 +1,10 @@
+NON-DISCLOSURE AGREEMENT
+Contract Reference: C-2026-0102
+Effective Date: 2025-06-01   Initial Term: 48 months
+Between: Northwind Analytics Ltd ("Supplier") and Thornbury Health Systems ("Client")
+
+CLAUSES
+Termination: This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.
+Governing Law: This Agreement shall be governed by the laws of England and Wales.
+Liability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.
+Data Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.

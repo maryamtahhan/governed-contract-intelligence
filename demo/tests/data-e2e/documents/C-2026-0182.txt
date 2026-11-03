@@ -1,0 +1,10 @@
+NON-DISCLOSURE AGREEMENT
+Contract Reference: C-2026-0182
+Effective Date: 2025-09-01   Initial Term: 36 months
+Between: Harbourline Software DAC ("Supplier") and Greystone Energy Partners ("Client")
+
+CLAUSES
+Termination: This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.
+Governing Law: This Agreement shall be governed by the laws of the State of New York.
+Liability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.
+(No data-protection clause is present in this Agreement.)

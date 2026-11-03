@@ -1,0 +1,128 @@
+# Simulated GPU pools for clusters without GPU nodes.
+#
+# Runs the three GPU pools as hybrid-pool containers (clearly simulated:
+# deterministic tiered error rates, device-time headers) so the routing,
+# governance, failover and measurement story works end-to-end on a CPU-only
+# cluster, while the CPU pool stays a real vLLM InferenceService. The real
+# GPU InferenceServices are scaled to zero until a GPU machine pool exists;
+# redeploy with `oc apply -k manifests` to switch to them.
+#
+# The image is built into the internal registry with a binary build:
+#   oc -n openshell-demo new-build --binary --strategy docker --name hybrid-demo
+#   oc -n openshell-demo start-build hybrid-demo --from-dir=demo --follow
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fake-vllm-gpu
+  labels: {app: fake-vllm-gpu, demo.openshell.ai/pool: vllm-gpu, demo.openshell.ai/simulated: "true"}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: fake-vllm-gpu}}
+  template:
+    metadata:
+      labels: {app: fake-vllm-gpu, demo.openshell.ai/simulated: "true"}
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: pool
+          image: image-registry.openshift-image-registry.svc:5000/openshell-demo/hybrid-demo:latest
+          args: ["hybrid-pool", "--pool", "vllm-gpu", "--model", "Semantic-Qwen",
+                 "--host", "0.0.0.0", "--port", "8000",
+                 "--prefill-ms-per-ktok", "40", "--decode-ms-per-tok", "12", "--concurrency", "12",
+                 "--error-rates", "simple=0.01,complex=0.04,reasoning=0.03"]
+          ports: [{containerPort: 8000}]
+          readinessProbe: {httpGet: {path: /healthz, port: 8000}, initialDelaySeconds: 2}
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {memory: 256Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fake-vllm-gpu
+spec:
+  selector: {app: fake-vllm-gpu}
+  ports: [{name: http, port: 8000, targetPort: 8000}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fake-vllm-gpu-approved
+  labels: {app: fake-vllm-gpu-approved, demo.openshell.ai/pool: vllm-gpu-approved, demo.openshell.ai/simulated: "true"}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: fake-vllm-gpu-approved}}
+  template:
+    metadata:
+      labels: {app: fake-vllm-gpu-approved, demo.openshell.ai/simulated: "true"}
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: pool
+          image: image-registry.openshift-image-registry.svc:5000/openshell-demo/hybrid-demo:latest
+          args: ["hybrid-pool", "--pool", "vllm-gpu-approved", "--model", "Semantic-Qwen",
+                 "--host", "0.0.0.0", "--port", "8000",
+                 "--prefill-ms-per-ktok", "40", "--decode-ms-per-tok", "12", "--concurrency", "12",
+                 "--error-rates", "simple=0.01,complex=0.04,reasoning=0.03"]
+          ports: [{containerPort: 8000}]
+          readinessProbe: {httpGet: {path: /healthz, port: 8000}, initialDelaySeconds: 2}
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {memory: 256Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fake-vllm-gpu-approved
+spec:
+  selector: {app: fake-vllm-gpu-approved}
+  ports: [{name: http, port: 8000, targetPort: 8000}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fake-vllm-gpu-small
+  labels: {app: fake-vllm-gpu-small, demo.openshell.ai/pool: vllm-gpu-small, demo.openshell.ai/simulated: "true"}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: fake-vllm-gpu-small}}
+  template:
+    metadata:
+      labels: {app: fake-vllm-gpu-small, demo.openshell.ai/simulated: "true"}
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: pool
+          image: image-registry.openshift-image-registry.svc:5000/openshell-demo/hybrid-demo:latest
+          args: ["hybrid-pool", "--pool", "vllm-gpu-small", "--model", "Semantic-Qwen",
+                 "--host", "0.0.0.0", "--port", "8000",
+                 "--prefill-ms-per-ktok", "30", "--decode-ms-per-tok", "5", "--concurrency", "8",
+                 "--error-rates", "simple=0.04,complex=0.30,reasoning=0.50"]
+          ports: [{containerPort: 8000}]
+          readinessProbe: {httpGet: {path: /healthz, port: 8000}, initialDelaySeconds: 2}
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {memory: 256Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fake-vllm-gpu-small
+spec:
+  selector: {app: fake-vllm-gpu-small}
+  ports: [{name: http, port: 8000, targetPort: 8000}]

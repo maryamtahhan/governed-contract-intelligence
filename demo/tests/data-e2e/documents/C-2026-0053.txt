@@ -1,0 +1,10 @@
+NON-DISCLOSURE AGREEMENT
+Contract Reference: C-2026-0053
+Effective Date: 2026-07-01   Initial Term: 12 months
+Between: Silverthorn Cloud BV ("Supplier") and Lakeshore Manufacturing Ltd ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.
+Governing Law: This Agreement shall be governed by the laws of Ireland.
+Liability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.
+Data Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.

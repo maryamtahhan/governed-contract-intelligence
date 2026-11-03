@@ -1,0 +1,10 @@
+MASTER SERVICES AGREEMENT
+Contract Reference: C-2026-0194
+Effective Date: 2026-05-01   Initial Term: 36 months
+Between: Harbourline Software DAC ("Supplier") and Thornbury Health Systems ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.
+Governing Law: This Agreement shall be governed by the laws of Germany.
+Liability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.
+Data Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.

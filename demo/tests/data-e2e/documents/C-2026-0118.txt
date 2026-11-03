@@ -1,0 +1,15 @@
+DATA PROCESSING AGREEMENT
+Contract Reference: C-2026-0118
+Effective Date: 2025-10-01   Initial Term: 48 months
+Between: Harbourline Software DAC ("Supplier") and Ardmore Financial Services ("Client")
+
+CLAUSES
+Termination: This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.
+Governing Law: This Agreement shall be governed by the laws of the State of New York.
+Liability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.
+Data Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.
+
+SCHEDULE 3 - PERSONAL DATA
+Data Controller contact: Liam Gallagher, liam.gallagher@ardmore.example, +353 1 555 6262
+Data Controller address: 84 Galway Main Street, Galway
+Employee IDs: EMP-207581, EMP-183958

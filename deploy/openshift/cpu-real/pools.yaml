@@ -1,0 +1,175 @@
+# All-real, all-CPU variant for clusters without working accelerators.
+#
+# The CPU pool and the three "GPU" pools all run real vLLM (Qwen 2.5 1.5B on
+# the CPU and small pools, 7B on the gpu/gpu-approved pools) served from CPU,
+# so every component of the demo is real - models, routing, classification,
+# governance, measurement - only the accelerator is absent. Quality and
+# device-time from this variant are real measurements of CPU serving; the
+# CPU-vs-GPU comparison itself comes from the GPU instance (see README).
+#
+# Pools are labelled demo.openshell.ai/accelerator=cpu so the dashboard and
+# report cannot mistake this for the GPU deployment.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cpureal-vllm-gpu
+  labels: {app: cpureal-vllm-gpu, demo.openshell.ai/pool: vllm-gpu, demo.openshell.ai/accelerator: cpu}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: cpureal-vllm-gpu}}
+  template:
+    metadata:
+      labels: {app: cpureal-vllm-gpu, demo.openshell.ai/accelerator: cpu}
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: vllm
+          image: docker.io/vllm/vllm-openai-cpu:latest
+          args: ["--model", "Qwen/Qwen2.5-7B-Instruct", "--served-model-name", "Semantic-Qwen",
+                 "--port", "8000", "--max-model-len", "16384",
+                 "--gpu-memory-utilization", "0.80"]
+          env: [{name: HF_HOME, value: /cache/hf}, {name: HOME, value: /cache}, {name: XDG_CACHE_HOME, value: /cache/xdg}]
+          ports: [{containerPort: 8000}]
+          readinessProbe: {httpGet: {path: /health, port: 8000}, initialDelaySeconds: 240, periodSeconds: 10}
+          resources:
+            requests: {cpu: "32", memory: 48Gi}
+            limits: {cpu: "48", memory: 64Gi}
+          volumeMounts:
+            - {name: shm, mountPath: /dev/shm}
+            - {name: hf-cache, mountPath: /cache}
+      volumes:
+        - {name: shm, emptyDir: {medium: Memory, sizeLimit: 2Gi}}
+        - {name: hf-cache, persistentVolumeClaim: {claimName: model-cache}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cpureal-vllm-gpu
+spec:
+  selector: {app: cpureal-vllm-gpu}
+  ports: [{name: http, port: 8000, targetPort: 8000}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cpureal-vllm-gpu-approved
+  labels: {app: cpureal-vllm-gpu-approved, demo.openshell.ai/pool: vllm-gpu-approved, demo.openshell.ai/accelerator: cpu}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: cpureal-vllm-gpu-approved}}
+  template:
+    metadata:
+      labels: {app: cpureal-vllm-gpu-approved, demo.openshell.ai/accelerator: cpu}
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: vllm
+          image: docker.io/vllm/vllm-openai-cpu:latest
+          args: ["--model", "Qwen/Qwen2.5-7B-Instruct", "--served-model-name", "Semantic-Qwen",
+                 "--port", "8000", "--max-model-len", "16384",
+                 "--gpu-memory-utilization", "0.80"]
+          env: [{name: HF_HOME, value: /cache/hf}, {name: HOME, value: /cache}, {name: XDG_CACHE_HOME, value: /cache/xdg}]
+          ports: [{containerPort: 8000}]
+          readinessProbe: {httpGet: {path: /health, port: 8000}, initialDelaySeconds: 240, periodSeconds: 10}
+          resources:
+            requests: {cpu: "32", memory: 48Gi}
+            limits: {cpu: "48", memory: 64Gi}
+          volumeMounts:
+            - {name: shm, mountPath: /dev/shm}
+            - {name: hf-cache, mountPath: /cache}
+      volumes:
+        - {name: shm, emptyDir: {medium: Memory, sizeLimit: 2Gi}}
+        - {name: hf-cache, persistentVolumeClaim: {claimName: model-cache}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cpureal-vllm-gpu-approved
+spec:
+  selector: {app: cpureal-vllm-gpu-approved}
+  ports: [{name: http, port: 8000, targetPort: 8000}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cpureal-vllm-gpu-small
+  labels: {app: cpureal-vllm-gpu-small, demo.openshell.ai/pool: vllm-gpu-small, demo.openshell.ai/accelerator: cpu}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: cpureal-vllm-gpu-small}}
+  template:
+    metadata:
+      labels: {app: cpureal-vllm-gpu-small, demo.openshell.ai/accelerator: cpu}
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: vllm
+          image: docker.io/vllm/vllm-openai-cpu:latest
+          args: ["--model", "Qwen/Qwen2.5-1.5B-Instruct", "--served-model-name", "Semantic-Qwen",
+                 "--port", "8000", "--max-model-len", "16384",
+                 "--gpu-memory-utilization", "0.80"]
+          env: [{name: HF_HOME, value: /cache/hf}, {name: HOME, value: /cache}, {name: XDG_CACHE_HOME, value: /cache/xdg}]
+          ports: [{containerPort: 8000}]
+          readinessProbe: {httpGet: {path: /health, port: 8000}, initialDelaySeconds: 120, periodSeconds: 10}
+          resources:
+            requests: {cpu: "16", memory: 14Gi}
+            limits: {cpu: "24", memory: 20Gi}
+          volumeMounts:
+            - {name: shm, mountPath: /dev/shm}
+            - {name: hf-cache, mountPath: /cache}
+      volumes:
+        - {name: shm, emptyDir: {medium: Memory, sizeLimit: 2Gi}}
+        - {name: hf-cache, persistentVolumeClaim: {claimName: model-cache}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cpureal-vllm-gpu-small
+spec:
+  selector: {app: cpureal-vllm-gpu-small}
+  ports: [{name: http, port: 8000, targetPort: 8000}]
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cpureal-vllm-cpu
+  labels: {app: cpureal-vllm-cpu, demo.openshell.ai/pool: vllm-cpu, demo.openshell.ai/accelerator: cpu}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: cpureal-vllm-cpu}}
+  template:
+    metadata:
+      labels: {app: cpureal-vllm-cpu, demo.openshell.ai/accelerator: cpu}
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: vllm
+          image: docker.io/vllm/vllm-openai-cpu:latest
+          args: ["--model", "Qwen/Qwen2.5-1.5B-Instruct", "--served-model-name", "Semantic-Qwen",
+                 "--port", "8000", "--max-model-len", "16384",
+                 "--gpu-memory-utilization", "0.80"]
+          env: [{name: HF_HOME, value: /cache/hf}, {name: HOME, value: /cache}, {name: XDG_CACHE_HOME, value: /cache/xdg}]
+          ports: [{containerPort: 8000}]
+          readinessProbe: {httpGet: {path: /health, port: 8000}, initialDelaySeconds: 120, periodSeconds: 10}
+          resources:
+            requests: {cpu: "12", memory: 14Gi}
+            limits: {cpu: "24", memory: 20Gi}
+          volumeMounts:
+            - {name: shm, mountPath: /dev/shm}
+            - {name: hf-cache, mountPath: /cache}
+      volumes:
+        - {name: shm, emptyDir: {medium: Memory, sizeLimit: 2Gi}}
+        - {name: hf-cache, persistentVolumeClaim: {claimName: model-cache}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cpureal-vllm-cpu
+spec:
+  selector: {app: cpureal-vllm-cpu}
+  ports: [{name: http, port: 8000, targetPort: 8000}]

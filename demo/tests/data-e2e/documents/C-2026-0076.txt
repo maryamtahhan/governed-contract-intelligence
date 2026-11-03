@@ -1,0 +1,15 @@
+STATEMENT OF WORK
+Contract Reference: C-2026-0076
+Effective Date: 2026-11-01   Initial Term: 36 months
+Between: Copperfield Data Services Inc ("Supplier") and Lakeshore Manufacturing Ltd ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.
+Governing Law: This Agreement shall be governed by the laws of Germany.
+Liability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.
+(No data-protection clause is present in this Agreement.)
+
+SCHEDULE 3 - PERSONAL DATA
+Data Controller contact: Liam Hurley, liam.hurley@lakeshore.example, +353 1 555 2479
+Data Controller address: 4 Galway Main Street, Waterford
+Employee IDs: EMP-929090, EMP-513741

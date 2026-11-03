@@ -1,0 +1,30 @@
+version: 1
+
+filesystem_policy:
+  include_workdir: true
+  read_only: [/usr, /lib, /lib64, /proc, /dev/urandom, /app, /etc, /var/log]
+  read_write: [/sandbox, /tmp, /dev/null]
+
+landlock:
+  compatibility: best_effort
+
+process: {}
+
+network_policies:
+  praxis:
+    name: praxis
+    endpoints:
+      - { host: praxis.openshell-demo.svc.cluster.local, port: 80, protocol: rest, enforcement: enforce, access: read-write }
+    binaries:
+      - { path: /usr/bin/node }
+      - { path: /usr/local/bin/node }
+  github_api:
+    name: github-api-readonly
+    endpoints:
+      - host: api.github.com
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        access: read-only
+    binaries:
+      - { path: /usr/bin/curl }

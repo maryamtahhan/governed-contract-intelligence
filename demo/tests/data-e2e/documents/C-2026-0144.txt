@@ -1,0 +1,15 @@
+STATEMENT OF WORK
+Contract Reference: C-2026-0144
+Effective Date: 2026-06-01   Initial Term: 24 months
+Between: Vistaview Systems GmbH ("Supplier") and Kestrel Logistics Group ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.
+Governing Law: This Agreement shall be governed by the laws of Ireland.
+Liability Cap: The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.
+Data Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.
+
+SCHEDULE 3 - PERSONAL DATA
+Data Controller contact: Brendan Doherty, brendan.doherty@kestrel.example, +353 1 555 1084
+Data Controller address: 105 Limerick Main Street, Limerick
+Employee IDs: EMP-677086, EMP-265613

@@ -1,0 +1,10 @@
+DATA PROCESSING AGREEMENT
+Contract Reference: C-2026-0054
+Effective Date: 2025-03-01   Initial Term: 36 months
+Between: Harbourline Software DAC ("Supplier") and Greystone Energy Partners ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.
+Governing Law: This Agreement shall be governed by the laws of Ireland.
+Liability Cap: The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.
+Data Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.

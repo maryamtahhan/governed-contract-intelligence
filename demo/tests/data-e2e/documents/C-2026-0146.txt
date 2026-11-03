@@ -1,0 +1,10 @@
+NON-DISCLOSURE AGREEMENT
+Contract Reference: C-2026-0146
+Effective Date: 2026-02-01   Initial Term: 48 months
+Between: Northwind Analytics Ltd ("Supplier") and Greystone Energy Partners ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.
+Governing Law: This Agreement shall be governed by the laws of the State of New York.
+Liability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.
+(No data-protection clause is present in this Agreement.)

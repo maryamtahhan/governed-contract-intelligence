@@ -1,0 +1,40 @@
+# The approved in-cluster GPU pool: same model as vllm-gpu, kept as a separate
+# InferenceService so the sensitive listener can route to it exclusively.
+# For the full story pin it to nodes reserved for sensitive work (see the
+# nodeSelector comment); what matters for the demo is that it is a distinct
+# pool that only the sensitive entry can reach.
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: vllm-gpu-approved
+  annotations:
+    serving.kserve.io/deploymentMode: RawDeployment
+spec:
+  predictor:
+    minReplicas: 1
+    maxReplicas: 1
+    tolerations:
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
+    model:
+      modelFormat:
+        name: vLLM
+      runtime: vllm-gpu-servingruntime
+      storageUri: hf://Qwen/Qwen2.5-7B-Instruct
+      args:
+        - --served-model-name=Semantic-Qwen
+        - --gpu-memory-utilization=0.90
+        - --enable-auto-tool-choice
+        - --tool-call-parser=hermes
+      resources:
+        requests:
+          cpu: "4"
+          memory: 20Gi
+          nvidia.com/gpu: "1"
+        limits:
+          cpu: "8"
+          memory: 24Gi
+          nvidia.com/gpu: "1"
+    # nodeSelector:
+    #   pool: gpu-approved

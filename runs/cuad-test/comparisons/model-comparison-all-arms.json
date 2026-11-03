@@ -1,0 +1,282 @@
+{
+ "truth_docs": 19,
+ "arms": [
+  {
+   "arm": "D",
+   "mode": "matrix",
+   "docs": 20,
+   "wall_s": 1099.96,
+   "run_doc_ids": [
+    "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+    "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+    "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+    "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+    "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+    "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+    "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+    "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+    "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+    "MSCIINC_02_28_2008-EX-10-10-",
+    "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+    "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+    "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+    "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+    "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+    "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+    "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+    "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+    "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-"
+   ],
+   "extraction": {
+    "precision": 0.138,
+    "recall": 1.0,
+    "f1": 0.242,
+    "fields_correct": 11,
+    "fields_total": 80
+   },
+   "risk_accuracy": 0.1,
+   "type_accuracy": null,
+   "report_accuracy": 0.0,
+   "docs_fully_correct": 0,
+   "classifier": {
+    "labelled": 23,
+    "accuracy": 0.696,
+    "confusion": {
+     "SIMPLE->SIMPLE": 16,
+     "COMPLEX->MEDIUM": 3,
+     "SIMPLE->MEDIUM": 4
+    }
+   },
+   "screen": {
+    "tp": 5,
+    "fp": 0,
+    "tn": 15,
+    "fn": 0
+   },
+   "routing": {
+    "routes": {
+     "vllm-cpu": 121
+    },
+    "cpu_served_share": 1.0,
+    "gpu_seconds": 0.0,
+    "cpu_core_seconds": 7614.2,
+    "gpu_seconds_per_doc": 0.0,
+    "cpu_core_seconds_per_doc": 400.745,
+    "device_time_measured": 7614.16,
+    "cost_method": "measured (integrated (in-flight gauges; batching means the device serves several requests while occupied))",
+    "sensitive_steps": 31,
+    "sensitive_on_approved": 31,
+    "sensitive_violations": 0,
+    "fallback": 1,
+    "errors": 0
+   }
+  },
+  {
+   "arm": "D",
+   "mode": "matrix",
+   "docs": 20,
+   "wall_s": 2291.6,
+   "run_doc_ids": [
+    "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+    "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+    "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+    "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+    "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+    "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+    "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+    "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+    "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+    "MSCIINC_02_28_2008-EX-10-10-",
+    "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+    "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+    "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+    "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+    "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+    "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+    "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+    "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+    "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-"
+   ],
+   "extraction": {
+    "precision": 0.636,
+    "recall": 0.808,
+    "f1": 0.712,
+    "fields_correct": 63,
+    "fields_total": 80
+   },
+   "risk_accuracy": 0.65,
+   "type_accuracy": null,
+   "report_accuracy": 0.105,
+   "docs_fully_correct": 6,
+   "classifier": {
+    "labelled": 104,
+    "accuracy": 0.481,
+    "confusion": {
+     "SIMPLE->SIMPLE": 50,
+     "SIMPLE->COMPLEX": 4,
+     "SIMPLE->MEDIUM": 45,
+     "COMPLEX->MEDIUM": 5
+    }
+   },
+   "screen": {
+    "tp": 5,
+    "fp": 0,
+    "tn": 15,
+    "fn": 0
+   },
+   "routing": {
+    "routes": {
+     "vllm-cpu": 116,
+     "vllm-gpu-approved": 5
+    },
+    "cpu_served_share": 0.959,
+    "gpu_seconds": 169.8,
+    "cpu_core_seconds": 14063.3,
+    "gpu_seconds_per_doc": 8.938,
+    "cpu_core_seconds_per_doc": 740.173,
+    "device_time_measured": 169.82,
+    "cost_method": "measured (integrated (in-flight gauges; batching means the device serves several requests while occupied))",
+    "sensitive_steps": 31,
+    "sensitive_on_approved": 31,
+    "sensitive_violations": 0,
+    "fallback": 1,
+    "errors": 0
+   }
+  },
+  {
+   "arm": "D",
+   "mode": "matrix",
+   "docs": 20,
+   "wall_s": 3144.54,
+   "run_doc_ids": [
+    "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+    "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+    "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+    "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+    "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+    "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+    "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+    "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+    "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+    "MSCIINC_02_28_2008-EX-10-10-",
+    "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+    "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+    "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+    "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+    "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+    "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+    "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+    "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+    "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-"
+   ],
+   "extraction": {
+    "precision": 0.778,
+    "recall": 0.538,
+    "f1": 0.636,
+    "fields_correct": 64,
+    "fields_total": 80
+   },
+   "risk_accuracy": 0.1,
+   "type_accuracy": null,
+   "report_accuracy": 0.0,
+   "docs_fully_correct": 1,
+   "classifier": {
+    "labelled": 0,
+    "accuracy": null,
+    "confusion": {}
+   },
+   "screen": {
+    "tp": 5,
+    "fp": 0,
+    "tn": 15,
+    "fn": 0
+   },
+   "routing": {
+    "routes": {
+     "vllm-cpu": 49
+    },
+    "cpu_served_share": 1.0,
+    "gpu_seconds": 0.0,
+    "cpu_core_seconds": 0.0,
+    "gpu_seconds_per_doc": 0.0,
+    "cpu_core_seconds_per_doc": 0.0,
+    "device_time_measured": 0.0,
+    "cost_method": "simulated (X-Busy-Ms headers from the fake pools)",
+    "sensitive_steps": 31,
+    "sensitive_on_approved": 24,
+    "sensitive_violations": 0,
+    "fallback": 0,
+    "errors": 72
+   }
+  },
+  {
+   "arm": "D",
+   "mode": "matrix",
+   "docs": 20,
+   "wall_s": 5283.21,
+   "run_doc_ids": [
+    "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+    "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+    "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+    "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+    "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+    "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+    "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+    "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+    "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+    "MSCIINC_02_28_2008-EX-10-10-",
+    "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+    "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+    "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+    "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+    "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+    "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+    "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+    "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+    "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-"
+   ],
+   "extraction": {
+    "precision": 0.727,
+    "recall": 0.64,
+    "f1": 0.681,
+    "fields_correct": 65,
+    "fields_total": 80
+   },
+   "risk_accuracy": 0.45,
+   "type_accuracy": null,
+   "report_accuracy": 0.0,
+   "docs_fully_correct": 4,
+   "classifier": {
+    "labelled": 1,
+    "accuracy": 0.0,
+    "confusion": {
+     "COMPLEX->MEDIUM": 1
+    }
+   },
+   "screen": {
+    "tp": 5,
+    "fp": 0,
+    "tn": 15,
+    "fn": 0
+   },
+   "routing": {
+    "routes": {
+     "vllm-cpu": 74,
+     "vllm-gpu-approved": 2
+    },
+    "cpu_served_share": 0.974,
+    "gpu_seconds": 22.6,
+    "cpu_core_seconds": 0.0,
+    "gpu_seconds_per_doc": 1.188,
+    "cpu_core_seconds_per_doc": 0.0,
+    "device_time_measured": 22.57,
+    "cost_method": "measured (exact (pool_busy_seconds_total counter))",
+    "sensitive_steps": 31,
+    "sensitive_on_approved": 24,
+    "sensitive_violations": 0,
+    "fallback": 0,
+    "errors": 45
+   }
+  }
+ ]
+}

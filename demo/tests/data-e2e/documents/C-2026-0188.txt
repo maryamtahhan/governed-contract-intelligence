@@ -1,0 +1,10 @@
+DATA PROCESSING AGREEMENT
+Contract Reference: C-2026-0188
+Effective Date: 2026-07-01   Initial Term: 48 months
+Between: Copperfield Data Services Inc ("Supplier") and Thornbury Health Systems ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.
+Governing Law: This Agreement shall be governed by the laws of England and Wales.
+Liability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.
+Data Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.

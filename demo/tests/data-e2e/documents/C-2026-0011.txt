@@ -1,0 +1,10 @@
+MASTER SERVICES AGREEMENT
+Contract Reference: C-2026-0011
+Effective Date: 2025-02-01   Initial Term: 24 months
+Between: Harbourline Software DAC ("Supplier") and Lakeshore Manufacturing Ltd ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.
+Governing Law: This Agreement shall be governed by the laws of England and Wales.
+Liability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.
+(No data-protection clause is present in this Agreement.)

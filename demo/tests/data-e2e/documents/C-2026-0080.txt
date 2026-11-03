@@ -1,0 +1,10 @@
+STATEMENT OF WORK
+Contract Reference: C-2026-0080
+Effective Date: 2025-11-01   Initial Term: 36 months
+Between: Northwind Analytics Ltd ("Supplier") and Greystone Energy Partners ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.
+Governing Law: This Agreement shall be governed by the laws of Ireland.
+Liability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.
+(No data-protection clause is present in this Agreement.)

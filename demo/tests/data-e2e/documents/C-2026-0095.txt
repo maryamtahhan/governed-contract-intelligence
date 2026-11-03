@@ -1,0 +1,10 @@
+DATA PROCESSING AGREEMENT
+Contract Reference: C-2026-0095
+Effective Date: 2026-10-01   Initial Term: 48 months
+Between: Silverthorn Cloud BV ("Supplier") and Greystone Energy Partners ("Client")
+
+CLAUSES
+Termination: This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.
+Governing Law: This Agreement shall be governed by the laws of Ireland.
+Liability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.
+(No data-protection clause is present in this Agreement.)

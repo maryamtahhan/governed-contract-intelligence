@@ -1,0 +1,10 @@
+STATEMENT OF WORK
+Contract Reference: C-2026-0162
+Effective Date: 2025-10-01   Initial Term: 12 months
+Between: Northwind Analytics Ltd ("Supplier") and Thornbury Health Systems ("Client")
+
+CLAUSES
+Termination: This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.
+Governing Law: This Agreement shall be governed by the laws of Germany.
+Liability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.
+Data Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.

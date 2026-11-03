@@ -1,0 +1,15 @@
+MASTER SERVICES AGREEMENT
+Contract Reference: C-2026-0112
+Effective Date: 2025-05-01   Initial Term: 36 months
+Between: Northwind Analytics Ltd ("Supplier") and Ballymore Foods plc ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.
+Governing Law: This Agreement shall be governed by the laws of England and Wales.
+Liability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.
+(No data-protection clause is present in this Agreement.)
+
+SCHEDULE 3 - PERSONAL DATA
+Data Controller contact: Aoife Fitzgerald, aoife.fitzgerald@ballymore.example, +353 1 555 7878
+Data Controller address: 160 Limerick Main Street, Dublin
+Employee IDs: EMP-769989, EMP-932463

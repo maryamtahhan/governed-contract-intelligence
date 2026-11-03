@@ -1,0 +1,15 @@
+MASTER SERVICES AGREEMENT
+Contract Reference: C-2026-0085
+Effective Date: 2026-11-01   Initial Term: 12 months
+Between: Copperfield Data Services Inc ("Supplier") and Ravenscourt Media SA ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.
+Governing Law: This Agreement shall be governed by the laws of the State of New York.
+Liability Cap: The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.
+(No data-protection clause is present in this Agreement.)
+
+SCHEDULE 3 - PERSONAL DATA
+Data Controller contact: Gavin Gallagher, gavin.gallagher@ravenscourt.example, +353 1 555 8433
+Data Controller address: 111 Dublin Main Street, Dublin
+Employee IDs: EMP-630108, EMP-734836

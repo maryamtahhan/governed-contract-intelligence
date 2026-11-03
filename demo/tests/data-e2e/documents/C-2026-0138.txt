@@ -1,0 +1,15 @@
+STATEMENT OF WORK
+Contract Reference: C-2026-0138
+Effective Date: 2026-07-01   Initial Term: 36 months
+Between: Silverthorn Cloud BV ("Supplier") and Ravenscourt Media SA ("Client")
+
+CLAUSES
+Termination: This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.
+Governing Law: This Agreement shall be governed by the laws of Ireland.
+Liability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.
+(No data-protection clause is present in this Agreement.)
+
+SCHEDULE 3 - PERSONAL DATA
+Data Controller contact: Aoife Lombard, aoife.lombard@ravenscourt.example, +353 1 555 5350
+Data Controller address: 199 Waterford Main Street, Waterford
+Employee IDs: EMP-787436, EMP-920934

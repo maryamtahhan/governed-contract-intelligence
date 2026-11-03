@@ -1,0 +1,10 @@
+STATEMENT OF WORK
+Contract Reference: C-2026-0197
+Effective Date: 2025-07-01   Initial Term: 36 months
+Between: Silverthorn Cloud BV ("Supplier") and Ardmore Financial Services ("Client")
+
+CLAUSES
+Termination: This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.
+Governing Law: This Agreement shall be governed by the laws of the State of New York.
+Liability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.
+Data Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.

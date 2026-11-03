@@ -1,0 +1,10 @@
+NON-DISCLOSURE AGREEMENT
+Contract Reference: C-2026-0091
+Effective Date: 2026-05-01   Initial Term: 36 months
+Between: Harbourline Software DAC ("Supplier") and Lakeshore Manufacturing Ltd ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.
+Governing Law: This Agreement shall be governed by the laws of Ireland.
+Liability Cap: The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.
+Data Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.

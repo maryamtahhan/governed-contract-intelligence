@@ -1,0 +1,10 @@
+DATA PROCESSING AGREEMENT
+Contract Reference: C-2026-0015
+Effective Date: 2025-08-01   Initial Term: 24 months
+Between: Harbourline Software DAC ("Supplier") and Kestrel Logistics Group ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.
+Governing Law: This Agreement shall be governed by the laws of England and Wales.
+Liability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.
+(No data-protection clause is present in this Agreement.)

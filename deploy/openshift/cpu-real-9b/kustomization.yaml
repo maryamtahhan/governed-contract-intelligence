@@ -1,0 +1,46 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# CPU-pool model variant: Qwen3.5-9B dense - the fallback candidate if the
+# 35B-A3B MoE underperforms on the CPU backend. Stacks on cpu-real.
+#
+# Apply with:  oc apply -k deploy/openshift/cpu-real-9b
+namespace: openshell-demo
+
+resources:
+  - ../cpu-real
+
+patches:
+  - target:
+      kind: Deployment
+      name: cpureal-vllm-cpu
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/args
+        value: ["--model", "Qwen/Qwen3.5-9B", "--served-model-name", "Semantic-Qwen",
+                "--port", "8000", "--max-model-len", "16384",
+                "--gpu-memory-utilization", "0.80",
+                "--trust-remote-code", "--tensor-parallel-size", "1",
+                "--enable-auto-tool-choice", "--tool-call-parser", "qwen3_coder",
+                "--reasoning-parser", "qwen3", "--mm-encoder-tp-mode", "data"]
+      - op: replace
+        path: /spec/template/spec/containers/0/env
+        value:
+          - {name: HF_HOME, value: /cache/hf}
+          - {name: HOME, value: /cache}
+          - {name: XDG_CACHE_HOME, value: /cache/xdg}
+          - {name: VLLM_ENGINE_READY_TIMEOUT_S, value: "1800"}
+          - {name: VLLM_USE_RUST_FRONTEND, value: "1"}
+      - op: replace
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests: {cpu: "16", memory: 48Gi}
+          limits: {cpu: "32", memory: 64Gi}
+      - op: replace
+        path: /spec/template/spec/containers/0/readinessProbe
+        value: {httpGet: {path: /health, port: 8000}, initialDelaySeconds: 360, periodSeconds: 15}
+      - op: replace
+        path: /spec/template/spec/volumes
+        value:
+          - {name: shm, emptyDir: {medium: Memory, sizeLimit: 2Gi}}
+          - {name: hf-cache, persistentVolumeClaim: {claimName: model-cache}}

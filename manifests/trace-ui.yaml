@@ -1,0 +1,155 @@
+# The trace UI / recording relay. server.py is the extended copy in
+# demo/src/hybrid_demo/traceui/server.py, mounted from a generated ConfigMap
+# so no image build is needed. It relays praxis -> pools (:8081/:8082/:8084/:8085),
+# serves the ingress (:8080) and the sensitive ingress (:8083), records every
+# request into SQLite on a PVC, and renders the live dashboard.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: trace-ui-data
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: trace-ui
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: trace-ui-reader
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments/scale"]
+    resourceNames: ["praxis-traffic-gen"]
+    verbs: ["get", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: trace-ui-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: trace-ui-reader
+subjects:
+  - kind: ServiceAccount
+    name: trace-ui
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trace-ui
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: trace-ui
+  template:
+    metadata:
+      labels:
+        app: trace-ui
+    spec:
+      serviceAccountName: trace-ui
+      containers:
+        - name: trace-ui
+          image: python:3.12-slim
+          command: ["python3", "/opt/trace-ui/server.py"]
+          env:
+            - name: TRACE_DB_PATH
+              value: /data/traces.db
+            - name: PRAXIS_UPSTREAM
+              value: http://praxis:8080
+            - name: SENSITIVE_UPSTREAM
+              value: http://praxis:8083
+            - name: TRACE_POOLS
+              value: vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small
+            - name: VLLM_CPU_UPSTREAM
+              value: http://vllm-cpu-predictor:80
+            - name: VLLM_GPU_UPSTREAM
+              value: http://vllm-gpu-predictor:80
+            - name: VLLM_GPU_APPROVED_UPSTREAM
+              value: http://vllm-gpu-approved-predictor:80
+            - name: VLLM_GPU_SMALL_UPSTREAM
+              value: http://vllm-gpu-small-predictor:80
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: sensitive
+              containerPort: 8083
+            - name: cpu-backend
+              containerPort: 8081
+            - name: gpu-backend
+              containerPort: 8082
+            - name: approved
+              containerPort: 8084
+            - name: small-backend
+              containerPort: 8085
+          readinessProbe:
+            httpGet:
+              path: /_trace/healthz
+              port: http
+            initialDelaySeconds: 3
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: server
+              mountPath: /opt/trace-ui
+              readOnly: true
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: trace-ui-data
+        - name: server
+          configMap:
+            name: trace-ui-server
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trace-ui
+spec:
+  selector:
+    app: trace-ui
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+    - name: sensitive
+      port: 8083
+      targetPort: sensitive
+    - name: cpu-backend
+      port: 8081
+      targetPort: cpu-backend
+    - name: gpu-backend
+      port: 8082
+      targetPort: gpu-backend
+    - name: approved
+      port: 8084
+      targetPort: approved
+    - name: small-backend
+      port: 8085
+      targetPort: small-backend
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: trace-ui
+spec:
+  to:
+    kind: Service
+    name: trace-ui
+  port:
+    targetPort: http

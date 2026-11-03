@@ -1,0 +1,10 @@
+NON-DISCLOSURE AGREEMENT
+Contract Reference: C-2026-0143
+Effective Date: 2026-09-01   Initial Term: 36 months
+Between: Harbourline Software DAC ("Supplier") and Ballymore Foods plc ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.
+Governing Law: This Agreement shall be governed by the laws of the State of New York.
+Liability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.
+Data Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.

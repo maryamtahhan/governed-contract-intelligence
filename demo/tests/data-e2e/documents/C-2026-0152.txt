@@ -1,0 +1,15 @@
+MASTER SERVICES AGREEMENT
+Contract Reference: C-2026-0152
+Effective Date: 2026-04-01   Initial Term: 12 months
+Between: Silverthorn Cloud BV ("Supplier") and Kestrel Logistics Group ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.
+Governing Law: This Agreement shall be governed by the laws of England and Wales.
+Liability Cap: The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.
+Data Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.
+
+SCHEDULE 3 - PERSONAL DATA
+Data Controller contact: Brendan Lombard, brendan.lombard@kestrel.example, +353 1 555 1911
+Data Controller address: 132 Limerick Main Street, Limerick
+Employee IDs: EMP-575458, EMP-238353

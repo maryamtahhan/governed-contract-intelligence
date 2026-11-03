@@ -1,0 +1,15 @@
+MASTER SERVICES AGREEMENT
+Contract Reference: C-2026-0177
+Effective Date: 2025-09-01   Initial Term: 24 months
+Between: Vistaview Systems GmbH ("Supplier") and Kestrel Logistics Group ("Client")
+
+CLAUSES
+Termination: This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.
+Governing Law: This Agreement shall be governed by the laws of Germany.
+Liability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.
+(No data-protection clause is present in this Agreement.)
+
+SCHEDULE 3 - PERSONAL DATA
+Data Controller contact: Niamh Hurley, niamh.hurley@kestrel.example, +353 1 555 7311
+Data Controller address: 106 Limerick Main Street, Dublin
+Employee IDs: EMP-112940, EMP-406024

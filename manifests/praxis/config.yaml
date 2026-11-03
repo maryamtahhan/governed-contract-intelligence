@@ -1,0 +1,257 @@
+# Arm D - the full hybrid stack (default config).
+#
+# Two listeners implement the plan's routing matrix:
+#   - general (:8080):  complexity via llm-d-sc; SIMPLE/MEDIUM -> CPU pool,
+#     COMPLEX/REASONING -> GPU pool; on failure, fail over to any general pool
+#     with X-Praxis-Fallback: true (the visible "degraded" flag).
+#   - sensitive (:8083): the pipeline's PII screen sends documents containing
+#     personal data here. COMPLEX/REASONING -> the approved in-cluster GPU pool
+#     only; SIMPLE/MEDIUM -> the in-cluster CPU pool. Its failover pool
+#     contains ONLY the approved GPU backend, so when that pool is down a
+#     REASONING request fails closed with an explicit error instead of
+#     spilling to a non-approved pool.
+#
+# Structure follows the proven config in RMalone8/llm-d-sc-demo: Praxis reaches
+# the predictors only through the trace-ui relays (per-pool recording hops),
+# health checks are per cluster, and llm-d-sc gets 500 ms before the default
+# cluster is used.
+insecure_options:
+  allow_private_upstreams: true
+
+admin:
+  address: "127.0.0.1:9901"
+  metrics_address: "0.0.0.0:9902"
+
+clusters:
+  - name: vllm-cpu
+    endpoints: ["trace-ui:8081"]
+    health_check:
+      type: http
+      path: /health
+      expected_status: 200
+      interval_ms: 5000
+      timeout_ms: 2000
+      healthy_threshold: 2
+      unhealthy_threshold: 2
+  - name: vllm-gpu
+    endpoints: ["trace-ui:8082"]
+    health_check:
+      type: http
+      path: /health
+      expected_status: 200
+      interval_ms: 5000
+      timeout_ms: 2000
+      healthy_threshold: 2
+      unhealthy_threshold: 2
+  - name: vllm-gpu-approved
+    endpoints: ["trace-ui:8084"]
+    health_check:
+      type: http
+      path: /health
+      expected_status: 200
+      interval_ms: 5000
+      timeout_ms: 2000
+      healthy_threshold: 2
+      unhealthy_threshold: 2
+  - name: vllm-gpu-small
+    endpoints: ["trace-ui:8085"]
+    health_check:
+      type: http
+      path: /health
+      expected_status: 200
+      interval_ms: 5000
+      timeout_ms: 2000
+      healthy_threshold: 2
+      unhealthy_threshold: 2
+  - name: vllm-any
+    endpoints: ["trace-ui:8081", "trace-ui:8082"]
+    health_check:
+      type: http
+      path: /health
+      expected_status: 200
+      interval_ms: 5000
+      timeout_ms: 2000
+      healthy_threshold: 2
+      unhealthy_threshold: 2
+  - name: vllm-approved-only
+    endpoints: ["trace-ui:8084"]
+    health_check:
+      type: http
+      path: /health
+      expected_status: 200
+      interval_ms: 5000
+      timeout_ms: 2000
+      healthy_threshold: 2
+      unhealthy_threshold: 2
+
+runtime:
+  subrequest_circuit_breaker:
+    consecutive_failures: 3
+    recovery_window_secs: 30
+    half_open_timeout_secs: 15
+
+listeners:
+  - name: ai-gateway
+    address: "0.0.0.0:8080"
+    filter_chains:
+      - inference-routing
+  - name: sensitive-gateway
+    address: "0.0.0.0:8083"
+    filter_chains:
+      - sensitive-routing
+
+filter_chains:
+  - name: inference-routing
+    filters:
+      - filter: request_id
+      - filter: access_log
+      - filter: static_response
+        conditions:
+          - when:
+              path: "/v1/models"
+              methods: ["GET"]
+        status: 200
+        headers:
+          - name: Content-Type
+            value: application/json
+        body: >-
+          {"object":"list","data":[{"id":"Semantic-Qwen","object":"model","created":0,"owned_by":"praxis"}]}
+      - filter: iterative_request_router
+        initial_step: classify-and-route
+        max_iterations: 3
+        timeout_ms: 300000
+        step_timeout_ms: 120000
+        steps:
+          - name: classify-and-route
+            filters:
+              - filter: llm_d_sc
+                endpoint: "llm-d-sc:50051"
+                default_cluster: vllm-cpu
+                routes:
+                  - label: SIMPLE
+                    cluster: vllm-cpu
+                  - label: MEDIUM
+                    cluster: vllm-cpu
+                  - label: COMPLEX
+                    cluster: vllm-gpu
+                  - label: REASONING
+                    cluster: vllm-gpu
+                timeout_ms: 500
+                connect_timeout_ms: 1000
+                min_score: 0.0
+                on_unavailable: default_cluster
+                on_resource_exhausted: default_cluster
+                emit_headers: true
+              - filter: load_balancer
+                clusters:
+                  - name: vllm-gpu
+                    endpoints: ["trace-ui:8082"]
+                  - name: vllm-cpu
+                    endpoints: ["trace-ui:8081"]
+            on_result:
+              - origin: transport
+                next: failover
+              - status: [429, 500, 502, 503, 504]
+                next: failover
+              - default: true
+                done: true
+          - name: failover
+            filters:
+              - filter: headers
+                request_set:
+                  - name: Content-Type
+                    value: application/json
+                response_add:
+                  - name: X-Praxis-Fallback
+                    value: "true"
+              - filter: router
+                routes:
+                  - path_prefix: "/"
+                    cluster: vllm-any
+              - filter: load_balancer
+                clusters:
+                  - name: vllm-any
+                    endpoints: ["trace-ui:8081", "trace-ui:8082"]
+            on_result:
+              - default: true
+                done: true
+
+  - name: sensitive-routing
+    filters:
+      - filter: request_id
+      - filter: access_log
+      - filter: static_response
+        conditions:
+          - when:
+              path: "/v1/models"
+              methods: ["GET"]
+        status: 200
+        headers:
+          - name: Content-Type
+            value: application/json
+        body: >-
+          {"object":"list","data":[{"id":"Semantic-Qwen","object":"model","created":0,"owned_by":"praxis"}]}
+      - filter: iterative_request_router
+        initial_step: classify-and-route
+        max_iterations: 3
+        timeout_ms: 300000
+        step_timeout_ms: 120000
+        steps:
+          - name: classify-and-route
+            filters:
+              - filter: llm_d_sc
+                endpoint: "llm-d-sc:50051"
+                default_cluster: vllm-cpu
+                routes:
+                  - label: SIMPLE
+                    cluster: vllm-cpu
+                  - label: MEDIUM
+                    cluster: vllm-cpu
+                  - label: COMPLEX
+                    cluster: vllm-gpu-approved
+                  - label: REASONING
+                    cluster: vllm-gpu-approved
+                timeout_ms: 500
+                connect_timeout_ms: 1000
+                min_score: 0.0
+                on_unavailable: default_cluster
+                on_resource_exhausted: default_cluster
+                emit_headers: true
+              - filter: load_balancer
+                clusters:
+                  - name: vllm-gpu-approved
+                    endpoints: ["trace-ui:8084"]
+                  - name: vllm-cpu
+                    endpoints: ["trace-ui:8081"]
+            on_result:
+              - origin: transport
+                next: failover
+              - status: [429, 500, 502, 503, 504]
+                next: failover
+              - default: true
+                done: true
+          # Failover for the sensitive entry is restricted to the approved GPU
+          # pool on purpose: a REASONING request fails closed when that pool is
+          # down rather than degrading onto a pool not approved for sensitive
+          # data. (A SIMPLE request whose CPU pool died lands on the approved
+          # GPU pool, which is also within the allowed set.)
+          - name: failover
+            filters:
+              - filter: headers
+                request_set:
+                  - name: Content-Type
+                    value: application/json
+                response_add:
+                  - name: X-Praxis-Fallback
+                    value: "true"
+              - filter: router
+                routes:
+                  - path_prefix: "/"
+                    cluster: vllm-approved-only
+              - filter: load_balancer
+                clusters:
+                  - name: vllm-approved-only
+                    endpoints: ["trace-ui:8084"]
+            on_result:
+              - default: true
+                done: true

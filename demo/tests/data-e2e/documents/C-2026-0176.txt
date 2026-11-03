@@ -1,0 +1,10 @@
+DATA PROCESSING AGREEMENT
+Contract Reference: C-2026-0176
+Effective Date: 2026-06-01   Initial Term: 36 months
+Between: Vistaview Systems GmbH ("Supplier") and Greystone Energy Partners ("Client")
+
+CLAUSES
+Termination: This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.
+Governing Law: This Agreement shall be governed by the laws of Ireland.
+Liability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.
+(No data-protection clause is present in this Agreement.)

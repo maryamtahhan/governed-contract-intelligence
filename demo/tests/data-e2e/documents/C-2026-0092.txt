@@ -1,0 +1,10 @@
+DATA PROCESSING AGREEMENT
+Contract Reference: C-2026-0092
+Effective Date: 2026-11-01   Initial Term: 48 months
+Between: Copperfield Data Services Inc ("Supplier") and Ravenscourt Media SA ("Client")
+
+CLAUSES
+Termination: This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.
+Governing Law: This Agreement shall be governed by the laws of England and Wales.
+Liability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.
+Data Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.

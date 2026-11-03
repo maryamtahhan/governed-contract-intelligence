@@ -1,0 +1,15 @@
+STATEMENT OF WORK
+Contract Reference: C-2026-0088
+Effective Date: 2025-09-01   Initial Term: 36 months
+Between: Northwind Analytics Ltd ("Supplier") and Greystone Energy Partners ("Client")
+
+CLAUSES
+Termination: This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.
+Governing Law: This Agreement shall be governed by the laws of Ireland.
+Liability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.
+Data Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.
+
+SCHEDULE 3 - PERSONAL DATA
+Data Controller contact: Ciara Lombard, ciara.lombard@greystone.example, +353 1 555 4674
+Data Controller address: 90 Waterford Main Street, Galway
+Employee IDs: EMP-988432, EMP-213475

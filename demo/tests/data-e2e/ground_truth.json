@@ -1,0 +1,2620 @@
+{
+ "seed": 42,
+ "count": 200,
+ "golden": [
+  "C-2026-0001",
+  "C-2026-0002",
+  "C-2026-0003",
+  "C-2026-0004",
+  "C-2026-0005",
+  "C-2026-0006",
+  "C-2026-0007",
+  "C-2026-0008",
+  "C-2026-0009",
+  "C-2026-0010",
+  "C-2026-0011",
+  "C-2026-0012"
+ ],
+ "documents": [
+  {
+   "doc_id": "C-2026-0001",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0002",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0003",
+   "type": "DPA",
+   "sensitive": true,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0004",
+   "type": "SOW",
+   "sensitive": true,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0005",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "medium"
+  },
+  {
+   "doc_id": "C-2026-0006",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0007",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0008",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0009",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0010",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0011",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0012",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "medium"
+  },
+  {
+   "doc_id": "C-2026-0013",
+   "type": "DPA",
+   "sensitive": true,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0014",
+   "type": "SOW",
+   "sensitive": true,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0015",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0016",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0017",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0018",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0019",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0020",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0021",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0022",
+   "type": "SOW",
+   "sensitive": true,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0023",
+   "type": "NDA",
+   "sensitive": true,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0024",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0025",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0026",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0027",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0028",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0029",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0030",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0031",
+   "type": "NDA",
+   "sensitive": true,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0032",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0033",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0034",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0035",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0036",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0037",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0038",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0039",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0040",
+   "type": "DPA",
+   "sensitive": true,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0041",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0042",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0043",
+   "type": "NDA",
+   "sensitive": true,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0044",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0045",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0046",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "medium"
+  },
+  {
+   "doc_id": "C-2026-0047",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0048",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0049",
+   "type": "SOW",
+   "sensitive": true,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "medium"
+  },
+  {
+   "doc_id": "C-2026-0050",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0051",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "medium"
+  },
+  {
+   "doc_id": "C-2026-0052",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0053",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0054",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0055",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0056",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0057",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0058",
+   "type": "SOW",
+   "sensitive": true,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0059",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0060",
+   "type": "DPA",
+   "sensitive": true,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0061",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0062",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "medium"
+  },
+  {
+   "doc_id": "C-2026-0063",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "medium"
+  },
+  {
+   "doc_id": "C-2026-0064",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0065",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0066",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0067",
+   "type": "DPA",
+   "sensitive": true,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0068",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0069",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0070",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0071",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0072",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0073",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0074",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0075",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0076",
+   "type": "SOW",
+   "sensitive": true,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0077",
+   "type": "MSA",
+   "sensitive": true,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "medium"
+  },
+  {
+   "doc_id": "C-2026-0078",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0079",
+   "type": "DPA",
+   "sensitive": true,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0080",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0081",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0082",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0083",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0084",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0085",
+   "type": "MSA",
+   "sensitive": true,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0086",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0087",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0088",
+   "type": "SOW",
+   "sensitive": true,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "medium"
+  },
+  {
+   "doc_id": "C-2026-0089",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0090",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0091",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0092",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0093",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0094",
+   "type": "SOW",
+   "sensitive": true,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0095",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0096",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0097",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0098",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0099",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "medium"
+  },
+  {
+   "doc_id": "C-2026-0100",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0101",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0102",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "medium"
+  },
+  {
+   "doc_id": "C-2026-0103",
+   "type": "SOW",
+   "sensitive": true,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "medium"
+  },
+  {
+   "doc_id": "C-2026-0104",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "medium"
+  },
+  {
+   "doc_id": "C-2026-0105",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0106",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0107",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "medium"
+  },
+  {
+   "doc_id": "C-2026-0108",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "medium"
+  },
+  {
+   "doc_id": "C-2026-0109",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0110",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0111",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0112",
+   "type": "MSA",
+   "sensitive": true,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0113",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0114",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0115",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0116",
+   "type": "DPA",
+   "sensitive": true,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0117",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0118",
+   "type": "DPA",
+   "sensitive": true,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "medium"
+  },
+  {
+   "doc_id": "C-2026-0119",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0120",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0121",
+   "type": "NDA",
+   "sensitive": true,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0122",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "medium"
+  },
+  {
+   "doc_id": "C-2026-0123",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0124",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0125",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0126",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0127",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0128",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0129",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0130",
+   "type": "MSA",
+   "sensitive": true,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0131",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0132",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "medium"
+  },
+  {
+   "doc_id": "C-2026-0133",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0134",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0135",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0136",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0137",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0138",
+   "type": "SOW",
+   "sensitive": true,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0139",
+   "type": "NDA",
+   "sensitive": true,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0140",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0141",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0142",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0143",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0144",
+   "type": "SOW",
+   "sensitive": true,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0145",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0146",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0147",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "medium"
+  },
+  {
+   "doc_id": "C-2026-0148",
+   "type": "NDA",
+   "sensitive": true,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0149",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0150",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0151",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "medium"
+  },
+  {
+   "doc_id": "C-2026-0152",
+   "type": "MSA",
+   "sensitive": true,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0153",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0154",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "medium"
+  },
+  {
+   "doc_id": "C-2026-0155",
+   "type": "SOW",
+   "sensitive": true,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "medium"
+  },
+  {
+   "doc_id": "C-2026-0156",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0157",
+   "type": "MSA",
+   "sensitive": true,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0158",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0159",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0160",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0161",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0162",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0163",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0164",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0165",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0166",
+   "type": "DPA",
+   "sensitive": true,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0167",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0168",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0169",
+   "type": "DPA",
+   "sensitive": true,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0170",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0171",
+   "type": "MSA",
+   "sensitive": true,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0172",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0173",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0174",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0175",
+   "type": "SOW",
+   "sensitive": true,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "medium"
+  },
+  {
+   "doc_id": "C-2026-0176",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0177",
+   "type": "MSA",
+   "sensitive": true,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0178",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0179",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0180",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0181",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0182",
+   "type": "NDA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0183",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0184",
+   "type": "NDA",
+   "sensitive": true,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0185",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0186",
+   "type": "NDA",
+   "sensitive": true,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0187",
+   "type": "SOW",
+   "sensitive": true,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "medium"
+  },
+  {
+   "doc_id": "C-2026-0188",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0189",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Ireland.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0190",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0191",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0192",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0193",
+   "type": "SOW",
+   "sensitive": true,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": null
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0194",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "high"
+  },
+  {
+   "doc_id": "C-2026-0195",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 48,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of England and Wales.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0196",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0197",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0198",
+   "type": "SOW",
+   "sensitive": false,
+   "initial_term_months": 24,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "governing_law": "This Agreement shall be governed by the laws of the State of New York.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0199",
+   "type": "DPA",
+   "sensitive": false,
+   "initial_term_months": 12,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "data_protection": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement."
+   },
+   "risk": "low"
+  },
+  {
+   "doc_id": "C-2026-0200",
+   "type": "MSA",
+   "sensitive": false,
+   "initial_term_months": 36,
+   "clauses": {
+    "termination": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "governing_law": "This Agreement shall be governed by the laws of Germany.",
+    "liability_cap": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "data_protection": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement."
+   },
+   "risk": "low"
+  }
+ ]
+}
