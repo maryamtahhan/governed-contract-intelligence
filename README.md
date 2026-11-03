@@ -46,35 +46,24 @@ pipeline, the measurement harness and the OpenShell sandbox. **Read
 
 ## How it fits together
 
+The product pipeline — what a batch of contracts flows through:
+
 ```
-docling ingestion (CPU)  ─>  PII screen at ingest                [designed]
-        │  structure-aware chunks, char offsets preserved
+docling ingestion (CPU)  ─>  PII screen at ingest                 [designed]
+        │   structure-aware chunks, char offsets preserved
         v
-litil-embed-0.6b embeddings (CPU) — within-doc regime   [measured §11]
+litil-embed-0.6b retrieval (CPU tier)                             [measured, §11]
         v
-CUAD specialist span extraction (CPU, ms/clause)                 [built]
-        │  span JSON + evidence chunks
+CUAD specialist span extraction (CPU, ms/clause)                  [built]
+        │   span JSON + evidence chunks
         v
 Qwen3.5-35B-A3B synthesis: risk judgment, cross-doc report        [built]
 ```
 
-Every hop goes through the same request path — this is the part that is
-governed and measured end-to-end today:
+Every hop goes through the same governed request path — the part that is
+built, governed and measured end-to-end today:
 
-```
-client / review pipeline ──> trace-ui :8080 (ingress) ──> praxis :8080 (general)
-                                                           │  llm-d-sc classifies (gRPC)
-client (sensitive docs) ──> trace-ui :8083 (sensitive) ─> praxis :8083 (sensitive)
-                                                           │
-                     ┌─────────────────────────────────────┴──────────────────────┐
-                     v                     v                   v                  v
-              trace-ui :8081        trace-ui :8082      trace-ui :8084     trace-ui :8085
-              vllm-cpu pool          vllm-gpu pool      vllm-gpu-approved  vllm-gpu-small
-              (Qwen 1.5B /           (Qwen 7B /          (pinned,           (arm B)
-               specialist / MoE)      MoE)                fail-closed)
-
-OpenClaw (inside the OpenShell sandbox) ──> praxis :80   [egress policy: praxis only]
-```
+![As-built architecture: clients (pipeline, sandboxed agent) → trace-ui / praxis gateway → llm-d-sc classification → pools; the dashed green boundary marks the approved set, inside which sensitive data is processed](docs/architecture-as-built.svg)
 
 - **Complexity is a preference, sensitivity is a constraint.** The general
   listener routes by the llm-d-sc complexity label (SIMPLE/MEDIUM → CPU,
