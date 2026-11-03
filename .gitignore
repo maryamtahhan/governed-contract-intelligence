@@ -6,3 +6,7 @@ demo/dist/
 *.egg-info/
 .DS_Store
 /tmp/
+.pytest_cache/
+.ruff_cache/
+# Generated at stack start from manifests/praxis/config.yaml.
+manifests/praxis/live.yaml

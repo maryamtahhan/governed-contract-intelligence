@@ -8,8 +8,10 @@ Python package: synthetic contract generator, review pipeline, simulated vLLM
 backends, the extended trace UI, and the measurement harness.
 
 ```bash
-uv sync                     # create the venv
+uv sync                     # create the venv (no torch: base install)
 uv run pytest               # unit + local-stack tests
+# The specialist pool and the CUAD/specialist validators need torch:
+uv sync --extra specialist
 ```
 
 Entry points (also used inside the containers and on OpenShift):

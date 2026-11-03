@@ -217,8 +217,6 @@ class _FakeSummary:
 
 
 def test_governance_check_refuses_a_truncated_trace_window(tmp_path, monkeypatch):
-    import json
-
     from hybrid_demo.evalkit import score
 
     records = [{

@@ -1,0 +1,25 @@
+# Opt-in node configuration for CPU-pool measurement validity. NOT part of
+# any kustomization: applying it changes kubelet settings and, on a
+# single-node cluster, reboots that node. Read README.md in this directory
+# before applying.
+apiVersion: machineconfiguration.openshift.io/v1
+kind: KubeletConfig
+metadata:
+  name: cpu-isolation
+spec:
+  # Guaranteed pods with integer CPU requests get exclusive CPU sets.
+  cpuManagerPolicy: static
+  cpuManagerPolicyOptions:
+    # Allocate whole physical cores (both SMT siblings) to a pod. Without
+    # this a Guaranteed pod can receive CPU 3 while its sibling CPU 35 goes
+    # to another pod; vLLM binds threads to physical cores and will not use
+    # the lone sibling, so half the reservation is wasted.
+    full-pcpus-only: "true"
+  # Keep each pod's CPUs, memory and devices on one NUMA node. vLLM's CPU
+  # backend reads weights from host memory; spanning NUMA nodes costs
+  # bandwidth on every token.
+  topologyManagerPolicy: single-numa-node
+  topologyManagerScope: pod
+  machineConfigPoolSelector:
+    matchLabels:
+      pools.operator.machineconfiguration.io/master: ""
