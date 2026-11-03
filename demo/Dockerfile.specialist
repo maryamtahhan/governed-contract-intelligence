@@ -14,7 +14,7 @@ RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/wh
        fastapi uvicorn httpx prometheus-client
 
 WORKDIR /app
-COPY pyproject.toml README.md ./
+COPY pyproject.toml ./
 COPY src ./src
 RUN pip install --no-cache-dir .
 
