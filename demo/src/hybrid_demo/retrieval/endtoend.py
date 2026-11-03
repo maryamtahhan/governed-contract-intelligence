@@ -98,9 +98,9 @@ def _decompose(records: list[dict], truth: dict, covered: dict) -> dict:
 
 def run(baseline_run: Path, data_dir: Path, cuad_zip: Path, checkpoint: str,
         embedder_name: str, top_k: int, null_margin: float) -> dict:
+    import torch
     from sentence_transformers import SentenceTransformer
     from transformers import AutoModelForQuestionAnswering, AutoTokenizer
-    import torch
 
     truth = load_truth(data_dir)
     fields = load_baseline_fields(baseline_run)

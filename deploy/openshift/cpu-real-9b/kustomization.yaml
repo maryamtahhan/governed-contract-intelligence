@@ -34,7 +34,8 @@ patches:
       - op: replace
         path: /spec/template/spec/containers/0/resources
         value:
-          requests: {cpu: "16", memory: 48Gi}
+          # Guaranteed QoS, matching the other pools (see cpu-real/pools.yaml).
+          requests: {cpu: "32", memory: 64Gi}
           limits: {cpu: "32", memory: 64Gi}
       - op: replace
         path: /spec/template/spec/containers/0/readinessProbe

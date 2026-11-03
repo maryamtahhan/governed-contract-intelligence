@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import random
-from pathlib import Path
 
 from hybrid_demo.pipeline.generate import CLAUSE_KEYS, build_document, generate, risk_of
 
@@ -55,4 +54,7 @@ def test_build_document_shape():
                             "STATEMENT OF WORK", "DATA PROCESSING AGREEMENT"))
     assert truth["doc_id"] == "C-TEST-0001"
     assert set(truth["clauses"]) == set(CLAUSE_KEYS)
-    assert Path(text).name == "" or isinstance(text, str)
+    assert "Contract Reference: C-TEST-0001" in text
+    assert truth["risk"] in {"low", "medium", "high"}
+    for clause in truth["clauses"].values():
+        assert clause is None or clause in text

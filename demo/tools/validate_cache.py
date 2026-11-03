@@ -37,15 +37,19 @@ def main() -> None:
 
     docs, texts, clause_keys = load_documents(args.data, args.docs)
     clauses = [k.replace("_", " ") for k in clause_keys]
-    requests = [(doc["doc_id"], clause) for doc in docs for clause in clauses]
+    unsupported = {c for c in clauses if question_for(c) is None}
+    if unsupported:
+        # CUAD has no data-protection category. Recording it as "not found"
+        # would pollute the sweep with a field the specialist was never
+        # asked, so skip it and report the omission.
+        print(f"skipping clauses with no CUAD question: {', '.join(sorted(unsupported))}")
+    supported = [c for c in clauses if c not in unsupported]
+    requests = [(doc["doc_id"], clause) for doc in docs for clause in supported]
 
     print(f"fresh-computing {len(requests)} answers (one encoder pass each)...")
     fresh = {}
     for doc_id, clause in requests:
         question = question_for(clause)
-        if question is None:
-            fresh[(doc_id, clause)] = {"clause": clause, "found": False, "text": None}
-            continue
         span = best_spans(model, tok, question, texts[doc_id])
         fresh[(doc_id, clause)] = {"clause": clause, "found": span is not None,
                                    "text": span.text if span else None}
@@ -72,7 +76,7 @@ def main() -> None:
               f"{hits / total:>8.1%} {fp / max(sim_hits, 1):>7.1%}"
               f"   (sensitive skipped: {sensitive})")
     print("\nsensitivity gate: sensitive documents are never stored or served "
-          "by the similarity cache (skips above); exact hits remain available.")
+          "by the cache at all (exact or similarity); skips are counted above.")
 
 
 if __name__ == "__main__":

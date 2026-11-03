@@ -4,7 +4,6 @@ import argparse
 import asyncio
 import json
 import os
-import re
 import time
 from pathlib import Path
 from typing import Any
@@ -12,7 +11,9 @@ from typing import Any
 import httpx
 
 from ..classifier import detect_sensitivity
+from ..routes import APPROVED_ROUTES, GPU_ROUTES
 from .generate import CLAUSE_KEYS
+from .risk import DATA_PROTECTION_KEY, rubric_text
 
 ARM_MODES = {
     "A": "all-gpu",
@@ -104,6 +105,7 @@ def risk_body(clauses: dict, sensitive: bool) -> dict:
     clauses_json = json.dumps(
         {k: {"found": bool(v), "text": v} for k, v in clauses.items()}, ensure_ascii=False
     )
+    has_data_protection = DATA_PROTECTION_KEY in clauses
     note = "This document contains personal data (see Schedule 3)." if sensitive else ""
     return {
         "model": "Semantic-Qwen",
@@ -115,9 +117,7 @@ def risk_body(clauses: dict, sensitive: bool) -> dict:
                 "role": "user",
                 "content": (
                     "Assess the overall risk of this contract given the extracted clauses below. "
-                    "Apply exactly this rubric: risk is high if there is no data-protection clause "
-                    "or if liability is unlimited; medium if termination is only for material "
-                    "breach that remains uncured; otherwise low.\n"
+                    f"{rubric_text(has_data_protection)}\n"
                     f"{note}\n"
                     f"Extracted clauses: {clauses_json}\n\n"
                     'Return JSON: {"risk": "low|medium|high", "reasons": ["..."], "ref": "..."}'
@@ -127,7 +127,11 @@ def risk_body(clauses: dict, sensitive: bool) -> dict:
     }
 
 
-def report_body(doc_lines: list[str], count: int) -> dict:
+def report_body(doc_lines: list[str], count: int,
+                has_data_protection: bool = True) -> dict:
+    dp_request = (", count contracts missing a data-protection clause"
+                  if has_data_protection else "")
+    dp_field = (', "missing_data_protection": N' if has_data_protection else "")
     return {
         "model": "Semantic-Qwen",
         "temperature": 0,
@@ -140,12 +144,13 @@ def report_body(doc_lines: list[str], count: int) -> dict:
                     f"Produce the cross-document risk report across all {count} documents. "
                     "Synthesise and compare the per-document extractions below, derive the aggregate "
                     "counts, and prove the ranking: count contracts by risk level, count governing "
-                    "laws, count contracts missing a data-protection clause, and name the highest-risk "
-                    "contract reference.\n\n"
+                    f"laws{dp_request}, and name the highest-risk contract reference. If several "
+                    "contracts tie for highest risk, name the lexicographically smallest reference.\n\n"
                     + "\n".join(doc_lines)
                     + "\n\nReturn JSON: {\"documents\": N, \"risk_counts\": {...}, "
-                    "\"governing_law_counts\": {...}, \"missing_data_protection\": N, "
-                    "\"highest_risk_ref\": \"...\"}"
+                    "\"governing_law_counts\": {...}"
+                    + dp_field
+                    + ", \"highest_risk_ref\": \"...\"}"
                 ),
             },
         ],
@@ -193,17 +198,25 @@ def parse_content(content: str | None) -> dict:
 class ReviewRun:
     def __init__(self, general_base: str, sensitive_base: str | None, concurrency: int,
                  governance: bool, clause_keys: list[str] | None = None,
-                 timeout: float = 600.0) -> None:
+                 timeout: float = 600.0, token: str | None = None) -> None:
         self.clause_keys = clause_keys or list(CLAUSE_KEYS)
-        self.general = httpx.AsyncClient(base_url=general_base, timeout=timeout)
+        # When the trace UI is exposed through a Route it can require a
+        # bearer token; the relay forwards the header, so the same token
+        # works for the ingress and the sensitive entry.
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+        self.general = httpx.AsyncClient(base_url=general_base, timeout=timeout,
+                                         headers=headers)
         self.sensitive = (
-            httpx.AsyncClient(base_url=sensitive_base, timeout=timeout)
+            httpx.AsyncClient(base_url=sensitive_base, timeout=timeout,
+                              headers=headers)
             if sensitive_base
             else None
         )
-        self.sem = asyncio.Semaphore(concurrency)
+        self.concurrency = max(1, concurrency)
+        self.sem = asyncio.Semaphore(self.concurrency)
         self.governance = governance
         self.records: list[dict] = []
+        self.screened: dict[str, bool] = {}
         self.screen_stats = {"tp": 0, "fp": 0, "tn": 0, "fn": 0}
 
     async def close(self) -> None:
@@ -216,7 +229,14 @@ class ReviewRun:
             return self.sensitive
         return self.general
 
-    def note_screen(self, screened: bool, truth: bool) -> None:
+    def note_screen(self, screened: bool, truth: bool | None) -> None:
+        """Score the screen only where an independent label exists.
+
+        CUAD has no PII annotations; recording its ``None`` truth as a
+        negative would manufacture false positives.
+        """
+        if truth is None:
+            return
         key = ("tp" if screened == truth and truth else "fp" if screened else
                "tn" if not truth else "fn")
         self.screen_stats[key] += 1
@@ -297,7 +317,8 @@ class ReviewRun:
     async def review_document(self, doc: dict, doc_text: str) -> dict:
         doc_id = doc["doc_id"]
         screened = detect_sensitivity(doc_text)
-        self.note_screen(screened, bool(doc.get("sensitive")))
+        self.screened[doc_id] = screened
+        self.note_screen(screened, doc.get("sensitive"))
         client = self.entry_for(screened)
         entry = "sensitive" if client is not self.general else "general"
         await self.call(client, entry, "classify", classify_body(doc_text), doc_id, "SIMPLE", screened)
@@ -313,8 +334,12 @@ class ReviewRun:
 
     async def run(self, docs: list[dict], doc_texts: dict[str, str]) -> None:
         t0 = time.time()
-        for doc in docs:
-            await self.review_document(doc, doc_texts[doc["doc_id"]])
+        # Documents are independent; the semaphore in call() bounds the
+        # number of in-flight requests at self.concurrency. Awaiting them one
+        # at a time made --concurrency cosmetic.
+        await asyncio.gather(
+            *(self.review_document(doc, doc_texts[doc["doc_id"]]) for doc in docs)
+        )
 
         doc_lines = []
         any_sensitive = False
@@ -336,7 +361,10 @@ class ReviewRun:
             dp_present = False
             if dp_rec:
                 dp_present = bool(dp_rec.get("content", {}).get("found"))
-            any_sensitive = any_sensitive or doc.get("sensitive")
+            # The report step must be chosen by what the screen saw, not by
+            # the manifest label; the label is ground truth used for scoring.
+            screened = self.screened.get(doc["doc_id"], False)
+            any_sensitive = any_sensitive or screened
             doc_lines.append(
                 json.dumps(
                     {
@@ -345,7 +373,7 @@ class ReviewRun:
                         "risk": risk,
                         "governing_law": law,
                         "data_protection": dp_present,
-                        "sensitive": bool(doc.get("sensitive")),
+                        "sensitive": screened,
                     },
                     ensure_ascii=False,
                 )
@@ -353,12 +381,15 @@ class ReviewRun:
         prefixed = [f"- {line}" for line in doc_lines]
         client = self.entry_for(any_sensitive)
         entry = "sensitive" if client is not self.general else "general"
-        await self.call(client, entry, "report", report_body(prefixed, len(docs)), None,
+        has_data_protection = DATA_PROTECTION_KEY in self.clause_keys
+        await self.call(client, entry, "report",
+                        report_body(prefixed, len(docs), has_data_protection), None,
                         "REASONING", any_sensitive)
         self.wall_s = time.time() - t0
 
 
-def load_documents(data_dir: str | Path, limit: int | None = None) -> tuple[list[dict], dict[str, str]]:
+def load_documents(data_dir: str | Path, limit: int | None = None
+                   ) -> tuple[list[dict], dict[str, str], list[str]]:
     data = Path(data_dir)
     manifest = json.loads((data / "ground_truth.json").read_text())
     clause_keys = manifest.get("clause_keys") or CLAUSE_KEYS
@@ -373,10 +404,6 @@ def load_documents(data_dir: str | Path, limit: int | None = None) -> tuple[list
     for doc in docs:
         texts[doc["doc_id"]] = (data / "documents" / f"{doc['doc_id']}.txt").read_text()
     return docs, texts, clause_keys
-
-
-GPU_ROUTES = {"vllm-gpu", "vllm-gpu-approved", "vllm-gpu-small"}
-APPROVED_ROUTES = {"vllm-cpu", "vllm-gpu-approved"}
 
 
 def summarise(records: list[dict], screen_stats: dict) -> dict:
@@ -455,6 +482,7 @@ async def run_arm(
     concurrency: int,
     sample_metrics: str | None = None,
     timeout: float = 600.0,
+    token: str | None = None,
 ) -> dict:
     mode = ARM_MODES.get(arm, arm)
     governance = arm in ARMS_WITH_GOVERNANCE or arm == "matrix"
@@ -473,7 +501,7 @@ async def run_arm(
         sampler.start()
 
     run = ReviewRun(gateway_base, sensitive_base, concurrency, governance, clause_keys,
-                    timeout=timeout)
+                    timeout=timeout, token=token)
     await run.run(docs, texts)
     await run.close()
 
@@ -488,6 +516,7 @@ async def run_arm(
         "mode": mode,
         "governance": governance,
         "docs": len(docs),
+        "concurrency": run.concurrency,
         "wall_s": round(run.wall_s, 2),
         **summarise(run.records, run.screen_stats),
     }
@@ -496,7 +525,9 @@ async def run_arm(
     )
     (out / "summary.json").write_text(json.dumps(summary, indent=1))
     try:
-        async with httpx.AsyncClient(base_url=gateway_base, timeout=15.0) as client:
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+        async with httpx.AsyncClient(base_url=gateway_base, timeout=15.0,
+                                     headers=headers) as client:
             await client.post("/_trace/api/runs", json=summary)
     except httpx.HTTPError:
         pass
@@ -520,10 +551,14 @@ def main() -> None:
                         help="pool=metrics-url pairs, comma-separated (e.g. "
                              "vllm-cpu=http://127.0.0.1:18081); scraped during the "
                              "run, summary written to metrics.json for the scorer")
+    parser.add_argument("--token", default=os.environ.get("TRACE_API_TOKEN") or None,
+                        help="bearer token for a trace UI protected by "
+                             "TRACE_API_TOKEN (default: that env var)")
     args = parser.parse_args()
     summary = asyncio.run(
         run_arm(args.gateway, args.sensitive_gateway, args.data, args.out, args.arm,
-                args.docs, args.concurrency, args.sample_metrics, args.timeout)
+                args.docs, args.concurrency, args.sample_metrics, args.timeout,
+                args.token)
     )
     print(json.dumps(summary, indent=1))
 

@@ -19,9 +19,13 @@ spec:
         - --enable-auto-tool-choice
         - --tool-call-parser=hermes
       resources:
+        # Guaranteed QoS: request == limit and an integer CPU count, so the
+        # static CPU manager can give the CPU pool an exclusive CPU set.
+        # Burstable requests (4 vs 8) made its latency depend on whatever
+        # else happened to be scheduled on the node.
         requests:
-          cpu: "4"
-          memory: 12Gi
+          cpu: "8"
+          memory: 16Gi
         limits:
           cpu: "8"
           memory: 16Gi

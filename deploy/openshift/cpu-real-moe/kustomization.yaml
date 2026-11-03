@@ -40,7 +40,10 @@ patches:
       - op: replace
         path: /spec/template/spec/containers/0/resources
         value:
-          requests: {cpu: "16", memory: 96Gi}
+          # Guaranteed QoS: an integer request equal to the limit lets the
+          # static CPU manager give the MoE an exclusive CPU set, so its
+          # latency is not measured against the other three pools.
+          requests: {cpu: "32", memory: 128Gi}
           limits: {cpu: "32", memory: 128Gi}
       - op: replace
         path: /spec/template/spec/containers/0/readinessProbe

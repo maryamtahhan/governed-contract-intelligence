@@ -149,3 +149,122 @@ pool_busy_seconds_total{pool="vllm-cpu",replica="r"} 12.5
     assert summary["prompt_tokens"] == 100.0
     assert summary["generation_tokens"] == 40.0
     assert "integrated" in summary["method"]
+
+
+def test_dataset_provenance_comes_from_the_manifest():
+    from hybrid_demo.evalkit.score import dataset_description
+
+    synthetic = dataset_description({"source": "synthetic", "count": 12, "seed": 42})
+    assert "12 synthetic documents" in synthetic
+    assert "no personal data" in synthetic
+    assert "CUAD" not in synthetic
+
+    cuad = dataset_description({"source": "cuad", "count": 40, "seed": 42})
+    assert "CUAD v1 real contracts" in cuad
+    assert "CC BY 4.0" in cuad
+    assert "synthetic documents" not in cuad
+
+
+def _run_dir(tmp_path, records):
+    import json
+
+    run = tmp_path / "run"
+    run.mkdir()
+    (run / "results.json").write_text(json.dumps({
+        "records": records,
+        "summary": {"arm": "B", "mode": "hybrid", "docs": 1, "wall_s": 1.0},
+    }))
+    return run
+
+
+def test_report_names_containment_and_flags_a_weak_classifier(tmp_path):
+    import json
+
+    from hybrid_demo.evalkit.score import build_report
+
+    data = tmp_path / "data"
+    data.mkdir()
+    (data / "ground_truth.json").write_text(json.dumps({
+        "source": "synthetic", "count": 1, "seed": 42,
+        "documents": [{"doc_id": "d1", "type": "MSA", "risk": "low",
+                       "clauses": {"termination": "Either party may terminate"}}],
+    }))
+    run = _run_dir(tmp_path, [{
+        "step": "classify", "doc_id": "d1",
+        "true_complexity": "SIMPLE", "true_sensitive": False,
+        "headers": {"x-demo-classification": "REASONING", "x-demo-route": "vllm-cpu"},
+        "content": {"type": "REASONING"},
+        "outcome": "served",
+    }])
+    text, report = build_report([str(run)], str(data), cores_per_cpu_replica=4)
+    assert "containment" in text
+    assert "span-exact" in text
+    assert "Classifier caveat" in text
+    assert report["dataset"] == (
+        "1 synthetic documents (seed 42, licences: synthetic, no personal data)")
+    assert report["arms"][0]["classifier"]["accuracy"] == 0.0
+
+
+class _FakeSummary:
+    def __init__(self, payload):
+        self._payload = payload
+
+    def raise_for_status(self):
+        return None
+
+    def json(self):
+        return self._payload
+
+
+def test_governance_check_refuses_a_truncated_trace_window(tmp_path, monkeypatch):
+    import json
+
+    from hybrid_demo.evalkit import score
+
+    records = [{
+        "step": "extract:termination", "doc_id": "d1",
+        "true_complexity": "SIMPLE", "true_sensitive": True,
+        "headers": {"x-demo-route": "vllm-cpu"},
+        "content": {"found": False, "text": None},
+        "outcome": "served",
+    } for _ in range(5)]
+    run = _run_dir(tmp_path, records)
+
+    def fake_get(*args, **kwargs):
+        return _FakeSummary({
+            "total": 7,
+            "routes": {"vllm-cpu": 2},
+            "groups": [{"entry": "sensitive", "route": "vllm-cpu", "count": 2}],
+        })
+
+    monkeypatch.setattr(score.httpx, "get", fake_get)
+    result = score.governance_check("http://trace.invalid", str(run))
+    assert result["pipeline_sensitive_steps"] == 5
+    assert result["trace_sensitive_steps"] == 2
+    assert result["trace_window_complete"] is False
+    assert result["clean"] is False
+    assert "retained 2 of 5" in result["reason"]
+
+    monkeypatch.setattr(score.httpx, "get", lambda *a, **k: _FakeSummary({
+        "total": 5,
+        "routes": {"vllm-cpu": 5},
+        "groups": [{"entry": "sensitive", "route": "vllm-cpu", "count": 5}],
+    }))
+    complete = score.governance_check("http://trace.invalid", str(run))
+    assert complete["trace_window_complete"] is True
+    assert complete["clean"] is True
+    assert "reason" not in complete
+
+
+def test_governance_check_flags_a_sensitive_trace_on_an_unapproved_route(monkeypatch):
+    from hybrid_demo.evalkit import score
+
+    monkeypatch.setattr(score.httpx, "get", lambda *a, **k: _FakeSummary({
+        "total": 1,
+        "routes": {"vllm-gpu": 1},
+        "groups": [{"entry": "sensitive", "route": "vllm-gpu", "count": 1}],
+    }))
+    result = score.governance_check("http://trace.invalid")
+    assert result["clean"] is False
+    assert result["sensitive_entry_violations"] == [
+        {"entry": "sensitive", "route": "vllm-gpu", "count": 1}]

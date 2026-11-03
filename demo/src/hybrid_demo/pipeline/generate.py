@@ -5,6 +5,8 @@ import json
 import random
 from pathlib import Path
 
+from .risk import assess_risk
+
 CONTRACT_TYPES = ["MSA", "NDA", "SOW", "DPA"]
 TYPE_HEADINGS = {
     "MSA": "MASTER SERVICES AGREEMENT",
@@ -64,13 +66,8 @@ CITIES = ["Dublin", "Cork", "Galway", "Limerick", "Waterford"]
 
 
 def risk_of(clauses: dict) -> str:
-    if not clauses.get("data_protection"):
-        return "high"
-    if "unlimited" in (clauses.get("liability_cap") or "").lower():
-        return "high"
-    if "only for material breach" in (clauses.get("termination") or "").lower():
-        return "medium"
-    return "low"
+    """Synthetic truth under the shared rubric (see pipeline/risk.py)."""
+    return assess_risk(clauses, has_data_protection=True)
 
 
 def build_document(rng: random.Random, ref: str, index: int = 0) -> tuple[str, dict]:

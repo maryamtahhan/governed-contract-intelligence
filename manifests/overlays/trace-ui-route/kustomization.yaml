@@ -1,0 +1,14 @@
+# Opt-in public Route for the trace UI. The base install deliberately
+# exposes no Route: the dashboard contains recorded contract questions and
+# responses. Applying this overlay publishes it on the cluster's default
+# hostname, so set an API token first:
+#   oc -n openshell-demo set env deploy/trace-ui TRACE_API_TOKEN=<token>
+#   oc apply -k manifests/overlays/trace-ui-route
+# The relay still accepts pipeline traffic on the Service; the Route is only
+# for humans opening the dashboard.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: openshell-demo
+
+resources:
+  - route.yaml

@@ -5,16 +5,33 @@ description = "Contract-review demo on hybrid CPU+GPU inference: pipeline, simul
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "fastapi>=0.115",
-    "uvicorn>=0.30",
-    "httpx>=0.27",
-    "prometheus-client>=0.20",
-    "pyyaml>=6.0",
+    "fastapi>=0.115,<1",
+    "uvicorn>=0.30,<1",
+    "httpx>=0.27,<1",
+    "prometheus-client>=0.20,<1",
+    "pyyaml>=6.0,<7",
+]
+
+[project.optional-dependencies]
+# The base install intentionally excludes torch/transformers: the demo's
+# simulated stack and tests run without them. The specialist pool and the
+# CUAD validators need this extra (or Dockerfile.specialist).
+specialist = [
+    "torch>=2.2,<3",
+    "transformers>=4.40,<6",
+    "sentencepiece>=0.1.99,<1",
+    "protobuf>=4.25,<7",
+]
+retrieval = [
+    "sentence-transformers>=2.7,<6",
+    "torch>=2.2,<3",
+    "transformers>=4.40,<6",
 ]
 
 [project.scripts]
 hybrid-gendata = "hybrid_demo.pipeline.generate:main"
 hybrid-review = "hybrid_demo.pipeline.review:main"
+hybrid-direct-arm = "hybrid_demo.pipeline.direct:main"
 hybrid-score = "hybrid_demo.evalkit.score:main"
 hybrid-pool = "hybrid_demo.fakepool.server:main"
 hybrid-traceui = "hybrid_demo.traceui.server:main"
@@ -24,12 +41,9 @@ hybrid-retrieval-e2e = "hybrid_demo.retrieval.endtoend:main"
 
 [dependency-groups]
 dev = [
-    "pytest>=8.2",
-    "pytest-asyncio>=0.23",
-    "ruff>=0.5",
-]
-retrieval = [
-    "sentence-transformers>=2.7",
+    "pytest>=8.2,<9",
+    "pytest-asyncio>=0.23,<2",
+    "ruff>=0.5,<1",
 ]
 
 [build-system]

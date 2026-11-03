@@ -659,3 +659,44 @@ alternative to our plain Deployments + config-watcher arm swaps), a
 **policy engine (PPE)** (a candidate home for the
 sensitivity-is-a-constraint matrix), and a **demos archive** (a natural
 contribution target for this demo once restructured).
+
+## 13. Measurement-compatibility notes (2026-11-03 corrections)
+
+A review pass (external) fixed several real defects in the measurement
+code. Each fix is correct; each also changes what the numbers mean, so
+the recorded values carry these flags:
+
+- **The risk rubric is now one shared function** (`pipeline/risk.py`),
+  asked in the prompt and applied to the truth — and it adapts to whether
+  the dataset annotates a data-protection category. Recorded risk
+  accuracies (MoE 0.65, §3.3) were measured under the old always-high
+  rubric on CUAD; **risk numbers from new runs are not comparable** to
+  them. This is the §3.3 pitfall fixed, not a regression.
+- **CUAD report accuracy was structurally deflated**: the scorer demanded
+  a `missing_data_protection` count the prompt never asked for (CUAD has
+  no DP category). Report-accuracy numbers from new runs will read
+  higher for the right reason.
+- **The pipeline's concurrency was cosmetic**: documents were awaited one
+  at a time, so `--concurrency` never parallelised and **every recorded
+  wall-clock time was a serial time**. Device-time per document — the
+  metric FINDINGS actually quotes — is unaffected. New runs' wall times
+  will be genuinely parallel and much shorter.
+- **The specialist's data-protection alias was a wrong-answer bug**: DP
+  prompts were silently answered with the audit-rights question. DP
+  extraction now forwards to the general model (correct behaviour).
+  Specialist-arm DP fields from old runs are unreliable.
+- **Sensitivity truth on CUAD is honestly absent** (`sensitive: None`):
+  the converter no longer uses the pipeline's own PII screen as a truth
+  label (circular). Screen precision/recall is now computed only on
+  independently labelled sets (synthetic); CUAD screen output remains an
+  observation ("5–12 of 20 docs flagged"), not an accuracy. Governance
+  counting is unchanged — it was always enforcement-of-the-flag, using
+  the screen's own decision.
+- **Chunking hard-splits pathological sentences** (no punctuation for
+  thousands of characters) that could still exceed the embedding window;
+  offsets translated correctly, regression-tested. Micro-shifts in
+  retrieval numbers on affected documents are possible.
+- **The trace relay no longer persists sensitive document text by
+  default** (routing metadata only) and supports an optional bearer token
+  for the trace API — required hygiene now that trace-ui is exposed via
+  Routes.

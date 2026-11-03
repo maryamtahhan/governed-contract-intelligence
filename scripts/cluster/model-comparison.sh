@@ -126,6 +126,7 @@ oc -n "$NS" rollout status deploy/praxis --timeout=300s >/dev/null
 for i in $(seq 1 10); do
   curl -s -m 300 -D /tmp/mc-h -o /dev/null "$GATEWAY/v1/chat/completions" \
     -H 'Content-Type: application/json' \
+    -H "Authorization: Bearer ${TRACE_API_TOKEN:-}" \
     -d '{"model":"Semantic-Qwen","messages":[{"role":"user","content":"Say ok."}],"max_tokens":8}'
   grep -qi "^x-demo-classification:" /tmp/mc-h && break
   sleep 2
@@ -134,16 +135,18 @@ done
 out="$RUNS/arm-D-$VARIANT"
 mkdir -p "$out"
 echo "== running arm D with the $VARIANT CPU pool ($DATA, $DOCS docs)"
-REVIEW_EXTRA=()
+# optional extra hybrid-review args; a plain string (not an array) because
+# macOS bash 3.2 + set -u treats empty-array expansion as unbound
+REVIEW_EXTRA=""
 if [[ "$VARIANT" == moe-thinking ]]; then
   # thinking generates many extra tokens: give each request room and avoid
   # pool contention (the A/B is about quality, not throughput)
-  REVIEW_EXTRA=(--timeout 3600 --concurrency 4)
+  REVIEW_EXTRA="--timeout 3600 --concurrency 4"
 fi
 (cd demo && uv run hybrid-review \
   --gateway "$GATEWAY" --sensitive-gateway "$SENSITIVE_GATEWAY" \
   --data "$DATA" --out "../$out" --arm D --docs "$DOCS" --concurrency "$CONCURRENCY" \
-  "${REVIEW_EXTRA[@]}" \
+  $REVIEW_EXTRA \
   --sample-metrics vllm-cpu=http://127.0.0.1:18081,vllm-gpu=http://127.0.0.1:18082,vllm-gpu-approved=http://127.0.0.1:18084,vllm-gpu-small=http://127.0.0.1:18085)
 
 echo

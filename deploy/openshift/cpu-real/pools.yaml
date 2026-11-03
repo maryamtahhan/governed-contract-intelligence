@@ -9,6 +9,17 @@
 #
 # Pools are labelled demo.openshell.ai/accelerator=cpu so the dashboard and
 # report cannot mistake this for the GPU deployment.
+#
+# CPU isolation: every pool is Guaranteed QoS (requests == limits, integer
+# CPU). With the kubelet CPU manager in its static policy each Guaranteed
+# pod gets an exclusive CPU set, so the pool being measured does not share
+# cores with the other pools, the gateway or the system. Budget on the
+# 288-core SNO: 48 + 48 + 24 + 24 = 144 cores, leaving 144 for everything
+# else. Without a static CPU manager the pods still get their full request
+# (no CFS throttling against other pods' limits) but cores are shared; the
+# manifest alone cannot enable that policy. See README "CPU isolation".
+# Changing a request changes the CPU set and therefore the latency numbers:
+# re-measure, do not splice old and new runs.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -20,7 +31,7 @@ spec:
   selector: {matchLabels: {app: cpureal-vllm-gpu}}
   template:
     metadata:
-      labels: {app: cpureal-vllm-gpu, demo.openshell.ai/accelerator: cpu}
+      labels: {app: cpureal-vllm-gpu, demo.openshell.ai/pool: vllm-gpu, demo.openshell.ai/accelerator: cpu}
     spec:
       automountServiceAccountToken: false
       containers:
@@ -33,7 +44,7 @@ spec:
           ports: [{containerPort: 8000}]
           readinessProbe: {httpGet: {path: /health, port: 8000}, initialDelaySeconds: 240, periodSeconds: 10}
           resources:
-            requests: {cpu: "32", memory: 48Gi}
+            requests: {cpu: "48", memory: 64Gi}
             limits: {cpu: "48", memory: 64Gi}
           volumeMounts:
             - {name: shm, mountPath: /dev/shm}
@@ -61,7 +72,7 @@ spec:
   selector: {matchLabels: {app: cpureal-vllm-gpu-approved}}
   template:
     metadata:
-      labels: {app: cpureal-vllm-gpu-approved, demo.openshell.ai/accelerator: cpu}
+      labels: {app: cpureal-vllm-gpu-approved, demo.openshell.ai/pool: vllm-gpu-approved, demo.openshell.ai/accelerator: cpu}
     spec:
       automountServiceAccountToken: false
       containers:
@@ -74,7 +85,7 @@ spec:
           ports: [{containerPort: 8000}]
           readinessProbe: {httpGet: {path: /health, port: 8000}, initialDelaySeconds: 240, periodSeconds: 10}
           resources:
-            requests: {cpu: "32", memory: 48Gi}
+            requests: {cpu: "48", memory: 64Gi}
             limits: {cpu: "48", memory: 64Gi}
           volumeMounts:
             - {name: shm, mountPath: /dev/shm}
@@ -102,7 +113,7 @@ spec:
   selector: {matchLabels: {app: cpureal-vllm-gpu-small}}
   template:
     metadata:
-      labels: {app: cpureal-vllm-gpu-small, demo.openshell.ai/accelerator: cpu}
+      labels: {app: cpureal-vllm-gpu-small, demo.openshell.ai/pool: vllm-gpu-small, demo.openshell.ai/accelerator: cpu}
     spec:
       automountServiceAccountToken: false
       containers:
@@ -115,7 +126,7 @@ spec:
           ports: [{containerPort: 8000}]
           readinessProbe: {httpGet: {path: /health, port: 8000}, initialDelaySeconds: 120, periodSeconds: 10}
           resources:
-            requests: {cpu: "16", memory: 14Gi}
+            requests: {cpu: "24", memory: 20Gi}
             limits: {cpu: "24", memory: 20Gi}
           volumeMounts:
             - {name: shm, mountPath: /dev/shm}
@@ -144,7 +155,7 @@ spec:
   selector: {matchLabels: {app: cpureal-vllm-cpu}}
   template:
     metadata:
-      labels: {app: cpureal-vllm-cpu, demo.openshell.ai/accelerator: cpu}
+      labels: {app: cpureal-vllm-cpu, demo.openshell.ai/pool: vllm-cpu, demo.openshell.ai/accelerator: cpu}
     spec:
       automountServiceAccountToken: false
       containers:
@@ -157,7 +168,7 @@ spec:
           ports: [{containerPort: 8000}]
           readinessProbe: {httpGet: {path: /health, port: 8000}, initialDelaySeconds: 120, periodSeconds: 10}
           resources:
-            requests: {cpu: "12", memory: 14Gi}
+            requests: {cpu: "24", memory: 20Gi}
             limits: {cpu: "24", memory: 20Gi}
           volumeMounts:
             - {name: shm, mountPath: /dev/shm}

@@ -14,7 +14,7 @@ spec:
   selector: {matchLabels: {app: cpureal-specialist}}
   template:
     metadata:
-      labels: {app: cpureal-specialist, demo.openshell.ai/specialist: cuad-qa}
+      labels: {app: cpureal-specialist, demo.openshell.ai/pool: vllm-cpu, demo.openshell.ai/specialist: cuad-qa}
     spec:
       automountServiceAccountToken: false
       containers:
@@ -27,7 +27,9 @@ spec:
           ports: [{containerPort: 8000}]
           readinessProbe: {httpGet: {path: /health, port: 8000}, initialDelaySeconds: 15}
           resources:
-            requests: {cpu: "1", memory: 2Gi}
+            # Guaranteed QoS (requests == limits) like the pools it fronts:
+            # the specialist and the CPU pool must not compete for cores.
+            requests: {cpu: "4", memory: 4Gi}
             limits: {cpu: "4", memory: 4Gi}
           securityContext:
             allowPrivilegeEscalation: false
