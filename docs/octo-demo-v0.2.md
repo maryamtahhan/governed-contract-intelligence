@@ -61,11 +61,15 @@ somewhere unsafe: if the approved system is unavailable, the request
 pool off mid-run and watching the logs.
 
 **"Can you prove private documents stayed private?"**
-This is the strongest result in the demo: across every test, every
-environment, every document set — **zero cases** of a sensitive document
-being handled outside the approved systems. And we didn't take the
-software's word for it: the proof comes from the gateway's own audit
-records, like checking bank statements rather than asking the bank.
+This is the strongest result in the demo: on every stack and every document
+set tested, **zero** requests that the pipeline's screen labelled sensitive
+were handled outside the approved systems. And we didn't take the software's
+word for it: the proof comes from the gateway's own audit records, like
+checking bank statements rather than asking the bank. Two limits stated
+plainly: the label is the screen's, not a third-party PII annotation (CUAD
+ships none), so this measures containment and routing, not screen accuracy;
+and the count covers recorded traces, which the relays guarantee for pool
+traffic by construction.
 
 **"Is the quality actually good?"**
 Three answers, plus context:
@@ -160,8 +164,12 @@ same fields and scorer for every number) **[measured]**:
 The last row is the pivot's first end-to-end number: retrieve-then-extract
 with a fine-tuned specialist that **cannot hallucinate by construction** (it
 returns spans of the source document) beats the generative MoE by 9 F1 points
-at milliseconds per clause on the CPU tier. Error decomposition: zero
-retrieval misses, zero specialist misses at the top-5 window.
+at milliseconds per clause on the CPU tier. Error decomposition over the 80
+extract steps scored (19 documents) at the top-5 window: zero retrieval
+misses, zero specialist misses — recall 1.000, so the remaining errors are
+extra spans, not missed ones. Scope: that is this scored set, not a general
+hit rate. On the separate 157-pair retrieval probe the same embedder's hit@5
+is 125/157 (~80%).
 
 Risk judgment (rubric-following, vs rule-derived truth): the MoE scores 0.65
 with real discrimination (16 high / 4 low); the 1.5B sits at or below the
@@ -178,12 +186,12 @@ tiered legal embeddings, specialist span extraction, MoE synthesis over
 retrieved evidence — every hop through the governed gateway. First
 measurements: the MTEB(Law) leaderboard ordering **inverts** on our
 within-document task (the 0.6B embedder significantly beats the top-scoring
-8B, McNemar p = 0.0001) while the 8B wins the cross-document regime —
-embedding tiers follow *measured regime fit*, not the leaderboard. The
-external method ladder points the same way: on a fixed CUAD backbone,
-Standard 72.9 → RAG 79.3 → multi-agent 85.8 F1 **[external]** — method moves
-CUAD numbers more than backbone size, and our 0.800-vs-0.712 result is that
-prediction confirmed on our stack.
+8B, McNemar p = 0.0075, 125/157 vs 113/157 hit@5) while the 8B wins the
+cross-document regime — embedding tiers follow *measured regime fit*, not
+the leaderboard. The external method ladder points the same way: on a fixed
+CUAD backbone, Standard 72.9 → RAG 79.3 → multi-agent 85.8 F1 **[external]**
+— method moves CUAD numbers more than backbone size, and our 0.800-vs-0.712
+result is that prediction confirmed on our stack.
 
 ### On-stage moments
 

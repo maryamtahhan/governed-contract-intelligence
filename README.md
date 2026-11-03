@@ -39,7 +39,7 @@ pipeline, the measurement harness and the OpenShell sandbox. **Read
 | Semantic cache in the specialist (V5 ordering rules, zero-FP threshold) | **built, measured** |
 | Four-arm measurement (A/B/C/D) + model-variant comparison on OCP | **built** |
 | Trace UI (waterfall, arms panel, dashboard, audit) | **built** |
-| Test suite | **46 tests green** (`cd demo && uv run pytest`) |
+| Test suite | **58 tests green** (`cd demo && uv run pytest`) |
 | Retrieval evaluation (chunking + recall@k/MRR vs annotation spans) | **run, both regimes — ordering inverts within-doc, restores cross-doc (FINDINGS §11)** |
 | docling ingestion + PII screen at ingest | designed (§11) |
 | hybrid-bench concurrency sweep, thinking-mode A/B, V2 tool-calling | open (FINDINGS §9) |
@@ -150,6 +150,24 @@ sampling). The overlays carry the platform fixes from FINDINGS §7 (cpu
 limits, writable cache volumes, /dev/shm sizing, model-cache PVC for small
 models, emptyDir for the MoE — read it before changing anything).
 
+The measured pools are Guaranteed QoS and assume the NTO CPU-isolation
+profile in [`deploy/openshift/cpu-isolation/`](deploy/openshift/cpu-isolation/):
+SMT siblings offlined so one CPU request is one physical core, and
+`single-numa-node` placement. That profile is **generated for the node it
+runs on**, not portable: the SNO here is a Xeon 6960P with six 24-core NUMA
+nodes, so each 24-core 7B pool needs a whole node. On any other node the CPU
+numbering, NUMA boundaries and pool-to-node fit differ — read `lscpu` first
+and regenerate the three lists (commands in that README). The Linux stack and
+the g5 run no NTO profile at all: use their numbers for routing and quality,
+and on the g5 for device-time, never for CPU-latency comparisons against the
+isolated OpenShift runs.
+
+Apply and verify it before a measurement series — the README there has the
+numbering check, the per-node CPU budget, the server-side dry-run command,
+and the opt-in transparent-hugepages experiment. Without the profile the
+pods still run, but their cpuset is not deterministic and their latency is
+not comparable with the recorded runs.
+
 Then:
 
 ```bash
@@ -165,6 +183,21 @@ deploy/praxis`. NetworkPolicies restrict the pools to the trace-ui relays
 (the V15 enforcement layer). The OpenClaw sandbox keeps its egress policy:
 praxis (read-write) and read-only api.github.com; everything else denied and
 logged (`openshell logs`).
+
+The trace UI has no Route in the base install — the dashboard holds contract
+questions and responses. To publish it, set a token and opt in:
+
+```bash
+oc -n openshell-demo set env deploy/trace-ui TRACE_API_TOKEN=<token>
+oc apply -k manifests/overlays/trace-ui-route
+```
+
+The relays reach trace-ui through the Service either way. The audit trail is
+SQLite on the trace-ui PVC, exported as plaintext `audit.jsonl`; raw traces
+are a rolling window of 250 (`TRACE_MAX_TRACES`), so a governance check is
+only complete when the window covers the run — per-run summaries in the
+`runs` table are the durable record. Treat the PVC and exports as sensitive,
+and apply your own retention beyond the demo's.
 
 ## Measurement design
 
@@ -189,8 +222,9 @@ compares:
 All numbers, protocols and caveats in [FINDINGS.md](FINDINGS.md) — read it
 before quoting any of these:
 
-- **Governance**: arm D = 0 sensitive violations on every stack, every
-  dataset; A/B = 25, C = 12–24.
+- **Governance**: arm D = 0 sensitive violations (requests the screen
+  labelled sensitive) on every stack, every dataset; A/B = 25, C = 12–24.
+  This is a containment result — routing, not PII ground truth (FINDINGS §2).
 - **Quality (CUAD held-out test split)**: 1.5B F1 0.242 (recall 1.0,
   precision ~0.15 — always answers, usually wrong: the worst failure shape
   for legal work); 35B-A3B MoE 0.712 (risk 0.65 with real discrimination).
@@ -231,7 +265,7 @@ demo/src/hybrid_demo/
     traceui/             recording relays, dashboard, audit export
 demo/tools/              classifier probes, prompt calibration, validators,
                          paired-significance tests (mcnemar.py)
-demo/tests/              46 tests incl. e2e against a praxis stub
+demo/tests/              58 tests incl. e2e against a praxis stub
 manifests/               OpenShift base (pools, llm-d-sc, praxis, trace-ui, netpols)
 manifests/praxis/        the four routing configs, shared with the Linux stack
 deploy/linux/            docker-compose / podman-compose stack
@@ -282,8 +316,9 @@ scripts/linux/down.sh -v             # Linux stack, -v deletes traces too
 - docling ingestion, portfolio-scale retrieval and the hybrid-bench
   concurrency sweep are designed but not built (FINDINGS §9, §11).
 - OpenShell's chart is experimental upstream; Kata is untested.
-- The gateway runs plaintext HTTP behind port-forwards (add OIDC/mTLS +
-  Routes before sharing).
+- The gateway runs plaintext HTTP behind port-forwards (add OIDC/mTLS
+  before sharing). The trace UI can be published with an opt-in Route plus
+  `TRACE_API_TOKEN`, but the gateway path itself has no auth.
 - The sensitive entry is chosen by the pipeline's PII screen (a DLP-style
   gate); llm-d-sc's sensitivity modelcar exists but two-label routing in
   one praxis chain is unvalidated (V19). Network policies provide the

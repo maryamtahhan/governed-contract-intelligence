@@ -52,6 +52,17 @@ swaps via praxis's config watcher, audit export (JSONL, one object per
 trace), and the PII screen (precision 1.0, recall 1.0 on synthetic; 5–12 of
 20 CUAD docs flagged, real contract text).
 
+What "0 violations" does and does not mean: sensitivity is whatever the
+pipeline's screen labels sensitive, and CUAD ships no PII ground truth
+(`sensitive=None`). The count therefore proves that **no request the screen
+called sensitive reached an unapproved pool** on any stack — a routing and
+containment result, verified from the gateway's records independently of
+the pipeline. It is not evidence that the CUAD corpus contains no PII, nor a
+measure of screen accuracy on real contracts beyond the 20-document sample
+above. Violations are counted per recorded trace; a request with no trace row
+at all would not appear in the count, which is why the auto-routed paths are
+exercised through the recording relays by construction.
+
 ## 3. Quality — what each tier of model is actually good at
 
 ### 3.1 Extraction is a copy task; real contracts are where it gets hard **[measured]**
@@ -544,14 +555,21 @@ PDF/DOCX corpus ─> docling ingestion (CPU) ─> PII screen at ingest
     sentence offsets, so chunks on ~40% of docs (any doc with a
     >1600-char paragraph) carried text from the document's start and
     wrong ranges — gold spans deep in those documents overlapped **no**
-    chunk. Fixed (3 lines) + 5 regression tests (`test_chunking.py`,
-    46 tests green); every affected number was rerun once and the values
-    above are the corrected ones. Headline movements: within-doc R@10
-    0.854 → **0.981** (litil); the ordering conclusions all survived
+    chunk. Fixed (3 lines) + 5 regression tests (`test_chunking.py`; the
+    suite is now 58 tests); every affected number was rerun once and the
+    values above are the corrected ones. Headline movements: within-doc
+    R@10 0.854 → **0.981** (litil); the ordering conclusions all survived
     (inversion within-doc, gate (a) no-reorder, gate (b) 8B-wins-cross-doc:
     MRR 0.921 vs 0.880/0.866). Significance on corrected per-pair data
-    (McNemar, hit@5): litil > octen p=0.0001, litil > dinghy-0.6B
-    p=0.0018, dinghy-0.6B vs octen p=0.12 (wash).
+    (McNemar, hit@5, exact test; reproduce with
+    `cd demo && uv run python tools/mcnemar.py
+    ../runs/retrieval/litil-embed-0.6b--baseline-perpair.json
+    ../runs/retrieval/octen-law-8b-v1--baseline-perpair.json --k 5`):
+    litil > octen **p = 0.0075** (125/157 vs 113/157), litil >
+    dinghy-0.6B **p = 0.0215** (125 vs 117), dinghy-0.6B vs octen
+    p = 0.4240 (wash, 117 vs 113). Earlier drafts quoted p=0.0001 and
+    p=0.0018 from a pre-correction analysis; those values are superseded
+    and are not reproducible from the committed per-pair files.
   - **dinghy-8B evaluated (2026-11-02, corrected protocol):** within-doc
     MRR 0.698 (best point estimate; statistically **tied** with litil,
     p=0.134; significantly above octen, p=0.013) and cross-doc MRR 0.912
@@ -575,8 +593,13 @@ PDF/DOCX corpus ─> docling ingestion (CPU) ─> PII screen at ingest
     (0.712) by 9 F1 points**, cannot hallucinate by construction, runs
     at ms/clause on the CPU tier, and the top-5 window even beats the
     specialist's own full-document number (retrieval filters
-    wrong-span answers). Error decomposition at top-5: zero retrieval
-    misses, zero specialist misses. Evidence:
+    wrong-span answers). Error decomposition at top-5 over these 80
+    extract steps in 19 documents: **zero retrieval misses and zero
+    specialist misses**, so recall is 1.000; the remaining errors are 12
+    extra spans (precision 0.667), not misses. That is a statement about this
+    scored set, not a general hit rate: on the separate 157-pair
+    retrieval probe the same embedder's hit@5 is 125/157 (~80%).
+    Evidence:
     `runs/retrieval/e2e-specialist{,-top10}.json`; harness:
     `hybrid-retrieval-e2e`. This is the SOTA-ladder prediction
     (§3.5, method > backbone) confirmed on our stack.
@@ -626,6 +649,15 @@ directly onto our two open architecture items:
 | 0.4 (open) | custom taxonomies: bring your own labels for business routing | **native specialist composition** — extraction→specialist stops living inside the composite pool and moves up into the gateway |
 | 0.5 (open) | feedback loop: export classification outcomes for retraining | closes the V14 label-disagreement loop |
 
+Health and readiness probes are now upstream too (PR #42, 2026-10-08): the
+server speaks the standard `grpc.health.v1` protocol, which Kubernetes
+`grpc:` probes understand. Our pinned `v0.1.0` image predates that change —
+the tag was pushed 2026-10-20 but built from the release tag, and the binary
+has no health service — so the manifest keeps a TCP readiness probe and a
+comment saying why. A `grpc:` probe against this image would leave the pod
+never Ready. Adopting the gRPC probe is a reason to move to a newer image,
+not a change to make on this one.
+
 Also relevant now: the **sensitivity taxonomy ships built in**
 (`classifiers/sensitivity.json`: PUBLIC/INTERNAL/CONFIDENTIAL/REGULATED/
 NEVER_EGRESS, anchor-topk-mean method). A cheap, high-value experiment:
@@ -637,6 +669,10 @@ gates: `hack/spec-check --promotion` refuses while any gate is unmet) is
 the pattern our FINDINGS labelling discipline aspires to.
 
 ### Praxis (`praxis-proxy/ai`)
+
+Two repos share the name: `praxis-proxy/praxis` is the Rust proxy framework
+(v0.7.5, 2026-10-21), and `praxis-proxy/ai` is the AI gateway built on it.
+The gateway is what we deploy, and the versions below are the gateway's.
 
 We run v0.7.0; **v0.9.0 is current** (2026-10-30). Items in v0.8/v0.9
 that matter to us:
@@ -652,9 +688,17 @@ that matter to us:
   happened** (v0.7/v0.8) — we route via chains/config today; worth
   evaluating whether intelligent_route formalises our matrix.
 
-Upgrade path: v0.7.0 → v0.9.0 is a config-compatibility question (0.x
-APIs may change), best tested on the simulated stack first. The org also
-hosts an **operator** (Kubernetes CRD-based deployment — a future
+Upgrade path: the deployed image is `quay.io/rmalone/praxis-ai-llm-d-sc`,
+a fork that carries the `llm_d_sc` filter the upstream gateway does not
+have. Its registry publishes only v0.7.0, so v0.7.0 → v0.9.0 means
+rebuilding that fork on a newer `ai` release, not changing a tag; treat the
+result as a new stack and re-run the config-compatibility checks on the
+simulated stack first (0.x configs may change). The framework releases
+since v0.7.0 also carry security fixes (v0.7.4 redacts credential-looking
+header values from `--dump` and the admin pipelines view; v0.7.5 updates
+rustls-webpki for RUSTSEC-2026-0382 and rustls for ECH/Brotli issues) —
+they matter if TLS upstreams or the admin surface are ever enabled. The
+org also hosts an **operator** (Kubernetes CRD-based deployment — a future
 alternative to our plain Deployments + config-watcher arm swaps), a
 **policy engine (PPE)** (a candidate home for the
 sensitivity-is-a-constraint matrix), and a **demos archive** (a natural

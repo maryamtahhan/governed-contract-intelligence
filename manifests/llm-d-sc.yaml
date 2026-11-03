@@ -45,6 +45,16 @@ spec:
             - name: grpc
               containerPort: 50051
               protocol: TCP
+          # TCP readiness, not the standard gRPC health probe: upstream main
+          # serves grpc.health.v1 (PR #42, 2026-10-08), but the pinned
+          # v0.1.0 image was built from the release tag, which predates it
+          # and contains no health service. A `grpc:` probe against this
+          # image fails and the pod never becomes Ready. The process logs
+          # "READY (resident Candle classifier loaded and warmed)"; that log
+          # is not exposed as a probe. Re-check the image before changing
+          # this to grpc. Until then, praxis's llm_d_sc 500 ms timeout with
+          # `default_cluster` is what protects a request that arrives before
+          # the model is warm (FINDINGS §7).
           readinessProbe:
             tcpSocket:
               port: grpc

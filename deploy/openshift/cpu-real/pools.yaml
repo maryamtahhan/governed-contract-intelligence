@@ -11,13 +11,22 @@
 # report cannot mistake this for the GPU deployment.
 #
 # CPU isolation: every pool is Guaranteed QoS (requests == limits, integer
-# CPU). With the kubelet CPU manager in its static policy each Guaranteed
-# pod gets an exclusive CPU set, so the pool being measured does not share
-# cores with the other pools, the gateway or the system. Budget on the
-# 288-core SNO: 48 + 48 + 24 + 24 = 144 cores, leaving 144 for everything
-# else. Without a static CPU manager the pods still get their full request
-# (no CFS throttling against other pods' limits) but cores are shared; the
-# manifest alone cannot enable that policy. See README "CPU isolation".
+# CPU). With the NTO PerformanceProfile in deploy/openshift/cpu-isolation,
+# the sibling hyperthreads of the isolated cores are offlined, so one CPU
+# request is one whole physical core and the static CPU manager gives each
+# pod an exclusive set. The profile was generated from the real SNO
+# topology (2026-11-03): 288 logical / 144 cores in SIX 24-core NUMA
+# nodes. A 24-core pod needs a whole node under single-numa-node, so each
+# 7B pool takes one; the 12/16-core pools and the specialist share the
+# others. Base budget: 24 + 24 + 12 + 12 + 2 = 74 of the profile's 78
+# isolated cores (4 idle on node4). The MoE/9B variants swap the 12-core
+# CPU pool for 16: 78 of 78, an exact fit. The numbers are PHYSICAL cores.
+# The earlier 48/48/24/24 were logical requests under full-pcpus-only,
+# i.e. the same 24/24/12/12 physical cores: the offlining profile makes
+# the mapping 1:1.
+# Without the profile the pod still gets its full request (no CFS
+# throttling) but shares cores with other pods; the manifest alone cannot
+# enable the static policy. See deploy/openshift/cpu-isolation/README.md.
 # Changing a request changes the CPU set and therefore the latency numbers:
 # re-measure, do not splice old and new runs.
 apiVersion: apps/v1
@@ -40,12 +49,22 @@ spec:
           args: ["--model", "Qwen/Qwen2.5-7B-Instruct", "--served-model-name", "Semantic-Qwen",
                  "--port", "8000", "--max-model-len", "16384",
                  "--gpu-memory-utilization", "0.80"]
-          env: [{name: HF_HOME, value: /cache/hf}, {name: HOME, value: /cache}, {name: XDG_CACHE_HOME, value: /cache/xdg}]
+          env:
+            - {name: HF_HOME, value: /cache/hf}
+            # weights are PVC-cached; skip HF revision checks (immune to DNS flaps).
+            # Disable for a first seed run on a fresh cluster.
+            - {name: HF_HUB_OFFLINE, value: "1"}
+            - {name: HOME, value: /cache}
+            - {name: XDG_CACHE_HOME, value: /cache/xdg}
+            # Bind one OpenMP thread per physical core, one NUMA node per
+            # rank; with siblings offlined this is 1 CPU = 1 core. vLLM
+            # reserves one CPU for the framework, so N-1 threads run.
+            - {name: VLLM_CPU_OMP_THREADS_BIND, value: auto}
           ports: [{containerPort: 8000}]
           readinessProbe: {httpGet: {path: /health, port: 8000}, initialDelaySeconds: 240, periodSeconds: 10}
           resources:
-            requests: {cpu: "48", memory: 64Gi}
-            limits: {cpu: "48", memory: 64Gi}
+            requests: {cpu: "24", memory: 64Gi}
+            limits: {cpu: "24", memory: 64Gi}
           volumeMounts:
             - {name: shm, mountPath: /dev/shm}
             - {name: hf-cache, mountPath: /cache}
@@ -81,12 +100,22 @@ spec:
           args: ["--model", "Qwen/Qwen2.5-7B-Instruct", "--served-model-name", "Semantic-Qwen",
                  "--port", "8000", "--max-model-len", "16384",
                  "--gpu-memory-utilization", "0.80"]
-          env: [{name: HF_HOME, value: /cache/hf}, {name: HOME, value: /cache}, {name: XDG_CACHE_HOME, value: /cache/xdg}]
+          env:
+            - {name: HF_HOME, value: /cache/hf}
+            # weights are PVC-cached; skip HF revision checks (immune to DNS flaps).
+            # Disable for a first seed run on a fresh cluster.
+            - {name: HF_HUB_OFFLINE, value: "1"}
+            - {name: HOME, value: /cache}
+            - {name: XDG_CACHE_HOME, value: /cache/xdg}
+            # Bind one OpenMP thread per physical core, one NUMA node per
+            # rank; with siblings offlined this is 1 CPU = 1 core. vLLM
+            # reserves one CPU for the framework, so N-1 threads run.
+            - {name: VLLM_CPU_OMP_THREADS_BIND, value: auto}
           ports: [{containerPort: 8000}]
           readinessProbe: {httpGet: {path: /health, port: 8000}, initialDelaySeconds: 240, periodSeconds: 10}
           resources:
-            requests: {cpu: "48", memory: 64Gi}
-            limits: {cpu: "48", memory: 64Gi}
+            requests: {cpu: "24", memory: 64Gi}
+            limits: {cpu: "24", memory: 64Gi}
           volumeMounts:
             - {name: shm, mountPath: /dev/shm}
             - {name: hf-cache, mountPath: /cache}
@@ -122,12 +151,22 @@ spec:
           args: ["--model", "Qwen/Qwen2.5-1.5B-Instruct", "--served-model-name", "Semantic-Qwen",
                  "--port", "8000", "--max-model-len", "16384",
                  "--gpu-memory-utilization", "0.80"]
-          env: [{name: HF_HOME, value: /cache/hf}, {name: HOME, value: /cache}, {name: XDG_CACHE_HOME, value: /cache/xdg}]
+          env:
+            - {name: HF_HOME, value: /cache/hf}
+            # weights are PVC-cached; skip HF revision checks (immune to DNS flaps).
+            # Disable for a first seed run on a fresh cluster.
+            - {name: HF_HUB_OFFLINE, value: "1"}
+            - {name: HOME, value: /cache}
+            - {name: XDG_CACHE_HOME, value: /cache/xdg}
+            # Bind one OpenMP thread per physical core, one NUMA node per
+            # rank; with siblings offlined this is 1 CPU = 1 core. vLLM
+            # reserves one CPU for the framework, so N-1 threads run.
+            - {name: VLLM_CPU_OMP_THREADS_BIND, value: auto}
           ports: [{containerPort: 8000}]
           readinessProbe: {httpGet: {path: /health, port: 8000}, initialDelaySeconds: 120, periodSeconds: 10}
           resources:
-            requests: {cpu: "24", memory: 20Gi}
-            limits: {cpu: "24", memory: 20Gi}
+            requests: {cpu: "12", memory: 20Gi}
+            limits: {cpu: "12", memory: 20Gi}
           volumeMounts:
             - {name: shm, mountPath: /dev/shm}
             - {name: hf-cache, mountPath: /cache}
@@ -164,12 +203,22 @@ spec:
           args: ["--model", "Qwen/Qwen2.5-1.5B-Instruct", "--served-model-name", "Semantic-Qwen",
                  "--port", "8000", "--max-model-len", "16384",
                  "--gpu-memory-utilization", "0.80"]
-          env: [{name: HF_HOME, value: /cache/hf}, {name: HOME, value: /cache}, {name: XDG_CACHE_HOME, value: /cache/xdg}]
+          env:
+            - {name: HF_HOME, value: /cache/hf}
+            # weights are PVC-cached; skip HF revision checks (immune to DNS flaps).
+            # Disable for a first seed run on a fresh cluster.
+            - {name: HF_HUB_OFFLINE, value: "1"}
+            - {name: HOME, value: /cache}
+            - {name: XDG_CACHE_HOME, value: /cache/xdg}
+            # Bind one OpenMP thread per physical core, one NUMA node per
+            # rank; with siblings offlined this is 1 CPU = 1 core. vLLM
+            # reserves one CPU for the framework, so N-1 threads run.
+            - {name: VLLM_CPU_OMP_THREADS_BIND, value: auto}
           ports: [{containerPort: 8000}]
           readinessProbe: {httpGet: {path: /health, port: 8000}, initialDelaySeconds: 120, periodSeconds: 10}
           resources:
-            requests: {cpu: "24", memory: 20Gi}
-            limits: {cpu: "24", memory: 20Gi}
+            requests: {cpu: "12", memory: 20Gi}
+            limits: {cpu: "12", memory: 20Gi}
           volumeMounts:
             - {name: shm, mountPath: /dev/shm}
             - {name: hf-cache, mountPath: /cache}

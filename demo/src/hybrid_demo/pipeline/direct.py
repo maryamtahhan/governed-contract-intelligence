@@ -73,13 +73,13 @@ async def run(endpoint: str, data_dir: str, out_dir: str,
                     (Path(data_dir) / "documents" / f"{d}.txt").read_text(),
                     list(CLAUSE_KEYS))
             for d in doc_ids])
-
-    records = [r for doc in doc_records for r in doc]
-    lines = [f"{r['doc_id']}: " + json.dumps(r["content"], ensure_ascii=False)
-             for r in records if r["step"].startswith("extract")]
+        records = [r for doc in doc_records for r in doc]
+        lines = [f"{r['doc_id']}: " + json.dumps(r["content"], ensure_ascii=False)
+                 for r in records if r["step"].startswith("extract")]
+        # the report request must use the still-open client
+        report_content = await _report(client, lines, len(doc_ids))
     records.append({"step": "report", "doc_id": None, "outcome": "served",
-                    "latency_ms": 0, "content": parse_content(
-                        await _report(client, lines, len(doc_ids)))})
+                    "latency_ms": 0, "content": parse_content(report_content)})
 
     summary = {
         "arm": "direct", "mode": "direct", "docs": len(doc_ids),

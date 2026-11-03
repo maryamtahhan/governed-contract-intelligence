@@ -1,0 +1,80 @@
+# Recommended CPU isolation for measurement runs.
+#
+# Generated from the real topology of the SNO (rhgaudi3s2, checked
+# 2026-11-03): Intel Xeon 6960P, 2 sockets x 72 cores, SMT on = 144 cores /
+# 288 threads, and SIX NUMA nodes of 24 cores each:
+#
+#   node0  0-23     + 144-167     node3  72-95    + 216-239
+#   node1  24-47    + 168-191     node4  96-119   + 240-263
+#   node2  48-71    + 192-215     node5  120-143  + 264-287
+#
+# Verify before applying. These lists are for THIS node's numbering; on a
+# different node type regenerate them (see README) instead of pasting them.
+#   oc debug node/<node> -- chroot /host lscpu -e=CPU,CORE,SOCKET,NODE,ONLINE
+#   oc debug node/<node> -- chroot /host cat /sys/devices/system/cpu/node*/cpulist
+#
+# The Node Tuning Operator (NTO) owns the kubelet CPU manager and topology
+# manager. `cpu.offlined` is REQUIRED for this layout: the sibling of an
+# isolated core must be taken offline explicitly. NTO does not offline CPUs
+# that are merely absent from `reserved` and `isolated`; it only tells the
+# kubelet that `reserved` is unavailable, so any other online CPU (including
+# an isolated core's SMT sibling) stays in the exclusive pool and can be
+# allocated to a Guaranteed pod. `offlined` is present in the v1/v2 APIs of
+# OpenShift 4.16+; confirm with `oc explain performanceprofile.spec.cpu.offlined`.
+# If the field is missing, use kubeletconfig-fallback.yaml instead.
+#
+# Placement under topologyPolicy single-numa-node. A 24-core pod needs a
+# whole 24-core NUMA node, so the two 7B pools each take one. The 1.5B
+# pool, the MoE/9B CPU pool, and the specialist share the remaining nodes:
+#
+#   cpureal-vllm-gpu            24  -> node1 (24-47)
+#   cpureal-vllm-gpu-approved   24  -> node2 (48-71)
+#   cpureal-vllm-gpu-small      12  -> node3 (72-83)
+#   cpureal-vllm-cpu            12  -> node4 (96-107)   MoE/9B: 16 (96-111)
+#   specialist                   2  -> node4 (112-113)
+#
+# Base = 74 of 78 isolated cores (4 idle); MoE/9B = 78 of 78. Nodes 0 and 5
+# stay reserved, including CPU 0, so kernel/IRQ housekeeping and the control
+# plane never share a core with a measured pod. Reserved = 66 cores /
+# 132 logical CPUs for the gateway, classifier, trace-ui, system pods and
+# the sandbox.
+#
+# Read README.md before applying: this changes node configuration and
+# reboots the node on a single-node cluster. Do not apply this file and
+# kubeletconfig-fallback.yaml together.
+apiVersion: performance.openshift.io/v2
+kind: PerformanceProfile
+metadata:
+  name: cpu-isolation
+spec:
+  cpu:
+    # Whole NUMA nodes 0 and 5, plus the unisolated remainder of nodes 3
+    # and 4. Both siblings are online for every reserved core.
+    reserved: "0-23,84-95,114-143,144-167,228-239,258-287"
+    # Nodes 1 and 2 in full (the two 24-core 7B pools), node3 cores 72-83
+    # (1.5B pool), node4 cores 96-113 (CPU/MoE pool + specialist).
+    isolated: "24-83,96-113"
+    # SMT siblings of every isolated core: node1, node2, node3 (72-83) and
+    # node4 (96-113). NTO creates a systemd unit that offlines exactly these
+    # CPUs at boot. Do not omit this list: NTO does not derive it from the
+    # gaps in `reserved`/`isolated`.
+    offlined: "168-227,240-257"
+  numa:
+    # Each pod's CPUs (and memory/devices, once the memory manager is on)
+    # stay on one NUMA node. vLLM reads weights from host memory every
+    # token, so crossing nodes makes latency depend on placement.
+    topologyPolicy: single-numa-node
+  # Explicit hugetlbfs pages are deliberately NOT reserved here. As of
+  # vLLM main, the CPU backend has no hugetlbfs allocation path (only the
+  # UMBP KV connector and one DeepSeek model call MADV_HUGEPAGE), so a
+  # reserved pool would be stranded and unavailable to ordinary memory.
+  # Transparent hugepages are the lever that can affect vLLM's anonymous
+  # allocations; see thp-experiment.yaml and the README.
+  # hugepages:
+  #   pages:
+  #     - {size: 2M, count: 8192, node: 0}
+  #     - {size: 2M, count: 8192, node: 1}
+  machineConfigPoolSelector:
+    machineconfiguration.openshift.io/role: master
+  nodeSelector:
+    node-role.kubernetes.io/master: ""
