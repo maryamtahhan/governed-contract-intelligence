@@ -22,7 +22,6 @@ done
 
 $COMPOSE version >/dev/null 2>&1 || { echo "compose not usable: $COMPOSE" >&2; exit 1; }
 # live.yaml is the config praxis watches; arms are swapped by copying over it.
-[ -f "$STACK/praxis-live.yaml" ] || true
 PRAXIS_DIR=manifests/praxis
 [ -f "$PRAXIS_DIR/live.yaml" ] || cp "$PRAXIS_DIR/config.yaml" "$PRAXIS_DIR/live.yaml"
 

@@ -5,4 +5,3 @@ __pycache__/
 .ruff_cache/
 data/synthetic/
 data/cuad/
-../runs/

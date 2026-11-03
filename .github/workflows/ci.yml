@@ -1,0 +1,27 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: demo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        # Base install only: torch/transformers (the specialist extra) are
+        # not needed for the unit suite and would dominate CI time.
+        run: uv sync --locked --dev
+      - name: Lint
+        run: uv run ruff check src tests tools
+      - name: Test
+        # CUAD is not committed; its tests skip cleanly when data/cuad is
+        # absent, so CI covers the converter only when the data is present.
+        run: uv run pytest -q
