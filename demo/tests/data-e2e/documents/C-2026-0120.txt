@@ -1,0 +1,10 @@
+STATEMENT OF WORK
+Contract Reference: C-2026-0120
+Effective Date: 2025-08-01   Initial Term: 48 months
+Between: Northwind Analytics Ltd ("Supplier") and Kestrel Logistics Group ("Client")
+
+CLAUSES
+Termination: This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.
+Governing Law: This Agreement shall be governed by the laws of England and Wales.
+Liability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.
+(No data-protection clause is present in this Agreement.)

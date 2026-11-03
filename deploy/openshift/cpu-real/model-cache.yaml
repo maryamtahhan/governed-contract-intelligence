@@ -1,0 +1,15 @@
+# Shared, persistent model cache for all pools (RWX on the NFS storage
+# class). Weights and vLLM compile caches survive pod recreation, so
+# restarting a pool - or pulling the plug and restoring it - takes ~2 minutes
+# instead of a full model download + compile. The HF cache is idempotent:
+# a pod that finds the weights present just starts.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: model-cache
+spec:
+  accessModes: [ReadWriteMany]
+  resources:
+    requests:
+      storage: 150Gi
+  storageClassName: nfs-storage

@@ -1,0 +1,106 @@
+# The praxis gateway with the llm_d_sc filter: two listeners (general :8080,
+# sensitive :8083), four pools behind the trace-ui relays. The four configs
+# (config.yaml = arm D + the A/B/C baselines) come from deploy/linux/praxis/
+# via the kustomize configMapGenerator, so the Linux stack and OpenShift run
+# byte-identical routing configs. Arms are swapped with
+#   oc -n openshell-demo set env deploy/praxis PRAXIS_CONFIG=/etc/praxis/arm-a.yaml
+#   oc -n openshell-demo rollout status deploy/praxis
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: praxis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: praxis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: praxis
+        app.kubernetes.io/component: gateway
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: praxis
+          image: quay.io/rmalone/praxis-ai-llm-d-sc:v0.7.0
+          command: ["praxis-ai"]
+          env:
+            - name: PRAXIS_CONFIG
+              value: /etc/praxis/config.yaml
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: sensitive
+              containerPort: 8083
+              protocol: TCP
+            - name: admin
+              containerPort: 9901
+              protocol: TCP
+            - name: metrics
+              containerPort: 9902
+              protocol: TCP
+          # Readiness uses /healthy, not /ready: with active health checks on,
+          # /ready returns 503 whenever a vLLM cluster is down, which would
+          # pull the gateway out of the Service exactly when failover must
+          # work. (Same note as RMalone8/llm-d-sc-demo.)
+          readinessProbe:
+            exec:
+              command: ["wget", "-qO-", "http://127.0.0.1:9902/healthy"]
+            initialDelaySeconds: 3
+          livenessProbe:
+            exec:
+              command: ["wget", "-qO-", "http://127.0.0.1:9902/healthy"]
+            initialDelaySeconds: 5
+          resources:
+            # The cpu limit matters: without it the runtime sizes its thread
+            # pool from the node's CPU count (288 here) and the thread stacks
+            # alone blow past the memory limit.
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: "8"
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: config
+              mountPath: /etc/praxis
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: config
+          configMap:
+            name: praxis-config
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: praxis
+spec:
+  selector:
+    app.kubernetes.io/name: praxis
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+    - name: sensitive
+      port: 8083
+      targetPort: sensitive
+      protocol: TCP
+    - name: metrics
+      port: 9902
+      targetPort: metrics
+      protocol: TCP

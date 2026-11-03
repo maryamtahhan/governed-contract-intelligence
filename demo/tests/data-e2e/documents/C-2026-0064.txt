@@ -1,0 +1,10 @@
+MASTER SERVICES AGREEMENT
+Contract Reference: C-2026-0064
+Effective Date: 2026-08-01   Initial Term: 36 months
+Between: Harbourline Software DAC ("Supplier") and Greystone Energy Partners ("Client")
+
+CLAUSES
+Termination: This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.
+Governing Law: This Agreement shall be governed by the laws of Ireland.
+Liability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.
+Data Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.

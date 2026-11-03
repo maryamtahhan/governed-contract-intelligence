@@ -1,0 +1,10 @@
+STATEMENT OF WORK
+Contract Reference: C-2026-0099
+Effective Date: 2026-02-01   Initial Term: 12 months
+Between: Vistaview Systems GmbH ("Supplier") and Ravenscourt Media SA ("Client")
+
+CLAUSES
+Termination: This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.
+Governing Law: This Agreement shall be governed by the laws of Germany.
+Liability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.
+Data Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.

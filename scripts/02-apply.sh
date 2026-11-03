@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Apply the model pools, classifier, gateway and trace UI; requires 00 and 01
+# to have succeeded. The trace-ui server is mounted from a ConfigMap created
+# here from the Python package file, so no image build is needed.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+NS="${NS:-openshell-demo}"
+
+oc create configmap trace-ui-server \
+  --from-file=server.py=demo/src/hybrid_demo/traceui/server.py \
+  --dry-run=client -o yaml | oc apply -f - > /dev/null
+oc apply -k manifests

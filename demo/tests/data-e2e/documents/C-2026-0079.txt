@@ -1,0 +1,15 @@
+DATA PROCESSING AGREEMENT
+Contract Reference: C-2026-0079
+Effective Date: 2025-06-01   Initial Term: 24 months
+Between: Harbourline Software DAC ("Supplier") and Greystone Energy Partners ("Client")
+
+CLAUSES
+Termination: This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.
+Governing Law: This Agreement shall be governed by the laws of Ireland.
+Liability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.
+Data Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.
+
+SCHEDULE 3 - PERSONAL DATA
+Data Controller contact: Hannah Lombard, hannah.lombard@greystone.example, +353 1 555 4868
+Data Controller address: 26 Galway Main Street, Waterford
+Employee IDs: EMP-997004, EMP-480303

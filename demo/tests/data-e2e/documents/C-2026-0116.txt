@@ -1,0 +1,15 @@
+DATA PROCESSING AGREEMENT
+Contract Reference: C-2026-0116
+Effective Date: 2025-04-01   Initial Term: 24 months
+Between: Copperfield Data Services Inc ("Supplier") and Ardmore Financial Services ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.
+Governing Law: This Agreement shall be governed by the laws of Germany.
+Liability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.
+(No data-protection clause is present in this Agreement.)
+
+SCHEDULE 3 - PERSONAL DATA
+Data Controller contact: Fiona Gallagher, fiona.gallagher@ardmore.example, +353 1 555 9444
+Data Controller address: 140 Limerick Main Street, Galway
+Employee IDs: EMP-517568, EMP-955015

@@ -1,0 +1,15 @@
+STATEMENT OF WORK
+Contract Reference: C-2026-0103
+Effective Date: 2025-10-01   Initial Term: 12 months
+Between: Northwind Analytics Ltd ("Supplier") and Pemberton Retail Holdings ("Client")
+
+CLAUSES
+Termination: This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.
+Governing Law: This Agreement shall be governed by the laws of the State of New York.
+Liability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.
+Data Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.
+
+SCHEDULE 3 - PERSONAL DATA
+Data Controller contact: Fiona Gallagher, fiona.gallagher@pemberton.example, +353 1 555 7421
+Data Controller address: 182 Dublin Main Street, Galway
+Employee IDs: EMP-235215, EMP-723945

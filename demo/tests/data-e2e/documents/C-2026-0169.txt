@@ -1,0 +1,15 @@
+DATA PROCESSING AGREEMENT
+Contract Reference: C-2026-0169
+Effective Date: 2026-12-01   Initial Term: 48 months
+Between: Northwind Analytics Ltd ("Supplier") and Ballymore Foods plc ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.
+Governing Law: This Agreement shall be governed by the laws of Ireland.
+Liability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.
+Data Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.
+
+SCHEDULE 3 - PERSONAL DATA
+Data Controller contact: Ciara Casey, ciara.casey@ballymore.example, +353 1 555 2578
+Data Controller address: 62 Cork Main Street, Waterford
+Employee IDs: EMP-649857, EMP-256130

@@ -1,0 +1,56 @@
+[project]
+name = "hybrid-demo"
+version = "0.1.0"
+description = "Contract-review demo on hybrid CPU+GPU inference: pipeline, simulated pools, trace UI, measurement"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "httpx>=0.27",
+    "prometheus-client>=0.20",
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+hybrid-gendata = "hybrid_demo.pipeline.generate:main"
+hybrid-review = "hybrid_demo.pipeline.review:main"
+hybrid-score = "hybrid_demo.evalkit.score:main"
+hybrid-pool = "hybrid_demo.fakepool.server:main"
+hybrid-traceui = "hybrid_demo.traceui.server:main"
+hybrid-specialist = "hybrid_demo.specialist.server:main"
+hybrid-retrieval-eval = "hybrid_demo.retrieval.evaluate:main"
+hybrid-retrieval-e2e = "hybrid_demo.retrieval.endtoend:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.2",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.5",
+]
+retrieval = [
+    "sentence-transformers>=2.7",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/hybrid_demo"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["B008"]
+
+[tool.ruff.lint.per-file-ignores]
+# The trace UI keeps its whole page (CSS+JS) in one PAGE string, like upstream.
+"src/hybrid_demo/traceui/server.py" = ["E501"]

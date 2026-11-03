@@ -1,0 +1,15 @@
+MASTER SERVICES AGREEMENT
+Contract Reference: C-2026-0157
+Effective Date: 2025-12-01   Initial Term: 24 months
+Between: Copperfield Data Services Inc ("Supplier") and Ballymore Foods plc ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.
+Governing Law: This Agreement shall be governed by the laws of Ireland.
+Liability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.
+Data Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.
+
+SCHEDULE 3 - PERSONAL DATA
+Data Controller contact: David Byrne, david.byrne@ballymore.example, +353 1 555 7590
+Data Controller address: 139 Cork Main Street, Dublin
+Employee IDs: EMP-560285, EMP-345722

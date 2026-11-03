@@ -1,0 +1,10 @@
+STATEMENT OF WORK
+Contract Reference: C-2026-0181
+Effective Date: 2026-11-01   Initial Term: 48 months
+Between: Harbourline Software DAC ("Supplier") and Thornbury Health Systems ("Client")
+
+CLAUSES
+Termination: This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.
+Governing Law: This Agreement shall be governed by the laws of England and Wales.
+Liability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.
+Data Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.

@@ -1,0 +1,176 @@
+{
+ "mode": "cross-doc",
+ "model": "litillabs/octen-law-8b-v1",
+ "query_prompt": "model 'query' prompt",
+ "docs": 102,
+ "chunks": 4004,
+ "categories": 40,
+ "mrr": 0.921,
+ "success_at_k": {
+  "@1": 0.85,
+  "@10": 1.0
+ },
+ "doc_recall_at_10": 0.368,
+ "per_category": {
+  "Affiliate License-Licensee": {
+   "gold_docs": 12,
+   "first_gold_doc_rank": 1
+  },
+  "Affiliate License-Licensor": {
+   "gold_docs": 6,
+   "first_gold_doc_rank": 2
+  },
+  "Agreement Date": {
+   "gold_docs": 93,
+   "first_gold_doc_rank": 1
+  },
+  "Anti-Assignment": {
+   "gold_docs": 72,
+   "first_gold_doc_rank": 1
+  },
+  "Audit Rights": {
+   "gold_docs": 38,
+   "first_gold_doc_rank": 1
+  },
+  "Cap On Liability": {
+   "gold_docs": 44,
+   "first_gold_doc_rank": 1
+  },
+  "Change Of Control": {
+   "gold_docs": 26,
+   "first_gold_doc_rank": 1
+  },
+  "Competitive Restriction Exception": {
+   "gold_docs": 16,
+   "first_gold_doc_rank": 1
+  },
+  "Covenant Not To Sue": {
+   "gold_docs": 24,
+   "first_gold_doc_rank": 1
+  },
+  "Document Name": {
+   "gold_docs": 102,
+   "first_gold_doc_rank": 1
+  },
+  "Effective Date": {
+   "gold_docs": 70,
+   "first_gold_doc_rank": 1
+  },
+  "Exclusivity": {
+   "gold_docs": 33,
+   "first_gold_doc_rank": 1
+  },
+  "Expiration Date": {
+   "gold_docs": 78,
+   "first_gold_doc_rank": 1
+  },
+  "Governing Law": {
+   "gold_docs": 83,
+   "first_gold_doc_rank": 1
+  },
+  "Insurance": {
+   "gold_docs": 32,
+   "first_gold_doc_rank": 1
+  },
+  "Ip Ownership Assignment": {
+   "gold_docs": 23,
+   "first_gold_doc_rank": 1
+  },
+  "Irrevocable Or Perpetual License": {
+   "gold_docs": 13,
+   "first_gold_doc_rank": 1
+  },
+  "Joint Ip Ownership": {
+   "gold_docs": 7,
+   "first_gold_doc_rank": 1
+  },
+  "License Grant": {
+   "gold_docs": 50,
+   "first_gold_doc_rank": 1
+  },
+  "Liquidated Damages": {
+   "gold_docs": 14,
+   "first_gold_doc_rank": 1
+  },
+  "Minimum Commitment": {
+   "gold_docs": 32,
+   "first_gold_doc_rank": 1
+  },
+  "Most Favored Nation": {
+   "gold_docs": 3,
+   "first_gold_doc_rank": 1
+  },
+  "No-Solicit Of Customers": {
+   "gold_docs": 7,
+   "first_gold_doc_rank": 2
+  },
+  "No-Solicit Of Employees": {
+   "gold_docs": 10,
+   "first_gold_doc_rank": 1
+  },
+  "Non-Compete": {
+   "gold_docs": 23,
+   "first_gold_doc_rank": 1
+  },
+  "Non-Disparagement": {
+   "gold_docs": 7,
+   "first_gold_doc_rank": 1
+  },
+  "Non-Transferable License": {
+   "gold_docs": 22,
+   "first_gold_doc_rank": 2
+  },
+  "Notice Period To Terminate Renewal": {
+   "gold_docs": 16,
+   "first_gold_doc_rank": 3
+  },
+  "Parties": {
+   "gold_docs": 102,
+   "first_gold_doc_rank": 1
+  },
+  "Post-Termination Services": {
+   "gold_docs": 29,
+   "first_gold_doc_rank": 1
+  },
+  "Renewal Term": {
+   "gold_docs": 26,
+   "first_gold_doc_rank": 1
+  },
+  "Revenue/Profit Sharing": {
+   "gold_docs": 35,
+   "first_gold_doc_rank": 1
+  },
+  "Rofr/Rofo/Rofn": {
+   "gold_docs": 17,
+   "first_gold_doc_rank": 1
+  },
+  "Source Code Escrow": {
+   "gold_docs": 1,
+   "first_gold_doc_rank": 1
+  },
+  "Termination For Convenience": {
+   "gold_docs": 29,
+   "first_gold_doc_rank": 1
+  },
+  "Third Party Beneficiary": {
+   "gold_docs": 6,
+   "first_gold_doc_rank": 2
+  },
+  "Uncapped Liability": {
+   "gold_docs": 13,
+   "first_gold_doc_rank": 1
+  },
+  "Unlimited/All-You-Can-Eat-License": {
+   "gold_docs": 3,
+   "first_gold_doc_rank": 1
+  },
+  "Volume Restriction": {
+   "gold_docs": 17,
+   "first_gold_doc_rank": 2
+  },
+  "Warranty Duration": {
+   "gold_docs": 10,
+   "first_gold_doc_rank": 1
+  }
+ }
+}

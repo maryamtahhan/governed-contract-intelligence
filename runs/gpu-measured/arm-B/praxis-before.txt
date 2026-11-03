@@ -1,0 +1,286 @@
+# TYPE praxis_http_requests_total counter
+praxis_http_requests_total{method="POST",status_class="2xx",route="/*",cluster="vllm-any"} 242
+praxis_http_requests_total{method="POST",status_class="5xx",route="unknown",cluster="none"} 2
+praxis_http_requests_total{method="POST",status_class="2xx",route="unknown",cluster="none"} 514
+praxis_http_requests_total{method="POST",status_class="2xx",route="/*",cluster="vllm-gpu"} 491
+praxis_http_requests_total{method="GET",status_class="2xx",route="unknown",cluster="none"} 9
+
+# TYPE llm_d_sc_classify_total counter
+llm_d_sc_classify_total{status="OK"} 516
+
+# TYPE praxis_lb_panic_mode_total counter
+praxis_lb_panic_mode_total{cluster="vllm-gpu"} 4
+praxis_lb_panic_mode_total{cluster="vllm-gpu-approved"} 1
+praxis_lb_panic_mode_total{cluster="vllm-approved-only"} 1
+
+# TYPE praxis_upstream_health_transitions_total counter
+praxis_upstream_health_transitions_total{cluster="vllm-gpu",result="unhealthy"} 4
+praxis_upstream_health_transitions_total{cluster="vllm-gpu-approved",result="healthy"} 1
+praxis_upstream_health_transitions_total{cluster="vllm-gpu-small",result="unhealthy"} 1
+praxis_upstream_health_transitions_total{cluster="vllm-cpu",result="healthy"} 1
+praxis_upstream_health_transitions_total{cluster="vllm-approved-only",result="unhealthy"} 2
+praxis_upstream_health_transitions_total{cluster="vllm-approved-only",result="healthy"} 1
+praxis_upstream_health_transitions_total{cluster="vllm-any",result="healthy"} 5
+praxis_upstream_health_transitions_total{cluster="vllm-any",result="unhealthy"} 5
+praxis_upstream_health_transitions_total{cluster="vllm-gpu",result="healthy"} 4
+praxis_upstream_health_transitions_total{cluster="vllm-gpu-approved",result="unhealthy"} 2
+praxis_upstream_health_transitions_total{cluster="vllm-cpu",result="unhealthy"} 1
+praxis_upstream_health_transitions_total{cluster="vllm-gpu-small",result="healthy"} 1
+
+# TYPE praxis_errors_total counter
+praxis_errors_total{type="filter_reject"} 9
+
+# TYPE praxis_upstream_requests_total counter
+praxis_upstream_requests_total{cluster="vllm-any",endpoint="trace-ui:8082",status_class="2xx"} 120
+praxis_upstream_requests_total{cluster="vllm-gpu",endpoint="trace-ui:8082",status_class="2xx"} 491
+praxis_upstream_requests_total{cluster="vllm-any",endpoint="trace-ui:8081",status_class="2xx"} 122
+
+# TYPE llm_d_sc_route_total counter
+llm_d_sc_route_total{label="SIMPLE",cluster="vllm-gpu-small"} 5
+llm_d_sc_route_total{label="MEDIUM",cluster="vllm-cpu"} 240
+llm_d_sc_route_total{label="REASONING",cluster="vllm-gpu"} 11
+llm_d_sc_route_total{label="SIMPLE",cluster="vllm-cpu"} 12
+llm_d_sc_route_total{label="REASONING",cluster="vllm-gpu-approved"} 6
+llm_d_sc_route_total{label="MEDIUM",cluster="vllm-gpu-small"} 242
+
+# TYPE praxis_process_open_fds gauge
+praxis_process_open_fds 60
+
+# TYPE praxis_http_active_requests gauge
+praxis_http_active_requests{listener="ai-gateway"} 0
+praxis_http_active_requests{listener="sensitive-gateway"} 0
+
+# TYPE praxis_upstream_healthy_endpoints gauge
+praxis_upstream_healthy_endpoints{cluster="vllm-cpu"} 1
+praxis_upstream_healthy_endpoints{cluster="vllm-any"} 2
+praxis_upstream_healthy_endpoints{cluster="vllm-gpu-approved"} 1
+praxis_upstream_healthy_endpoints{cluster="vllm-gpu-small"} 1
+praxis_upstream_healthy_endpoints{cluster="vllm-gpu"} 1
+praxis_upstream_healthy_endpoints{cluster="vllm-gpu-any"} 2
+praxis_upstream_healthy_endpoints{cluster="vllm-approved-only"} 1
+
+# TYPE praxis_upstream_total_endpoints gauge
+praxis_upstream_total_endpoints{cluster="vllm-gpu-any"} 2
+praxis_upstream_total_endpoints{cluster="vllm-gpu-approved"} 1
+praxis_upstream_total_endpoints{cluster="vllm-gpu-small"} 1
+praxis_upstream_total_endpoints{cluster="vllm-approved-only"} 1
+praxis_upstream_total_endpoints{cluster="vllm-any"} 2
+praxis_upstream_total_endpoints{cluster="vllm-cpu"} 1
+praxis_upstream_total_endpoints{cluster="vllm-gpu"} 1
+
+# TYPE praxis_process_max_fds gauge
+praxis_process_max_fds 524288
+
+# TYPE praxis_http_request_body_bytes histogram
+praxis_http_request_body_bytes_bucket{method="GET",status_class="2xx",cluster="none",le="64"} 9
+praxis_http_request_body_bytes_bucket{method="GET",status_class="2xx",cluster="none",le="256"} 9
+praxis_http_request_body_bytes_bucket{method="GET",status_class="2xx",cluster="none",le="1024"} 9
+praxis_http_request_body_bytes_bucket{method="GET",status_class="2xx",cluster="none",le="4096"} 9
+praxis_http_request_body_bytes_bucket{method="GET",status_class="2xx",cluster="none",le="16384"} 9
+praxis_http_request_body_bytes_bucket{method="GET",status_class="2xx",cluster="none",le="65536"} 9
+praxis_http_request_body_bytes_bucket{method="GET",status_class="2xx",cluster="none",le="262144"} 9
+praxis_http_request_body_bytes_bucket{method="GET",status_class="2xx",cluster="none",le="1048576"} 9
+praxis_http_request_body_bytes_bucket{method="GET",status_class="2xx",cluster="none",le="10485760"} 9
+praxis_http_request_body_bytes_bucket{method="GET",status_class="2xx",cluster="none",le="+Inf"} 9
+praxis_http_request_body_bytes_sum{method="GET",status_class="2xx",cluster="none"} 0
+praxis_http_request_body_bytes_count{method="GET",status_class="2xx",cluster="none"} 9
+praxis_http_request_body_bytes_bucket{method="POST",status_class="5xx",cluster="none",le="64"} 0
+praxis_http_request_body_bytes_bucket{method="POST",status_class="5xx",cluster="none",le="256"} 1
+praxis_http_request_body_bytes_bucket{method="POST",status_class="5xx",cluster="none",le="1024"} 2
+praxis_http_request_body_bytes_bucket{method="POST",status_class="5xx",cluster="none",le="4096"} 2
+praxis_http_request_body_bytes_bucket{method="POST",status_class="5xx",cluster="none",le="16384"} 2
+praxis_http_request_body_bytes_bucket{method="POST",status_class="5xx",cluster="none",le="65536"} 2
+praxis_http_request_body_bytes_bucket{method="POST",status_class="5xx",cluster="none",le="262144"} 2
+praxis_http_request_body_bytes_bucket{method="POST",status_class="5xx",cluster="none",le="1048576"} 2
+praxis_http_request_body_bytes_bucket{method="POST",status_class="5xx",cluster="none",le="10485760"} 2
+praxis_http_request_body_bytes_bucket{method="POST",status_class="5xx",cluster="none",le="+Inf"} 2
+praxis_http_request_body_bytes_sum{method="POST",status_class="5xx",cluster="none"} 412
+praxis_http_request_body_bytes_count{method="POST",status_class="5xx",cluster="none"} 2
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="none",le="64"} 0
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="none",le="256"} 25
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="none",le="1024"} 108
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="none",le="4096"} 510
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="none",le="16384"} 514
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="none",le="65536"} 514
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="none",le="262144"} 514
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="none",le="1048576"} 514
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="none",le="10485760"} 514
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="none",le="+Inf"} 514
+praxis_http_request_body_bytes_sum{method="POST",status_class="2xx",cluster="none"} 566138
+praxis_http_request_body_bytes_count{method="POST",status_class="2xx",cluster="none"} 514
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-gpu",le="64"} 0
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-gpu",le="256"} 7
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-gpu",le="1024"} 58
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-gpu",le="4096"} 487
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-gpu",le="16384"} 491
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-gpu",le="65536"} 491
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-gpu",le="262144"} 491
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-gpu",le="1048576"} 491
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-gpu",le="10485760"} 491
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-gpu",le="+Inf"} 491
+praxis_http_request_body_bytes_sum{method="POST",status_class="2xx",cluster="vllm-gpu"} 569557
+praxis_http_request_body_bytes_count{method="POST",status_class="2xx",cluster="vllm-gpu"} 491
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-any",le="64"} 0
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-any",le="256"} 2
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-any",le="1024"} 36
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-any",le="4096"} 240
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-any",le="16384"} 242
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-any",le="65536"} 242
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-any",le="262144"} 242
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-any",le="1048576"} 242
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-any",le="10485760"} 242
+praxis_http_request_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-any",le="+Inf"} 242
+praxis_http_request_body_bytes_sum{method="POST",status_class="2xx",cluster="vllm-any"} 279449
+praxis_http_request_body_bytes_count{method="POST",status_class="2xx",cluster="vllm-any"} 242
+
+# TYPE praxis_http_response_body_bytes histogram
+praxis_http_response_body_bytes_bucket{method="GET",status_class="2xx",cluster="none",le="64"} 9
+praxis_http_response_body_bytes_bucket{method="GET",status_class="2xx",cluster="none",le="256"} 9
+praxis_http_response_body_bytes_bucket{method="GET",status_class="2xx",cluster="none",le="1024"} 9
+praxis_http_response_body_bytes_bucket{method="GET",status_class="2xx",cluster="none",le="4096"} 9
+praxis_http_response_body_bytes_bucket{method="GET",status_class="2xx",cluster="none",le="16384"} 9
+praxis_http_response_body_bytes_bucket{method="GET",status_class="2xx",cluster="none",le="65536"} 9
+praxis_http_response_body_bytes_bucket{method="GET",status_class="2xx",cluster="none",le="262144"} 9
+praxis_http_response_body_bytes_bucket{method="GET",status_class="2xx",cluster="none",le="1048576"} 9
+praxis_http_response_body_bytes_bucket{method="GET",status_class="2xx",cluster="none",le="10485760"} 9
+praxis_http_response_body_bytes_bucket{method="GET",status_class="2xx",cluster="none",le="+Inf"} 9
+praxis_http_response_body_bytes_sum{method="GET",status_class="2xx",cluster="none"} 0
+praxis_http_response_body_bytes_count{method="GET",status_class="2xx",cluster="none"} 9
+praxis_http_response_body_bytes_bucket{method="POST",status_class="5xx",cluster="none",le="64"} 1
+praxis_http_response_body_bytes_bucket{method="POST",status_class="5xx",cluster="none",le="256"} 2
+praxis_http_response_body_bytes_bucket{method="POST",status_class="5xx",cluster="none",le="1024"} 2
+praxis_http_response_body_bytes_bucket{method="POST",status_class="5xx",cluster="none",le="4096"} 2
+praxis_http_response_body_bytes_bucket{method="POST",status_class="5xx",cluster="none",le="16384"} 2
+praxis_http_response_body_bytes_bucket{method="POST",status_class="5xx",cluster="none",le="65536"} 2
+praxis_http_response_body_bytes_bucket{method="POST",status_class="5xx",cluster="none",le="262144"} 2
+praxis_http_response_body_bytes_bucket{method="POST",status_class="5xx",cluster="none",le="1048576"} 2
+praxis_http_response_body_bytes_bucket{method="POST",status_class="5xx",cluster="none",le="10485760"} 2
+praxis_http_response_body_bytes_bucket{method="POST",status_class="5xx",cluster="none",le="+Inf"} 2
+praxis_http_response_body_bytes_sum{method="POST",status_class="5xx",cluster="none"} 72
+praxis_http_response_body_bytes_count{method="POST",status_class="5xx",cluster="none"} 2
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="none",le="64"} 0
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="none",le="256"} 0
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="none",le="1024"} 454
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="none",le="4096"} 514
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="none",le="16384"} 514
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="none",le="65536"} 514
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="none",le="262144"} 514
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="none",le="1048576"} 514
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="none",le="10485760"} 514
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="none",le="+Inf"} 514
+praxis_http_response_body_bytes_sum{method="POST",status_class="2xx",cluster="none"} 470910
+praxis_http_response_body_bytes_count{method="POST",status_class="2xx",cluster="none"} 514
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-gpu",le="64"} 0
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-gpu",le="256"} 0
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-gpu",le="1024"} 462
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-gpu",le="4096"} 491
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-gpu",le="16384"} 491
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-gpu",le="65536"} 491
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-gpu",le="262144"} 491
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-gpu",le="1048576"} 491
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-gpu",le="10485760"} 491
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-gpu",le="+Inf"} 491
+praxis_http_response_body_bytes_sum{method="POST",status_class="2xx",cluster="vllm-gpu"} 431049
+praxis_http_response_body_bytes_count{method="POST",status_class="2xx",cluster="vllm-gpu"} 491
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-any",le="64"} 0
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-any",le="256"} 0
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-any",le="1024"} 214
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-any",le="4096"} 242
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-any",le="16384"} 242
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-any",le="65536"} 242
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-any",le="262144"} 242
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-any",le="1048576"} 242
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-any",le="10485760"} 242
+praxis_http_response_body_bytes_bucket{method="POST",status_class="2xx",cluster="vllm-any",le="+Inf"} 242
+praxis_http_response_body_bytes_sum{method="POST",status_class="2xx",cluster="vllm-any"} 219531
+praxis_http_response_body_bytes_count{method="POST",status_class="2xx",cluster="vllm-any"} 242
+
+# TYPE praxis_upstream_connect_duration_seconds summary
+praxis_upstream_connect_duration_seconds{cluster="vllm-gpu",quantile="0"} 0.000082322
+praxis_upstream_connect_duration_seconds{cluster="vllm-gpu",quantile="0.5"} 0.00009300102569038173
+praxis_upstream_connect_duration_seconds{cluster="vllm-gpu",quantile="0.9"} 0.0001240656080651412
+praxis_upstream_connect_duration_seconds{cluster="vllm-gpu",quantile="0.95"} 0.0001254880485073492
+praxis_upstream_connect_duration_seconds{cluster="vllm-gpu",quantile="0.99"} 0.00013115902564100798
+praxis_upstream_connect_duration_seconds{cluster="vllm-gpu",quantile="0.999"} 0.00013115902564100798
+praxis_upstream_connect_duration_seconds{cluster="vllm-gpu",quantile="1"} 0.000731609
+praxis_upstream_connect_duration_seconds_sum{cluster="vllm-gpu"} 0.05912365099999998
+praxis_upstream_connect_duration_seconds_count{cluster="vllm-gpu"} 491
+praxis_upstream_connect_duration_seconds{cluster="vllm-any",quantile="0"} 0
+praxis_upstream_connect_duration_seconds{cluster="vllm-any",quantile="0.5"} 0
+praxis_upstream_connect_duration_seconds{cluster="vllm-any",quantile="0.9"} 0
+praxis_upstream_connect_duration_seconds{cluster="vllm-any",quantile="0.95"} 0
+praxis_upstream_connect_duration_seconds{cluster="vllm-any",quantile="0.99"} 0
+praxis_upstream_connect_duration_seconds{cluster="vllm-any",quantile="0.999"} 0
+praxis_upstream_connect_duration_seconds{cluster="vllm-any",quantile="1"} 0
+praxis_upstream_connect_duration_seconds_sum{cluster="vllm-any"} 0.035391186000000005
+praxis_upstream_connect_duration_seconds_count{cluster="vllm-any"} 242
+
+# TYPE praxis_http_request_duration_seconds summary
+praxis_http_request_duration_seconds{method="GET",status_class="2xx",route="unknown",cluster="none",quantile="0"} 0
+praxis_http_request_duration_seconds{method="GET",status_class="2xx",route="unknown",cluster="none",quantile="0.5"} 0
+praxis_http_request_duration_seconds{method="GET",status_class="2xx",route="unknown",cluster="none",quantile="0.9"} 0
+praxis_http_request_duration_seconds{method="GET",status_class="2xx",route="unknown",cluster="none",quantile="0.95"} 0
+praxis_http_request_duration_seconds{method="GET",status_class="2xx",route="unknown",cluster="none",quantile="0.99"} 0
+praxis_http_request_duration_seconds{method="GET",status_class="2xx",route="unknown",cluster="none",quantile="0.999"} 0
+praxis_http_request_duration_seconds{method="GET",status_class="2xx",route="unknown",cluster="none",quantile="1"} 0
+praxis_http_request_duration_seconds_sum{method="GET",status_class="2xx",route="unknown",cluster="none"} 0.001670122
+praxis_http_request_duration_seconds_count{method="GET",status_class="2xx",route="unknown",cluster="none"} 9
+praxis_http_request_duration_seconds{method="POST",status_class="5xx",route="unknown",cluster="none",quantile="0"} 0
+praxis_http_request_duration_seconds{method="POST",status_class="5xx",route="unknown",cluster="none",quantile="0.5"} 0
+praxis_http_request_duration_seconds{method="POST",status_class="5xx",route="unknown",cluster="none",quantile="0.9"} 0
+praxis_http_request_duration_seconds{method="POST",status_class="5xx",route="unknown",cluster="none",quantile="0.95"} 0
+praxis_http_request_duration_seconds{method="POST",status_class="5xx",route="unknown",cluster="none",quantile="0.99"} 0
+praxis_http_request_duration_seconds{method="POST",status_class="5xx",route="unknown",cluster="none",quantile="0.999"} 0
+praxis_http_request_duration_seconds{method="POST",status_class="5xx",route="unknown",cluster="none",quantile="1"} 0
+praxis_http_request_duration_seconds_sum{method="POST",status_class="5xx",route="unknown",cluster="none"} 240.064337273
+praxis_http_request_duration_seconds_count{method="POST",status_class="5xx",route="unknown",cluster="none"} 2
+praxis_http_request_duration_seconds{method="POST",status_class="2xx",route="unknown",cluster="none",quantile="0"} 0.084537616
+praxis_http_request_duration_seconds{method="POST",status_class="2xx",route="unknown",cluster="none",quantile="0.5"} 0.0845425760244883
+praxis_http_request_duration_seconds{method="POST",status_class="2xx",route="unknown",cluster="none",quantile="0.9"} 0.0845425760244883
+praxis_http_request_duration_seconds{method="POST",status_class="2xx",route="unknown",cluster="none",quantile="0.95"} 0.0845425760244883
+praxis_http_request_duration_seconds{method="POST",status_class="2xx",route="unknown",cluster="none",quantile="0.99"} 0.0845425760244883
+praxis_http_request_duration_seconds{method="POST",status_class="2xx",route="unknown",cluster="none",quantile="0.999"} 0.0845425760244883
+praxis_http_request_duration_seconds{method="POST",status_class="2xx",route="unknown",cluster="none",quantile="1"} 0.084537616
+praxis_http_request_duration_seconds_sum{method="POST",status_class="2xx",route="unknown",cluster="none"} 1378.9685097789998
+praxis_http_request_duration_seconds_count{method="POST",status_class="2xx",route="unknown",cluster="none"} 514
+praxis_http_request_duration_seconds{method="POST",status_class="2xx",route="/*",cluster="vllm-gpu",quantile="0"} 0.279170304
+praxis_http_request_duration_seconds{method="POST",status_class="2xx",route="/*",cluster="vllm-gpu",quantile="0.5"} 1.6525176883400317
+praxis_http_request_duration_seconds{method="POST",status_class="2xx",route="/*",cluster="vllm-gpu",quantile="0.9"} 2.369075981440853
+praxis_http_request_duration_seconds{method="POST",status_class="2xx",route="/*",cluster="vllm-gpu",quantile="0.95"} 2.4736628762679436
+praxis_http_request_duration_seconds{method="POST",status_class="2xx",route="/*",cluster="vllm-gpu",quantile="0.99"} 2.795189764076503
+praxis_http_request_duration_seconds{method="POST",status_class="2xx",route="/*",cluster="vllm-gpu",quantile="0.999"} 2.795189764076503
+praxis_http_request_duration_seconds{method="POST",status_class="2xx",route="/*",cluster="vllm-gpu",quantile="1"} 4.958583816
+praxis_http_request_duration_seconds_sum{method="POST",status_class="2xx",route="/*",cluster="vllm-gpu"} 773.7180574700004
+praxis_http_request_duration_seconds_count{method="POST",status_class="2xx",route="/*",cluster="vllm-gpu"} 491
+praxis_http_request_duration_seconds{method="POST",status_class="2xx",route="/*",cluster="vllm-any",quantile="0"} 0
+praxis_http_request_duration_seconds{method="POST",status_class="2xx",route="/*",cluster="vllm-any",quantile="0.5"} 0
+praxis_http_request_duration_seconds{method="POST",status_class="2xx",route="/*",cluster="vllm-any",quantile="0.9"} 0
+praxis_http_request_duration_seconds{method="POST",status_class="2xx",route="/*",cluster="vllm-any",quantile="0.95"} 0
+praxis_http_request_duration_seconds{method="POST",status_class="2xx",route="/*",cluster="vllm-any",quantile="0.99"} 0
+praxis_http_request_duration_seconds{method="POST",status_class="2xx",route="/*",cluster="vllm-any",quantile="0.999"} 0
+praxis_http_request_duration_seconds{method="POST",status_class="2xx",route="/*",cluster="vllm-any",quantile="1"} 0
+praxis_http_request_duration_seconds_sum{method="POST",status_class="2xx",route="/*",cluster="vllm-any"} 839.7323598440006
+praxis_http_request_duration_seconds_count{method="POST",status_class="2xx",route="/*",cluster="vllm-any"} 242
+
+# TYPE llm_d_sc_classify_duration_seconds summary
+llm_d_sc_classify_duration_seconds{quantile="0"} 0.001105838
+llm_d_sc_classify_duration_seconds{quantile="0.5"} 0.0011058953200541273
+llm_d_sc_classify_duration_seconds{quantile="0.9"} 0.0011058953200541273
+llm_d_sc_classify_duration_seconds{quantile="0.95"} 0.0011058953200541273
+llm_d_sc_classify_duration_seconds{quantile="0.99"} 0.0011058953200541273
+llm_d_sc_classify_duration_seconds{quantile="0.999"} 0.0011058953200541273
+llm_d_sc_classify_duration_seconds{quantile="1"} 0.001105838
+llm_d_sc_classify_duration_seconds_sum 41.548592264000035
+llm_d_sc_classify_duration_seconds_count 516
+
+# TYPE praxis_subrequest_header_duration_seconds summary
+praxis_subrequest_header_duration_seconds{quantile="0"} 0.078265298
+praxis_subrequest_header_duration_seconds{quantile="0.5"} 0.07826145946146035
+praxis_subrequest_header_duration_seconds{quantile="0.9"} 0.07826145946146035
+praxis_subrequest_header_duration_seconds{quantile="0.95"} 0.07826145946146035
+praxis_subrequest_header_duration_seconds{quantile="0.99"} 0.07826145946146035
+praxis_subrequest_header_duration_seconds{quantile="0.999"} 0.07826145946146035
+praxis_subrequest_header_duration_seconds{quantile="1"} 0.078265298
+praxis_subrequest_header_duration_seconds_sum 1334.7214758629993
+praxis_subrequest_header_duration_seconds_count 519
+

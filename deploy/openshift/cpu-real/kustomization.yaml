@@ -1,0 +1,58 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# All-real, all-CPU variant (see pools.yaml header). The base contributes the
+# real CPU pool, llm-d-sc, praxis, trace-ui, netpols and the OpenShell-facing
+# Service; this overlay points the trace-ui relays at the CPU-served pools and
+# parks the NVIDIA InferenceServices at zero replicas.
+namespace: openshell-demo
+
+resources:
+  - ../../../manifests
+  - pools.yaml
+  - model-cache.yaml
+
+patches:
+  - target:
+      kind: Deployment
+      name: trace-ui
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/env
+        value:
+          - {name: TRACE_DB_PATH, value: /data/traces.db}
+          - {name: PRAXIS_UPSTREAM, value: "http://praxis:80"}
+          - {name: SENSITIVE_UPSTREAM, value: "http://praxis:8083"}
+          - {name: TRACE_POOLS, value: "vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small"}
+          - {name: VLLM_CPU_UPSTREAM, value: "http://cpureal-vllm-cpu:8000"}
+          - {name: VLLM_GPU_UPSTREAM, value: "http://cpureal-vllm-gpu:8000"}
+          - {name: VLLM_GPU_APPROVED_UPSTREAM, value: "http://cpureal-vllm-gpu-approved:8000"}
+          - {name: VLLM_GPU_SMALL_UPSTREAM, value: "http://cpureal-vllm-gpu-small:8000"}
+  - target:
+      kind: InferenceService
+      name: vllm-cpu
+    patch: |-
+      - op: replace
+        path: /spec/predictor/minReplicas
+        value: 0
+  - target:
+      kind: InferenceService
+      name: vllm-gpu
+    patch: |-
+      - op: replace
+        path: /spec/predictor/minReplicas
+        value: 0
+  - target:
+      kind: InferenceService
+      name: vllm-gpu-approved
+    patch: |-
+      - op: replace
+        path: /spec/predictor/minReplicas
+        value: 0
+  - target:
+      kind: InferenceService
+      name: vllm-gpu-small
+    patch: |-
+      - op: replace
+        path: /spec/predictor/minReplicas
+        value: 0

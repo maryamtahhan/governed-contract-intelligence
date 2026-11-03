@@ -1,0 +1,15 @@
+STATEMENT OF WORK
+Contract Reference: C-2026-0058
+Effective Date: 2025-04-01   Initial Term: 48 months
+Between: Silverthorn Cloud BV ("Supplier") and Ravenscourt Media SA ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.
+Governing Law: This Agreement shall be governed by the laws of Ireland.
+Liability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.
+Data Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.
+
+SCHEDULE 3 - PERSONAL DATA
+Data Controller contact: Eoin Byrne, eoin.byrne@ravenscourt.example, +353 1 555 3870
+Data Controller address: 167 Limerick Main Street, Galway
+Employee IDs: EMP-593355, EMP-644173

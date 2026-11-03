@@ -1,0 +1,15 @@
+DATA PROCESSING AGREEMENT
+Contract Reference: C-2026-0060
+Effective Date: 2025-07-01   Initial Term: 48 months
+Between: Copperfield Data Services Inc ("Supplier") and Lakeshore Manufacturing Ltd ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.
+Governing Law: This Agreement shall be governed by the laws of Germany.
+Liability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.
+Data Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.
+
+SCHEDULE 3 - PERSONAL DATA
+Data Controller contact: Liam Lombard, liam.lombard@lakeshore.example, +353 1 555 7770
+Data Controller address: 133 Galway Main Street, Waterford
+Employee IDs: EMP-156837, EMP-296694

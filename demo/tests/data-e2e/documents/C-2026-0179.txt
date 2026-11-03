@@ -1,0 +1,10 @@
+STATEMENT OF WORK
+Contract Reference: C-2026-0179
+Effective Date: 2026-04-01   Initial Term: 48 months
+Between: Copperfield Data Services Inc ("Supplier") and Lakeshore Manufacturing Ltd ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.
+Governing Law: This Agreement shall be governed by the laws of the State of New York.
+Liability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.
+Data Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.

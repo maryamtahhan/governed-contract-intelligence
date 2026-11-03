@@ -1,0 +1,37 @@
+{
+ "arm": "D",
+ "mode": "matrix",
+ "governance": true,
+ "docs": 20,
+ "wall_s": 1591.47,
+ "steps": 121,
+ "routes": {
+  "vllm-cpu": 1,
+  "vllm-gpu-approved": 24,
+  "vllm-gpu": 85
+ },
+ "labels": {
+  "SIMPLE": 1,
+  "COMPLEX": 4
+ },
+ "entries": {
+  "sensitive": 31,
+  "general": 90
+ },
+ "fallback": 0,
+ "errors": 11,
+ "screen": {
+  "tp": 5,
+  "fp": 0,
+  "tn": 15,
+  "fn": 0
+ },
+ "sensitive_steps": 31,
+ "sensitive_on_approved": 25,
+ "sensitive_violations": 0,
+ "classifier_latency_us_avg": null,
+ "gpu_busy_ms": 0,
+ "cpu_busy_ms": 0,
+ "latency_ms_avg": 13152,
+ "latency_ms_p95": 30714
+}

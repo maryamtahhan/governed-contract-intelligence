@@ -1,0 +1,1328 @@
+{
+ "fields": 80,
+ "docs": 19,
+ "checkpoint": "data/cuad-models/roberta-large",
+ "embedder": "litillabs/litil-embed-0.6b",
+ "top_k": 5,
+ "null_margin": 1.0,
+ "arms": {
+  "full-doc": {
+   "extraction": {
+    "precision": 0.657,
+    "recall": 0.958,
+    "f1": 0.78,
+    "fields_correct": 67,
+    "fields_total": 80
+   },
+   "decomposition": {
+    "tp": 23,
+    "fp": 12,
+    "fn": 1,
+    "fn_retrieval_miss": 0,
+    "fn_specialist_miss": 1,
+    "fp_on_unannotated": 8
+   },
+   "records": [
+    {
+     "step": "extract:termination",
+     "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+     "content": {
+      "found": true,
+      "text": "THIS AGREEMENT SHALL BE GOVERNED BY AND CONSTRUED IN ACCORDANCE WITH THE INTERNAL LAWS OF THE COMMONWEALTH OF PENNSYLVANIA WITHOUT GIVING EFFECT TO ANY CHOICE OR CONFLICT OF LAW PROVISION OR RULE (WHETHER OF THE COMMONWEALTH OF PENNSYLVANIA OR ANY OTHER JURISDICTION)."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+     "content": {
+      "found": true,
+      "text": "Each Seller agrees that in the event of a breach of this Agreement, the damage to Buyer will be inestimable and that therefore any remedy at Law or in monetary damages shall be inadequate."
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+     "content": {
+      "found": true,
+      "text": "Either party may terminate this Agreement prior to expiration of the Term: (i) upon thirty (30) days prior written notice, or (ii) immediately upon written notice to the other party if: (a) the other party declares or a petition is filed in any court for insolvency or bankruptcy and such petition is not dismissed in thirty (30) days; (b) the other party reorganizes under the relevant bankruptcy act or any similar statute in such party's jurisdiction of incorporation; (c) the other party consents to the appointment of a trustee in bankruptcy or a receiver or similar entity; or (d) the Developer breaches DSS's Technology or Intellectual Property rights contained herein."
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+     "content": {
+      "found": true,
+      "text": "This Agreement shall be governed in accordance with the laws of the State of New York without regard to conflict of laws principles."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+     "content": {
+      "found": true,
+      "text": "Developer shall be fully liable, without limitation, for money damages resulting from its improper or unauthorized use, modification, alteration, licensing or transfer of the Technology or Improvements, or resulting from its failure to provide functional and merchantable Improvements hereunder, which failure shall be deemed a material breach of this Agreement by Developer."
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+     "content": {
+      "found": true,
+      "text": "Client may terminate this Agreement on thirty (30) days written notice without cause."
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+     "content": {
+      "found": true,
+      "text": "This Agreement shall be governed by the laws of the State of Connecticut, U.S.A. without regard to conflict of law principles."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+     "content": {
+      "found": true,
+      "text": "Notwithstanding any other provision of this Agreement, each party's total liability in respect of damages under this Agreement, any regulation or common law shall be limited to the sum of all amounts received from Client in terms of this Agreement; provided, however, that this limitation shall not apply with respect to any claims arising out of or relating to clause 6 (Inventions and Proprietary Information), indemnification obligations or damages arising from a party's gross negligence or willful misconduct."
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+     "content": {
+      "found": true,
+      "text": "The Parties may terminate its performance of related obligations under this Agreement within thirty (30) days of receipt by the Party of written termination notice."
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+     "content": {
+      "found": true,
+      "text": "This Agreement and its application and interpretation will be governed exclusively by its terms and the laws of the State of Nevada (USA), and excluding any conflicts of law provisions which would require the application of any law other than Nevada."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+     "content": {
+      "found": true,
+      "text": "HPIL ET agrees that the sole and exclusive remedy for money damages relating to this Agreement and the transactions contemplated hereby shall be the rights to indemnification set forth in this Section 10."
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+     "content": {
+      "found": true,
+      "text": "Either party may terminate this Agreement without cause at any time effective upon thirty (30) days' written notice."
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+     "content": {
+      "found": true,
+      "text": "This Agreement was entered into in the State of Florida, and its validity, construction, interpretation, and legal effect shall be governed by the laws and judicial decisions of the State of Florida applicable to contracts entered into and performed entirely within the State of Florida."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+     "content": {
+      "found": true,
+      "text": "i-on will not be liable under any circumstances for any lost profits or other consequential damages, even if i-on has been advised as to the possibility of such damages. i-on's liability for damages to the Customer for any cause whatsoever, regardless of the form of action, and whether in contract or in tort, including negligence, shall be limited to one (1) month's fees and the remaining portion of any prepaid fees."
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+     "content": {
+      "found": true,
+      "text": "The Joint Venturers declare that in entering into this      Agreement, they have contracted with reference to the laws of the      Commonwealth of Pennsylvania, and the construction and interpretation of      the terms and provisions of this Agreement shall be interpreted and      construed under the laws of the Commonwealth of Pennsylvania, except in      such cases and to such extent as the laws of another jurisdiction shall      necessarily control."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+     "content": {
+      "found": true,
+      "text": "If requested      by a Joint Venturer, the Joint Venture books and records shall be audited      as of the close of each year by an independent accountant acceptable to      both Joint Venturers."
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+     "content": {
+      "found": true,
+      "text": "This Agreement shall be governed by and construed in accordance with the internal laws of the State of Delaware applicable to agreements made and to be performed within that state."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+     "content": {
+      "found": true,
+      "text": "Except to the extent governed by the Federal Arbitration Act or other federal law, this Agreement and all claims arising from the relationship between Hyatt (and/or any of its Affiliates) and Playa (and/or any of its Affiliates) under this Agreement will be governed by the laws of the State of Illinois (U.S.A.), without regard to its conflict of laws rules, except that any Illinois law or any other law regulating the offer or sale of franchises, business opportunities, or similar interests, or governing the relationship between a franchisor and a franchisee or any similar relationship, will not apply unless its jurisdictional requirements are met independently without reference to this Section 4."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+     "content": {
+      "found": true,
+      "text": "Notwithstanding the foregoing, if at any time Tennessee terminates the July 8, 2002, Negotiated Rate Agreement between Tennessee and Shipper for any reason, Shipper shall have the unilateral right to notify Tennessee of its intent to terminate this Agreement effective sixty days after the referenced Negotiated Rate Agreement terminates."
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+     "content": {
+      "found": true,
+      "text": "THE INTERPRETATION AND PERFORMANCE OF THIS CONTRACT SHALL BE IN ACCORDANCE WITH AND CONTROLLED BY THE LAWS OF THE STATE OF TEXAS, WITHOUT REGARD TO THE DOCTRINES GOVERNING CHOICE OF LAW."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+     "content": {
+      "found": true,
+      "text": "This Agreement shall be construed in accordance with and governed by the substantive internal laws of the State of New York."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+     "content": {
+      "found": true,
+      "text": "Notwithstanding the provisions of Section 5(a) and (b), none of the members of the MS Provider Group and the MSCI Provider Group shall be liable for any special, indirect, incidental, consequential or punitive damages of any kind whatsoever in any way due to, resulting from or arising in connection with the performance of or failure to perform MS's or MSCI's obligations under this Agreement."
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+     "content": {
+      "found": true,
+      "text": "This Addendum may be terminated at any time by either Party in accordance with the termination provisions of the Distribution Agreement."
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+     "content": {
+      "found": true,
+      "text": "The terms of the Governing Law and Dispute Resolution provisions of the Distribution Agreement will apply to this Addendum."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+     "content": {
+      "found": true,
+      "text": "Notwithstanding the above, Torvec may, in its sole  discretion, cancel its participation in any of the above-referenced events by notifying Vendor of such cancellation not later than two weeks  prior to the due date(s) for payment hereunder."
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+     "content": {
+      "found": true,
+      "text": "This Agreement is to be governed and construed according to the laws of the State of New York without regard to conflicts of law."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+     "content": {
+      "found": true,
+      "text": "Upon termination of this Agreement, NEITHER PARTY SHALL BE LIABLE TO THE OTHER FOR ANY CONSEQUENTIAL,  EXEMPLARY, SPECIAL, INCIDENTAL OR PUNITIVE DAMAGES, EVEN IF IT HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH  DAMAGES, WHICH ARE RELATED TO THE AGREEMENT OR ITS BREACH."
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+     "content": {
+      "found": true,
+      "text": "This Limited Power of Attorney shall be governed and construed in accordance with the laws of the Commonwealth of Pennsylvania without reference to principles of conflicts of laws."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+     "content": {
+      "found": true,
+      "text": "Liability for or recourse under or upon any undertaking of FASC pursuant to the power or authority granted to FASC under this Limited Power of Attorney under any rule of law, statute or constitution or by the enforcement of any assessment or penalty or by legal or equitable proceedings or otherwise shall be limited only to the assets of the Fund on whose behalf FASC was acting pursuant to the authority granted hereunder."
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+     "content": {
+      "found": true,
+      "text": "XFN may terminate this Agreement by giving thirty (30) days written notice      to the CEIS."
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+     "content": {
+      "found": true,
+      "text": "This Agreement is governed by and shall be construed in      accordance with the laws of Hong Kong"
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+     "content": {
+      "found": true,
+      "text": "XFN's only payment      obligation to CEIS in consideration of the rights granted pursuant to this      Clause 2 is set forth in Clause 4."
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+     "content": {
+      "found": true,
+      "text": "Customer, upon thirty days prior written notice, may cancel this           Agreement at the end of the Initial Term and thereafter on each           anniversary of the end of the Initial Term."
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+     "content": {
+      "found": true,
+      "text": "This Agreement shall be interpreted in accordance with the                   laws of the State of Indiana."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+     "content": {
+      "found": true,
+      "text": "MMMW shall NOT be liable for INCIDENTAL or CONSEQUENTIAL                   DAMAGES, even if MMMW has been advised, knew or should have                   known of the possibility of such damages."
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    }
+   ]
+  },
+  "top-5": {
+   "extraction": {
+    "precision": 0.667,
+    "recall": 1.0,
+    "f1": 0.8,
+    "fields_correct": 68,
+    "fields_total": 80
+   },
+   "decomposition": {
+    "tp": 24,
+    "fp": 12,
+    "fn": 0,
+    "fn_retrieval_miss": 0,
+    "fn_specialist_miss": 0,
+    "fp_on_unannotated": 8
+   },
+   "records": [
+    {
+     "step": "extract:termination",
+     "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+     "content": {
+      "found": true,
+      "text": "THIS AGREEMENT SHALL BE GOVERNED BY AND CONSTRUED IN ACCORDANCE WITH THE INTERNAL LAWS OF THE COMMONWEALTH OF PENNSYLVANIA WITHOUT GIVING EFFECT TO ANY CHOICE OR CONFLICT OF LAW PROVISION OR RULE (WHETHER OF THE COMMONWEALTH OF PENNSYLVANIA OR ANY OTHER JURISDICTION)."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+     "content": {
+      "found": true,
+      "text": "Each Seller agrees that in the event of a breach of this Agreement, the damage to Buyer will be inestimable and that therefore any remedy at Law or in monetary damages shall be inadequate."
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+     "content": {
+      "found": true,
+      "text": "Either party may terminate this Agreement prior to expiration of the Term: (i) upon thirty (30) days prior written notice, or (ii) immediately upon written notice to the other party if: (a) the other party declares or a petition is filed in any court for insolvency or bankruptcy and such petition is not dismissed in thirty (30) days; (b) the other party reorganizes under the relevant bankruptcy act or any similar statute in such party's jurisdiction of incorporation; (c) the other party consents to the appointment of a trustee in bankruptcy or a receiver or similar entity; or (d) the Developer breaches DSS's Technology or Intellectual Property rights contained herein."
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+     "content": {
+      "found": true,
+      "text": "This Agreement shall be governed in accordance with the laws of the State of New York without regard to conflict of laws principles."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+     "content": {
+      "found": true,
+      "text": "Developer shall be fully liable, without limitation, for money damages resulting from its improper or unauthorized use, modification, alteration, licensing or transfer of the Technology or Improvements, or resulting from its failure to provide functional and merchantable Improvements hereunder, which failure shall be deemed a material breach of this Agreement by Developer."
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+     "content": {
+      "found": true,
+      "text": "Client may terminate this Agreement on thirty (30) days written notice without cause."
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+     "content": {
+      "found": true,
+      "text": "This Agreement shall be governed by the laws of the State of Connecticut, U.S.A. without regard to conflict of law principles."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+     "content": {
+      "found": true,
+      "text": "Notwithstanding any other provision of this Agreement, each party's total liability in respect of damages under this Agreement, any regulation or common law shall be limited to the sum of all amounts received from Client in terms of this Agreement; provided, however, that this limitation shall not apply with respect to any claims arising out of or relating to clause 6 (Inventions and Proprietary Information), indemnification obligations or damages arising from a party's gross negligence or willful misconduct."
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+     "content": {
+      "found": true,
+      "text": "Client shall have the right to be present at any such inspections and shall have primary responsibility for preparing any responses, which may be required, to the extent such responses relate to the project covered by the Addenda."
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+     "content": {
+      "found": true,
+      "text": "The Parties may terminate its performance of related obligations under this Agreement within thirty (30) days of receipt by the Party of written termination notice."
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+     "content": {
+      "found": true,
+      "text": "This Agreement and its application and interpretation will be governed exclusively by its terms and the laws of the State of Nevada (USA), and excluding any conflicts of law provisions which would require the application of any law other than Nevada."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+     "content": {
+      "found": true,
+      "text": "HPIL ET agrees that the sole and exclusive remedy for money damages relating to this Agreement and the transactions contemplated hereby shall be the rights to indemnification set forth in this Section 10."
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+     "content": {
+      "found": true,
+      "text": "Either party may terminate this Agreement without cause at any time effective upon thirty (30) days' written notice."
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+     "content": {
+      "found": true,
+      "text": "This Agreement was entered into in the State of Florida, and its validity, construction, interpretation, and legal effect shall be governed by the laws and judicial decisions of the State of Florida applicable to contracts entered into and performed entirely within the State of Florida."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+     "content": {
+      "found": true,
+      "text": "i-on's liability for damages to the Customer for any cause whatsoever, regardless of the form of action, and whether in contract or in tort, including negligence, shall be limited to one (1) month's fees and the remaining portion of any prepaid fees."
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+     "content": {
+      "found": true,
+      "text": "The Joint Venturers declare that in entering into this      Agreement, they have contracted with reference to the laws of the      Commonwealth of Pennsylvania, and the construction and interpretation of      the terms and provisions of this Agreement shall be interpreted and      construed under the laws of the Commonwealth of Pennsylvania, except in      such cases and to such extent as the laws of another jurisdiction shall      necessarily control."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+     "content": {
+      "found": true,
+      "text": "If requested      by a Joint Venturer, the Joint Venture books and records shall be audited      as of the close of each year by an independent accountant acceptable to      both Joint Venturers."
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+     "content": {
+      "found": true,
+      "text": "This Agreement shall be governed by and construed in accordance with the internal laws of the State of Delaware applicable to agreements made and to be performed within that state."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+     "content": {
+      "found": true,
+      "text": "Except to the extent governed by the Federal Arbitration Act or other federal law, this Agreement and all claims arising from the relationship between Hyatt (and/or any of its Affiliates) and Playa (and/or any of its Affiliates) under this Agreement will be governed by the laws of the State of Illinois (U.S.A.), without regard to its conflict of laws rules, except that any Illinois law or any other law regulating the offer or sale of franchises, business opportunities, or similar interests, or governing the relationship between a franchisor and a franchisee or any similar relationship, will not apply unless its jurisdictional requirements are met independently without reference to this Section 4."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+     "content": {
+      "found": true,
+      "text": "In any action or proceeding between the Parties (including any arbitration proceeding) arising under or with respect to this Agreement or in any manner pertaining to the Hyatt All-Inclusive Resorts or to the relationship of the Parties under this Agreement, each Party hereby unconditionally and irrevocably waives and releases any right, power or privilege either may have to claim or receive from the other Party any punitive or exemplary damages, each Party acknowledging and agreeing that the remedies herein provided and other remedies at law or in equity will in all circumstances be adequate."
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+     "content": {
+      "found": true,
+      "text": "Shipper must notify Transporter on or before October 31, 2006 of its intent to terminate the attached service agreement."
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+     "content": {
+      "found": true,
+      "text": "THE INTERPRETATION AND PERFORMANCE OF THIS CONTRACT SHALL BE IN ACCORDANCE WITH AND CONTROLLED BY THE LAWS OF THE STATE OF TEXAS, WITHOUT REGARD TO THE DOCTRINES GOVERNING CHOICE OF LAW."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+     "content": {
+      "found": true,
+      "text": "This Agreement shall be construed in accordance with and governed by the substantive internal laws of the State of New York."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+     "content": {
+      "found": true,
+      "text": "Notwithstanding the provisions of Section 5(a) and (b), none of the members of the MS Provider Group and the MSCI Provider Group shall be liable for any special, indirect, incidental, consequential or punitive damages of any kind whatsoever in any way due to, resulting from or arising in connection with the performance of or failure to perform MS's or MSCI's obligations under this Agreement."
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+     "content": {
+      "found": true,
+      "text": "This Addendum may be terminated at any time by either Party in accordance with the termination provisions of the Distribution Agreement."
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+     "content": {
+      "found": true,
+      "text": "The terms of the Governing Law and Dispute Resolution provisions of the Distribution Agreement will apply to this Addendum."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+     "content": {
+      "found": true,
+      "text": "Sole right to disapprove any driver selected by Vendor for any reason."
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+     "content": {
+      "found": true,
+      "text": "This Agreement is to be governed and construed according to the laws of the State of New York without regard to conflicts of law."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+     "content": {
+      "found": true,
+      "text": "Upon termination of this Agreement, NEITHER PARTY SHALL BE LIABLE TO THE OTHER FOR ANY CONSEQUENTIAL,  EXEMPLARY, SPECIAL, INCIDENTAL OR PUNITIVE DAMAGES, EVEN IF IT HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH  DAMAGES, WHICH ARE RELATED TO THE AGREEMENT OR ITS BREACH."
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+     "content": {
+      "found": true,
+      "text": "This Limited Power of Attorney shall be governed and construed in accordance with the laws of the Commonwealth of Pennsylvania without reference to principles of conflicts of laws."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+     "content": {
+      "found": true,
+      "text": "Liability for or recourse under or upon any undertaking of FASC pursuant to the power or authority granted to FASC under this Limited Power of Attorney under any rule of law, statute or constitution or by the enforcement of any assessment or penalty or by legal or equitable proceedings or otherwise shall be limited only to the assets of the Fund on whose behalf FASC was acting pursuant to the authority granted hereunder."
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+     "content": {
+      "found": true,
+      "text": "XFN may terminate this Agreement by giving thirty (30) days written notice      to the CEIS."
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+     "content": {
+      "found": true,
+      "text": "This Agreement is governed by and shall be construed in      accordance with the laws of Hong Kong"
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+     "content": {
+      "found": true,
+      "text": "Customer, upon thirty days prior written notice, may cancel this           Agreement at the end of the Initial Term and thereafter on each           anniversary of the end of the Initial Term."
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+     "content": {
+      "found": true,
+      "text": "This Agreement shall be interpreted in accordance with the                   laws of the State of Indiana."
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+     "content": {
+      "found": true,
+      "text": "MMMW shall NOT be liable for INCIDENTAL or CONSEQUENTIAL                   DAMAGES, even if MMMW has been advised, knew or should have                   known of the possibility of such damages."
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:termination",
+     "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:governing_law",
+     "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:liability_cap",
+     "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    },
+    {
+     "step": "extract:audit_rights",
+     "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+     "content": {
+      "found": false,
+      "text": null
+     }
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,279 @@
+{
+ "truth_docs": 200,
+ "arms": [
+  {
+   "arm": "A",
+   "mode": "all-gpu",
+   "docs": 20,
+   "wall_s": 1243.95,
+   "run_doc_ids": [
+    "C-2026-0001",
+    "C-2026-0002",
+    "C-2026-0003",
+    "C-2026-0004",
+    "C-2026-0005",
+    "C-2026-0006",
+    "C-2026-0007",
+    "C-2026-0008",
+    "C-2026-0009",
+    "C-2026-0010",
+    "C-2026-0011",
+    "C-2026-0012",
+    "C-2026-0013",
+    "C-2026-0014",
+    "C-2026-0015",
+    "C-2026-0016",
+    "C-2026-0017",
+    "C-2026-0018",
+    "C-2026-0019",
+    "C-2026-0020"
+   ],
+   "extraction": {
+    "precision": 1.0,
+    "recall": 0.932,
+    "f1": 0.965,
+    "fields_correct": 75,
+    "fields_total": 80
+   },
+   "risk_accuracy": 0.7,
+   "type_accuracy": 1.0,
+   "report_accuracy": 0.6,
+   "docs_fully_correct": 13,
+   "classifier": {
+    "labelled": 0,
+    "accuracy": null,
+    "confusion": {}
+   },
+   "screen": {
+    "tp": 4,
+    "fp": 0,
+    "tn": 16,
+    "fn": 0
+   },
+   "routing": {
+    "routes": {
+     "vllm-gpu": 121
+    },
+    "cpu_served_share": 0.0,
+    "gpu_seconds": 1159.8,
+    "cpu_core_seconds": 0.0,
+    "gpu_seconds_per_doc": 57.987,
+    "cpu_core_seconds_per_doc": 0.0,
+    "device_time_measured": 1159.75,
+    "cost_method": "measured (integrated (in-flight gauges; batching means the device serves several requests while occupied))",
+    "sensitive_steps": 25,
+    "sensitive_on_approved": 0,
+    "sensitive_violations": 25,
+    "fallback": 0,
+    "errors": 0
+   }
+  },
+  {
+   "arm": "B",
+   "mode": "gpu-split",
+   "docs": 20,
+   "wall_s": 824.32,
+   "run_doc_ids": [
+    "C-2026-0001",
+    "C-2026-0002",
+    "C-2026-0003",
+    "C-2026-0004",
+    "C-2026-0005",
+    "C-2026-0006",
+    "C-2026-0007",
+    "C-2026-0008",
+    "C-2026-0009",
+    "C-2026-0010",
+    "C-2026-0011",
+    "C-2026-0012",
+    "C-2026-0013",
+    "C-2026-0014",
+    "C-2026-0015",
+    "C-2026-0016",
+    "C-2026-0017",
+    "C-2026-0018",
+    "C-2026-0019",
+    "C-2026-0020"
+   ],
+   "extraction": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "fields_correct": 80,
+    "fields_total": 80
+   },
+   "risk_accuracy": 0.4,
+   "type_accuracy": 0.85,
+   "report_accuracy": 0.24,
+   "docs_fully_correct": 8,
+   "classifier": {
+    "labelled": 0,
+    "accuracy": null,
+    "confusion": {}
+   },
+   "screen": {
+    "tp": 4,
+    "fp": 0,
+    "tn": 16,
+    "fn": 0
+   },
+   "routing": {
+    "routes": {
+     "vllm-gpu-small": 121
+    },
+    "cpu_served_share": 0.0,
+    "gpu_seconds": 714.5,
+    "cpu_core_seconds": 0.0,
+    "gpu_seconds_per_doc": 35.723,
+    "cpu_core_seconds_per_doc": 0.0,
+    "device_time_measured": 714.45,
+    "cost_method": "measured (integrated (in-flight gauges; batching means the device serves several requests while occupied))",
+    "sensitive_steps": 25,
+    "sensitive_on_approved": 0,
+    "sensitive_violations": 25,
+    "fallback": 0,
+    "errors": 0
+   }
+  },
+  {
+   "arm": "C",
+   "mode": "round-robin",
+   "docs": 20,
+   "wall_s": 1036.59,
+   "run_doc_ids": [
+    "C-2026-0001",
+    "C-2026-0002",
+    "C-2026-0003",
+    "C-2026-0004",
+    "C-2026-0005",
+    "C-2026-0006",
+    "C-2026-0007",
+    "C-2026-0008",
+    "C-2026-0009",
+    "C-2026-0010",
+    "C-2026-0011",
+    "C-2026-0012",
+    "C-2026-0013",
+    "C-2026-0014",
+    "C-2026-0015",
+    "C-2026-0016",
+    "C-2026-0017",
+    "C-2026-0018",
+    "C-2026-0019",
+    "C-2026-0020"
+   ],
+   "extraction": {
+    "precision": 1.0,
+    "recall": 0.932,
+    "f1": 0.965,
+    "fields_correct": 75,
+    "fields_total": 80
+   },
+   "risk_accuracy": 0.7,
+   "type_accuracy": 0.85,
+   "report_accuracy": 0.3,
+   "docs_fully_correct": 13,
+   "classifier": {
+    "labelled": 0,
+    "accuracy": null,
+    "confusion": {}
+   },
+   "screen": {
+    "tp": 4,
+    "fp": 0,
+    "tn": 16,
+    "fn": 0
+   },
+   "routing": {
+    "routes": {
+     "vllm-cpu": 61,
+     "vllm-gpu": 60
+    },
+    "cpu_served_share": 0.504,
+    "gpu_seconds": 905.4,
+    "cpu_core_seconds": 3405.4,
+    "gpu_seconds_per_doc": 45.27,
+    "cpu_core_seconds_per_doc": 170.272,
+    "device_time_measured": 905.4,
+    "cost_method": "measured (integrated (in-flight gauges; batching means the device serves several requests while occupied))",
+    "sensitive_steps": 25,
+    "sensitive_on_approved": 13,
+    "sensitive_violations": 12,
+    "fallback": 1,
+    "errors": 0
+   }
+  },
+  {
+   "arm": "D",
+   "mode": "matrix",
+   "docs": 20,
+   "wall_s": 826.61,
+   "run_doc_ids": [
+    "C-2026-0001",
+    "C-2026-0002",
+    "C-2026-0003",
+    "C-2026-0004",
+    "C-2026-0005",
+    "C-2026-0006",
+    "C-2026-0007",
+    "C-2026-0008",
+    "C-2026-0009",
+    "C-2026-0010",
+    "C-2026-0011",
+    "C-2026-0012",
+    "C-2026-0013",
+    "C-2026-0014",
+    "C-2026-0015",
+    "C-2026-0016",
+    "C-2026-0017",
+    "C-2026-0018",
+    "C-2026-0019",
+    "C-2026-0020"
+   ],
+   "extraction": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "fields_correct": 80,
+    "fields_total": 80
+   },
+   "risk_accuracy": 0.4,
+   "type_accuracy": 0.9,
+   "report_accuracy": 0.34,
+   "docs_fully_correct": 8,
+   "classifier": {
+    "labelled": 121,
+    "accuracy": 0.008,
+    "confusion": {
+     "SIMPLE->MEDIUM": 100,
+     "COMPLEX->MEDIUM": 20,
+     "REASONING->REASONING": 1
+    }
+   },
+   "screen": {
+    "tp": 4,
+    "fp": 0,
+    "tn": 16,
+    "fn": 0
+   },
+   "routing": {
+    "routes": {
+     "vllm-cpu": 120,
+     "vllm-gpu-approved": 1
+    },
+    "cpu_served_share": 0.992,
+    "gpu_seconds": 29.2,
+    "cpu_core_seconds": 6017.0,
+    "gpu_seconds_per_doc": 1.461,
+    "cpu_core_seconds_per_doc": 300.848,
+    "device_time_measured": 29.21,
+    "cost_method": "measured (integrated (in-flight gauges; batching means the device serves several requests while occupied))",
+    "sensitive_steps": 25,
+    "sensitive_on_approved": 25,
+    "sensitive_violations": 0,
+    "fallback": 0,
+    "errors": 0
+   }
+  }
+ ]
+}

@@ -1,0 +1,15 @@
+DATA PROCESSING AGREEMENT
+Contract Reference: C-2026-0013
+Effective Date: 2025-01-01   Initial Term: 12 months
+Between: Silverthorn Cloud BV ("Supplier") and Ravenscourt Media SA ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.
+Governing Law: This Agreement shall be governed by the laws of England and Wales.
+Liability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.
+Data Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.
+
+SCHEDULE 3 - PERSONAL DATA
+Data Controller contact: Aoife Fitzgerald, aoife.fitzgerald@ravenscourt.example, +353 1 555 2104
+Data Controller address: 19 Waterford Main Street, Cork
+Employee IDs: EMP-132938, EMP-446479

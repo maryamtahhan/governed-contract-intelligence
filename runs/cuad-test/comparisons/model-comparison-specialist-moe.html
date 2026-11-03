@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Hybrid demo report</title>
+<style>
+:root{color-scheme:dark}body{margin:0;padding:32px;background:#07111f;color:#e9f2ff;
+font:15px/1.5 Inter,ui-sans-serif,system-ui,sans-serif}
+main{max-width:1000px;margin:auto}h1{font-size:24px}h2{font-size:18px;margin-top:32px}
+table{border-collapse:collapse;width:100%;margin:12px 0}
+th,td{border:1px solid #2b4865;padding:6px 10px;text-align:left}
+th{background:#0d1b2d}tr:nth-child(even) td{background:#0b1626}
+.bad{color:#ff4d5e;font-weight:700}.good{color:#55e6a0}
+p.note{color:#9db1c8}
+</style></head><body><main>
+<h1>Hybrid CPU+GPU demo - measurement report</h1>
+<p class="note">Device-time and dollar figures are SIMULATED where the fake pool backends were used; ground truth: 19 synthetic documents.</p>
+<h2>Arms overview</h2><table><thead><tr><th>arm</th><th>mode</th><th>docs</th><th>wall s</th><th>errors</th><th>fallback (degraded)</th></tr></thead><tbody><tr><td>D</td><td>matrix</td><td>20</td><td>2291.6</td><td>0</td><td>1</td></tr><tr><td>D</td><td>matrix</td><td>20</td><td>1591.47</td><td>11</td><td>0</td></tr></tbody></table>
+<h2>Quality vs ground truth</h2><table><thead><tr><th>arm</th><th>extract P</th><th>extract R</th><th>extract F1</th><th>risk acc</th><th>type acc</th><th>report acc</th><th>docs fully correct</th></tr></thead><tbody><tr><td>D</td><td>0.636</td><td>0.808</td><td>0.712</td><td>0.65</td><td>None</td><td>0.105</td><td>6/20</td></tr><tr><td>D</td><td>0.633</td><td>0.76</td><td>0.691</td><td>0.45</td><td>None</td><td>0.126</td><td>3/20</td></tr></tbody></table>
+<h2>Routing and governance</h2><table><thead><tr><th>arm</th><th>CPU-served share</th><th>sensitive steps</th><th>on approved pool</th><th>violations</th></tr></thead><tbody><tr><td>D</td><td>0.959</td><td>31</td><td>31</td><td class="good">0</td></tr><tr><td>D</td><td>0.009</td><td>31</td><td>25</td><td class="good">0</td></tr></tbody></table>
+<h2>Cost (device-time; simulated with fake pools)</h2><table><thead><tr><th>arm</th><th>GPU-s/doc</th><th>CPU core-s/doc</th></tr></thead><tbody><tr><td>D</td><td>8.938</td><td>740.173</td></tr><tr><td>D</td><td>74.572</td><td>0.0</td></tr></tbody></table>
+</main></body></html>

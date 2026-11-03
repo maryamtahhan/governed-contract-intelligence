@@ -1,0 +1,15 @@
+NON-DISCLOSURE AGREEMENT
+Contract Reference: C-2026-0148
+Effective Date: 2025-11-01   Initial Term: 36 months
+Between: Northwind Analytics Ltd ("Supplier") and Pemberton Retail Holdings ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.
+Governing Law: This Agreement shall be governed by the laws of England and Wales.
+Liability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.
+Data Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.
+
+SCHEDULE 3 - PERSONAL DATA
+Data Controller contact: Ciara Doherty, ciara.doherty@pemberton.example, +353 1 555 8822
+Data Controller address: 2 Galway Main Street, Limerick
+Employee IDs: EMP-439320, EMP-360096

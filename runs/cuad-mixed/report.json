@@ -1,0 +1,78 @@
+{
+ "truth_docs": 39,
+ "arms": [
+  {
+   "arm": "D",
+   "mode": "matrix",
+   "docs": 20,
+   "wall_s": 1095.97,
+   "run_doc_ids": [
+    "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+    "AzulSa_20170303_F-1A_EX-10-3_9943903_EX-10-3_Mai",
+    "BellringBrandsInc_20190920_S-1_EX-10-12_11817081",
+    "DataCallTechnologies_20060918_SB-2A_EX-10-9_9445",
+    "EcoScienceSolutionsInc_20171117_8-K_EX-10-1_1095",
+    "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+    "GOCALLINC_03_30_2000-EX-10-7-Promotion-Agreement",
+    "HUBEIMINKANGPHARMACEUTICALLTD_09_19_2006-EX-10-1",
+    "InnerscopeHearingTechnologiesInc_20181109_8-K_EX",
+    "LECLANCHE-S-A---JOINT-DEVELOPMENT-AND-MARKETING-",
+    "LIGHTBRIDGECORP_11_23_2015-EX-10-26-STRATEGIC-AL",
+    "LOGANSROADHOUSEINC_03_27_1998-EX-10-17-SPONSORSH",
+    "MJBIOTECH-INC_12_06_2018-EX-99-01-JOINT-VENTURE-",
+    "PRIMEENERGYRESOURCESCORP_04_02_2007-EX-10-28-COM",
+    "PalmerSquareCapitalBdcInc_20200116_10-12GA_EX-10",
+    "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+    "ScansourceInc_20190822_10-K_EX-10-38_11793958_EX",
+    "ScansourceInc_20190822_10-K_EX-10-39_11793959_EX",
+    "VARIABLESEPARATEACCOUNT_04_30_2014-EX-13-C-UNCON",
+    "VEONEER-INC_02_21_2020-EX-10-11-JOINT-VENTURE-AG"
+   ],
+   "extraction": {
+    "precision": 0.156,
+    "recall": 1.0,
+    "f1": 0.27,
+    "fields_correct": 15,
+    "fields_total": 80
+   },
+   "risk_accuracy": 0.1,
+   "type_accuracy": null,
+   "report_accuracy": 0.2,
+   "docs_fully_correct": 0,
+   "classifier": {
+    "labelled": 120,
+    "accuracy": 0.508,
+    "confusion": {
+     "SIMPLE->SIMPLE": 60,
+     "SIMPLE->MEDIUM": 40,
+     "COMPLEX->MEDIUM": 19,
+     "REASONING->REASONING": 1
+    }
+   },
+   "screen": {
+    "tp": 4,
+    "fp": 0,
+    "tn": 16,
+    "fn": 0
+   },
+   "routing": {
+    "routes": {
+     "vllm-cpu": 120,
+     "vllm-gpu-approved": 1
+    },
+    "cpu_served_share": 0.992,
+    "gpu_seconds": 20.5,
+    "cpu_core_seconds": 8125.8,
+    "gpu_seconds_per_doc": 1.027,
+    "cpu_core_seconds_per_doc": 406.292,
+    "device_time_measured": 20.54,
+    "cost_method": "measured (integrated (in-flight gauges; batching means the device serves several requests while occupied))",
+    "sensitive_steps": 25,
+    "sensitive_on_approved": 25,
+    "sensitive_violations": 0,
+    "fallback": 0,
+    "errors": 0
+   }
+  }
+ ]
+}

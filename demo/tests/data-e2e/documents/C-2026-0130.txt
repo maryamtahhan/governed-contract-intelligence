@@ -1,0 +1,15 @@
+MASTER SERVICES AGREEMENT
+Contract Reference: C-2026-0130
+Effective Date: 2026-03-01   Initial Term: 36 months
+Between: Copperfield Data Services Inc ("Supplier") and Lakeshore Manufacturing Ltd ("Client")
+
+CLAUSES
+Termination: This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.
+Governing Law: This Agreement shall be governed by the laws of England and Wales.
+Liability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.
+Data Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.
+
+SCHEDULE 3 - PERSONAL DATA
+Data Controller contact: Gavin Lombard, gavin.lombard@lakeshore.example, +353 1 555 8609
+Data Controller address: 156 Cork Main Street, Galway
+Employee IDs: EMP-313933, EMP-456717

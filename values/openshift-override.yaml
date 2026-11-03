@@ -1,0 +1,45 @@
+# Override for the NVIDIA OpenShell chart on OpenShift.
+# Layer: helm install ... -f <chart>/ci/values-openshift-scc.yaml -f values/openshift-override.yaml
+# (scripts/01-install-openshell.sh does this for you.)
+#
+# The chart's own OpenShift guide says to keep the restricted posture: no
+# privileged SCC, no added capabilities. The driver reads the namespace's
+# openshift.io/sa.scc.uid-range annotation and runs sandboxes in that range.
+
+# Let restricted-v2 assign UID/fsGroup (same as ci/values-openshift-scc.yaml,
+# repeated so this file also works standalone).
+podSecurityContext:
+  fsGroup: null
+securityContext:
+  runAsUser: null
+
+# Quick-eval transport: plaintext gateway, reached via `oc port-forward`.
+# For anything shared, switch to mTLS/OIDC + Route (see README "Going further").
+server:
+  disableTls: true
+  # Set if your cluster has no default StorageClass, otherwise the gateway PVC stays Pending.
+  # dataStorageClass: gp3-csi
+  dataStorageSize: 5Gi
+
+# The openshell CLI (through a port-forward) calls the gateway with no credentials. Without
+# this the gateway answers UNAUTHENTICATED "missing authorization header".
+# UNSAFE outside a trusted environment: any pod that can reach Service/openshell
+# can then create sandboxes. Keep the gateway un-exposed (no Route) and restrict
+# ingress with a NetworkPolicy, or switch to OIDC/mTLS for anything shared.
+# (Same setting the chart's ci/values-openshift-e2e.yaml and access-control docs use.)
+gatewayConfig:
+  openshell.gateway.auth:
+    allow_unauthenticated_users: true
+
+# Mirror/pin images here if your cluster can't pull ghcr.io directly.
+# global:
+#   image:
+#     registry: ghcr.io/nvidia
+#     tag: ""            # defaults to chart appVersion
+
+# The sandbox workload image (ghcr.io/openclaw/openclaw) is passed with --from in
+# scripts/03-create-sandbox.sh, so the chart's default sandbox image is left alone.
+
+# Optional: run sandboxes under Kata (needs OpenShift sandboxed containers).
+# sandbox:
+#   defaultRuntimeClassName: kata

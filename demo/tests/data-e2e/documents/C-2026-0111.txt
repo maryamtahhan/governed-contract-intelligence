@@ -1,0 +1,10 @@
+MASTER SERVICES AGREEMENT
+Contract Reference: C-2026-0111
+Effective Date: 2026-08-01   Initial Term: 24 months
+Between: Harbourline Software DAC ("Supplier") and Ardmore Financial Services ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.
+Governing Law: This Agreement shall be governed by the laws of the State of New York.
+Liability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.
+Data Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.

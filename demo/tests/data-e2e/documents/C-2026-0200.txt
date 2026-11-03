@@ -1,0 +1,10 @@
+MASTER SERVICES AGREEMENT
+Contract Reference: C-2026-0200
+Effective Date: 2026-06-01   Initial Term: 36 months
+Between: Northwind Analytics Ltd ("Supplier") and Ravenscourt Media SA ("Client")
+
+CLAUSES
+Termination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.
+Governing Law: This Agreement shall be governed by the laws of Germany.
+Liability Cap: The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.
+Data Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.

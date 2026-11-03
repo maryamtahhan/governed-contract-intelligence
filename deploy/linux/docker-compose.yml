@@ -1,0 +1,171 @@
+# Local Linux stack for the hybrid CPU+GPU contract-review demo.
+#
+# Real routing components from RMalone8/llm-d-sc-demo (Praxis with the
+# llm_d_sc filter, the llm-d-sc classifier, trace-ui relays) with two backend
+# sets, selected by profile:
+#
+#   scripts/linux/up.sh                  # --profile fake (default): simulated
+#                                        # vLLM backends, runs on any host
+#   scripts/linux/up.sh --real           # --profile real: real vLLM pools
+#                                        # (needs GPUs + nvidia CDI)
+#
+# The trace-ui *_UPSTREAM env points at whichever set is running.
+#
+#   docker compose up -d --build            # arm D (full matrix) by default
+#   scripts/linux/set_arm.sh A              # live config swap (praxis watcher)
+#   docker compose stop fake-gpu            # pull the plug (fake profile)
+name: hybrid-demo
+
+services:
+  # One-shot: copies the classifier model into the shared volume, like the
+  # ModelCar init container in the Kubernetes deployment. llm-d-sc waits for
+  # it to complete (service_completed_successfully).
+  modelcar:
+    image: quay.io/rmalone/llm-d-sc-modelcar:complexity
+    entrypoint: ["/bin/sh", "-c", "cp -R /models/. /shared/ && echo model-car copied"]
+    volumes:
+      - model:/shared
+
+  llm-d-sc:
+    image: quay.io/rmalone/llm-d-sc:v0.1.0
+    environment:
+      LLM_D_SC_MODEL_DIR: /models
+      LLM_D_SC_CLASSIFIER: complexity
+      LLM_D_SC_LISTEN: "0.0.0.0:50051"
+    volumes:
+      - model:/models
+    depends_on:
+      modelcar:
+        condition: service_completed_successfully
+
+  praxis:
+    image: quay.io/rmalone/praxis-ai-llm-d-sc:v0.7.0
+    # In compose, `command` appends to the image ENTRYPOINT (unlike the k8s
+    # `command` in the manifests, which replaces it), so set entrypoint here.
+    entrypoint: ["praxis-ai"]
+    environment:
+      # praxis watches this file and hot-reloads; arms are swapped by copying
+      # manifests/praxis/<arm>.yaml over live.yaml (scripts/linux/set_arm.sh)
+      # - no container restart, which also makes the kill switch a live flip.
+      PRAXIS_CONFIG: /etc/praxis/${PRAXIS_CONFIG_FILE:-live.yaml}
+    volumes:
+      # Writable so the runner can swap the live config; Z relabels for
+      # SELinux-enforcing hosts (RHEL). The same files are the source for the
+      # OpenShift praxis-config ConfigMap (manifests/kustomization.yaml).
+      - ../../manifests/praxis:/etc/praxis:Z
+    ports:
+      - "19002:9902"
+    depends_on:
+      - llm-d-sc
+      - trace-ui
+
+  trace-ui:
+    build: ../../demo
+    command: ["hybrid-traceui"]
+    environment:
+      TRACE_DB_PATH: /data/traces.db
+      PRAXIS_UPSTREAM: http://praxis:8080
+      SENSITIVE_UPSTREAM: http://praxis:8083
+      TRACE_POOLS: vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small
+      # Point at the real vLLM services when running --profile real
+      # (scripts/linux/up.sh --real exports these).
+      VLLM_CPU_UPSTREAM: ${VLLM_CPU_UPSTREAM:-http://fake-cpu:8000}
+      VLLM_GPU_UPSTREAM: ${VLLM_GPU_UPSTREAM:-http://fake-gpu:8000}
+      VLLM_GPU_APPROVED_UPSTREAM: ${VLLM_GPU_APPROVED_UPSTREAM:-http://fake-approved:8000}
+      VLLM_GPU_SMALL_UPSTREAM: ${VLLM_GPU_SMALL_UPSTREAM:-http://fake-gpu-small:8000}
+      TRACE_INGRESS_PORT: "8080"
+      SENSITIVE_INGRESS_PORT: "8083"
+    volumes:
+      - trace-data:/data
+    ports:
+      - "8080:8080"
+      - "8083:8083"
+      # Pool relays and praxis metrics, for the runner's scrapes and debugging.
+      - "18081:8081"
+      - "18082:8082"
+      - "18084:8084"
+      - "18085:8085"
+
+  # ---- simulated backends: OpenAI-compatible, deterministic tiered error
+  # ---- rates, device-time headers. For CI and CPU-only hosts.
+  fake-cpu:
+    build: ../../demo
+    profiles: ["fake"]
+    command: ["hybrid-pool", "--pool", "vllm-cpu", "--model", "Semantic-Qwen",
+              "--host", "0.0.0.0", "--port", "8000",
+              "--prefill-ms-per-ktok", "700", "--decode-ms-per-tok", "24", "--concurrency", "8",
+              "--error-rates", "simple=0.10,complex=0.18,reasoning=0.55"]
+  fake-gpu:
+    build: ../../demo
+    profiles: ["fake"]
+    command: ["hybrid-pool", "--pool", "vllm-gpu", "--model", "Semantic-Qwen",
+              "--host", "0.0.0.0", "--port", "8000",
+              "--prefill-ms-per-ktok", "40", "--decode-ms-per-tok", "12", "--concurrency", "12",
+              "--error-rates", "simple=0.01,complex=0.04,reasoning=0.03"]
+  fake-approved:
+    build: ../../demo
+    profiles: ["fake"]
+    command: ["hybrid-pool", "--pool", "vllm-gpu-approved", "--model", "Semantic-Qwen",
+              "--host", "0.0.0.0", "--port", "8000",
+              "--prefill-ms-per-ktok", "40", "--decode-ms-per-tok", "12", "--concurrency", "12",
+              "--error-rates", "simple=0.01,complex=0.04,reasoning=0.03"]
+  fake-gpu-small:
+    build: ../../demo
+    profiles: ["fake"]
+    command: ["hybrid-pool", "--pool", "vllm-gpu-small", "--model", "Semantic-Qwen",
+              "--host", "0.0.0.0", "--port", "8000",
+              "--prefill-ms-per-ktok", "30", "--decode-ms-per-tok", "5", "--concurrency", "8",
+              "--error-rates", "simple=0.04,complex=0.30,reasoning=0.50"]
+
+  # ---- real vLLM backends (GPU instance with nvidia CDI configured).
+  # ---- One GPU each: general 7B, approved 7B, small 1.5B; CPU pool on cores.
+  vllm-cpu-real:
+    shm_size: "2g"
+    image: docker.io/vllm/vllm-openai-cpu:latest
+    profiles: ["real"]
+    # On the CPU backend --gpu-memory-utilization is the fraction of SYSTEM
+    # memory to cap the KV cache at (92% default); 0.15 of 186GB is plenty
+    # for a 1.5B model and leaves the host alone.
+    command: ["--model", "Qwen/Qwen2.5-1.5B-Instruct", "--served-model-name", "Semantic-Qwen",
+              "--port", "8000", "--max-model-len", "16384", "--gpu-memory-utilization", "0.15"]
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+    cpus: 24
+  vllm-gpu-real:
+    shm_size: "2g"
+    image: docker.io/vllm/vllm-openai:latest
+    profiles: ["real"]
+    command: ["--model", "Qwen/Qwen2.5-7B-Instruct", "--served-model-name", "Semantic-Qwen",
+              "--port", "8000", "--gpu-memory-utilization", "0.85",
+              "--enable-auto-tool-choice", "--tool-call-parser", "hermes"]
+    devices: ["nvidia.com/gpu=0"]
+    security_opt: ["label=disable"]
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+  vllm-gpu-approved-real:
+    shm_size: "2g"
+    image: docker.io/vllm/vllm-openai:latest
+    profiles: ["real"]
+    command: ["--model", "Qwen/Qwen2.5-7B-Instruct", "--served-model-name", "Semantic-Qwen",
+              "--port", "8000", "--gpu-memory-utilization", "0.85",
+              "--enable-auto-tool-choice", "--tool-call-parser", "hermes"]
+    devices: ["nvidia.com/gpu=1"]
+    security_opt: ["label=disable"]
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+  vllm-gpu-small-real:
+    shm_size: "2g"
+    image: docker.io/vllm/vllm-openai:latest
+    profiles: ["real"]
+    command: ["--model", "Qwen/Qwen2.5-1.5B-Instruct", "--served-model-name", "Semantic-Qwen",
+              "--port", "8000", "--gpu-memory-utilization", "0.85", "--max-model-len", "16384",
+              "--enable-auto-tool-choice", "--tool-call-parser", "hermes"]
+    devices: ["nvidia.com/gpu=2"]
+    security_opt: ["label=disable"]
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+
+volumes:
+  trace-data:
+  model:
+  hf-cache:
