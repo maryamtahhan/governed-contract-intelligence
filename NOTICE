@@ -1,0 +1,10 @@
+governed-contract-intelligence
+Copyright 2026 Maryam Tahhan
+
+This product includes software and configuration developed as an extension
+of RMalone8/llm-d-sc-demo (Praxis + llm-d-sc + trace UI).
+
+It deploys and measures third-party components including Praxis
+(praxis-proxy/ai, Apache-2.0), llm-d-sc (llm-d-incubation/
+llm-d-semantic-classifier, Apache-2.0), vLLM, and NVIDIA OpenShell/OpenClaw.
+Evaluation data: CUAD v1 (The Atticus Project, CC BY 4.0).
