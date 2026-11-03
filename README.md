@@ -168,6 +168,30 @@ and the opt-in transparent-hugepages experiment. Without the profile the
 pods still run, but their cpuset is not deterministic and their latency is
 not comparable with the recorded runs.
 
+The classifier image is separate. Upstream publishes no container image for
+`llm-d-semantic-classifier`, and the newest published tag
+(`quay.io/rmalone/llm-d-sc:v0.1.0`) predates the standard gRPC health
+service, so the base manifest keeps a TCP readiness probe. To run current
+source, build it in the cluster and pin the deployment to the result:
+
+```bash
+oc -n openshell-demo new-build --binary --name=llm-d-sc-upstream --strategy=docker
+oc -n openshell-demo patch bc/llm-d-sc-upstream --type=merge \
+  -p '{"spec":{"strategy":{"dockerStrategy":{"dockerfilePath":"Containerfile"}}}}'
+oc -n openshell-demo start-build llm-d-sc-upstream \
+  --from-dir=/path/to/llm-d-semantic-classifier --follow
+oc -n openshell-demo set image deploy/llm-d-sc \
+  llm-d-sc=image-registry.openshift-image-registry.svc:5000/openshell-demo/llm-d-sc-upstream:latest
+```
+
+Pin the digest
+(`oc -n openshell-demo get is llm-d-sc-upstream -o jsonpath='{.status.tags[?(@.tag=="latest")].items[0].image}'`)
+if the run is measured: `:latest` moves. `oc apply -k manifests` restores the public
+`v0.1.0` image; re-run `set image` after it. The praxis image is a
+different case — the only published fork tag is `v0.7.0`, and upstream
+`ai` v0.9.0 has no `llm_d_sc` filter, so upgrading it means rebuilding the
+fork (FINDINGS §12).
+
 Then:
 
 ```bash

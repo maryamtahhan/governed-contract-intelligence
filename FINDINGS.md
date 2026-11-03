@@ -658,6 +658,15 @@ comment saying why. A `grpc:` probe against this image would leave the pod
 never Ready. Adopting the gRPC probe is a reason to move to a newer image,
 not a change to make on this one.
 
+Upstream publishes no image for this service, so "newer" means building it.
+On the SNO (2026-11-03) the service now runs a build from upstream main
+(`e660fff`): the binary serves `grpc.health.v1`, and an in-cluster
+`llm-d-sc-classify --model /models` returned COMPLEX 0.999 on a design
+prompt, so the modelcar and the wire contract still line up. The base
+manifest keeps the public `v0.1.0` image and its TCP probe so other clusters
+can deploy without building; `oc apply -k manifests` restores that image, and
+the runbook has the build-and-pin commands.
+
 Also relevant now: the **sensitivity taxonomy ships built in**
 (`classifiers/sensitivity.json`: PUBLIC/INTERNAL/CONFIDENTIAL/REGULATED/
 NEVER_EGRESS, anchor-topk-mean method). A cheap, high-value experiment:
