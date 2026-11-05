@@ -1,0 +1,10 @@
+{
+ "arm": "direct",
+ "mode": "direct",
+ "docs": 19,
+ "endpoint": "http://localhost:8000/v1",
+ "thinking": false,
+ "model": "Qwen/Qwen3.5-35B-A3B",
+ "served_model": "Semantic-Qwen",
+ "hardware": "4× A10G, TP=4"
+}

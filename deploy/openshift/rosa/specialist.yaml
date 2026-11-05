@@ -1,0 +1,67 @@
+# The CUAD specialist composite for ROSA. Identical behaviour to
+# deploy/openshift/cpu-real-specialist/specialist.yaml (extraction answered
+# by the fine-tuned RoBERTa-large QA checkpoint in one encoder pass;
+# everything else forwarded to the MoE at cpureal-vllm-cpu); diverges only
+# in placement: it runs on the tainted x8i node next to the pools it fronts.
+#
+# Unlike the vLLM pools this is a plain FastAPI/torch service, not an OMP
+# process manager, so VLLM_CPU_OMP_THREADS_BIND does not apply. It is pinned
+# the cheap way instead: taskset -c 16-17 (the two cores cpu-topology.sh
+# assigns on NUMA 0, beside the MoE it forwards to), and OMP_NUM_THREADS=2
+# bounds torch intra-op threads to the same budget. The image is
+# Debian-based, so taskset (util-linux) is present. With placement pinned,
+# the CPU request != limit is safe here (no OMP manager to throttle), but it
+# keeps the Guaranteed QoS of the SNO manifest.
+#
+# The image is built in-cluster (BuildConfig hybrid-specialist in this
+# namespace); on 4.22 use the dockerfilePath + --from-dir workaround from
+# scripts/cluster/model-comparison.sh - `oc start-build --dockerfile` is not
+# supported by this server.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cpureal-specialist
+  labels: {app: cpureal-specialist, demo.openshell.ai/pool: vllm-cpu, demo.openshell.ai/specialist: cuad-qa}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: cpureal-specialist}}
+  template:
+    metadata:
+      labels: {app: cpureal-specialist, demo.openshell.ai/pool: vllm-cpu, demo.openshell.ai/specialist: cuad-qa}
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        demo.openshell.ai/node: cpu-infer
+      tolerations:
+        - {key: demo.openshell.ai/cpu-infer, operator: Exists, effect: NoSchedule}
+      containers:
+        - name: specialist
+          image: image-registry.openshift-image-registry.svc:5000/openshell-demo/hybrid-specialist:latest
+          # Pin to the cores cpu-topology.sh assigns (NUMA 0, beside the MoE);
+          # taskset execs the console script, so args stay unchanged.
+          command: ["taskset", "-c", "16-17"]
+          args: ["hybrid-specialist", "--model", "/opt/cuad-model/roberta-large",
+                 "--host", "0.0.0.0", "--port", "8000",
+                 "--concurrency", "4", "--null-margin", "1.0",
+                 "--forward-to", "http://cpureal-vllm-cpu:8000"]
+          env:
+            # torch intra-op threads: match the request, not the node
+            - {name: OMP_NUM_THREADS, value: "2"}
+          ports: [{containerPort: 8000}]
+          readinessProbe: {httpGet: {path: /health, port: 8000}, initialDelaySeconds: 15}
+          resources:
+            requests: {cpu: "2", memory: 8Gi}
+            limits: {cpu: "2", memory: 8Gi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cpureal-specialist
+spec:
+  selector: {app: cpureal-specialist}
+  ports: [{name: http, port: 8000, targetPort: 8000}]

@@ -1,0 +1,119 @@
+# GPU MoE pool: Qwen3.5-35B-A3B on real accelerators, served through the
+# same plain-Deployment shape as the cpu-real pools so the trace-ui relays
+# and praxis routing need no changes — only the upstream URL moves.
+#
+# Why this exists: on the SNO the 35B-A3B runs on CPU (cpu-real-moe), which
+# is the point of the "no GPU required" story but makes the routing demo
+# slow. On a cluster that has GPUs the same weights should be what the
+# COMPLEX/REASONING labels land on, so the demo can show the governance path
+# without the CPU decode tail. Same checkpoint on both, so quality numbers
+# stay comparable; only latency differs (measured: F1 0.690 both, 3.4-21.3 s
+# per call on CPU vs ~0.6-1 s on 4x A10G).
+#
+# Capacity required: one node with 4 NVIDIA GPUs of A10G class (24 GiB each,
+# 96 GiB total). 67 GiB of bf16 weights leave ~21 GiB for KV cache at
+# --max-model-len 16384 and --max-num-seqs 32; that is the g5.12xlarge
+# profile measured on 2026-11-02, not a guess. Tensor parallel 4 spans all
+# four cards, so this pod consumes the whole node's GPUs — schedule it on a
+# dedicated GPU node, or accept that no other GPU workload fits beside it.
+#
+# The weights come from the model-cache PVC (seeded by moe-cache-seeder.yaml)
+# and HF_HUB_OFFLINE is on: the pod must start from a warm cache, and a cold
+# cache turns into a container that sits in "pulling weights" for an hour.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gpumoe-vllm
+  labels:
+    app: gpumoe-vllm
+    demo.openshell.ai/pool: vllm-gpu
+    demo.openshell.ai/accelerator: gpu
+spec:
+  replicas: 1
+  # Recreate, not RollingUpdate: the pod holds all four GPUs, so a second one
+  # can never schedule and a rolling update would deadlock.
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: gpumoe-vllm}}
+  template:
+    metadata:
+      labels:
+        app: gpumoe-vllm
+        demo.openshell.ai/pool: vllm-gpu
+        demo.openshell.ai/accelerator: gpu
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        nvidia.com/gpu.present: "true"
+      tolerations:
+        - {key: nvidia.com/gpu, operator: Exists, effect: NoSchedule}
+      containers:
+        - name: vllm
+          # Same CUDA runtime image the KServe GPU pools use; pinned by digest
+          # so the base and this overlay cannot drift apart silently.
+          image: registry.redhat.io/rhaii/vllm-cuda-rhel9@sha256:ba060ec145e1b7ac3a3b25b89fc75f7d146746156990ff5858235eaa9d158e32
+          command: ["python", "-m", "vllm.entrypoints.openai.api_server"]
+          # The alias praxis and the trace headers report is "Semantic-Qwen";
+          # the checkpoint is recorded separately in the run summary. Keeping
+          # the alias stable is what lets an old trace be compared with a new
+          # one at all.
+          args: ["--model", "Qwen/Qwen3.5-35B-A3B",
+                 "--served-model-name", "Semantic-Qwen",
+                 "--port", "8000", "--max-model-len", "16384", "--max-num-seqs", "32",
+                 "--gpu-memory-utilization", "0.92", "--tensor-parallel-size", "4",
+                 "--trust-remote-code", "--enable-auto-tool-choice",
+                 "--tool-call-parser", "qwen3_coder", "--reasoning-parser", "qwen3"]
+          env:
+            - {name: HF_HOME, value: /cache/hf}
+            - {name: HOME, value: /cache}
+            - {name: XDG_CACHE_HOME, value: /cache/xdg}
+            # Warm cache only; seed with moe-cache-seeder.yaml first.
+            - {name: HF_HUB_OFFLINE, value: "1"}
+            - {name: HF_HUB_DISABLE_XET, value: "1"}
+            # A cold 67 GiB load on this storage class takes longer than
+            # vLLM's default engine-ready window.
+            - {name: VLLM_ENGINE_READY_TIMEOUT_S, value: "3600"}
+          ports: [{containerPort: 8000, name: http}]
+          readinessProbe:
+            httpGet: {path: /health, port: 8000}
+            initialDelaySeconds: 900
+            periodSeconds: 15
+            failureThreshold: 8
+          resources:
+            # Guaranteed QoS: the four GPUs are an indivisible unit, and being
+            # evicted for CPU pressure would cost a 15-minute model load.
+            requests: {cpu: "16", memory: 128Gi, nvidia.com/gpu: "4"}
+            limits: {cpu: "16", memory: 128Gi, nvidia.com/gpu: "4"}
+          volumeMounts:
+            - {name: shm, mountPath: /dev/shm}
+            - {name: hf-cache, mountPath: /cache}
+      volumes:
+        # vLLM's multiprocess transport uses /dev/shm heavily under TP=4;
+        # the 64 MiB default is the classic silent hang.
+        - {name: shm, emptyDir: {medium: Memory, sizeLimit: 8Gi}}
+        - {name: hf-cache, persistentVolumeClaim: {claimName: model-cache}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gpumoe-vllm
+spec:
+  selector: {app: gpumoe-vllm}
+  ports: [{name: http, port: 8000, targetPort: 8000}]
+---
+# The sensitive entry routes COMPLEX/REASONING here. By default this Service
+# selects the same pods as gpumoe-vllm: the "approved" promise in this demo is
+# that a sensitive request may only land on the GPU pool, and both names then
+# point at identical hardware and identical weights.
+#
+# It is NOT a second isolated replica. If the claim to defend is "a sensitive
+# request never shares a process with a general one", give this Service its own
+# Deployment — copy gpumoe-vllm, rename it, change its `app` label, and point
+# this selector at it — which needs another 4 GPUs. Say which promise the demo
+# is making before pointing at this.
+apiVersion: v1
+kind: Service
+metadata:
+  name: gpumoe-vllm-approved
+spec:
+  selector: {app: gpumoe-vllm}
+  ports: [{name: http, port: 8000, targetPort: 8000}]

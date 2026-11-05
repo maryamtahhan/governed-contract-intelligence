@@ -1,0 +1,68 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# GPU-pool variant: stacks on cpu-real-moe, so the CPU pool still serves the
+# 35B-A3B from CPU and the GPU pool now serves the SAME checkpoint from 4
+# accelerators. That pairing is deliberate: one checkpoint on two hardwares
+# makes CPU-vs-GPU a controlled comparison (same weights, same prompts, same
+# scorer), which is the claim the demo makes about latency, not quality.
+#
+# Apply with:  oc apply -k deploy/openshift/gpu-moe
+# Prereq:      seed the model-cache PVC first (moe-cache-seeder.yaml). The
+#              GPU deployment runs HF_HUB_OFFLINE=1 and will not download.
+# Requires:    a node with 4 NVIDIA A10G-class GPUs (see gpu-moe.yaml header).
+#
+# When recording runs against this overlay, pass the matching provenance
+# (paths from the repo root; from demo/ use @../deploy/...):
+#   --environment <cluster-role> --cluster <name> \
+#   --pools @deploy/openshift/gpu-moe/pools.json
+# so summary.json says what was behind each route. Names alone cannot.
+#
+# What moves: only the trace-ui relay targets for the two "expensive" pools.
+# praxis config is unchanged — it routes labels to pool NAMES, and the names
+# still exist; the relay is what knows which Deployment answers for a name.
+# That indirection is the whole reason this overlay is small.
+namespace: openshell-demo
+
+resources:
+  - ../cpu-real-moe
+  - gpu-moe.yaml
+
+patches:
+  - target:
+      kind: Deployment
+      name: trace-ui
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/env
+        value:
+          - {name: TRACE_DB_PATH, value: /data/traces.db}
+          - {name: PRAXIS_UPSTREAM, value: "http://praxis:80"}
+          - {name: SENSITIVE_UPSTREAM, value: "http://praxis:8083"}
+          - {name: JUDGMENT_UPSTREAM, value: "http://praxis:8086"}
+          - {name: SENSITIVE_JUDGMENT_UPSTREAM, value: "http://praxis:8087"}
+          - {name: TRACE_POOLS, value: "vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small"}
+          # The three "cheap" names stay on the CPU-served pools from the
+          # base. Only vllm-cpu is the 35B-A3B; vllm-gpu-small remains the
+          # 1.5B it always was, so a small-model arm still has somewhere to go.
+          - {name: VLLM_CPU_UPSTREAM, value: "http://cpureal-vllm-cpu:8000"}
+          - {name: VLLM_GPU_SMALL_UPSTREAM, value: "http://cpureal-vllm-gpu-small:8000"}
+          # COMPLEX/REASONING on the general entry, and COMPLEX/REASONING on
+          # the sensitive entry, now go to the GPU MoE pool.
+          - {name: VLLM_GPU_UPSTREAM, value: "http://gpumoe-vllm:8000"}
+          - {name: VLLM_GPU_APPROVED_UPSTREAM, value: "http://gpumoe-vllm-approved:8000"}
+  # The base cpu-real pools still carry the names vllm-gpu and
+  # vllm-gpu-approved but run the 7B on CPU, 24 CPU each. Once the relays
+  # above point elsewhere nothing routes to them, and leaving them up burns
+  # core sets the CPU MoE pool needs — so park them at zero. Their Services
+  # stay (a detached endpoint is harmless); only the pods go.
+  - target: {kind: Deployment, name: cpureal-vllm-gpu}
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 0
+  - target: {kind: Deployment, name: cpureal-vllm-gpu-approved}
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 0

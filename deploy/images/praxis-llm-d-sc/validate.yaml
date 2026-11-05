@@ -1,0 +1,38 @@
+# Build-time validation config for the custom praxis-ai image.
+#
+# This is intentionally small: it exists so `praxis-ai --validate` constructs
+# the llm_d_sc filter, validates its config schema, and checks that the filter
+# and the load balancer agree on the selected cluster. It does not contact
+# llm-d-sc or any model pool. The gRPC channel is lazy and validation performs
+# no DNS or network I/O.
+
+admin:
+  metrics_address: "127.0.0.1:9901"
+
+listeners:
+  - name: validate
+    address: "127.0.0.1:18080"
+    filter_chains: [validate-routing]
+
+filter_chains:
+  - name: validate-routing
+    filters:
+      - filter: llm_d_sc
+        endpoint: "127.0.0.1:50051"
+        signal: contract_step
+        default_cluster: cpu
+        timeout_ms: 100
+        routes:
+          - {label: CLASSIFY, cluster: cpu}
+          - {label: EXTRACT, cluster: cpu}
+          - {label: RISK, cluster: gpu}
+          - {label: REPORT, cluster: gpu}
+      - filter: load_balancer
+        clusters:
+          - name: cpu
+            endpoints: ["127.0.0.1:8000"]
+          - name: gpu
+            endpoints: ["127.0.0.1:8001"]
+
+insecure_options:
+  allow_private_endpoints: true

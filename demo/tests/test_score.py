@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import json
+
 from hybrid_demo.evalkit.cost import price, sweep
 from hybrid_demo.evalkit.score import (
     APPROVED_ROUTES,
+    docs_fully_correct,
     extraction_scores,
     routing_scores,
     text_matches,
@@ -118,6 +121,41 @@ def test_majority_risk_baseline():
     assert majority_risk_baseline(truth, set()) is None
 
 
+def test_report_compares_governing_law_by_jurisdiction_and_accepts_any_high_risk_ref():
+    from hybrid_demo.evalkit.score import jurisdiction, report_checks
+
+    truth = {
+        "d1": {"doc_id": "d1", "risk": "high",
+               "clauses": {"governing_law": "the laws of the State of New York"}},
+        "d2": {"doc_id": "d2", "risk": "high",
+               "clauses": {"governing_law": "COMMONWEALTH OF PENNSYLVANIA"}},
+    }
+    records = [
+        record("extract:governing_law", "d1", True, "New York law"),
+        record("extract:governing_law", "d2", True, "Pennsylvania law"),
+        {
+            "step": "report", "doc_id": None, "outcome": "served",
+            "content": {
+                "documents": 2,
+                "risk_counts": {"high": 2, "medium": 0, "low": 0},
+                # Models answer with law names; truth stores the whole clause.
+                "governing_law_counts": {"New York": 1, "Pennsylvania": 1},
+                # d1 is the alphabetical "highest", but any truth-high doc is a
+                # valid reference.
+                "highest_risk_ref": "d2",
+            },
+        },
+    ]
+    result = report_checks(records, truth)
+    assert result["expected"]["governing_law_counts"] == {"new york": 1, "pennsylvania": 1}
+    assert result["checks"]["governing_law_counts"] == 1.0
+    assert result["checks"]["highest_risk_ref"] == 1.0
+    assert result["score"] == 1.0
+    assert jurisdiction("laws of West Virginia") == "west virginia"
+    assert jurisdiction("Indiana") == "indiana"
+    assert jurisdiction("no law named") is None
+
+
 def test_sampler_parsing_and_integration():
     from hybrid_demo.evalkit.sampler import MetricsSampler, parse_prometheus
 
@@ -149,6 +187,61 @@ pool_busy_seconds_total{pool="vllm-cpu",replica="r"} 12.5
     assert summary["prompt_tokens"] == 100.0
     assert summary["generation_tokens"] == 40.0
     assert "integrated" in summary["method"]
+
+
+def test_sampler_accepts_underscore_only_gauges():
+    """The Python prometheus client (our specialist) emits underscore names.
+
+    Regression: the sampler used to detect gauges only by the colon spelling,
+    so a pool that was idle at the final scrape fell through to the counter
+    path and reported no device time at all.
+    """
+    from hybrid_demo.evalkit.sampler import MetricsSampler
+
+    sampler = MetricsSampler({"cpu": "http://127.0.0.1:1/metrics"}, interval=0.05)
+    samples = [(0.0, {"vllm_num_requests_running": 2.0}),
+               (2.0, {"vllm_num_requests_running": 0.0}),
+               (4.0, {"vllm_num_requests_running": 0.0})]
+    summary = sampler._summarize("cpu", samples)
+    assert "integrated" in summary["method"]
+    assert summary["device_active_s"] == 2.0
+
+
+def test_direct_run_metrics_file_is_not_treated_as_device_time(tmp_path):
+    """Direct runs write quality scores to metrics.json.
+
+    The sampler summary is a pool -> summary dict; scoring a direct run must
+    not feed the former to routing_scores (regression: AttributeError:
+    'float' object has no attribute 'get' at report time).
+    """
+    from hybrid_demo.evalkit.score import load_run, score_run
+
+    run = tmp_path / "cpu-moe"
+    run.mkdir()
+    records = [{
+        "step": "extract:governing_law", "doc_id": "d1",
+        "content": {"found": True, "text": "laws of New York"},
+        "headers": {}, "outcome": "served",
+    }]
+    (run / "results.json").write_text(json.dumps({
+        "summary": {"arm": "direct", "mode": "direct", "docs": 1, "wall_s": 1.0},
+        "records": records,
+    }))
+    (run / "metrics.json").write_text(json.dumps({
+        "extraction": {"precision": 1.0, "recall": 1.0, "f1": 1.0,
+                       "fields_correct": 1, "fields_total": 1},
+        "risk_accuracy": 1.0,
+        "report_accuracy": 0.5,
+        "docs_fully_correct": 1,
+    }))
+    truth = {"d1": {"clauses": {"governing_law": "laws of New York"}}}
+    scored = score_run(load_run(run), truth, cores_per_cpu_replica=8)
+    # Direct runs are labelled by pool directory so three pools can share a
+    # report without three rows called "direct".
+    assert scored["arm"] == "cpu-moe"
+    assert scored["routing"]["gpu_time_measured"] is False
+    assert scored["routing"]["cpu_time_measured"] is False
+    assert scored["routing"]["cost_method"].startswith("unmeasured")
 
 
 def test_dataset_provenance_comes_from_the_manifest():
@@ -203,6 +296,28 @@ def test_report_names_containment_and_flags_a_weak_classifier(tmp_path):
     assert report["dataset"] == (
         "1 synthetic documents (seed 42, licences: synthetic, no personal data)")
     assert report["arms"][0]["classifier"]["accuracy"] == 0.0
+
+
+def test_report_accepts_the_documented_repeated_runs_form(tmp_path, monkeypatch):
+    """The handoff command uses `--runs A --runs B`; it must not drop runs."""
+    import sys
+
+    from hybrid_demo.evalkit import score
+
+    seen: dict[str, list[str]] = {}
+
+    def fake_build(run_dirs, data_dir, cores, rates):
+        seen["runs"] = run_dirs
+        return "report", {"arms": []}
+
+    monkeypatch.setattr(score, "build_report", fake_build)
+    monkeypatch.setattr(score, "render_html", lambda data: "html")
+    monkeypatch.setattr(sys, "argv", [
+        "hybrid-score", "report", "--runs", "one", "--runs", "two",
+        "--data", "data/synthetic", "--out", str(tmp_path / "report.md"),
+    ])
+    score.main()
+    assert seen["runs"] == ["one", "two"]
 
 
 class _FakeSummary:
@@ -266,3 +381,27 @@ def test_governance_check_flags_a_sensitive_trace_on_an_unapproved_route(monkeyp
     assert result["clean"] is False
     assert result["sensitive_entry_violations"] == [
         {"entry": "sensitive", "route": "vllm-gpu", "count": 1}]
+
+
+def test_a_failed_call_is_not_a_correct_absence():
+    """A 503 never answered, so it cannot have said "no clause".
+
+    Regression: both scorers looked only at ``found``, so an extract that timed
+    out on an annotated-absent clause counted as correct — and on arm-D-moe
+    five such documents were reported fully correct when one was.
+    """
+    terminated = record("extract:termination", "d1", True,
+                        "Either party may terminate")
+    risky = {"step": "risk", "doc_id": "d1", "outcome": "served",
+             "content": {"risk": "low"}}
+
+    failed = {"step": "extract:governing_law", "doc_id": "d1",
+              "outcome": "http_503", "content": {}}
+    scores = extraction_scores([terminated, failed], TRUTH)
+    assert scores["fields_correct"] == 1
+    assert docs_fully_correct([terminated, failed, risky], TRUTH) == 0
+
+    # The same document answers "no clause" when the call is served.
+    absent = record("extract:governing_law", "d1", False, None)
+    assert extraction_scores([terminated, absent], TRUTH)["fields_correct"] == 2
+    assert docs_fully_correct([terminated, absent, risky], TRUTH) == 1

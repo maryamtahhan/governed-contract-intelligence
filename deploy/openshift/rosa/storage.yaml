@@ -1,0 +1,40 @@
+# Per-node model caches for ROSA (gp3/EBS, RWO). The SNO used one shared
+# RWX NFS PVC; on this cluster EBS volumes cannot attach across nodes, and
+# the GPU (g5) and CPU (x8i) pools live on different nodes, so each node
+# gets its own cache, seeded by seeders.yaml:
+#
+#   model-cache-cpu (x8i node): Qwen2.5-1.5B-Instruct (~3 GiB) +
+#                                Qwen3.5-35B-A3B (~67 GiB) + vLLM compile
+#                                caches
+#   model-cache-gpu (g5 node):  Qwen3.5-35B-A3B (~67 GiB) + compile caches
+#
+# gp3-csi uses WaitForFirstConsumer, so each volume is created in the AZ of
+# the first pod that mounts it — run the seeders (which carry the node
+# selectors) before anything else mounts these, and the volumes land in the
+# right AZ. gp3's baseline throughput (125 MiB/s) puts a 67 GiB seed at
+# roughly ten minutes; reads at boot are what matter and they are fast.
+#
+# The FINDINGS §7 NFS dirty-page OOM does not apply: local EBS flushes at
+# line rate, and the only large writes happen in the resource-less seeder
+# Jobs anyway.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: model-cache-cpu
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: gp3-csi
+  resources:
+    requests:
+      storage: 150Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: model-cache-gpu
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: gp3-csi
+  resources:
+    requests:
+      storage: 100Gi

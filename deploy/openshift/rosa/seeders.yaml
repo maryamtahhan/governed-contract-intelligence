@@ -1,0 +1,97 @@
+# Seed the per-node model caches before the pools start. Adapted from
+# deploy/openshift/moe-cache-seeder.yaml with ROSA placement: each Job runs
+# on the node whose cache it fills (node selector + toleration), so the
+# WaitForFirstConsumer volume lands in the right AZ, and the download
+# happens next to the disk that will hold it.
+#
+# No resources block on purpose: no memory limit means no cgroup OOM from
+# dirty-page accounting while writing 67 GiB (the FINDINGS §7 lesson,
+# belt-and-braces even though EBS is not NFS).
+#
+# Apply BEFORE the pools (they run HF_HUB_OFFLINE=1):
+#   oc apply -f deploy/openshift/rosa/storage.yaml
+#   oc apply -f deploy/openshift/rosa/seeders.yaml
+#   oc -n openshell-demo wait --for=condition=complete job/seed-model-cache-cpu job/seed-model-cache-gpu --timeout=3600s
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seed-model-cache-cpu
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: seed-model-cache-cpu
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        demo.openshell.ai/node: cpu-infer
+      tolerations:
+        - {key: demo.openshell.ai/cpu-infer, operator: Exists, effect: NoSchedule}
+      containers:
+        - name: seeder
+          image: python:3.12-slim
+          env:
+            - {name: HOME, value: /tmp}
+            - {name: HF_HOME, value: /cache/hf}
+            - {name: HF_HUB_DISABLE_XET, value: "1"}
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              pip install --quiet --target /tmp/py huggingface_hub
+              PYTHONPATH=/tmp/py python3 -c "
+              from huggingface_hub import snapshot_download
+              snapshot_download('Qwen/Qwen2.5-1.5B-Instruct', max_workers=8)
+              print('1.5B SEEDED')
+              snapshot_download('Qwen/Qwen3.5-35B-A3B', max_workers=8)
+              print('MOE SEEDED')
+              "
+              echo 'CPU CACHE SEED COMPLETE'
+          volumeMounts:
+            - {name: cache, mountPath: /cache}
+      volumes:
+        - name: cache
+          persistentVolumeClaim: {claimName: model-cache-cpu}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seed-model-cache-gpu
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: seed-model-cache-gpu
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        demo.openshell.ai/node: gpu
+      tolerations:
+        - {key: nvidia.com/gpu, operator: Exists, effect: NoSchedule}
+      containers:
+        - name: seeder
+          image: python:3.12-slim
+          env:
+            - {name: HOME, value: /tmp}
+            - {name: HF_HOME, value: /cache/hf}
+            - {name: HF_HUB_DISABLE_XET, value: "1"}
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              pip install --quiet --target /tmp/py huggingface_hub
+              PYTHONPATH=/tmp/py python3 -c "
+              from huggingface_hub import snapshot_download
+              snapshot_download('Qwen/Qwen3.5-35B-A3B', max_workers=8)
+              print('MOE SEEDED')
+              "
+              echo 'GPU CACHE SEED COMPLETE'
+          volumeMounts:
+            - {name: cache, mountPath: /cache}
+      volumes:
+        - name: cache
+          persistentVolumeClaim: {claimName: model-cache-gpu}

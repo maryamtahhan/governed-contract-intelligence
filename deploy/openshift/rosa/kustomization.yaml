@@ -1,0 +1,125 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# ROSA (hosted control plane) variant: real GPU + real CPU pools on one
+# managed OpenShift cluster, no static CPU manager.
+#
+# What this is: the full specialist-moe + gpu-moe composition (CUAD specialist
+# behind the vllm-cpu relay, Qwen3.5-35B-A3B on the CPU pool AND on 4x A10G,
+# 1.5B small pool, 7B pools parked at zero) expressed once, with the ROSA
+# specifics baked in.
+#
+# Why it diverges from the SNO overlays (each divergence is deliberate):
+#
+# 1. NO KSERVE OBJECTS. The base manifests/ kustomization ships KServe
+#    InferenceServices and ServingRuntimes; this cluster has no KServe (and
+#    the SNO finding, FINDINGS §7, is that the storage-initializer path is
+#    broken there anyway - every real pool is a plain Deployment). The
+#    non-KServe base files are listed directly below instead of chaining
+#    through deploy/openshift/cpu-real-moe, so `oc apply -k` works on a bare
+#    cluster. The praxis routing configs are still the same files, so the
+#    "byte-identical routing across stacks" invariant holds.
+#
+# 2. CPU ASSIGNMENT WITHOUT CPU MANAGER. ROSA gives no PerformanceProfile /
+#    KubeletConfig / static kubelet policy (managed nodes), so the SNO
+#    isolation (deploy/openshift/cpu-isolation/) does not apply. Each pool
+#    pins its WHOLE process tree to an explicit, disjoint, NUMA-local set of
+#    thread-0 CPUs with `taskset -c` (set as the container command). The
+#    lists come from the Intel llm-d Xeon article's layout.
+#
+#    VLLM_CPU_OMP_THREADS_BIND and LD_PRELOAD=libiomp5 are still set to
+#    express intent, but they are NOT the effective mechanism in this image:
+#    the engine forks after the preloaded libiomp5 has initialised, so the
+#    env-only path logs the right core list and applies nothing (measured
+#    2026-11-04 on <redacted-cluster>: 234/234 engine threads still on 0-95).
+#    taskset is inherited by every child, survives fork, and is verifiable
+#    in /proc/<tid>/status (measured after the switch: 126 threads on 0-15,
+#    1.5B on 24-35). vLLM's own "auto" mode is NOT used: it binds every
+#    rank-0 worker to NUMA node 0, which would pile all pools onto one node.
+#
+#    The core lists were generated from the real node (2026-11-04,
+#    scripts/cluster/cpu-topology.sh): MoE 0-15 on NUMA 0, specialist 16-17
+#    on NUMA 0, 1.5B 24-35 on NUMA 1, 7B (parked) 36-47. Regenerate and
+#    paste new lists after any node-type or node-count change; never record
+#    latency numbers from a run whose lists were not generated from the node
+#    it ran on.
+#
+# 3. CPU REQUEST, NO CPU LIMIT on the pinned pools. A CFS quota throttles
+#    exactly the threads we pin (article's warning); a request still gives
+#    the scheduler honest capacity accounting. Memory keeps requests==limits.
+#    VLLM_CPU_KVCACHE_SPACE is deliberately NOT set: the SNO runs recorded
+#    the comparison baseline without it, and vLLM treats "unset" as its own
+#    default path (platforms/cpu.py).
+#
+# 4. PER-NODE MODEL CACHES. gp3 (EBS) is RWO and cannot attach across AZs,
+#    and the GPU and CPU pools live on different nodes: model-cache-cpu
+#    (x8i) and model-cache-gpu (g5) are seeded by Jobs (seeders.yaml) with
+#    no memory limit - the FINDINGS §7 NFS dirty-page OOM does not apply to
+#    local EBS, and the pools boot HF_HUB_OFFLINE=1 from the warm cache.
+#    The CPU image is pinned by digest: the OMP binding semantics above were
+#    verified against exactly this build (vllm 0.33.0).
+#
+# 5. Node placement: all inference nodes are tainted machine pools in one
+#    AZ (colocated - the measured request path must not cross AZs, and gp3
+#    volumes are AZ-locked). Pools tolerate demo.openshell.ai/cpu-infer; the
+#    GPU pool tolerates nvidia.com/gpu. praxis, llm-d-sc and trace-ui run
+#    untolerated on the small default pool.
+#
+# Bring-up order (cluster must exist and be ready first):
+#   1. rosa create machinepool ... gci-x8i-24xl (x8i.24xlarge) and
+#      gci-g5-12xl (g5.12xlarge), both in one private subnet / AZ
+#   2. oc apply -f gpu-operator.yaml        # driver install ~10-15 min, start early
+#   3. wait for both nodes; scripts/cluster/cpu-topology.sh <x8i-node>
+#      -> paste the proposed VLLM_CPU_OMP_THREADS_BIND lists into pools-cpu.yaml
+#   4. oc apply -f storage.yaml && oc apply -f seeders.yaml   # weights land warm
+#   5. oc apply -k deploy/openshift/rosa    # idempotent; pools boot from cache
+#
+# When recording runs against this overlay, pass the matching provenance
+# (paths from the repo root; from demo/ use @../deploy/...):
+#   --environment rosa --cluster <redacted-cluster-eu> \
+#   --pools @deploy/openshift/rosa/pools.json
+#
+# Arm swaps and the praxis config watcher work exactly as on the SNO:
+#   oc -n openshell-demo set env deploy/praxis PRAXIS_CONFIG=/etc/praxis/arm-a.yaml
+namespace: openshell-demo
+
+resources:
+  # Non-KServe base (see divergence 1 above): praxis, llm-d-sc, trace-ui,
+  # traffic-gen, network policies, and the praxis-config generator all arrive
+  # through this directory reference - kustomize evaluates the generator's
+  # file paths against manifests/base/, so the routing ConfigMap is the same
+  # content hash every stack gets.
+  - ../../../manifests/base
+  # pools and platform pieces (this directory)
+  - pools-cpu.yaml
+  - specialist.yaml
+  - gpu-moe-pool.yaml
+  - storage.yaml
+  - seeders.yaml
+  - gpu-operator.yaml
+
+patches:
+  # The composed relay map (specialist-moe + gpu-moe): the CPU relay fronts
+  # the CUAD specialist (extraction answered by the QA model in one encoder
+  # pass; risk/classify forwarded to the MoE behind the same relay); the
+  # two "expensive" names land on the 4x A10G pool serving the SAME
+  # checkpoint as the CPU pool - the controlled CPU-vs-GPU comparison.
+  # To rerun the plain MoE arm instead, point VLLM_CPU_UPSTREAM at
+  # http://cpureal-vllm-cpu:8000 and restart trace-ui.
+  - target:
+      kind: Deployment
+      name: trace-ui
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/env
+        value:
+          - {name: TRACE_DB_PATH, value: /data/traces.db}
+          - {name: PRAXIS_UPSTREAM, value: "http://praxis:80"}
+          - {name: SENSITIVE_UPSTREAM, value: "http://praxis:8083"}
+          - {name: JUDGMENT_UPSTREAM, value: "http://praxis:8086"}
+          - {name: SENSITIVE_JUDGMENT_UPSTREAM, value: "http://praxis:8087"}
+          - {name: TRACE_POOLS, value: "vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small"}
+          - {name: VLLM_CPU_UPSTREAM, value: "http://cpureal-specialist:8000"}
+          - {name: VLLM_GPU_UPSTREAM, value: "http://gpumoe-vllm:8000"}
+          - {name: VLLM_GPU_APPROVED_UPSTREAM, value: "http://gpumoe-vllm-approved:8000"}
+          - {name: VLLM_GPU_SMALL_UPSTREAM, value: "http://cpureal-vllm-gpu-small:8000"}

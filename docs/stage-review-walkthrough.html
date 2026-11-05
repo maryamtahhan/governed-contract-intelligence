@@ -1,0 +1,1101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stage Review Walkthrough</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@600&display=swap">
+<script>
+  // Same preference key as the stage review, so the guide and the page agree.
+  try {
+    const theme = localStorage.getItem("stage-ui-theme");
+    if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
+  } catch (e) {}
+</script>
+<style>
+:root {
+  --bg: #f3f5f1;
+  --surface: #ffffff;
+  --surface-2: #eaeee8;
+  --ink: #141915;
+  --muted: #59645c;
+  --faint: #7d8880;
+  --line: #d4dad3;
+  --line-2: #e3e7e1;
+  --accent: #1b6b47;
+  --accent-ink: #124b31;
+  --accent-soft: #e2eee7;
+  --ok: #1b6b47;
+  --ok-soft: #e2eee7;
+  --bad: #a3352b;
+  --bad-soft: #f7e6e3;
+  --warn: #8a5a12;
+  --warn-soft: #f6edd9;
+  --mark: #ffe58a;
+  --mark-ink: #3d3005;
+  --shadow: 0 1px 2px rgba(20, 25, 21, .05);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1411;
+    --surface: #171d18;
+    --surface-2: #131813;
+    --ink: #e6ebe5;
+    --muted: #9aa69d;
+    --faint: #748078;
+    --line: #2a332c;
+    --line-2: #222a23;
+    --accent: #6bcb9b;
+    --accent-ink: #9ee0bd;
+    --accent-soft: #16281f;
+    --ok: #6bcb9b;
+    --ok-soft: #16281f;
+    --bad: #ef9388;
+    --bad-soft: #2c1b19;
+    --warn: #e0b064;
+    --warn-soft: #2a2216;
+    --mark: #5c4a12;
+    --mark-ink: #ffe9a3;
+    --shadow: none;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1411;
+  --surface: #171d18;
+  --surface-2: #131813;
+  --ink: #e6ebe5;
+  --muted: #9aa69d;
+  --faint: #748078;
+  --line: #2a332c;
+  --line-2: #222a23;
+  --accent: #6bcb9b;
+  --accent-ink: #9ee0bd;
+  --accent-soft: #16281f;
+  --ok: #6bcb9b;
+  --ok-soft: #16281f;
+  --bad: #ef9388;
+  --bad-soft: #2c1b19;
+  --warn: #e0b064;
+  --warn-soft: #2a2216;
+  --mark: #5c4a12;
+  --mark-ink: #ffe9a3;
+  --shadow: none;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  padding-block: 40px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.page { max-width: 1020px; margin: 0 auto; }
+.mono { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+p { max-width: 70ch; margin: 0 0 14px; }
+a { color: var(--accent-ink); text-underline-offset: 3px; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+header.top {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 26px;
+  margin-bottom: 8px;
+}
+.eyebrow {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11.5px;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+  margin: 0 0 14px;
+}
+h1 {
+  font-family: "IBM Plex Serif", Georgia, serif;
+  font-weight: 600;
+  font-size: clamp(2rem, 5vw, 3.05rem);
+  line-height: 1.08;
+  letter-spacing: -0.022em;
+  text-wrap: balance;
+  margin: 0 0 14px;
+}
+.deck {
+  font-size: 18px;
+  line-height: 1.5;
+  color: var(--muted);
+  max-width: 62ch;
+  margin: 0;
+}
+.meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11.5px;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 4px 9px;
+}
+.chip b { color: var(--ink); font-weight: 500; }
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+  padding: 9px 15px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+  text-decoration: none;
+}
+.cta:hover { text-decoration: underline; text-decoration-thickness: 1.5px; }
+.header-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 22px; }
+.header-actions .cta { margin-top: 0; }
+.theme-btn {
+  display: inline-flex; align-items: center; padding: 9px 15px;
+  border: 1px solid var(--line); border-radius: 6px;
+  background: var(--surface); color: var(--muted);
+  font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12.5px;
+  cursor: pointer;
+}
+.theme-btn:hover { border-color: var(--accent); color: var(--accent-ink); }
+.chip.example { border-color: var(--warn); color: var(--warn); background: var(--warn-soft); }
+details.appendix { margin-top: 52px; border-top: 1px solid var(--line); padding-top: 18px; }
+details.appendix > summary {
+  cursor: pointer; list-style: none;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--muted); font-weight: 600;
+}
+details.appendix > summary::-webkit-details-marker { display: none; }
+details.appendix > summary:before { content: "▸ "; color: var(--faint); }
+details.appendix[open] > summary:before { content: "▾ "; }
+details.appendix[open] > summary { margin-bottom: 22px; }
+details.appendix section { margin-top: 34px; }
+
+ul.plain { max-width: 70ch; margin: 0 0 14px; padding-left: 20px; }
+ul.plain li { margin-bottom: 7px; }
+
+section { margin-top: 46px; }
+.sec-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line-2);
+}
+.sec-head h2 {
+  font-family: "IBM Plex Serif", Georgia, serif;
+  font-weight: 600;
+  font-size: 1.45rem;
+  letter-spacing: -0.012em;
+  margin: 0;
+  text-wrap: balance;
+}
+.sec-head .kicker {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-left: auto;
+  white-space: nowrap;
+}
+h3 {
+  font-weight: 600;
+  font-size: 1.02rem;
+  line-height: 1.35;
+  margin: 0 0 6px;
+}
+
+.callout {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 3px;
+  padding: 18px 20px;
+  margin: 18px 0;
+  box-shadow: var(--shadow);
+}
+.callout p:last-child { margin-bottom: 0; }
+.callout.warn { border-left-color: var(--warn); background: var(--warn-soft); }
+.callout.bad { border-left-color: var(--bad); background: var(--bad-soft); }
+.callout .label {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.pipe {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 6px;
+  margin: 20px 0 8px;
+}
+.node {
+  flex: 1 1 150px;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--accent);
+  border-radius: 3px;
+  padding: 10px 12px;
+}
+.node.off { border-top-color: var(--line); background: var(--surface-2); }
+.node .n {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.3;
+}
+.node .t {
+  display: block;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.arrow {
+  align-self: center;
+  color: var(--faint);
+  font-size: 16px;
+  padding: 0 1px;
+}
+.pipe-note {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.grid-2 > * { min-width: 0; }
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 18px 0 8px;
+}
+.tile { background: var(--surface); padding: 15px 16px; min-width: 0; }
+.tile .lab {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.tile .val {
+  font-family: "IBM Plex Serif", Georgia, serif;
+  font-size: 30px;
+  line-height: 1.1;
+  font-weight: 600;
+  margin: 6px 0 4px;
+  font-variant-numeric: tabular-nums;
+}
+.tile .val small { font-size: 15px; color: var(--muted); font-family: "IBM Plex Sans", sans-serif; font-weight: 400; }
+.tile .sub { font-size: 12px; line-height: 1.4; color: var(--muted); }
+.tile .sub .bad { color: var(--bad); font-weight: 500; }
+.tile .sub .ok { color: var(--ok); font-weight: 500; }
+
+.table-wrap { overflow-x: auto; margin: 14px 0; border: 1px solid var(--line); border-radius: 3px; }
+table { border-collapse: collapse; width: 100%; background: var(--surface); font-size: 14px; }
+caption {
+  caption-side: top;
+  text-align: left;
+  font-size: 12.5px;
+  color: var(--muted);
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+}
+th, td { text-align: left; padding: 9px 12px; vertical-align: top; }
+thead th {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 500;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+tbody tr + tr td, tbody tr + tr th { border-top: 1px solid var(--line-2); }
+tbody th { font-weight: 500; white-space: nowrap; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px; }
+td.mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12.5px; }
+.matrix td.diag { background: var(--ok-soft); color: var(--ok); font-weight: 500; }
+.matrix td.zero { color: var(--faint); }
+.matrix tfoot td { font-size: 12px; color: var(--muted); background: var(--surface-2); border-top: 1px solid var(--line); }
+
+.badge {
+  display: inline-block;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: .04em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.badge.ok { color: var(--ok); background: var(--ok-soft); border-color: var(--ok); }
+.badge.bad { color: var(--bad); background: var(--bad-soft); border-color: var(--bad); }
+.badge.warn { color: var(--warn); background: var(--warn-soft); border-color: var(--warn); }
+
+ul.clean, ol.clean { margin: 10px 0 14px; padding-left: 20px; max-width: 70ch; }
+ul.clean li, ol.clean li { margin-bottom: 8px; }
+ul.clean li::marker { color: var(--faint); }
+
+.script { counter-reset: step; list-style: none; margin: 18px 0 0; padding: 0; max-width: 74ch; }
+.script > li {
+  position: relative;
+  padding: 0 0 22px 54px;
+  border-left: 1px solid var(--line);
+  margin-left: 18px;
+}
+.script > li:last-child { border-left-color: transparent; padding-bottom: 0; }
+.script > li::before {
+  counter-increment: step;
+  content: counter(step);
+  position: absolute;
+  left: -18px;
+  top: -2px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--accent-ink);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 500;
+}
+.script .when {
+  display: block;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: .08em;
+  color: var(--faint);
+  margin-bottom: 3px;
+}
+.script .say {
+  display: block;
+  color: var(--muted);
+  font-size: 15px;
+  margin-top: 4px;
+}
+.script .say b { color: var(--ink); font-weight: 500; }
+
+.qa { margin: 16px 0 0; max-width: 76ch; }
+.qa dt {
+  font-weight: 600;
+  margin-top: 16px;
+  line-height: 1.4;
+}
+.qa dt:first-child { margin-top: 0; }
+.qa dd { margin: 4px 0 0; color: var(--muted); max-width: 70ch; }
+.qa dd b { color: var(--ink); font-weight: 500; }
+
+.checklist { list-style: none; margin: 14px 0 0; padding: 0; max-width: 74ch; }
+.checklist li {
+  position: relative;
+  padding: 11px 0 11px 30px;
+  border-top: 1px solid var(--line-2);
+}
+.checklist li:first-child { border-top: 0; }
+.checklist li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 16px;
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid var(--faint);
+  border-radius: 2px;
+}
+.checklist b { font-weight: 600; }
+.checklist span.sev {
+  display: inline-block;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-right: 7px;
+  vertical-align: 1px;
+}
+.sev.must { color: var(--bad); background: var(--bad-soft); }
+.sev.should { color: var(--warn); background: var(--warn-soft); }
+.sev.know { color: var(--muted); background: var(--surface-2); }
+
+code {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: .88em;
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+pre {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 13px 15px;
+  overflow-x: auto;
+  margin: 12px 0 16px;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+pre code { background: none; border: 0; padding: 0; font-size: inherit; }
+
+footer {
+  margin-top: 56px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  font-size: 12.5px;
+  color: var(--faint);
+}
+footer p { max-width: none; margin: 0 0 5px; }
+footer .mono { font-size: 11.5px; }
+
+@media (max-width: 720px) {
+  .tiles { grid-template-columns: 1fr 1fr; }
+  .grid-2 { grid-template-columns: 1fr; }
+  .arrow { display: none; }
+  .node { flex-basis: 100%; }
+  .sec-head { flex-wrap: wrap; }
+  .sec-head .kicker { margin-left: 0; }
+}
+@media (max-width: 420px) {
+  .tiles { grid-template-columns: 1fr; }
+  body { padding-top: 26px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { scroll-behavior: auto !important; }
+}
+</style>
+</head>
+<body>
+
+
+<div class="page">
+<header class="top">
+  <p class="eyebrow">Presenter's guide · example run arm-direct-moe-gpu-v2 · replay</p>
+  <h1>Stage Review Walkthrough</h1>
+  <p class="deck">What the page at <span class="mono">127.0.0.1:8099</span> is showing, what each number means, and what to say about it to a technical audience.</p>
+  <div class="meta">
+    <span class="chip example"><b>example data</b> · pre-ROSA</span>
+    <span class="chip"><b>19</b> contracts</span>
+    <span class="chip"><b>4</b> clause categories</span>
+    <span class="chip"><b>76</b> extract fields</span>
+    <span class="chip">direct run · no gateway</span>
+    <span class="chip">model <b>Qwen/Qwen3.5-35B-A3B</b></span>
+    <span class="chip">example host · 4× A10G, TP=4</span>
+    <span class="chip">A/B: <b>appendix</b> · failed run</span>
+    <span class="chip">live: <b>off</b></span>
+  </div>
+  <div class="header-actions">
+    <a class="cta" href="/">Open the stage review →</a>
+    <button class="theme-btn" id="themeBtn" type="button" title="Switch theme">Theme</button>
+  </div>
+</header>
+
+<div class="callout warn">
+  <div class="label">Which run is on screen?</div>
+  <p><b id="runContext">Checking the server…</b> The walkthrough below describes the <b>CUAD
+    19-contract example</b>; the <b>ROSA 200-document matrix</b> is measured operational evidence and
+    lives in <a href="#rosa">its own section</a>. The provenance chip on the stage page is the source
+    of truth: amber <b>example data</b> is the CUAD replay, green <b>measured</b> is a ROSA run.
+    Pool names are routing tiers, not hardware claims; the only hardware claim on the page is the
+    model chip, and it belongs to the direct run.</p>
+</div>
+
+<section>
+  <div class="sec-head"><h2>What you are looking at</h2><span class="kicker">the 30-second version</span></div>
+  <p>The page is a replay of one finished batch run of a contract-review pipeline over 19 real contracts from the CUAD test split. For each contract it shows the model's output for one classification step, four clause extractions, and one risk judgment, placed next to the expert annotation the scorer compared it against.</p>
+  <p>It is a replay, not a live service. Every card is rendered from <span class="mono">results.json</span>; the live button is disabled because the server was started without an endpoint. Clicking a document on the left replays its recorded stages at roughly the latency they actually took.</p>
+  <div class="callout warn">
+    <div class="label">Say this early</div>
+    <p>This is <b>example data</b>, and view A measures <b>model quality</b>. It is the <b>direct run</b>: the batch runner called a bare vLLM endpoint, with no Praxis gateway, no label routing, and no audit trail. The comparison run adds the governance path — entry, label, pool, trace — but it is a failed run kept in the appendix, so it is not quality evidence. Gateway behaviour is also documented on the trace UI and in <span class="mono">FINDINGS.md</span>.</p>
+  </div>
+</section>
+
+<section id="words">
+  <div class="sec-head"><h2>Start here: the words on the diagrams</h2><span class="kicker">plain language</span></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Word</th><th>What it actually is</th></tr></thead>
+      <tbody>
+        <tr><td><b>Batch runner</b></td><td>The Python command you start — <span class="mono">hybrid-run --target direct</span> or <span class="mono">hybrid-run --target gateway</span> (the older <span class="mono">hybrid-direct-arm</span> and <span class="mono">hybrid-review</span> commands are aliases). It reads documents, builds prompts, sends HTTP requests, parses replies and scores them. It runs on CPU and never serves a model. Older notes call this the “client” or “pipeline client”.</td></tr>
+        <tr><td><b>Endpoint</b></td><td>A running vLLM server. It exposes <span class="mono">/v1/chat/completions</span> and does the inference.</td></tr>
+        <tr><td><b>Entry (general / sensitive)</b></td><td>Which door the request uses. The batch runner screens the document for personal data: clean documents go to the general entry (<span class="mono">:8080</span>); documents with personal data go to the sensitive entry (<span class="mono">:8083</span>), which fails closed instead of spilling to an unapproved pool.</td></tr>
+        <tr><td><b>Ingress relay</b></td><td>The trace-ui service at the entry. It writes the request into the audit trail and forwards it to praxis. It does not choose a pool or run a model.</td></tr>
+        <tr><td><b>Praxis</b></td><td>The policy gate. It reads the entry, asks the classifier for a complexity label (SIMPLE, MEDIUM, COMPLEX, REASONING) and picks a pool using the active routing config (<span class="mono">all-gpu</span>, <span class="mono">gpu-small</span>, <span class="mono">round-robin</span> or <span class="mono">hybrid</span>). It does not run the model.</td></tr>
+        <tr><td><b>Pool relay</b></td><td>The second trace-ui hop. After praxis picks a pool, this relay records the actual model call and forwards it to that pool's vLLM server. It also does not run a model.</td></tr>
+        <tr><td><b>Pool</b></td><td>A named destination such as <span class="mono">vllm-cpu</span> or <span class="mono">vllm-gpu-approved</span>. The name is a routing tier, not a promise about the hardware behind it; the deployment behind the name is what actually runs.</td></tr>
+        <tr><td><b>Routing config</b></td><td>One of four named policies over the same pools: <span class="mono">all-gpu</span>, <span class="mono">gpu-small</span>, <span class="mono">round-robin</span> or <span class="mono">hybrid</span>. The config name describes routing behavior, not hardware: read the pool map to see what actually answered. Praxis hot-swaps them without a restart, which is how the same stack was measured under each policy. The old word “arm” meant the same thing, and old run directories still contain <span class="mono">arm-</span>.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="pipe-note">Keep two questions separate. <b>Where are prompts built?</b> Always in the batch runner, CPU-side. <b>Where does inference run?</b> At the endpoint for a direct run, or in the pool praxis chose for a through-stack run.</p>
+</section>
+
+<section>
+  <div class="sec-head"><h2>The pipeline behind each document</h2><span class="kicker">four stages, one chain</span></div>
+  <div class="pipe" role="img" aria-label="Pipeline: classify, then four independent extracts, then risk; report sits outside the document chain">
+    <div class="node"><span class="n">01 Classify</span><span class="t">1 call · document text only</span></div>
+    <span class="arrow">→</span>
+    <div class="node"><span class="n">02 Extract ×4</span><span class="t">4 calls · text + category name</span></div>
+    <span class="arrow">→</span>
+    <div class="node"><span class="n">03 Risk</span><span class="t">1 call · reads the extracts</span></div>
+    <span class="arrow">⋯</span>
+    <div class="node off"><span class="n">Report</span><span class="t">whole run · side panel</span></div>
+  </div>
+  <p class="pipe-note">Classify and the four extracts depend only on the document, so the interactive path can issue them together. Risk waits for all four extracts because its prompt contains them. The report reads every document, which is why it is drawn outside the chain and scored in the side panel.</p>
+  <p style="margin-top:14px">The four categories are <span class="mono">termination</span>, <span class="mono">governing_law</span>, <span class="mono">liability_cap</span>, and <span class="mono">audit_rights</span>. They come from the dataset manifest, not from code.</p>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Screen map</h2><span class="kicker">what lives where</span></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Region</th><th>What it is</th><th>What to point at</th></tr></thead>
+      <tbody>
+        <tr><td><b>Left rail</b></td><td>19 documents, each with a state dot and a ✓ when every field is correct.</td><td>Green, amber, red dots are a scan of which contracts passed, missed something, or quoted something wrong.</td></tr>
+        <tr><td><b>Header chips</b></td><td>Provenance first, then the document count, the gateway/direct distinction, the model and live status.</td><td>The provenance chip is the one that sets the terms: amber <b>example data</b> means the numbers are illustrative; green <b>measured</b> means the run is the ROSA baseline. Hover it for environment, commit, start time, concurrency, timeout and the pool map. The model chip identifies the checkpoint, not just the endpoint's alias. When a through-stack run used more than one model, the header shows “models N per call” instead of pretending there was one.</td></tr>
+        <tr><td><b>Request path</b></td><td>The run-level chain directly under the header: batch runner → vLLM (all stages) → model, or batch runner → ingress relay → praxis → pool relay → vLLM pool → model.</td><td>Read it with the A/B toggle. View A has no praxis in the path; view B does. The batch runner is CPU-side orchestration only — it builds prompts and parses JSON. Both runners share the same prompt builders in <span class="mono">review.py</span>; only the transport differs. Classify, the four extracts, risk and one report call are model calls; in view A they all hit the one endpoint, so whatever hardware that endpoint runs on answers every stage. View B can show more than one served model; the path strip lists them with call counts.</td></tr>
+        <tr><td><b>A/B button</b></td><td>Swaps the two runs the server was started with: A is <span class="mono">--run</span>, B is <span class="mono">--compare</span>. The header run line names both.</td><td>In the CUAD example below, A is the direct run and B is the appendix gateway run. In the default <span class="mono">make dashboard-up</span>, the order is reversed: A is the ROSA praxis run (<span class="mono">runs/rosa-200/hybrid</span>), B is the direct GPU run (<span class="mono">runs/direct/gpu-moe</span>). Do not assume a letter means direct or praxis.</td></tr>
+        <tr><td><b>Pipeline strip</b></td><td>The chain as it ran, with real latency per stage.</td><td>Four extraction nodes fan out from classify; risk waits for them.</td></tr>
+        <tr><td><b>Stage cards</b></td><td>Classify, one card per clause, then risk.</td><td>Each extract card has the model's quote, a source excerpt with the quote highlighted, and a truth block.</td></tr>
+        <tr><td><b>Truth toggle</b></td><td>Hides every annotation and verdict badge.</td><td>Use it to show the system's output before revealing the answer key.</td></tr>
+        <tr><td><b>Side panel</b></td><td>Run scoreboard, then <b>Problems</b> (a clickable failure list), <b>Where the calls went</b>, and a collapsed <b>Run detail</b> with report checks and median latency.</td><td>Start with the scoreboard. Unfold Problems only when someone asks what failed; the raw per-pool counts stay inside Routing.</td></tr>
+        <tr><td><b>Telemetry page</b></td><td><span class="mono">/monitor</span> on the same server: live per-pool vLLM counters, each through-stack run's pool spend, and the bench sweep at concurrency 1/4/16.</td><td>Pool load and throughput moved here so the stage panel stays readable. Open it when someone asks where the work landed or what the device-time was.</td></tr>
+        <tr><td><b>Request disclosure</b></td><td>A collapsed “What we sent” block on each stage card.</td><td>Open one to show the exact messages, model and token caps the call used.</td></tr>
+        <tr><td><b>New document / corpus</b></td><td>The composer behind “New document”: paste one contract, drop several text files, or drop a <span class="mono">.zip</span>/<span class="mono">.tar.gz</span>. A batch runs two documents at a time and streams each stage as it lands.</td><td>Enabled only when the server was started with <span class="mono">--endpoint</span>. Submitted documents are unscored: quotes are still located in the source.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>How a document is scored</h2><span class="kicker">five verdicts, one metric</span></div>
+  <p>Extraction is scored by <b>containment</b>, not span equality. A prediction is correct when either normalised string contains the other. A wider quote that includes the annotated text passes; a correct paraphrase fails. Every verdict badge maps to one scorer outcome:</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Verdict</th><th>Meaning</th><th class="num">View A</th><th class="num">Appendix B</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge ok">match</span></td><td>The model quoted the clause, and the quote matches the annotation under containment.</td><td class="num">20</td><td class="num">6</td></tr>
+        <tr><td><span class="badge ok">absent — correct</span></td><td>Both the annotation and the model say there is no clause of this category.</td><td class="num">38</td><td class="num">16</td></tr>
+        <tr><td><span class="badge bad">not annotated</span></td><td>The model quoted a clause where CUAD has none for this category — a scoring miss, not proof the words are absent from the contract.</td><td class="num">10</td><td class="num">1</td></tr>
+        <tr><td><span class="badge warn">missed</span></td><td>The annotation has a clause; the model reported none.</td><td class="num">6</td><td class="num">1</td></tr>
+        <tr><td><span class="badge bad">quote not matched</span></td><td>The model answered, but its quote does not contain the annotation.</td><td class="num">2</td><td class="num">0</td></tr>
+        <tr><td><span class="badge warn">no record</span></td><td>The call failed (502/503/504), so there is no answer to score. It is not a correct absence, and the scorer no longer credits one.</td><td class="num">0</td><td class="num">52</td></tr>
+      </tbody>
+      <tfoot><tr><td colspan="4">View A: 76 fields = 19 documents × 4 categories; 20 matches plus 38 correct absences = 58 of 76. View B: only 24 of 76 extract calls returned an answer, so 22 fields are correct and 52 have no record — its score is not comparable to view A.</td></tr></tfoot>
+    </table>
+  </div>
+  <p>Risk is separate. The model applies a rubric and returns a level with reasons. “Fully correct” means every scored field in that document passed. On this dataset that is the four clauses plus risk; the document type is not scored because the manifest has no type annotation.</p>
+</section>
+
+<section id="truth">
+  <div class="sec-head"><h2>What “ground truth” means here</h2><span class="kicker">three kinds of annotation, one answer key</span></div>
+  <p>Every badge on the page compares the model against <b>ground truth</b> — the CUAD annotations, short-handed to “truth”. It is worth being precise about that term, because it is not one thing and it is not a lawyer's opinion. All of it ships in <span class="mono">data/cuad-test/ground_truth.json</span>, derived from the CUAD expert annotations.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Ground truth</th><th>Where it comes from</th><th>What a match means</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>Clause annotation</b><br><span class="mono">clauses.*</span></td>
+          <td>A CUAD annotator quoted the clause for that category in that contract, or labelled the category as having none.</td>
+          <td>The model's quote and the annotation contain one another after normalisation. A correct paraphrase still fails.</td>
+        </tr>
+        <tr>
+          <td><b>Risk level</b><br><span class="mono">risk</span></td>
+          <td>Not an annotator: <span class="mono">pipeline/risk.py assess_risk()</span> applied to the <i>expert</i> clauses by the converter that built the manifest.</td>
+          <td>The model applied the same rule to the clauses it extracted. This is a <b>rubric-following check</b>, not a legal judgment.</td>
+        </tr>
+        <tr>
+          <td><b>Report expectations</b></td>
+          <td>Computed at scoring time by <span class="mono">evalkit/score.py report_checks()</span> from the annotations: governing-law jurisdictions, the set of high-risk contracts.</td>
+          <td>The report named a jurisdiction and a high-risk contract the annotations support. Nothing about the report is stored as a field in the dataset.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p><b>“No clause annotated” is not “no clause in the contract”.</b> An empty category is a statement by CUAD <i>for that category</i>, but CUAD labels are not exhaustive: a contract can contain an audit right the annotators did not label. The badge says <span class="mono">not annotated</span> for that reason; it replaced an earlier wording, “clause not in contract”, that claimed more than the annotation does. Precision is therefore reported as a lower bound, as <span class="mono">FINDINGS.md</span> does.</p>
+
+  <p><b>Silence in the manifest can hide an explicit negative.</b> CUAD's own records distinguish “no answer because there is no such clause” (<span class="mono">is_impossible: true</span>) from “no QA entry at all”; the converter stores both as <span class="mono">null</span>. Watchit Media's content-license agreement shows why the distinction matters: its only “terminat&#42;” sentence is a cancellation-fee clause, CUAD explicitly marks “Termination For Convenience” impossible for it, and the model quoted that sentence. The quote is real text, but it prices what termination costs; it does not grant a termination right. So the model earns <span class="mono">not annotated</span> here, and the card's “✓ quote located in source” still stands.</p>
+
+  <p><b>A missing annotation is not an empty one.</b> The classify card shows <span class="mono">type: null</span> for every document in this manifest. That means “nobody annotated the type”, so the field is skipped rather than scored wrong. The page keeps the two apart: <span class="mono">null</span> truth is unscored; a truth of “none” is scored and can be right or wrong.</p>
+
+  <h3 style="margin-top:26px">Truth and source verification are two different checks</h3>
+  <p>Every extract card runs two checks that look similar and answer different questions:</p>
+  <ul class="plain">
+    <li><b>Verdict</b> — does the model's answer agree with the <i>annotation</i>? This is what the score counts.</li>
+    <li><b>Verified in source</b> — does the quoted string literally occur in the <i>contract text</i>? This is a whitespace-tolerant search of the file, independent of the annotation.</li>
+  </ul>
+  <p>They can disagree in both directions, and the page shows both. A quote can match the annotation yet not occur verbatim, if the model spliced words from different sentences: CENTRACK's termination quote is scored correct and still does not appear in the source as a contiguous string. A quote can be verified yet scored wrong, if it is a real clause CUAD did not label: all ten false positives in this run are genuine strings in their contracts. Use the verdict for accuracy and the highlight for “is the model making this up”.</p>
+
+  <p>On a contract pasted in live there is no annotation, so every field is marked <span class="mono">unscored</span>: the quote is still located in the source, but no correctness is claimed and nothing is added to the meter. That is the honest reading of “there is no answer key for this one”.</p>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Example run's numbers</h2><span class="kicker">view A · arm-direct-moe-gpu-v2 · illustrative</span></div>
+  <div class="tiles">
+    <div class="tile">
+      <div class="lab">Extraction F1</div>
+      <div class="val">0.690</div>
+      <div class="sub">P 0.625 · R 0.769<br>58/76 fields</div>
+    </div>
+    <div class="tile">
+      <div class="lab">Risk accuracy</div>
+      <div class="val">0.632 <small>vs 0.684</small></div>
+      <div class="sub"><span class="bad">below baseline</span><br>12/19 correct</div>
+    </div>
+    <div class="tile">
+      <div class="lab">Report</div>
+      <div class="val">64.5%</div>
+      <div class="sub">2/4 fields exact<br>current scorer</div>
+    </div>
+    <div class="tile">
+      <div class="lab">Fully correct</div>
+      <div class="val">5 <small>/19</small></div>
+      <div class="sub">every scored field<br>2 are all-absent</div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:26px">Extraction, broken down</h3>
+  <p>F1 0.690 is dragged down on both sides: 10 false positives cost precision, 6 misses cost recall. Twenty of 76 fields are real quoted matches; 38 are correctly reported absences, which is why the field count looks better than the F1.</p>
+
+  <h3 style="margin-top:26px">Risk, as a confusion matrix</h3>
+  <p>A confusion matrix counts each document once. Pick the row for the level the annotation gives the document, then read across to the column for what the model answered: that cell is tallied. The shaded diagonal is agreement; every other cell is a document the model placed at the wrong level. The <span class="mono">n</span> column is how many documents the annotation put in that row.</p>
+  <div class="table-wrap">
+    <table class="matrix">
+      <caption>Rows are the annotated level (ground truth), columns the model's answer. The shaded diagonal is correct.</caption>
+      <thead><tr><th></th><th class="num">pred high</th><th class="num">pred medium</th><th class="num">pred low</th><th class="num">n</th></tr></thead>
+      <tbody>
+        <tr><th>ground truth high</th><td class="num diag">11</td><td class="num">1</td><td class="num">1</td><td class="num">13</td></tr>
+        <tr><th>ground truth medium</th><td class="num">2</td><td class="num zero">0</td><td class="num">2</td><td class="num">4</td></tr>
+        <tr><th>ground truth low</th><td class="num">1</td><td class="num zero">0</td><td class="num diag">1</td><td class="num">2</td></tr>
+      </tbody>
+      <tfoot><tr><td colspan="5">The model predicted 4 high-risk documents. The annotations mark 13. Always answering “high” would score 13/19 = 0.684; the model scores 12/19 = 0.632.</td></tr></tfoot>
+    </table>
+  </div>
+  <p>The model predicts “high” 14 times, close to the 13 the annotations mark, but it never gets a medium right and swaps two high-risk contracts down to medium or low. Those swaps cost more than the three non-high contracts it flags as high, which is why 12/19 lands below the constant answer. This is the honest finding the page is built to show.</p>
+
+  <h3 style="margin-top:26px">The cross-document report</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Check</th><th class="num">Score</th><th>What it compared</th></tr></thead>
+      <tbody>
+        <tr><td>Documents counted</td><td class="num">100%</td><td class="mono">19 predicted / 19 expected</td></tr>
+        <tr><td>Highest-risk reference</td><td class="num">100%</td><td>Named one of the 13 annotated high-risk contracts</td></tr>
+        <tr><td>Governing law counts</td><td class="num">53%</td><td>New York 4 vs 3; 3 “unknown” vs 4 unannotated</td></tr>
+        <tr><td>Risk counts</td><td class="num">5%</td><td class="mono">4 / 7 / 8 vs 13 / 4 / 2</td></tr>
+      </tbody>
+      <tfoot><tr><td colspan="3">Blended report score 64.5% (2 of 4 checks exact). In the direct runner the report prompt receives the four extracts per document, not the risk labels, so it re-judges risk from the clauses: it returned 4 high / 7 medium / 8 low, while the risk stage produced 14 / 1 / 4. This is a second, independent judgment, not a tally.</td></tr></tfoot>
+    </table>
+  </div>
+
+  <h3 style="margin-top:26px">Latency, as recorded</h3>
+  <p>Median classify 3.3 s, extracts 2.1–3.7 s each, risk 1.0 s. These are GPU-served MoE calls on batch prompts. The demo argument is batch review, where minutes per document is acceptable; do not present these as interactive latency.</p>
+</section>
+
+<section id="rosa">
+  <div class="sec-head"><h2>ROSA 200-document run</h2><span class="kicker">measured · synthetic corpus · 2026-11-04</span></div>
+  <p>The 200-document configuration matrix completed on the ROSA cluster (<span class="mono"><redacted-cluster></span>) on
+    2026-11-04. It is <b>measured operational evidence</b>: real vLLM pools, real routing, real wall-clock.
+    It is <b>not</b> a CUAD quality baseline — the corpus is synthetic, so its extraction and risk scores
+    cannot be compared with the 19-contract CUAD example on this page.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Config</th><th>Mode</th><th class="num">Wall s</th><th class="num">Extract F1</th><th class="num">Risk acc</th><th class="num">Fully correct</th><th class="num">Sensitive violations</th><th class="num">GPU-s/doc</th></tr></thead>
+      <tbody>
+        <tr><td><b>A</b></td><td>all-GPU</td><td class="num">202</td><td class="num">1.000</td><td class="num">1.000</td><td class="num">200/200</td><td class="num" style="color:var(--bad)">247</td><td class="num">1.974</td></tr>
+        <tr><td><b>B</b></td><td>GPU split</td><td class="num">439</td><td class="num">1.000</td><td class="num">0.395</td><td class="num">77/200</td><td class="num" style="color:var(--bad)">247</td><td class="num">2.218</td></tr>
+        <tr><td><b>C</b></td><td>round-robin</td><td class="num">613</td><td class="num">0.992</td><td class="num">1.000</td><td class="num">188/200</td><td class="num" style="color:var(--bad)">122</td><td class="num">2.855</td></tr>
+        <tr><td><b>D</b></td><td>matrix</td><td class="num">1,112</td><td class="num">0.982</td><td class="num">0.995</td><td class="num">173/200</td><td class="num" style="color:var(--ok)"><b>0</b></td><td class="num">0.036</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="pipe-note" style="margin-top:12px">The governance result is config D: all <b>247</b> sensitive steps
+    landed on approved pools, with zero violations. Config D also used <b>0.036 GPU-s/doc</b> against config A's
+    1.974 — about <b>54×</b> less GPU time — at 0.982 vs 1.000 extraction F1 and 0.995 vs 1.000 risk accuracy.
+    Full report: <span class="mono">runs/rosa-200/report.md</span>.</p>
+  <div class="callout warn">
+    <div class="label">Do not overclaim the routing</div>
+    <p>The classifier labelled <b>1,200 of 1,201 steps MEDIUM</b> (complexity accuracy ≈ 0.001), and the
+    ROSA overlay points the specialist's forward at the <b>CPU MoE</b>. Config D is therefore a
+    <b>CPU-first policy with the GPU reserved for cross-document synthesis</b>: 600 extraction calls were
+    answered by the CPU specialist, the remaining single-document calls were forwarded to the CPU MoE, and
+    only the portfolio report reached the GPU. The 99.9% CPU-served share is the policy, not demonstrated
+    semantic routing. The honest claim is governance and cost, not that the classifier separated simple from
+    complex work.</p>
+  </div>
+  <p><b>CUAD ROSA baseline: still pending.</b> The stage replay on this page remains the pre-ROSA CUAD example.
+    To replace it, record a CUAD test-split run on ROSA with <span class="mono">--environment rosa</span>;
+    the provenance chip will then read <b>measured</b> and the table above will have a like-for-like quality row.</p>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Read it honestly</h2><span class="kicker">what a sharp reviewer will catch</span></div>
+  <p>These points are worth having ready before someone else finds them.</p>
+
+  <div class="callout bad">
+    <div class="label">Must disclose</div>
+    <p><b>Risk is below the always-answer-“high” baseline.</b> The page shows 0.632 against a 0.684 line. Do not hide the bar. The model predicts “high” 14 times against 13 annotated, but its swaps cost more than its hits: 2 high-risk contracts are called medium or low, and 3 non-high contracts are called high. That is the rubric-following weakness the project set out to measure. The baseline is on the page because hiding it would mislead.</p>
+  </div>
+
+  <div class="callout bad">
+    <div class="label">Must disclose or fix</div>
+    <p><b>The report score on the page is 64.5%; the run's stored <span class="mono">metrics.json</span> says 26.3%.</b> The scorer changed after this run was written: the governing-law comparison now reduces clauses to jurisdictions, and “highest risk” now accepts any annotated high-risk contract instead of one alphabetical pick. The page recomputes with the current scorer; the stored file is stale. Either re-score the run before presenting or say plainly that the page uses the current scorer.</p>
+  </div>
+
+  <div class="callout warn">
+    <div class="label">Worth knowing</div>
+    <p><b>The report does not tally the risk cards.</b> The direct runner builds the report prompt from the extract records, not the risk labels. It re-judges risk from the clauses and returned 4 high / 7 medium / 8 low, while the risk stage produced 14 / 1 / 4. Treat the report check as a second, independent judgment.</p>
+  </div>
+
+  <div class="callout">
+    <div class="label">Worth knowing</div>
+    <p><b>“Fully correct” includes documents where the right answer was “no clause”.</b> Five documents pass every field; two of them (Pcquote and MFA Financial) are 5/5 because all four categories were correctly absent and the risk level matched. That is a real result, but it is not the same difficulty as the fully correct document with three quoted clauses. Show both.</p>
+  </div>
+
+  <div class="callout">
+    <div class="label">Worth knowing</div>
+    <p><b>The badge says “not annotated”, not “not in the contract”.</b> The annotation says no clause was labelled for that category. CUAD annotations are not exhaustive, so a quote can be a real clause the annotators did not label, or a real sentence that does not grant the right the category names. The truth block says “No clause annotated for this category”, and the badge now says the same thing. Treat precision as a lower bound, as <span class="mono">FINDINGS.md</span> does.</p>
+  </div>
+
+  <div class="callout">
+    <div class="label">Worth knowing</div>
+    <p><b>The pipeline strip says “parallel”, but this is a batch replay.</b> The batch runner issues the four extracts one after another; the interactive path is what fans them out. The recorded data has per-step latency, not overlap, so the replay cannot prove concurrency. Do not claim the fan-out from this page.</p>
+  </div>
+
+  <div class="callout">
+    <div class="label">Worth knowing</div>
+    <p><b>The page folds one repeated <span class="mono">doc_id</span>.</b> CUAD's manifest lists 20 entries for 19 unique contracts, and the batch runner executed all 20 — 121 steps, not 115. The page shows the first pass and scores the document once, so its counts (76 extract fields, 115 calls) are four fields and six steps smaller than the run's own <span class="mono">summary.json</span>. The header chip says “1 repeated doc_id folded” so the difference is stated rather than discovered.</p>
+  </div>
+
+</section>
+
+<section>
+  <div class="sec-head"><h2>A three-minute script</h2><span class="kicker">click by click</span></div>
+  <ol class="script">
+    <li>
+      <span class="when">0:00 · open on the first document</span>
+      “This is a replay of a finished batch run, not a live call. Nineteen contracts, four clause categories each, scored against expert annotations.”
+      <span class="say">Point at the rail. The dots are a one-glance pass/fail scan.</span>
+    </li>
+    <li>
+      <span class="when">0:20 · the pipeline strip</span>
+      “Classify reads the document. The four extractions read the document and a category name, so they do not depend on each other. Risk reads the extracts. The report reads every document, so it sits in the side panel.”
+    </li>
+    <li>
+      <span class="when">0:40 · click Truth off</span>
+      “Everything you see now is the model's output. There is no answer key on screen.”
+      <span class="say">Let the room read one quote and its highlighted source excerpt.</span>
+    </li>
+    <li>
+      <span class="when">0:55 · click Truth on, open an extract card</span>
+      “The quote, then the same words located in the source. That check is independent of the annotation: the page is asking whether the quoted string is really in the contract.”
+      <span class="say">Use <b>HPILHOLDING</b> or <b>ACCELERATED TECHNOLOGIES</b>; both have matched quotes with a visible highlight.</span>
+    </li>
+    <li>
+      <span class="when">1:20 · open PAXMEDICA</span>
+      “One field out of five. A missed clause, a wrong quote, a false positive, and the risk level wrong. This is what failure looks like, on the same page and the same scorer.”
+    </li>
+    <li>
+      <span class="when">1:45 · the side scoreboard</span>
+      “Extraction F1 0.69. Risk accuracy 0.632. The line on that bar is what you get by always answering ‘high’: 0.684. The model is below it. That is a real finding, not a display bug.”
+    </li>
+    <li>
+      <span class="when">2:10 · unfold Run detail</span>
+      “The report prompt receives the extracts, not the risk labels, so it re-judges risk: it returned 4 high / 7 medium / 8 low while the risk stage produced 14 / 1 / 4. The 5% check is that second judgment, not a tally of the cards.”
+    </li>
+    <li>
+      <span class="when">2:30 · the Documents tile</span>
+      “Five of nineteen are fully correct. Two of those five are contracts where the right answer was ‘no clause’. One, CENTRACK, has three real quoted clauses.”
+    </li>
+    <li>
+      <span class="when">2:50 · close on view A</span>
+      “View A is the quality evidence: how good the model is on real contracts, failures included. The gateway path is kept in the appendix because that comparison run failed most of its calls; mixing the two surfaces is the easiest way to overclaim.”
+    </li>
+  </ol>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Questions to expect</h2><span class="kicker">short answers</span></div>
+  <dl class="qa">
+    <dt>What does “direct run” mean?</dt>
+    <dd>A <b>configuration</b> is one run in the experiment: the same documents, prompts, parser and scorer, with one variable changed. <b>Direct</b> means the batch runner called one vLLM endpoint straight (<span class="mono">http://localhost:8000/v1</span>) — no trace-ui relay, no praxis gateway, no label routing, no PII entry, no audit trail. That isolates model quality from the stack: everything on view A is the model, and its cards carry no route, label or trace chip because no gateway was there to name one. The trade is that it proves nothing about governance; the through-stack runs and the appendix comparison run exist for that.</dd>
+
+    <dt>Where is the gateway and the routing?</dt>
+    <dd>Not on view A. It is the direct run: the pipeline called vLLM directly, so there are no labels, no routing decisions, and no audit records. The appendix comparison run shows the gateway path; the full audit trail is on the trace UI. Mixing the two surfaces is the easiest way to overclaim.</dd>
+
+    <dt>Is this one model, or one per stage?</dt>
+    <dd>View A is one model for every stage: Qwen3.5-35B-A3B answers classify, all four extracts, risk and the report. The broken-down design is measured elsewhere. The specialist composite answers extraction with a fine-tuned RoBERTa-large QA encoder — full-document F1 <b>0.780</b>, top-5 retrieval F1 <b>0.800</b>, recall 1.000, and it cannot invent a quote because it returns spans of the input — against <b>0.712</b> for the generative MoE on the same held-out test split and the same 80 fields, and it forwards classify, risk and report to a general model. That is a local direct run (<span class="mono">runs/retrieval/e2e-specialist.json</span>), not a through-stack run. The appendix comparison run is the through-stack path, and it is contaminated by infrastructure failures, so it shows routing, not that quality.</dd>
+
+    <dt>Didn't the specialist perform better?</dt>
+    <dd>On extraction, yes — that is the measured result, and it is the reason the broken-down pipeline is worth pursuing. The through-stack run failing is a separate fact.</dd>
+
+    <dt>So why isn't the appendix run the better configuration?</dt>
+    <dd>Because a quality measurement and a working through-stack run are different things. The specialist's extraction result is real — 0.780 full document, 0.800 at top-5, against 0.712 for the generative MoE — but it came from a local direct run, where every extraction prompt was answered. Through the gateway the same work has to survive labelling, pool health and the network, and this run did not: 82 of 121 calls failed, 14 of them at the router's ~30 s timeout. The architecture claim stands; the end-to-end number does not exist yet. Re-run at lower concurrency with the router timeout raised.</dd>
+
+    <dt>Why does the compare run show <span class="mono">vllm-cpu</span>?</dt>
+    <dd>Because praxis chose the pool named <span class="mono">vllm-cpu</span>. Pool names are routing tiers inherited from the llm-d convention, not hardware: in the example run every pool was CPU-served, so a <span class="mono">vllm-gpu</span> chip does not by itself mean a GPU answered. The model chip on view A (example host · 4× A10G) is the only hardware claim on the page, and it belongs to the direct run.</dd>
+
+    <dt>Can the gateway tell me which endpoint answered?</dt>
+    <dd>The pool, not the endpoint. A trace record holds the route name, label, entry, hops and health checks; the pool's upstream URL and Deployment are configuration, and the database stores neither per request. To say “this call ran on <span class="mono">cpureal-vllm-gpu-approved</span>” you would read that pool's deployment and trust that no rollout moved it since.</dd>
+
+    <dt>Which checkpoint actually answered a call?</dt>
+    <dd>Ask the response body. Each card's <span class="mono">model</span> chip comes from the body's <span class="mono">model</span> field, which is why a specialist pool can name <span class="mono">cuad-specialist</span> while a forwarded prompt names the alias. View B records this per call and lists the models with counts; view A predates that capture, so it has only the run-level checkpoint label. A run without the field cannot be backfilled — re-running is the fix.</dd>
+
+    <dt>Why is precision only 0.625?</dt>
+    <dd>Ten false positives and two unmatched quotes. Some of those are annotation gaps rather than model errors, because CUAD labels are not exhaustive. The project treats reported precision as a lower bound for every model, and every run is scored on the same annotations.</dd>
+
+    <dt>What does “absent — correct” mean?</dt>
+    <dd>The annotation has no clause for that category and the model also reported none. It is a correct answer, and it is 38 of the 76 fields here. It matters because a model that says “no clause” everywhere would score well on those fields and badly on recall.</dd>
+
+    <dt>Why 19 documents when the document says 20?</dt>
+    <dd>The manifest lists 20 entries but one <span class="mono">doc_id</span> is repeated, so the runner executed that contract twice — 121 steps across 20 entries. The page keeps the first pass and shows 19 cards, and the header chip says “1 repeated doc_id folded”. Its counts are therefore four fields smaller than the run's <span class="mono">summary.json</span>; the alternative was to score one contract against two cards.</dd>
+
+    <dt>Why is the classify card not scored?</dt>
+    <dd>The CUAD manifest has <span class="mono">type: null</span> for these documents. The card still shows the model's prediction (“NDA”, term, reference), but there is no truth to compare, so it contributes no field and type accuracy is null. The page's own help text says type counts toward “fully correct”; on this dataset it does not.</dd>
+
+    <dt>What exactly is “truth” on this page?</dt>
+    <dd>The CUAD expert annotations, not a lawyer's opinion and not another model. Clause truth is an annotated quote or an explicit “none”. Risk truth is the project's own rubric applied to those expert clauses, so the risk field checks rubric-following. The report's expectations are computed from the annotations at scoring time. See <a href="#truth">What “truth” means here</a> for the three kinds and the difference between a verdict and a source check.</dd>
+
+    <dt>Is the model inventing quotes?</dt>
+    <dd>Two extract cards are marked “quote not matched”, and ten are false positives against the annotation. Every card also runs a separate source check and shows where the quote occurs. A quote that is not in the file would be visible there. The useful distinction is between “not in the contract” and “not what the annotator labelled”.</dd>
+
+    <dt>Why are the latencies in seconds?</dt>
+    <dd>GPU-served MoE calls on batch prompts. Medians are 2–4 s per extraction. The workload is batch contract review, so the pitch is throughput and GPU-time reduction, not interactive response.</dd>
+
+    <dt>Risk is below the baseline. Is that a bug?</dt>
+    <dd>No. It is the measurement. The risk stage predicts “high” 14 times against 13 annotated, but it never gets a medium right and swaps two high-risk contracts down to medium or low. That is enough to land below the constant answer, and the baseline line makes it visible instead of letting 0.632 look respectable.</dd>
+
+    <dt>Can I run a contract I paste in?</dt>
+    <dd>Yes, when the server was started with <span class="mono">--endpoint</span>. The composer accepts one pasted contract, several text files, or a <span class="mono">.zip</span>/<span class="mono">.tar.gz</span> of them; a batch keeps two documents in flight and streams each stage as it lands. Submitted documents are unscored — there is no annotation — but every quote is still located in the source. Archives are read in memory, member paths cannot escape the archive, and binary members are skipped and named, not fed to the model. PDF/DOCX ingestion is not built. A live submission is a <b>direct</b> run: the same prompt builders and scorer shape as the batch runner, but sent straight to the endpoint — no relay, no praxis label, no PII entry, no sensitive-pool routing — so it does not exercise the governance the through-stack runs show. To run fresh documents through the governed path, use <span class="mono">hybrid-run --target gateway</span> and replay that run directory.</dd>
+
+    <dt>Where did the pool load and throughput numbers go?</dt>
+    <dd>They moved to <span class="mono">/monitor</span>, so the stage panel stays readable. Device-seconds per pool and the vLLM bench sweep at concurrency 1, 4 and 16 are one click from the header. The sweep is the only place the page compares hardware directly: on the CUAD prompts, output throughput goes from 14.7 to 78.4 tokens/s on CPU and from 92.7 to 226 tokens/s on GPU between c1 and c16. They are not stage latencies from either view.</dd>
+
+    <dt>Why does the report tile disagree with metrics.json?</dt>
+    <dd>The scorer was revised after the run. The page recomputes from <span class="mono">results.json</span> with the current code; <span class="mono">metrics.json</span> keeps the number from the scorer version used at run time. Re-score the run or disclose the difference.</dd>
+  </dl>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Before you present</h2><span class="kicker">nine checks</span></div>
+  <ul class="checklist">
+    <li><span class="sev must">Decide</span><b>Live or replay.</b> Live is off right now. For replay, change nothing. For live, keep the same runs and add the endpoint, so the composer can stream a pasted or dropped document:<br><code>uv run hybrid-ui --run ../runs/cuad-test/arm-direct-moe-gpu-v2 --compare ../runs/cuad-test/arm-D-specialist --data data/cuad-test --port 8099 --endpoint http://&lt;host&gt;:8000/v1</code><br>Live is a <b>direct</b> path — same prompts and scorer shape, sent straight to the endpoint with no PII routing, labels or sensitive pool — so present it as the model path, not the governance path; governance is what the replayed through-stack runs (or a fresh <span class="mono">hybrid-run --target gateway</span>) show. The server binds 127.0.0.1 by default; pass <span class="mono">--live-token</span> before binding a wider <span class="mono">--host</span>.</li>
+    <li><span class="sev must">Decide</span><b>Serve the A/B run or not.</b> The appendix comparison run is optional:<br><code>uv run hybrid-ui --run ../runs/cuad-test/arm-direct-moe-gpu-v2 --compare ../runs/cuad-test/arm-D-specialist --data data/cuad-test --port 8099</code><br>It is a gateway run and 76 of the 115 steps on the page have no answer (82 of the run's 121 executed steps; the page folds one repeated doc_id). Use it only to show entry → label → pool → trace; quote the specialist's quality from <span class="mono">runs/retrieval/e2e-specialist.json</span> (0.780 full document, 0.800 top-5), not from this view.</li>
+    <li><span class="sev must">Fix or say</span><b>The report mismatch.</b> The page says 64.5%, the stored run says 26.3%. Re-score before presenting, or open with the fact that the page uses the current scorer.</li>
+    <li><span class="sev know">Know</span><b>The model.</b> The example run is Qwen/Qwen3.5-35B-A3B on 4× A10G with TP=4, served under the alias <span class="mono">Semantic-Qwen</span>. The header chip shows both; the runners record the checkpoint label from <span class="mono">--model</span> because the OpenAI API only reports the served alias.</li>
+    <li><span class="sev know">Know</span><b>Pool vs hardware.</b> A <span class="mono">vllm-gpu</span> chip is a tier name, not proof of a GPU. In the appendix comparison run every pool was CPU-served; the A10G claim belongs to view A only. On a GPU-bearing cluster, <span class="mono">deploy/openshift/gpu-moe</span> makes the name true: it puts the same 35B-A3B checkpoint on 4× A10G behind <span class="mono">vllm-gpu</span> and <span class="mono">vllm-gpu-approved</span>.</li>
+    <li><span class="sev should">Set</span><b>Provenance flags on any run you will present.</b> Both runners now record <span class="mono">--environment</span> and <span class="mono">--cluster</span> (or <span class="mono">HYBRID_ENVIRONMENT</span>/<span class="mono">HYBRID_CLUSTER</span>), the git commit and whether the tree was dirty, concurrency, timeout, and a <span class="mono">--pools</span> map of route → model/hardware/deployment. Without the pool map a later reader can see which pool answered but not what was in it. Neither CUAD run on this page records an environment, so the page shows amber <b>example data</b> — that default is deliberate, and a run is never promoted to <b>measured</b> just because it exists. The new <span class="mono">runs/rosa-200</span> configurations do record <span class="mono">environment: rosa</span> and <span class="mono">cluster: <redacted-cluster></span>, so they show green <b>measured</b>. A ROSA run recorded with <span class="mono">--environment rosa</span> (or an explicit measured provenance field) flips the chip.</li>
+    <li><span class="sev should">Pick</span><b>Two example documents.</b> CENTRACK for a fully-correct document with real quotes; PAXMEDICA or FEDERATED for a mixed failure. Open them once before the talk so the clicks are warm.</li>
+    <li><span class="sev should">Start</span><b>With ground truth off.</b> Let the audience see the model's output before the answer key. The toggle is in the header and reads “Ground truth: on/off”; it must be on for the side scoreboard to make sense.</li>
+    <li><span class="sev know">Avoid</span><b>Two overclaims.</b> Do not claim governance or gateway routing from view A, and do not claim the extraction fan-out from a batch replay.</li>
+  </ul>
+</section>
+
+<details class="appendix" id="appendix-ab">
+<summary>Appendix — the failed A/B comparison run</summary>
+<p class="pipe-note" style="margin-bottom:22px">This comparison run is kept as an appendix because 82 of its 121 calls failed. It is evidence of the gateway path — entry, label, pool, trace — not of model quality. The main guide stops before it.</p>
+<div class="callout warn">
+  <div class="label">A/B order is set by the server, not by this table</div>
+  <p>The CUAD example below was started with A = direct run (<span class="mono">arm-direct-moe-gpu-v2</span>) and B = gateway run (<span class="mono">arm-D-specialist</span>). The default <span class="mono">make dashboard-up</span> uses the opposite order: A = ROSA praxis run (<span class="mono">runs/rosa-200/hybrid</span>) and B = direct GPU run (<span class="mono">runs/direct/gpu-moe</span>). Read the run line in the header before describing either view.</p>
+</div>
+<section id="two-configs">
+  <div class="sec-head"><h2>Two configurations, and why a chip can say “CPU”</h2><span class="kicker">which run am I looking at?</span></div>
+  <p>The header names the run being rendered. The <b>A/B</b> button beside it swaps the whole page to the comparison run, and the header and every card change with it. The two runs answer different questions:</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>View</th><th>Run</th><th>Path</th><th>Hardware</th><th>What it can prove</th></tr></thead>
+      <tbody>
+        <tr><td><b>A</b> · default</td><td class="mono">arm-direct-moe-gpu-v2</td><td>batch runner → vLLM, no gateway</td><td>4× A10G, TP=4 (AWS g5.12xlarge)</td><td>Model quality: extraction, risk, report. No routing, no audit trail.</td></tr>
+        <tr><td><b>B</b> · A/B</td><td class="mono">arm-D-specialist</td><td>trace-ui relays → praxis → pools</td><td>CPU-served pools · pre-ROSA example</td><td>The gateway path: entry, label, pool, trace id. This is an old run id; its routing config is <span class="mono">hybrid</span>. An infrastructure failure, not a quality measurement.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3 style="margin-top:26px">The two paths, drawn</h3>
+  <p class="pipe-note" style="margin:0 0 2px"><b>View A — direct run.</b> The batch runner talks to the model endpoint; there is nothing else in the path.</p>
+  <div class="pipe" role="img" aria-label="Direct run: the batch runner calls vLLM directly, which serves Qwen3.5-35B-A3B on four A10G GPUs. There is no relay, gateway, label routing or trace.">
+    <div class="node"><span class="n">Batch runner</span><span class="t">hybrid-run --target direct · builds prompts, parses JSON (CPU)</span></div>
+    <span class="arrow">→</span>
+    <div class="node"><span class="n">vLLM endpoint</span><span class="t">localhost:8000/v1 · classify · extract ×4 · risk · report</span></div>
+    <span class="arrow">→</span>
+    <div class="node"><span class="n">Qwen3.5-35B-A3B</span><span class="t">served as Semantic-Qwen · 4× A10G, TP=4</span></div>
+  </div>
+  <p class="pipe-note">No relay, no praxis, no label, no pool choice, no trace id. The batch runner only builds prompts and parses responses — <span class="mono">direct.py</span> imports the same builders from <span class="mono">review.py</span> as the through-stack runner. Every model call — classify, extract ×4, risk — goes to this one endpoint, so the endpoint's hardware (CPU or GPU) answers all stages. The response carries no routing headers, which is why the cards show no entry, label or pool chips — not because the page failed to render them.</p>
+
+  <p class="pipe-note" style="margin:18px 0 2px"><b>View B — through-stack run.</b> Every request crosses two recorders and one policy gate; those records are the governance evidence.</p>
+  <div class="pipe" role="img" aria-label="Through-stack run: the batch runner calls the trace-ui ingress relay, which forwards to praxis. Praxis checks the entry, labels the request and chooses a pool. A per-pool trace-ui relay records the model call and forwards it to the chosen pool. The pool runs the model; a forwarded prompt reports the Semantic-Qwen alias, while a specialist pool names itself. Route, label, entry and trace id come back as response headers.">
+    <div class="node"><span class="n">Batch runner</span><span class="t">hybrid-run --target gateway · builds prompts, parses JSON (CPU)</span></div>
+    <span class="arrow">→</span>
+    <div class="node"><span class="n">Ingress relay</span><span class="t">trace-ui general/sensitive · writes the first audit row</span></div>
+    <span class="arrow">→</span>
+    <div class="node"><span class="n">Praxis</span><span class="t">entry → label → pool</span></div>
+    <span class="arrow">→</span>
+    <div class="node"><span class="n">Pool relay</span><span class="t">trace-ui :8081/:8082/… · writes the model-call row</span></div>
+    <span class="arrow">→</span>
+    <div class="node"><span class="n">Pool</span><span class="t">vllm-cpu · vllm-gpu · vllm-gpu-approved</span></div>
+    <span class="arrow">→</span>
+    <div class="node"><span class="n">Served models</span><span class="t">per call · alias or specialist id</span></div>
+  </div>
+  <p class="pipe-note">The batch runner is CPU-side orchestration; classify, extract ×4 and risk are model calls that land in the pool praxis chose, plus one report call at the end of the run. The response echoes <span class="mono">x-demo-entry</span>, <span class="mono">x-demo-classification</span>, <span class="mono">x-demo-route</span> and <span class="mono">x-praxis-trace-id</span>. The relays record the route name and hop timings — not the pod or upstream URL.</p>
+  <p style="margin-top:14px"><b>Why measure both?</b> They are not competing for the same score. The direct run sets the model-quality reference with nothing in the path; the through-stack runs show what the gateway does to a request. The controlled comparison is the same weights on CPU and GPU: the two direct runs agree exactly on quality — F1 0.690, risk 0.632, 5/19 fully correct on both — and differ on latency, where CPU classify took 3.4–21.3 s against ~0.6–1 s on four A10Gs. Quality did not change; speed did.</p>
+  <div class="callout warn">
+    <div class="label">Pool names are tiers, not hardware</div>
+    <p>The pool names come from the llm-d routing convention: <span class="mono">vllm-gpu</span>, <span class="mono">vllm-gpu-approved</span>, <span class="mono">vllm-cpu</span>, <span class="mono">vllm-gpu-small</span>. In the comparison run behind this appendix, <b>every one of those pools was served on CPU</b>: the pre-ROSA deployment ran the 7B checkpoint on the two “gpu” pools and the 1.5B on <span class="mono">vllm-cpu</span>, all under the single alias <span class="mono">Semantic-Qwen</span>. So a route chip reading <span class="mono">vllm-cpu</span> names the pool praxis chose; it does not by itself say what silicon answered. The only GPU-served view on this page is A — and its cards carry no route chip at all, because a direct call has no gateway to name one.</p>
+    <p style="margin-top:10px"><b>On a GPU-bearing cluster this changes.</b> <span class="mono">deploy/openshift/gpu-moe</span> stacks on <span class="mono">cpu-real-moe</span> and points the two expensive names — <span class="mono">vllm-gpu</span> and <span class="mono">vllm-gpu-approved</span> — at a 4×A10G deployment of the same 35B-A3B checkpoint, leaving <span class="mono">vllm-cpu</span> on CPU. Then a <span class="mono">vllm-gpu</span> chip really does mean a GPU, and the CPU/GPU contrast becomes one checkpoint on two hardwares rather than two different tiers. The claim to make is the one measured: same quality, different latency.</p>
+  </div>
+  <div class="callout bad">
+    <div class="label">Say this before toggling to B</div>
+    <p>The comparison run is a <b>failed run</b>, not a quality result. 82 of its 121 calls returned 502, 503 or 504 at concurrency 12, so only 39 answers exist: most of its cards read “no record”. The cause was infrastructure — the tunnel and cluster failures recorded in <span class="mono">FINDINGS.md</span> §9 — not the specialist model. Do not let “few answers” read as “the specialist performs badly”: extraction was measured separately, and it did better than the generative model.</p>
+  </div>
+  <div class="callout">
+    <div class="label">The specialist did measure better — on extraction, off the stack</div>
+    <p>On the held-out test split, with the same scorer and the same 80 extract fields as the recorded MoE configuration, the CUAD specialist answered with <b>F1 0.780</b> full-document (P 0.657, R 0.958) and <b>F1 0.800</b> when fed litil's top-5 retrieved chunks (P 0.667, R 1.000), against <b>0.712</b> for the generative MoE. Recall is 1.000 at top-5, so no annotated clause was missed, and the encoder returns spans of the input — it cannot invent a quote. The 12 remaining errors are extra spans, eight of them on text CUAD never annotated. Evidence: <span class="mono">runs/retrieval/e2e-specialist.json</span> and <span class="mono">e2e-specialist-top10.json</span>. This was a <b>local direct run, not through the stack</b>: that is the measurement the broken-down-pipeline argument rests on, and the reason view B's failed run is worth re-running rather than dismissing.</p>
+  </div>
+</section>
+
+<section id="praxis-path">
+  <div class="sec-head"><h2>The gateway path, as the response reports it</h2><span class="kicker">entry → label → pool → trace</span></div>
+  <p>On view B the batch runner talks to the trace-ui ingress relay, which forwards to praxis. Praxis labels the request and chooses a pool; a second trace-ui relay then records the actual model call and forwards it to that pool. The response carries headers the pipeline stores on the record, and the chips on each classify, extract and risk card are rendered from those headers:</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Header</th><th>Card chip</th><th>What it says</th><th>What it does not say</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">x-demo-entry</td><td><span class="chip">entry <b>general</b></span></td><td>Which listener admitted the request. The PII screen sends sensitive documents through the <span class="mono">sensitive</span> entry — the one that fails closed.</td><td>Which model ran.</td></tr>
+        <tr><td class="mono">x-demo-classification</td><td><span class="chip">label <b>MEDIUM</b></span></td><td>The label praxis applied: SIMPLE, MEDIUM, COMPLEX or REASONING.</td><td>Not the complexity annotation the run is scored against; the page shows that separately in the truth block.</td></tr>
+        <tr><td class="mono">x-demo-route</td><td><span class="chip">pool <b>vllm-cpu</b></span></td><td>The pool that answered.</td><td>Not the pod, Service or upstream URL. The trace database stores the route name, classification, entry, hops and health checks — no endpoint identity. Pool → Deployment is configuration (<span class="mono">TRACE_POOLS</span> and <span class="mono">*_UPSTREAM</span>), not per-request evidence.</td></tr>
+        <tr><td class="mono">x-praxis-trace-id</td><td><span class="chip">trace <b>…</b></span></td><td>The id that ties the request to its hops and health checks in the trace UI.</td><td>Whether the answer was any good.</td></tr>
+        <tr><td class="mono">x-praxis-fallback</td><td>record field</td><td>Whether the named pool was the first choice or a fallback.</td><td>Why the first choice failed — that is in the hop record.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><b>The rule praxis applies.</b> SIMPLE and MEDIUM go to the CPU-side pools; COMPLEX and REASONING go to the GPU-side pools. On the sensitive entry a REASONING request fails closed with an explicit 502 rather than degrading to CPU; on the general entry it degrades to CPU with the fallback signal set. View B recorded COMPLEX ×3 and MEDIUM ×6 — only the calls that succeeded carry a label at all, because a failed call returns no headers to read.</p>
+  <div class="callout">
+    <div class="label">Model identity is per call, and new</div>
+    <p>Cards also carry a <span class="mono">model</span> chip, read from the <span class="mono">model</span> field of each response body — not from praxis. That is the only per-call evidence of which checkpoint answered: the gateway records the pool, a specialist pool names its own id (<span class="mono">cuad-specialist</span>), and a forwarded prompt returns the alias (<span class="mono">Semantic-Qwen</span>). Capture was added after view A was recorded, so view A has only the run-level checkpoint label; view B records it per call, and its routing panel and path strip list the models with counts. A run without the field cannot be backfilled; the deployment YAML names the checkpoints a pool could have run, but not which one answered a given call.</p>
+  </div>
+  <div class="callout bad">
+    <div class="label">Must disclose if you show this run</div>
+    <p><b>A failed call is not a correct absence.</b> The scorer used to credit a 502/503/504 on an annotated-absent clause as “correct absent”. On this comparison run that inflated extraction from 22 to 53 correct fields and reported one fully-correct document where none is. The page always showed those calls as <span class="mono">no record</span>; the scorer now agrees. If you quote a number from an older <span class="mono">metrics.json</span>, it may predate the fix.</p>
+  </div>
+</section>
+</details>
+
+<footer>
+  <p id="guideSource">Built from the running server at <span class="mono">127.0.0.1:8099</span>, the example run at <span class="mono">runs/cuad-test/arm-direct-moe-gpu-v2</span> (view A) and the appendix comparison run at <span class="mono">runs/cuad-test/arm-D-specialist</span> (view B). This is example data, not the ROSA baseline.</p>
+  <p>Model label backfilled into view A's <span class="mono">summary.json</span> from the run notes: <span class="mono">Qwen/Qwen3.5-35B-A3B</span>, served as <span class="mono">Semantic-Qwen</span>, 4× A10G at TP=4. The direct and hybrid runners now record it at run time, together with the model each response named.</p>
+  <p class="mono">demo/src/hybrid_demo/ui/payload.py · evalkit/score.py · pipeline/direct.py · pipeline/review.py · deploy/openshift/rosa/ · docs/octo-demo-v0.2.md §2d</p>
+</footer>
+</div>
+
+<script>
+  (function () {
+    const btn = document.getElementById("themeBtn");
+    if (!btn) return;
+    const isDark = () => document.documentElement.dataset.theme === "dark"
+      || (!document.documentElement.dataset.theme
+          && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    const render = () => { btn.textContent = isDark() ? "Light mode" : "Dark mode"; };
+    btn.addEventListener("click", () => {
+      const next = isDark() ? "light" : "dark";
+      document.documentElement.dataset.theme = next;
+      try { localStorage.setItem("stage-ui-theme", next); } catch (e) {}
+      render();
+    });
+    render();
+  })();
+
+  // The same guide is served beside whichever run the stage UI was started
+  // with. Read that run's own metadata rather than assuming it is the CUAD
+  // example, and replace the header chips when the page is on ROSA.
+  (async function () {
+    try {
+      const res = await fetch("/api/run");
+      if (!res.ok) return;
+      const data = await res.json();
+      const meta = data.meta || {};
+      const measured = meta.provenance === "measured";
+      // The server names the config from the canonical configs.json; the guide
+      // carries no second copy of the map.
+      const config = meta.config || meta.arm || "—";
+      const hardware = (meta.pool_hardware || [])
+        .map((p) => `${p.route}${p.hardware ? ` (${p.hardware})` : ""}`)
+        .join(" · ") || "hardware not recorded";
+      const where = [meta.cluster, meta.environment].filter(Boolean).join(" · ");
+      const context = document.getElementById("runContext");
+      if (context) {
+        context.textContent = measured
+          ? `This server is replaying the measured ROSA run ${meta.run} (config ${config}, ${meta.docs} documents) on ${where}.`
+          : `This server is replaying the CUAD example ${meta.run} (${meta.docs} documents).`;
+      }
+      const eyebrow = document.querySelector(".eyebrow");
+      if (eyebrow) {
+        eyebrow.textContent = measured
+          ? `Presenter's guide · ROSA run ${meta.run} · replay`
+          : `Presenter's guide · example run ${meta.run} · replay`;
+      }
+      if (measured) {
+        const chips = document.querySelector(".meta");
+        if (chips) {
+          const correct = data.metrics ? data.metrics.docs_fully_correct : "—";
+          chips.innerHTML = `
+            <span class="chip" style="border-color:var(--ok);color:var(--ok);background:var(--ok-soft)"><b>measured</b> · ${where}</span>
+            <span class="chip"><b>${meta.docs}</b> documents</span>
+            <span class="chip">config <b>${config}</b></span>
+            <span class="chip" title="Read from the run's recorded pool map, not from the config or route name.">hardware <b>${hardware}</b></span>
+            <span class="chip">gateway-routed</span>
+            <span class="chip"><b>${correct}</b>/${meta.docs} fully correct</span>`;
+        }
+        const source = document.getElementById("guideSource");
+        if (source) {
+          source.innerHTML = `Built from the running server at <span class="mono">127.0.0.1:8099</span>, replaying the measured ROSA run <span class="mono">runs/rosa-200/${meta.run}</span> (config ${config}, ${meta.docs} synthetic documents). The CUAD example and its appendix are still documented below; the ROSA numbers are in <span class="mono">runs/rosa-200/report.md</span>.`;
+        }
+      }
+    } catch (e) {
+      const context = document.getElementById("runContext");
+      if (context) context.textContent = "This guide is not being served by the stage UI; read the provenance chip on the page to see which run is on screen.";
+    }
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: openshell-demo
+
+# The platform half of the demo: everything that is NOT a model pool. It is
+# split out of the root kustomization so a stack that does not run KServe
+# (ROSA: no RHOAI, the pools are plain Deployments) can consume it as a
+# directory - kustomize's file-load security rule allows directory references
+# across the tree but not individual files outside the consuming overlay.
+#
+# The root manifests/kustomization.yaml composes this base plus the KServe
+# InferenceService/ServingRuntime objects, so `oc apply -k manifests` keeps
+# producing exactly the same set as before the split.
+resources:
+  - llm-d-sc.yaml
+  - praxis.yaml
+  - trace-ui.yaml
+  - traffic-gen.yaml
+  - network-policies.yaml
+
+# The praxis routing configs are shared with the local Linux stack
+# (deploy/linux/docker-compose.yml mounts this directory), so both platforms
+# run byte-identical routing. Swap arms with:
+#   oc -n openshell-demo set env deploy/praxis PRAXIS_CONFIG=/etc/praxis/arm-a.yaml
+#   oc -n openshell-demo rollout status deploy/praxis
+configMapGenerator:
+  - name: praxis-config
+    files:
+      - config.yaml=praxis/config.yaml
+      - arm-a.yaml=praxis/arm-a.yaml
+      - arm-b.yaml=praxis/arm-b.yaml
+      - arm-c.yaml=praxis/arm-c.yaml

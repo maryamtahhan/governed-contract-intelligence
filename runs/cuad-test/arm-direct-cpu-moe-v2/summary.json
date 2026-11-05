@@ -1,0 +1,7 @@
+{
+ "arm": "direct",
+ "mode": "direct",
+ "docs": 19,
+ "endpoint": "http://127.0.0.1:8002/v1",
+ "thinking": false
+}

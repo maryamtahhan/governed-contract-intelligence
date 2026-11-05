@@ -23,6 +23,8 @@ patches:
           - {name: TRACE_DB_PATH, value: /data/traces.db}
           - {name: PRAXIS_UPSTREAM, value: "http://praxis:80"}
           - {name: SENSITIVE_UPSTREAM, value: "http://praxis:8083"}
+          - {name: JUDGMENT_UPSTREAM, value: "http://praxis:8086"}
+          - {name: SENSITIVE_JUDGMENT_UPSTREAM, value: "http://praxis:8087"}
           - {name: TRACE_POOLS, value: "vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small"}
           - {name: VLLM_CPU_UPSTREAM, value: "http://cpureal-vllm-cpu:8000"}
           - {name: VLLM_GPU_UPSTREAM, value: "http://cpureal-vllm-gpu:8000"}

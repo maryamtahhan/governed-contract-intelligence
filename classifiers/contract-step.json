@@ -1,0 +1,58 @@
+{
+  "classifier_id": "contract-step",
+  "signal": "contract_step",
+  "taxonomy_revision": "contract-step-anchors-v1",
+  "model_repo": "cnuland/llm-d-sc-complexity",
+  "model_revision": "c5f55ef419d268ba843c544dc00988d1e9878044",
+  "method": "anchor-topk-mean",
+  "top_k": 3,
+  "labels": [
+    "CLASSIFY",
+    "EXTRACT",
+    "RISK",
+    "REPORT"
+  ],
+  "anchors": {
+    "CLASSIFY": [
+      "Identify which agreement template this is.",
+      "Categorize the document as an MSA, NDA, SOW, or DPA.",
+      "Determine the contract family and its opening duration.",
+      "What kind of deal does this paperwork represent?",
+      "Read the instrument and label its agreement type.",
+      "State the document category and how long the first term runs.",
+      "Is this a services agreement, confidentiality agreement, work order, or data-processing addendum?",
+      "Name the agreement type and the initial subscription period."
+    ],
+    "EXTRACT": [
+      "Pull the requested provision out of the agreement.",
+      "Quote the section that covers the named topic.",
+      "Find the relevant language and return its exact words.",
+      "Locate the clause in the document and reproduce it.",
+      "What does the agreement say about the named subject?",
+      "Search the contract for the provision and report its text.",
+      "Return the clause verbatim, or say it is missing.",
+      "Copy the passage that addresses the requested term."
+    ],
+    "RISK": [
+      "Rate the agreement's exposure as low, medium, or high.",
+      "How dangerous is this deal from a legal standpoint?",
+      "Evaluate the material exposure created by these terms.",
+      "Assign a risk rating and explain the reasoning.",
+      "Weigh the obligations and identify the biggest dangers.",
+      "Judge whether the contract is safe, cautious, or unsafe to sign.",
+      "Give a legal risk opinion with supporting reasons.",
+      "Assess how much exposure the company accepts under this deal."
+    ],
+    "REPORT": [
+      "Combine the findings into a portfolio-level briefing.",
+      "Summarize the batch and rank the agreements by danger.",
+      "Aggregate the document results into one management summary.",
+      "Create the final roll-up across the whole document set.",
+      "Compare the contracts and report the portfolio totals.",
+      "Build the cross-document brief with aggregate counts.",
+      "Synthesize the per-contract results into a single narrative.",
+      "Produce the batch summary and name the riskiest agreement."
+    ]
+  },
+  "provenance": "Authored for the contract-review pipeline. The anchors describe task intent, not prompt wording: none is copied from the production prompt builders. The model_repo and model_revision fields are metadata only; llm-d-sc loads weights from LLM_D_SC_MODEL_DIR. This taxonomy has not been measured against the contract workload yet; evaluate it with hybrid-eval-contract-steps before routing on it."
+}

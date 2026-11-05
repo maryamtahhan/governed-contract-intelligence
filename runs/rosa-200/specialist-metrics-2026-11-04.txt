@@ -1,0 +1,33 @@
+# Specialist through-stack evidence, derived from the arm-D run records
+# Source: runs/rosa-200/arm-D/results.json (200 synthetic documents)
+# Environment: ROSA HCP <redacted-cluster> (cluster <redacted-ocm-cluster-id>)
+#
+# Why derived and not a live /metrics scrape: the live counter snapshot was
+# lost when the specialist pod was restarted to deploy the /metrics fix.
+# The per-record `response_model` is stronger anyway: it names the responder
+# for every extraction call instead of a cumulative counter.
+#
+# Derivation (run from the repo root):
+#   python3 - <<'PY'
+#   import json, collections
+#   records = json.load(open("runs/rosa-200/arm-D/results.json"))["records"]
+#   extract = [r for r in records if str(r.get("step","")).startswith("extract:")]
+#   counts = collections.Counter((r["step"].split(":",1)[1], r.get("response_model"))
+#                                for r in extract)
+#   for (clause, model), n in sorted(counts.items()):
+#       print(f"{clause:20s} {model:16s} {n}")
+#   print("total", len(extract), "specialist",
+#         sum(n for (c,m),n in counts.items() if m == "cuad-specialist"))
+#   PY
+#
+# Output:
+#   data_protection      Semantic-Qwen    200
+#   governing_law        cuad-specialist  200
+#   liability_cap        cuad-specialist  200
+#   termination          cuad-specialist  200
+#   total 800 specialist 600
+#
+# All 800 extraction steps were served (outcome=served) and all were routed
+# x-demo-route=vllm-cpu, the composite. Three of the four clause categories
+# were answered by the specialist encoder; data_protection stayed on the
+# CPU MoE. The composite is not a side experiment.

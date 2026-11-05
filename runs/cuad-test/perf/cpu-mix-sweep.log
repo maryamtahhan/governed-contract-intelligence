@@ -1,0 +1,302 @@
+start 2026-11-03T17:02:55+00:00
+=== cpu-cuad-c1 2026-11-03T17:02:55+00:00 ===
+W1103 17:02:57.553000 1774 torch/_opaque_base.py:6] torch._opaque_base is deprecated, use torch._custom_class_base instead
+W1103 17:02:57.554000 1774 torch/_library/opaque_object.py:288] register_opaque_type is deprecated, use register_custom_class instead
+W1103 17:02:57.554000 1774 torch/_library/opaque_object.py:211] typ='value' is deprecated, use typ='constant' instead
+Namespace(subparser='bench', bench_type='serve', dispatch_function=<function BenchmarkServingSubcommand.cmd at 0x7f3122d5a160>, trust_remote_code=False, seed=0, num_prompts=76, dataset_name='custom', no_stream=False, dataset_path='/tmp/cuad-extract-prompts.jsonl', no_oversample=False, skip_chat_template=False, enable_multimodal_chat=False, disable_shuffle=False, custom_output_len=200, custom_ensure_client_side_data=False, spec_bench_output_len=256, spec_bench_category=None, sharegpt_output_len=None, timed_trace_chunk_hash_size=16, timed_trace_sec_multiplier=1, timed_trace_label_timestamp='timestamp', timed_trace_label_input_length='input_length', timed_trace_label_output_length='output_length', timed_trace_label_hash_ids='hash_ids', blazedit_min_distance=0.0, blazedit_max_distance=1.0, asr_max_audio_len_sec=inf, asr_min_audio_len_sec=0.0, random_input_len=1024, random_output_len=128, random_range_ratio='0.0', random_prefix_len=0, random_batch_size=1, no_reranker=False, random_mm_base_items_per_request=1, random_mm_num_mm_items_range_ratio=0.0, random_mm_limit_mm_per_prompt={'image': 255, 'video': 1}, random_mm_bucket_config={(256, 256, 1): 0.5, (720, 1280, 1): 0.5, (720, 1280, 16): 0.0}, hf_subset=None, hf_split=None, hf_name=None, hf_output_len=None, bfcl_categories=None, prefix_repetition_prefix_len=256, prefix_repetition_suffix_len=256, prefix_repetition_num_prefixes=10, prefix_repetition_output_len=128, speed_bench_dataset_subset='qualitative', speed_bench_output_len=4096, speed_bench_category=None, label=None, backend='openai-chat', base_url='http://localhost:8000', host='127.0.0.1', port=8000, endpoint='/v1/chat/completions', header=None, max_concurrency=1, model='Semantic-Qwen', input_len=None, output_len=None, tokenizer='Qwen/Qwen3.5-35B-A3B', tokenizer_mode='auto', use_beam_search=False, logprobs=None, request_rate=inf, burstiness=1.0, probe_request_rate=0.0, disable_tqdm=True, num_warmups=2, profile=False, save_result=True, save_detailed=False, append_result=False, metadata=None, result_dir='/tmp/bench', result_filename='cpu-cuad-c1.json', ignore_eos=False, self_timed=None, percentile_metrics='ttft,tpot,itl,e2el', metric_percentiles='50,95', goodput=None, request_id_prefix='bench-720ef6bd-', top_p=None, top_k=None, min_p=None, temperature=None, frequency_penalty=None, presence_penalty=None, repetition_penalty=None, served_model_name=None, lora_modules=None, lora_assignment='random', ramp_up_strategy=None, ramp_up_start_rps=None, ramp_up_end_rps=None, ready_check_timeout_sec=0, chat_template_kwargs={'enable_thinking': False}, extra_body=None, skip_tokenizer_init=False, insecure=False, plot_timeline=False, timeline_itl_thresholds='25,50', plot_dataset_stats=False, log_config_file=None, logging_config=LoggingConfig(log_level='INFO', formatter='text', configure_logging=True, pylogging_config_file=None))
+Fetching 13 files:   0%|          | 0/13 [00:00<?, ?it/s]Fetching 13 files: 100%|██████████| 13/13 [00:00<00:00, 2223.37it/s]
+WARNING: vllm bench serve no longer sets temperature==0 (greedy) in requests by default. The default will be determined on the server side and can be model/API specific. For the old behavior, include --temperature=0.
+Starting initial single prompt test run...
+Skipping endpoint ready check.
+Warming up with 2 requests...
+Warmup run completed.
+Starting main benchmark run...
+Traffic request rate: inf
+Burstiness factor: 1.0 (Poisson process)
+Maximum request concurrency: 1
+tip: install termplotlib and gnuplot to plot the metrics
+============ Serving Benchmark Result ============
+Successful requests:                     76        
+Failed requests:                         0         
+Maximum request concurrency:             1         
+Benchmark duration (s):                  1032.69   
+Total input tokens:                      229997    
+Total generated tokens:                  15200     
+Request throughput (req/s):              0.07      
+Output token throughput (tok/s):         14.72     
+Peak output token throughput (tok/s):    18.00     
+Peak concurrent requests:                2.00      
+Total token throughput (tok/s):          237.44    
+---------------Time to First Token----------------
+Mean TTFT (ms):                          2197.06   
+Median TTFT (ms):                        2278.40   
+P50 TTFT (ms):                           2278.40   
+P95 TTFT (ms):                           3553.18   
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          57.24     
+Median TPOT (ms):                        57.24     
+P50 TPOT (ms):                           57.24     
+P95 TPOT (ms):                           57.47     
+---------------Inter-token Latency----------------
+Mean ITL (ms):                           57.24     
+Median ITL (ms):                         57.18     
+P50 ITL (ms):                            57.18     
+P95 ITL (ms):                            57.99     
+----------------End-to-end Latency----------------
+Mean E2EL (ms):                          13587.87  
+Median E2EL (ms):                        13676.34  
+P50 E2EL (ms):                           13676.34  
+P95 E2EL (ms):                           14975.09  
+==================================================
+=== cpu-cuad-c1 exit=0 2026-11-03T17:20:42+00:00 ===
+=== cpu-cuad-c4 2026-11-03T17:20:42+00:00 ===
+W1103 17:20:45.099000 2176 torch/_opaque_base.py:6] torch._opaque_base is deprecated, use torch._custom_class_base instead
+W1103 17:20:45.100000 2176 torch/_library/opaque_object.py:288] register_opaque_type is deprecated, use register_custom_class instead
+W1103 17:20:45.100000 2176 torch/_library/opaque_object.py:211] typ='value' is deprecated, use typ='constant' instead
+Namespace(subparser='bench', bench_type='serve', dispatch_function=<function BenchmarkServingSubcommand.cmd at 0x7f966af1e200>, trust_remote_code=False, seed=0, num_prompts=76, dataset_name='custom', no_stream=False, dataset_path='/tmp/cuad-extract-prompts.jsonl', no_oversample=False, skip_chat_template=False, enable_multimodal_chat=False, disable_shuffle=False, custom_output_len=200, custom_ensure_client_side_data=False, spec_bench_output_len=256, spec_bench_category=None, sharegpt_output_len=None, timed_trace_chunk_hash_size=16, timed_trace_sec_multiplier=1, timed_trace_label_timestamp='timestamp', timed_trace_label_input_length='input_length', timed_trace_label_output_length='output_length', timed_trace_label_hash_ids='hash_ids', blazedit_min_distance=0.0, blazedit_max_distance=1.0, asr_max_audio_len_sec=inf, asr_min_audio_len_sec=0.0, random_input_len=1024, random_output_len=128, random_range_ratio='0.0', random_prefix_len=0, random_batch_size=1, no_reranker=False, random_mm_base_items_per_request=1, random_mm_num_mm_items_range_ratio=0.0, random_mm_limit_mm_per_prompt={'image': 255, 'video': 1}, random_mm_bucket_config={(256, 256, 1): 0.5, (720, 1280, 1): 0.5, (720, 1280, 16): 0.0}, hf_subset=None, hf_split=None, hf_name=None, hf_output_len=None, bfcl_categories=None, prefix_repetition_prefix_len=256, prefix_repetition_suffix_len=256, prefix_repetition_num_prefixes=10, prefix_repetition_output_len=128, speed_bench_dataset_subset='qualitative', speed_bench_output_len=4096, speed_bench_category=None, label=None, backend='openai-chat', base_url='http://localhost:8000', host='127.0.0.1', port=8000, endpoint='/v1/chat/completions', header=None, max_concurrency=4, model='Semantic-Qwen', input_len=None, output_len=None, tokenizer='Qwen/Qwen3.5-35B-A3B', tokenizer_mode='auto', use_beam_search=False, logprobs=None, request_rate=inf, burstiness=1.0, probe_request_rate=0.0, disable_tqdm=True, num_warmups=2, profile=False, save_result=True, save_detailed=False, append_result=False, metadata=None, result_dir='/tmp/bench', result_filename='cpu-cuad-c4.json', ignore_eos=False, self_timed=None, percentile_metrics='ttft,tpot,itl,e2el', metric_percentiles='50,95', goodput=None, request_id_prefix='bench-11afd5c9-', top_p=None, top_k=None, min_p=None, temperature=None, frequency_penalty=None, presence_penalty=None, repetition_penalty=None, served_model_name=None, lora_modules=None, lora_assignment='random', ramp_up_strategy=None, ramp_up_start_rps=None, ramp_up_end_rps=None, ready_check_timeout_sec=0, chat_template_kwargs={'enable_thinking': False}, extra_body=None, skip_tokenizer_init=False, insecure=False, plot_timeline=False, timeline_itl_thresholds='25,50', plot_dataset_stats=False, log_config_file=None, logging_config=LoggingConfig(log_level='INFO', formatter='text', configure_logging=True, pylogging_config_file=None))
+Fetching 13 files:   0%|          | 0/13 [00:00<?, ?it/s]Fetching 13 files: 100%|██████████| 13/13 [00:00<00:00, 2685.48it/s]
+WARNING: vllm bench serve no longer sets temperature==0 (greedy) in requests by default. The default will be determined on the server side and can be model/API specific. For the old behavior, include --temperature=0.
+Starting initial single prompt test run...
+Skipping endpoint ready check.
+Warming up with 2 requests...
+Warmup run completed.
+Starting main benchmark run...
+Traffic request rate: inf
+Burstiness factor: 1.0 (Poisson process)
+Maximum request concurrency: 4
+tip: install termplotlib and gnuplot to plot the metrics
+============ Serving Benchmark Result ============
+Successful requests:                     76        
+Failed requests:                         0         
+Maximum request concurrency:             4         
+Benchmark duration (s):                  381.62    
+Total input tokens:                      229997    
+Total generated tokens:                  15200     
+Request throughput (req/s):              0.20      
+Output token throughput (tok/s):         39.83     
+Peak output token throughput (tok/s):    52.00     
+Peak concurrent requests:                8.00      
+Total token throughput (tok/s):          642.51    
+---------------Time to First Token----------------
+Mean TTFT (ms):                          1274.60   
+Median TTFT (ms):                        1408.60   
+P50 TTFT (ms):                           1408.60   
+P95 TTFT (ms):                           1778.11   
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          94.51     
+Median TPOT (ms):                        94.04     
+P50 TPOT (ms):                           94.04     
+P95 TPOT (ms):                           98.58     
+---------------Inter-token Latency----------------
+Mean ITL (ms):                           94.51     
+Median ITL (ms):                         93.10     
+P50 ITL (ms):                            93.10     
+P95 ITL (ms):                            97.83     
+----------------End-to-end Latency----------------
+Mean E2EL (ms):                          20081.82  
+Median E2EL (ms):                        19977.59  
+P50 E2EL (ms):                           19977.59  
+P95 E2EL (ms):                           20614.91  
+==================================================
+=== cpu-cuad-c4 exit=0 2026-11-03T17:27:28+00:00 ===
+=== cpu-cuad-c16 2026-11-03T17:27:28+00:00 ===
+W1103 17:27:30.548000 2587 torch/_opaque_base.py:6] torch._opaque_base is deprecated, use torch._custom_class_base instead
+W1103 17:27:30.549000 2587 torch/_library/opaque_object.py:288] register_opaque_type is deprecated, use register_custom_class instead
+W1103 17:27:30.549000 2587 torch/_library/opaque_object.py:211] typ='value' is deprecated, use typ='constant' instead
+Namespace(subparser='bench', bench_type='serve', dispatch_function=<function BenchmarkServingSubcommand.cmd at 0x7fb4ca756660>, trust_remote_code=False, seed=0, num_prompts=76, dataset_name='custom', no_stream=False, dataset_path='/tmp/cuad-extract-prompts.jsonl', no_oversample=False, skip_chat_template=False, enable_multimodal_chat=False, disable_shuffle=False, custom_output_len=200, custom_ensure_client_side_data=False, spec_bench_output_len=256, spec_bench_category=None, sharegpt_output_len=None, timed_trace_chunk_hash_size=16, timed_trace_sec_multiplier=1, timed_trace_label_timestamp='timestamp', timed_trace_label_input_length='input_length', timed_trace_label_output_length='output_length', timed_trace_label_hash_ids='hash_ids', blazedit_min_distance=0.0, blazedit_max_distance=1.0, asr_max_audio_len_sec=inf, asr_min_audio_len_sec=0.0, random_input_len=1024, random_output_len=128, random_range_ratio='0.0', random_prefix_len=0, random_batch_size=1, no_reranker=False, random_mm_base_items_per_request=1, random_mm_num_mm_items_range_ratio=0.0, random_mm_limit_mm_per_prompt={'image': 255, 'video': 1}, random_mm_bucket_config={(256, 256, 1): 0.5, (720, 1280, 1): 0.5, (720, 1280, 16): 0.0}, hf_subset=None, hf_split=None, hf_name=None, hf_output_len=None, bfcl_categories=None, prefix_repetition_prefix_len=256, prefix_repetition_suffix_len=256, prefix_repetition_num_prefixes=10, prefix_repetition_output_len=128, speed_bench_dataset_subset='qualitative', speed_bench_output_len=4096, speed_bench_category=None, label=None, backend='openai-chat', base_url='http://localhost:8000', host='127.0.0.1', port=8000, endpoint='/v1/chat/completions', header=None, max_concurrency=16, model='Semantic-Qwen', input_len=None, output_len=None, tokenizer='Qwen/Qwen3.5-35B-A3B', tokenizer_mode='auto', use_beam_search=False, logprobs=None, request_rate=inf, burstiness=1.0, probe_request_rate=0.0, disable_tqdm=True, num_warmups=2, profile=False, save_result=True, save_detailed=False, append_result=False, metadata=None, result_dir='/tmp/bench', result_filename='cpu-cuad-c16.json', ignore_eos=False, self_timed=None, percentile_metrics='ttft,tpot,itl,e2el', metric_percentiles='50,95', goodput=None, request_id_prefix='bench-d7f280cf-', top_p=None, top_k=None, min_p=None, temperature=None, frequency_penalty=None, presence_penalty=None, repetition_penalty=None, served_model_name=None, lora_modules=None, lora_assignment='random', ramp_up_strategy=None, ramp_up_start_rps=None, ramp_up_end_rps=None, ready_check_timeout_sec=0, chat_template_kwargs={'enable_thinking': False}, extra_body=None, skip_tokenizer_init=False, insecure=False, plot_timeline=False, timeline_itl_thresholds='25,50', plot_dataset_stats=False, log_config_file=None, logging_config=LoggingConfig(log_level='INFO', formatter='text', configure_logging=True, pylogging_config_file=None))
+Fetching 13 files:   0%|          | 0/13 [00:00<?, ?it/s]Fetching 13 files: 100%|██████████| 13/13 [00:00<00:00, 2579.64it/s]
+WARNING: vllm bench serve no longer sets temperature==0 (greedy) in requests by default. The default will be determined on the server side and can be model/API specific. For the old behavior, include --temperature=0.
+Starting initial single prompt test run...
+Skipping endpoint ready check.
+Warming up with 2 requests...
+Warmup run completed.
+Starting main benchmark run...
+Traffic request rate: inf
+Burstiness factor: 1.0 (Poisson process)
+Maximum request concurrency: 16
+tip: install termplotlib and gnuplot to plot the metrics
+============ Serving Benchmark Result ============
+Successful requests:                     76        
+Failed requests:                         0         
+Maximum request concurrency:             16        
+Benchmark duration (s):                  193.82    
+Total input tokens:                      229997    
+Total generated tokens:                  15200     
+Request throughput (req/s):              0.39      
+Output token throughput (tok/s):         78.42     
+Peak output token throughput (tok/s):    128.00    
+Peak concurrent requests:                21.00     
+Total token throughput (tok/s):          1265.07   
+---------------Time to First Token----------------
+Mean TTFT (ms):                          2272.06   
+Median TTFT (ms):                        1840.21   
+P50 TTFT (ms):                           1840.21   
+P95 TTFT (ms):                           5748.85   
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          185.59    
+Median TPOT (ms):                        190.50    
+P50 TPOT (ms):                           190.50    
+P95 TPOT (ms):                           194.76    
+---------------Inter-token Latency----------------
+Mean ITL (ms):                           185.59    
+Median ITL (ms):                         171.81    
+P50 ITL (ms):                            171.81    
+P95 ITL (ms):                            190.91    
+----------------End-to-end Latency----------------
+Mean E2EL (ms):                          39204.67  
+Median E2EL (ms):                        39582.07  
+P50 E2EL (ms):                           39582.07  
+P95 E2EL (ms):                           43751.89  
+==================================================
+=== cpu-cuad-c16 exit=0 2026-11-03T17:31:05+00:00 ===
+=== cpu-mix-c1 2026-11-03T17:31:05+00:00 ===
+W1103 17:31:08.155000 3013 torch/_opaque_base.py:6] torch._opaque_base is deprecated, use torch._custom_class_base instead
+W1103 17:31:08.156000 3013 torch/_library/opaque_object.py:288] register_opaque_type is deprecated, use register_custom_class instead
+W1103 17:31:08.156000 3013 torch/_library/opaque_object.py:211] typ='value' is deprecated, use typ='constant' instead
+Namespace(subparser='bench', bench_type='serve', dispatch_function=<function BenchmarkServingSubcommand.cmd at 0x7f284cf5a200>, trust_remote_code=False, seed=0, num_prompts=115, dataset_name='custom', no_stream=False, dataset_path='/tmp/cuad-mix-prompts.jsonl', no_oversample=False, skip_chat_template=False, enable_multimodal_chat=False, disable_shuffle=False, custom_output_len=-1, custom_ensure_client_side_data=False, spec_bench_output_len=256, spec_bench_category=None, sharegpt_output_len=None, timed_trace_chunk_hash_size=16, timed_trace_sec_multiplier=1, timed_trace_label_timestamp='timestamp', timed_trace_label_input_length='input_length', timed_trace_label_output_length='output_length', timed_trace_label_hash_ids='hash_ids', blazedit_min_distance=0.0, blazedit_max_distance=1.0, asr_max_audio_len_sec=inf, asr_min_audio_len_sec=0.0, random_input_len=1024, random_output_len=128, random_range_ratio='0.0', random_prefix_len=0, random_batch_size=1, no_reranker=False, random_mm_base_items_per_request=1, random_mm_num_mm_items_range_ratio=0.0, random_mm_limit_mm_per_prompt={'image': 255, 'video': 1}, random_mm_bucket_config={(256, 256, 1): 0.5, (720, 1280, 1): 0.5, (720, 1280, 16): 0.0}, hf_subset=None, hf_split=None, hf_name=None, hf_output_len=None, bfcl_categories=None, prefix_repetition_prefix_len=256, prefix_repetition_suffix_len=256, prefix_repetition_num_prefixes=10, prefix_repetition_output_len=128, speed_bench_dataset_subset='qualitative', speed_bench_output_len=4096, speed_bench_category=None, label=None, backend='openai-chat', base_url='http://localhost:8000', host='127.0.0.1', port=8000, endpoint='/v1/chat/completions', header=None, max_concurrency=1, model='Semantic-Qwen', input_len=None, output_len=None, tokenizer='Qwen/Qwen3.5-35B-A3B', tokenizer_mode='auto', use_beam_search=False, logprobs=None, request_rate=inf, burstiness=1.0, probe_request_rate=0.0, disable_tqdm=True, num_warmups=2, profile=False, save_result=True, save_detailed=False, append_result=False, metadata=None, result_dir='/tmp/bench', result_filename='cpu-mix-c1.json', ignore_eos=False, self_timed=None, percentile_metrics='ttft,tpot,itl,e2el', metric_percentiles='50,95', goodput=None, request_id_prefix='bench-e89fc40c-', top_p=None, top_k=None, min_p=None, temperature=None, frequency_penalty=None, presence_penalty=None, repetition_penalty=None, served_model_name=None, lora_modules=None, lora_assignment='random', ramp_up_strategy=None, ramp_up_start_rps=None, ramp_up_end_rps=None, ready_check_timeout_sec=0, chat_template_kwargs={'enable_thinking': False}, extra_body=None, skip_tokenizer_init=False, insecure=False, plot_timeline=False, timeline_itl_thresholds='25,50', plot_dataset_stats=False, log_config_file=None, logging_config=LoggingConfig(log_level='INFO', formatter='text', configure_logging=True, pylogging_config_file=None))
+Fetching 13 files:   0%|          | 0/13 [00:00<?, ?it/s]Fetching 13 files: 100%|██████████| 13/13 [00:00<00:00, 2537.98it/s]
+WARNING: vllm bench serve no longer sets temperature==0 (greedy) in requests by default. The default will be determined on the server side and can be model/API specific. For the old behavior, include --temperature=0.
+Starting initial single prompt test run...
+Skipping endpoint ready check.
+Warming up with 2 requests...
+Warmup run completed.
+Starting main benchmark run...
+Traffic request rate: inf
+Burstiness factor: 1.0 (Poisson process)
+Maximum request concurrency: 1
+tip: install termplotlib and gnuplot to plot the metrics
+============ Serving Benchmark Result ============
+Successful requests:                     115       
+Failed requests:                         0         
+Maximum request concurrency:             1         
+Benchmark duration (s):                  1464.35   
+Total input tokens:                      302252    
+Total generated tokens:                  23900     
+Request throughput (req/s):              0.08      
+Output token throughput (tok/s):         16.32     
+Peak output token throughput (tok/s):    18.00     
+Peak concurrent requests:                2.00      
+Total token throughput (tok/s):          222.73    
+---------------Time to First Token----------------
+Mean TTFT (ms):                          875.79    
+Median TTFT (ms):                        550.36    
+P50 TTFT (ms):                           550.36    
+P95 TTFT (ms):                           2878.87   
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          57.23     
+Median TPOT (ms):                        57.26     
+P50 TPOT (ms):                           57.26     
+P95 TPOT (ms):                           57.48     
+---------------Inter-token Latency----------------
+Mean ITL (ms):                           57.33     
+Median ITL (ms):                         57.22     
+P50 ITL (ms):                            57.22     
+P95 ITL (ms):                            58.48     
+----------------End-to-end Latency----------------
+Mean E2EL (ms):                          12733.39  
+Median E2EL (ms):                        11891.53  
+P50 E2EL (ms):                           11891.53  
+P95 E2EL (ms):                           12174.90  
+==================================================
+=== cpu-mix-c1 exit=0 2026-11-03T17:56:02+00:00 ===
+=== cpu-mix-c4 2026-11-03T17:56:02+00:00 ===
+W1103 17:56:04.776000 3417 torch/_opaque_base.py:6] torch._opaque_base is deprecated, use torch._custom_class_base instead
+W1103 17:56:04.776000 3417 torch/_library/opaque_object.py:288] register_opaque_type is deprecated, use register_custom_class instead
+W1103 17:56:04.776000 3417 torch/_library/opaque_object.py:211] typ='value' is deprecated, use typ='constant' instead
+Namespace(subparser='bench', bench_type='serve', dispatch_function=<function BenchmarkServingSubcommand.cmd at 0x7f4d22966160>, trust_remote_code=False, seed=0, num_prompts=115, dataset_name='custom', no_stream=False, dataset_path='/tmp/cuad-mix-prompts.jsonl', no_oversample=False, skip_chat_template=False, enable_multimodal_chat=False, disable_shuffle=False, custom_output_len=-1, custom_ensure_client_side_data=False, spec_bench_output_len=256, spec_bench_category=None, sharegpt_output_len=None, timed_trace_chunk_hash_size=16, timed_trace_sec_multiplier=1, timed_trace_label_timestamp='timestamp', timed_trace_label_input_length='input_length', timed_trace_label_output_length='output_length', timed_trace_label_hash_ids='hash_ids', blazedit_min_distance=0.0, blazedit_max_distance=1.0, asr_max_audio_len_sec=inf, asr_min_audio_len_sec=0.0, random_input_len=1024, random_output_len=128, random_range_ratio='0.0', random_prefix_len=0, random_batch_size=1, no_reranker=False, random_mm_base_items_per_request=1, random_mm_num_mm_items_range_ratio=0.0, random_mm_limit_mm_per_prompt={'image': 255, 'video': 1}, random_mm_bucket_config={(256, 256, 1): 0.5, (720, 1280, 1): 0.5, (720, 1280, 16): 0.0}, hf_subset=None, hf_split=None, hf_name=None, hf_output_len=None, bfcl_categories=None, prefix_repetition_prefix_len=256, prefix_repetition_suffix_len=256, prefix_repetition_num_prefixes=10, prefix_repetition_output_len=128, speed_bench_dataset_subset='qualitative', speed_bench_output_len=4096, speed_bench_category=None, label=None, backend='openai-chat', base_url='http://localhost:8000', host='127.0.0.1', port=8000, endpoint='/v1/chat/completions', header=None, max_concurrency=4, model='Semantic-Qwen', input_len=None, output_len=None, tokenizer='Qwen/Qwen3.5-35B-A3B', tokenizer_mode='auto', use_beam_search=False, logprobs=None, request_rate=inf, burstiness=1.0, probe_request_rate=0.0, disable_tqdm=True, num_warmups=2, profile=False, save_result=True, save_detailed=False, append_result=False, metadata=None, result_dir='/tmp/bench', result_filename='cpu-mix-c4.json', ignore_eos=False, self_timed=None, percentile_metrics='ttft,tpot,itl,e2el', metric_percentiles='50,95', goodput=None, request_id_prefix='bench-f9b928e5-', top_p=None, top_k=None, min_p=None, temperature=None, frequency_penalty=None, presence_penalty=None, repetition_penalty=None, served_model_name=None, lora_modules=None, lora_assignment='random', ramp_up_strategy=None, ramp_up_start_rps=None, ramp_up_end_rps=None, ready_check_timeout_sec=0, chat_template_kwargs={'enable_thinking': False}, extra_body=None, skip_tokenizer_init=False, insecure=False, plot_timeline=False, timeline_itl_thresholds='25,50', plot_dataset_stats=False, log_config_file=None, logging_config=LoggingConfig(log_level='INFO', formatter='text', configure_logging=True, pylogging_config_file=None))
+Fetching 13 files:   0%|          | 0/13 [00:00<?, ?it/s]Fetching 13 files: 100%|██████████| 13/13 [00:00<00:00, 2607.40it/s]
+WARNING: vllm bench serve no longer sets temperature==0 (greedy) in requests by default. The default will be determined on the server side and can be model/API specific. For the old behavior, include --temperature=0.
+Starting initial single prompt test run...
+Skipping endpoint ready check.
+Warming up with 2 requests...
+Warmup run completed.
+Starting main benchmark run...
+Traffic request rate: inf
+Burstiness factor: 1.0 (Poisson process)
+Maximum request concurrency: 4
+tip: install termplotlib and gnuplot to plot the metrics
+============ Serving Benchmark Result ============
+Successful requests:                     115       
+Failed requests:                         0         
+Maximum request concurrency:             4         
+Benchmark duration (s):                  617.06    
+Total input tokens:                      302252    
+Total generated tokens:                  23900     
+Request throughput (req/s):              0.19      
+Output token throughput (tok/s):         38.73     
+Peak output token throughput (tok/s):    52.00     
+Peak concurrent requests:                7.00      
+Total token throughput (tok/s):          528.56    
+---------------Time to First Token----------------
+Mean TTFT (ms):                          930.32    
+Median TTFT (ms):                        838.64    
+P50 TTFT (ms):                           838.64    
+P95 TTFT (ms):                           1602.19   
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          98.23     
+Median TPOT (ms):                        98.35     
+P50 TPOT (ms):                           98.35     
+P95 TPOT (ms):                           102.99    
+---------------Inter-token Latency----------------
+Mean ITL (ms):                           98.85     
+Median ITL (ms):                         95.13     
+P50 ITL (ms):                            95.13     
+P95 ITL (ms):                            99.55     
+----------------End-to-end Latency----------------
+Mean E2EL (ms):                          21374.84  
+Median E2EL (ms):                        20428.75  
+P50 E2EL (ms):                           20428.75  
+P95 E2EL (ms):                           21294.18  
+==================================================
+=== cpu-mix-c4 exit=0 2026-11-03T18:06:43+00:00 ===
+=== cpu-mix-c16 2026-11-03T18:06:43+00:00 ===
+W1103 18:06:45.685000 3830 torch/_opaque_base.py:6] torch._opaque_base is deprecated, use torch._custom_class_base instead
+W1103 18:06:45.685000 3830 torch/_library/opaque_object.py:288] register_opaque_type is deprecated, use register_custom_class instead
+W1103 18:06:45.685000 3830 torch/_library/opaque_object.py:211] typ='value' is deprecated, use typ='constant' instead
+Namespace(subparser='bench', bench_type='serve', dispatch_function=<function BenchmarkServingSubcommand.cmd at 0x7f3d5af02160>, trust_remote_code=False, seed=0, num_prompts=115, dataset_name='custom', no_stream=False, dataset_path='/tmp/cuad-mix-prompts.jsonl', no_oversample=False, skip_chat_template=False, enable_multimodal_chat=False, disable_shuffle=False, custom_output_len=-1, custom_ensure_client_side_data=False, spec_bench_output_len=256, spec_bench_category=None, sharegpt_output_len=None, timed_trace_chunk_hash_size=16, timed_trace_sec_multiplier=1, timed_trace_label_timestamp='timestamp', timed_trace_label_input_length='input_length', timed_trace_label_output_length='output_length', timed_trace_label_hash_ids='hash_ids', blazedit_min_distance=0.0, blazedit_max_distance=1.0, asr_max_audio_len_sec=inf, asr_min_audio_len_sec=0.0, random_input_len=1024, random_output_len=128, random_range_ratio='0.0', random_prefix_len=0, random_batch_size=1, no_reranker=False, random_mm_base_items_per_request=1, random_mm_num_mm_items_range_ratio=0.0, random_mm_limit_mm_per_prompt={'image': 255, 'video': 1}, random_mm_bucket_config={(256, 256, 1): 0.5, (720, 1280, 1): 0.5, (720, 1280, 16): 0.0}, hf_subset=None, hf_split=None, hf_name=None, hf_output_len=None, bfcl_categories=None, prefix_repetition_prefix_len=256, prefix_repetition_suffix_len=256, prefix_repetition_num_prefixes=10, prefix_repetition_output_len=128, speed_bench_dataset_subset='qualitative', speed_bench_output_len=4096, speed_bench_category=None, label=None, backend='openai-chat', base_url='http://localhost:8000', host='127.0.0.1', port=8000, endpoint='/v1/chat/completions', header=None, max_concurrency=16, model='Semantic-Qwen', input_len=None, output_len=None, tokenizer='Qwen/Qwen3.5-35B-A3B', tokenizer_mode='auto', use_beam_search=False, logprobs=None, request_rate=inf, burstiness=1.0, probe_request_rate=0.0, disable_tqdm=True, num_warmups=2, profile=False, save_result=True, save_detailed=False, append_result=False, metadata=None, result_dir='/tmp/bench', result_filename='cpu-mix-c16.json', ignore_eos=False, self_timed=None, percentile_metrics='ttft,tpot,itl,e2el', metric_percentiles='50,95', goodput=None, request_id_prefix='bench-711cba4f-', top_p=None, top_k=None, min_p=None, temperature=None, frequency_penalty=None, presence_penalty=None, repetition_penalty=None, served_model_name=None, lora_modules=None, lora_assignment='random', ramp_up_strategy=None, ramp_up_start_rps=None, ramp_up_end_rps=None, ready_check_timeout_sec=0, chat_template_kwargs={'enable_thinking': False}, extra_body=None, skip_tokenizer_init=False, insecure=False, plot_timeline=False, timeline_itl_thresholds='25,50', plot_dataset_stats=False, log_config_file=None, logging_config=LoggingConfig(log_level='INFO', formatter='text', configure_logging=True, pylogging_config_file=None))
+Fetching 13 files:   0%|          | 0/13 [00:00<?, ?it/s]Fetching 13 files: 100%|██████████| 13/13 [00:00<00:00, 3044.27it/s]
+WARNING: vllm bench serve no longer sets temperature==0 (greedy) in requests by default. The default will be determined on the server side and can be model/API specific. For the old behavior, include --temperature=0.
+Starting initial single prompt test run...
+Skipping endpoint ready check.
+Warming up with 2 requests...
+Warmup run completed.
+Starting main benchmark run...
+Traffic request rate: inf
+Burstiness factor: 1.0 (Poisson process)
+Maximum request concurrency: 16
+tip: install termplotlib and gnuplot to plot the metrics
+============ Serving Benchmark Result ============
+Successful requests:                     115       
+Failed requests:                         0         
+Maximum request concurrency:             16        
+Benchmark duration (s):                  403.63    
+Total input tokens:                      302252    
+Total generated tokens:                  23900     
+Request throughput (req/s):              0.28      
+Output token throughput (tok/s):         59.21     
+Peak output token throughput (tok/s):    144.00    
+Peak concurrent requests:                24.00     
+Total token throughput (tok/s):          808.05    
+---------------Time to First Token----------------
+Mean TTFT (ms):                          1786.95   
+Median TTFT (ms):                        1678.09   
+P50 TTFT (ms):                           1678.09   
+P95 TTFT (ms):                           3927.95   
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          195.21    
+Median TPOT (ms):                        200.02    
+P50 TPOT (ms):                           200.02    
+P95 TPOT (ms):                           207.27    
+---------------Inter-token Latency----------------
+Mean ITL (ms):                           184.98    
+Median ITL (ms):                         177.03    
+P50 ITL (ms):                            177.03    
+P95 ITL (ms):                            192.59    
+----------------End-to-end Latency----------------
+Mean E2EL (ms):                          40046.35  
+Median E2EL (ms):                        41334.39  
+P50 E2EL (ms):                           41334.39  
+P95 E2EL (ms):                           42580.61  
+==================================================
+=== cpu-mix-c16 exit=0 2026-11-03T18:13:50+00:00 ===
+done 2026-11-03T18:13:50+00:00

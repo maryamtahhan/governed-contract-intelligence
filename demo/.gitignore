@@ -5,3 +5,5 @@ __pycache__/
 .ruff_cache/
 data/synthetic/
 data/cuad/
+.dashboard.pid
+.dashboard.log

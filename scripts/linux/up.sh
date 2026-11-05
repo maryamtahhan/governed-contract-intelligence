@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build and start the local Linux stack (arm D by default).
+# Build and start the local Linux stack (hybrid config by default).
 # Works with docker compose or podman-compose:
 #   COMPOSE="docker compose" ./scripts/linux/up.sh        (default)
 #   COMPOSE="$HOME/pv/bin/podman-compose" ./scripts/linux/up.sh
@@ -22,7 +22,7 @@ done
 
 $COMPOSE version >/dev/null 2>&1 || { echo "compose not usable: $COMPOSE" >&2; exit 1; }
 # live.yaml is the config praxis watches; arms are swapped by copying over it.
-PRAXIS_DIR=manifests/praxis
+PRAXIS_DIR=manifests/base/praxis
 [ -f "$PRAXIS_DIR/live.yaml" ] || cp "$PRAXIS_DIR/config.yaml" "$PRAXIS_DIR/live.yaml"
 
 if [ "$PROFILE" = "real" ]; then

@@ -3,9 +3,12 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
 import re
+import subprocess
 import time
 import uuid
+from pathlib import Path
 from typing import Any
 
 NGRAM = 3
@@ -83,3 +86,78 @@ def parse_url_host_port(url: str) -> tuple[str, int]:
     host = m.group(1)
     port = int(m.group(2) or (443 if url.startswith("https") else 80))
     return host, port
+
+
+def _git_sha() -> str | None:
+    """The commit a run was produced from, when this checkout knows it.
+
+    A deployed image has no .git; HYBRID_GIT_SHA can be baked in at build
+    time, and None is the honest answer when neither exists.
+    """
+    override = os.environ.get("HYBRID_GIT_SHA")
+    if override:
+        return override
+    root = Path(__file__).resolve().parents[3]
+    try:
+        done = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            capture_output=True, text=True, timeout=5, check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    sha = done.stdout.strip()
+    return sha if done.returncode == 0 and sha else None
+
+
+def _git_dirty() -> bool | None:
+    """Whether the tree that produced the run matched its HEAD.
+
+    A sha with uncommitted changes is a base, not the code; recording that
+    stops a later comparison from crediting the wrong commit. None when this
+    is not a git checkout at all (a deployed image).
+    """
+    root = Path(__file__).resolve().parents[3]
+    try:
+        done = subprocess.run(
+            ["git", "-C", str(root), "status", "--porcelain"],
+            capture_output=True, text=True, timeout=5, check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if done.returncode != 0:
+        return None
+    return bool(done.stdout.strip())
+
+
+def parse_pools(raw: str | None) -> dict:
+    """Pool provenance passed as JSON or an ``@path``.
+
+    The runner cannot discover which checkpoint or hardware sat behind a
+    route; only the operator knows, at deploy time. Recording it with the
+    run is the difference between a replay and a screenshot.
+    """
+    if not raw:
+        return {}
+    text = Path(raw[1:]).read_text() if raw.startswith("@") else raw
+    value = json.loads(text)
+    if not isinstance(value, dict):
+        raise ValueError("--pools must be a JSON object")
+    return value
+
+
+def run_provenance(environment: str | None = None, cluster: str | None = None,
+                   pools: dict | None = None, **extra: Any) -> dict[str, Any]:
+    """Where a run happened, recorded with it.
+
+    ``environment``/``cluster`` fall back to HYBRID_ENVIRONMENT and
+    HYBRID_CLUSTER, so a cluster script can set them once for every arm.
+    """
+    return {
+        "environment": (environment or os.environ.get("HYBRID_ENVIRONMENT")
+                        or None),
+        "cluster": cluster or os.environ.get("HYBRID_CLUSTER") or None,
+        "git_sha": _git_sha(),
+        "git_dirty": _git_dirty(),
+        "pools": pools or {},
+        **extra,
+    }

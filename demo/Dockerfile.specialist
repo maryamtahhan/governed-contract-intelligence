@@ -2,27 +2,33 @@
 # compatible wrapper. The checkpoint is downloaded at BUILD time (baked into
 # the image, ~1.4GB) so pod restarts need no model fetch.
 #
-# Build into the internal registry with a binary build (see
-# scripts/cluster/model-comparison.sh specialist):
+# Build into the internal registry with a binary build. Use a slim archive:
+# `--from-dir=demo` uploads the 950MB .venv and the build then sits in
+# git-clone (measured 40+ min, 2026-11-04).
 #   oc -n openshell-demo new-build --binary --strategy docker --name hybrid-specialist
-#   oc -n openshell-demo start-build hybrid-specialist --from-dir=demo \
-#       --dockerfile Dockerfile.specialist --follow
+#   STAGE=$(mktemp -d); cp demo/pyproject.toml demo/Dockerfile.specialist "$STAGE"
+#   cp -R demo/src "$STAGE/src"; tar -C "$STAGE" -czf /tmp/specialist-src.tgz .
+#   oc -n openshell-demo start-build hybrid-specialist \
+#       --from-file=/tmp/specialist-src.tgz --follow
 FROM python:3.12-slim
 
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu \
     && pip install --no-cache-dir transformers sentencepiece protobuf \
        fastapi uvicorn httpx prometheus-client
 
-WORKDIR /app
-COPY pyproject.toml ./
-COPY src ./src
-RUN pip install --no-cache-dir .
-
+# The checkpoint download is the expensive layer (~1.4GB). It must come
+# before COPY src so that a source-only change (the /metrics fix, for
+# example) reuses it instead of re-downloading.
 RUN mkdir -p /opt/cuad-model \
     && python -c "import urllib.request; urllib.request.urlretrieve('https://zenodo.org/api/records/4599830/files/roberta-large.zip/content', '/tmp/model.zip')" \
     && python -c "import zipfile; zipfile.ZipFile('/tmp/model.zip').extractall('/opt/cuad-model')" \
     && rm /tmp/model.zip \
     && ls /opt/cuad-model/roberta-large/config.json
+
+WORKDIR /app
+COPY pyproject.toml ./
+COPY src ./src
+RUN pip install --no-cache-dir .
 
 ENV CUAD_MODEL_DIR=/opt/cuad-model/roberta-large
 EXPOSE 8000

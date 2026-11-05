@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "note": "The four praxis routing policies. routes are routing-tier names, not hardware; read a run's pool map for what actually served it. Keys stay A/B/C/D because summary.arm is recorded evidence.",
+  "configs": [
+    {
+      "key": "A",
+      "name": "all-gpu",
+      "mode": "all-gpu",
+      "aliases": [],
+      "behavior": "Every request goes to one through-stack route: no classifier, no CPU, no failover.",
+      "routes": ["vllm-gpu"],
+      "manifest": "manifests/base/praxis/arm-a.yaml",
+      "governance": false
+    },
+    {
+      "key": "B",
+      "name": "gpu-small",
+      "mode": "gpu-split",
+      "aliases": ["gpu-split"],
+      "behavior": "Classifier: SIMPLE/MEDIUM go to the small route; COMPLEX/REASONING go to the large route. Either route can take over on failure.",
+      "routes": ["vllm-gpu-small", "vllm-gpu"],
+      "manifest": "manifests/base/praxis/arm-b.yaml",
+      "governance": false
+    },
+    {
+      "key": "C",
+      "name": "round-robin",
+      "mode": "round-robin",
+      "aliases": [],
+      "behavior": "Alternate across CPU and GPU with no classifier.",
+      "routes": ["vllm-cpu", "vllm-gpu"],
+      "manifest": "manifests/base/praxis/arm-c.yaml",
+      "governance": false
+    },
+    {
+      "key": "D",
+      "name": "hybrid",
+      "mode": "matrix",
+      "aliases": ["matrix"],
+      "behavior": "General entry: SIMPLE/MEDIUM to CPU, COMPLEX/REASONING to GPU. Sensitive entry: CPU or approved GPU only; fail closed.",
+      "routes": ["vllm-cpu", "vllm-gpu", "vllm-gpu-approved"],
+      "manifest": "manifests/base/praxis/config.yaml",
+      "governance": true
+    }
+  ]
+}

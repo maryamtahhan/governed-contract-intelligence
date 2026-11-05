@@ -2,28 +2,15 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: openshell-demo
 
+# Full base: the platform half (manifests/base/, also consumable on its own by
+# stacks without KServe) plus the KServe InferenceService/ServingRuntime
+# objects. `oc apply -k manifests` on a cluster with RHOAI/KServe installed
+# produces the same object set as before the split.
 resources:
+  - base
   - vllm-cpu-runtime.yaml
   - vllm-cpu-inferenceservice.yaml
   - vllm-gpu-servingruntime.yaml
   - vllm-gpu-inferenceservice.yaml
   - vllm-gpu-approved-inferenceservice.yaml
   - vllm-gpu-small-inferenceservice.yaml
-  - llm-d-sc.yaml
-  - praxis.yaml
-  - trace-ui.yaml
-  - traffic-gen.yaml
-  - network-policies.yaml
-
-# The praxis routing configs are shared with the local Linux stack
-# (deploy/linux/docker-compose.yml mounts this directory), so both platforms
-# run byte-identical routing. Swap arms with:
-#   oc -n openshell-demo set env deploy/praxis PRAXIS_CONFIG=/etc/praxis/arm-a.yaml
-#   oc -n openshell-demo rollout status deploy/praxis
-configMapGenerator:
-  - name: praxis-config
-    files:
-      - config.yaml=praxis/config.yaml
-      - arm-a.yaml=praxis/arm-a.yaml
-      - arm-b.yaml=praxis/arm-b.yaml
-      - arm-c.yaml=praxis/arm-c.yaml

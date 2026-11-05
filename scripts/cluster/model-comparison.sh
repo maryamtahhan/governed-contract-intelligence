@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # CPU-pool model comparison: swap the CPU pool to a model variant, wait for
-# it to be healthy and warm, then rerun arm D (the full matrix) on the same
+# it to be healthy and warm, then rerun the hybrid config on the same
 # documents into its own run dir so the scorer can compare CPU-pool models.
 #
 #   scripts/cluster/model-comparison.sh moe   # Qwen3.5-35B-A3B
 #   scripts/cluster/model-comparison.sh 9b    # Qwen3.5-9B dense
 #   scripts/cluster/model-comparison.sh base  # back to Qwen2.5-1.5B
 #
-# Results land in ${RUNS:-runs/cuad-mixed}/arm-D-<variant>; compare with
-#   (cd demo && uv run hybrid-score report --runs ../runs/cuad-mixed/arm-D \
-#        --runs ../runs/cuad-mixed/arm-D-moe --data "$DATA" --out ../model-comparison.md)
+# Results land in ${RUNS:-runs/cuad-mixed}/hybrid-<variant>; compare with
+#   (cd demo && uv run hybrid-score report --runs ../runs/cuad-mixed/hybrid \
+#        --runs ../runs/cuad-mixed/hybrid-moe --data "$DATA" --out ../model-comparison.md)
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 NS="${NS:-openshell-demo}"
@@ -20,6 +20,8 @@ DOCS="${DOCS:-20}"
 CONCURRENCY="${CONCURRENCY:-12}"
 LOCAL_PORT="${LOCAL_PORT:-18080}"
 SENSITIVE_PORT="${LOCAL_SENSITIVE_PORT:-18083}"
+JUDGMENT_PORT="${LOCAL_JUDGMENT_PORT:-18086}"
+SENSITIVE_JUDGMENT_PORT="${LOCAL_SENSITIVE_JUDGMENT_PORT:-18087}"
 
 case "$VARIANT" in
   moe)        OVERLAY=deploy/openshift/cpu-real-moe; POOL_DEPLOY=cpureal-vllm-cpu ;;
@@ -110,17 +112,23 @@ if [[ "${USE_ROUTES:-1}" = 1 ]]; then
   }
   ensure_route trace-ui-general 8080
   ensure_route trace-ui-sensitive 8083
+  ensure_route trace-ui-judgment 8086
+  ensure_route trace-ui-sensitive-judgment 8087
   GATEWAY_HOST=$(oc -n "$NS" get route trace-ui-general -o jsonpath='{.spec.host}')
   GATEWAY="http://$GATEWAY_HOST"
   SENSITIVE_GATEWAY="http://$(oc -n "$NS" get route trace-ui-sensitive -o jsonpath='{.spec.host}')"
+  JUDGMENT_GATEWAY="http://$(oc -n "$NS" get route trace-ui-judgment -o jsonpath='{.spec.host}')"
+  SENSITIVE_JUDGMENT_GATEWAY="http://$(oc -n "$NS" get route trace-ui-sensitive-judgment -o jsonpath='{.spec.host}')"
   for i in $(seq 1 30); do curl -sf "$GATEWAY/_trace/healthz" >/dev/null 2>&1 && break; sleep 1; done
   curl -sf "$GATEWAY/_trace/healthz" >/dev/null || { echo "route to trace-ui not healthy" >&2; exit 1; }
 else
-  oc -n "$NS" port-forward svc/trace-ui "$LOCAL_PORT:8080" "$SENSITIVE_PORT:8083" >/dev/null &
+  oc -n "$NS" port-forward svc/trace-ui "$LOCAL_PORT:8080" "$SENSITIVE_PORT:8083" "$JUDGMENT_PORT:8086" "$SENSITIVE_JUDGMENT_PORT:8087" >/dev/null &
   PF=$!
   trap 'kill $PF 2>/dev/null' EXIT
   GATEWAY="http://127.0.0.1:$LOCAL_PORT"
   SENSITIVE_GATEWAY="http://127.0.0.1:$SENSITIVE_PORT"
+  JUDGMENT_GATEWAY="http://127.0.0.1:$JUDGMENT_PORT"
+  SENSITIVE_JUDGMENT_GATEWAY="http://127.0.0.1:$SENSITIVE_JUDGMENT_PORT"
   for i in $(seq 1 30); do curl -sf "$GATEWAY/_trace/healthz" >/dev/null 2>&1 && break; sleep 1; done
 fi
 oc -n "$NS" port-forward svc/trace-ui 18081:8081 18082:8082 18084:8084 18085:8085 >/dev/null &
@@ -138,9 +146,9 @@ for i in $(seq 1 10); do
   sleep 2
 done
 
-out="$RUNS/arm-D-$VARIANT"
+out="$RUNS/hybrid-$VARIANT"
 mkdir -p "$out"
-echo "== running arm D with the $VARIANT CPU pool ($DATA, $DOCS docs)"
+echo "== running config hybrid with the $VARIANT CPU pool ($DATA, $DOCS docs)"
 # optional extra hybrid-review args; a plain string (not an array) because
 # macOS bash 3.2 + set -u treats empty-array expansion as unbound
 REVIEW_EXTRA=""
@@ -149,14 +157,15 @@ if [[ "$VARIANT" == moe-thinking ]]; then
   # pool contention (the A/B is about quality, not throughput)
   REVIEW_EXTRA="--timeout 3600 --concurrency 4"
 fi
-(cd demo && uv run hybrid-review \
+(cd demo && uv run hybrid-run --target gateway \
   --gateway "$GATEWAY" --sensitive-gateway "$SENSITIVE_GATEWAY" \
-  --data "$DATA" --out "../$out" --arm D --docs "$DOCS" --concurrency "$CONCURRENCY" \
+  --judgment-gateway "$JUDGMENT_GATEWAY" --sensitive-judgment-gateway "$SENSITIVE_JUDGMENT_GATEWAY" \
+  --data "$DATA" --out "../$out" --config hybrid --docs "$DOCS" --concurrency "$CONCURRENCY" \
   $REVIEW_EXTRA \
   --sample-metrics vllm-cpu=http://127.0.0.1:18081,vllm-gpu=http://127.0.0.1:18082,vllm-gpu-approved=http://127.0.0.1:18084,vllm-gpu-small=http://127.0.0.1:18085)
 
 echo
 echo "done: $out"
 echo "compare with:"
-echo "  (cd demo && uv run hybrid-score report --runs ../$RUNS/arm-D --runs ../$out \\"
+echo "  (cd demo && uv run hybrid-score report --runs ../$RUNS/hybrid --runs ../$out \\"
 echo "       --data $DATA --out ../model-comparison-$VARIANT.md)"

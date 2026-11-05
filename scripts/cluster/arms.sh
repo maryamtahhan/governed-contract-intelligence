@@ -1,18 +1,32 @@
 #!/usr/bin/env bash
-# Run the measurement arms against the OpenShift stack. Port-forwards the
-# trace UI to the local machine, swaps the praxis config per arm (env change
+# Run the four routing policies against the OpenShift stack. Port-forwards the
+# trace UI to the local machine, swaps the praxis config per policy (env change
 # + rollout), runs the review pipeline through the trace UI so everything is
 # recorded, then builds the report. Run from a machine with oc + uv.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
+source scripts/configs.sh
+REPO=$(pwd)
 NS="${NS:-openshell-demo}"
 RUNS="${RUNS:-runs}"
 DOCS="${DOCS:-40}"
+# Explicit document ids for demo runs (comma-separated). Overrides DOCS;
+# --docs 1 alone picks the first golden document, which is non-sensitive.
+DOC_IDS="${DOC_IDS:-}"
 DATA="${DATA:-data/synthetic}"
 CONCURRENCY="${CONCURRENCY:-12}"
-ARMS="${ARMS:-A B C D}"
+CONFIGS="${CONFIGS:-${ARMS:-all-gpu gpu-small round-robin hybrid}}"
 LOCAL_PORT="${LOCAL_PORT:-18080}"
 SENSITIVE_PORT="${LOCAL_SENSITIVE_PORT:-18083}"
+JUDGMENT_PORT="${LOCAL_JUDGMENT_PORT:-18086}"
+SENSITIVE_JUDGMENT_PORT="${LOCAL_SENSITIVE_JUDGMENT_PORT:-18087}"
+# Provenance travels with the run. Default to the ROSA cluster this script
+# targets; set ENVIRONMENT=sno (or example) for an older stack so it is not
+# presented as a measured ROSA result.
+ENVIRONMENT="${ENVIRONMENT:-rosa}"
+CLUSTER="${CLUSTER:-}"
+prov_args=(--environment "$ENVIRONMENT" --pools "@$REPO/deploy/openshift/rosa/pools.json")
+[ -n "$CLUSTER" ] && prov_args+=(--cluster "$CLUSTER")
 
 for c in oc curl uv; do command -v "$c" >/dev/null || { echo "missing: $c" >&2; exit 1; }; done
 # Stale port-forwards from earlier sessions hold the ports and kill the run.
@@ -29,23 +43,22 @@ if [ ! -f "demo/$DATA/ground_truth.json" ]; then
   echo "dataset not found: demo/$DATA" >&2; exit 1
 fi
 
-arm_config() { case "$1" in A) echo arm-a.yaml;; B) echo arm-b.yaml;; C) echo arm-c.yaml;; *) echo config.yaml;; esac; }
-
-set_arm() {
-  oc -n "$NS" set env deploy/praxis "PRAXIS_CONFIG=/etc/praxis/$(arm_config "$1")" >/dev/null
+set_config() {
+  config=$(config_name "$1")
+  oc -n "$NS" set env deploy/praxis "PRAXIS_CONFIG=/etc/praxis/$(config_file "$config")" >/dev/null
   oc -n "$NS" rollout status deploy/praxis --timeout=300s >/dev/null
   # A fresh praxis can serve its first request through a cold gRPC
   # connection to llm-d-sc (classification skipped, no label). Warm it with
   # one request before measuring.
   for i in $(seq 1 10); do
-    curl -s -m 120 -D /tmp/arm-h -o /dev/null "$GATEWAY/v1/chat/completions" \
+    curl -s -m 120 -D /tmp/config-h -o /dev/null "$GATEWAY/v1/chat/completions" \
       -H 'Content-Type: application/json' \
       -H "Authorization: Bearer ${TRACE_API_TOKEN:-}" \
       -d '{"model":"Semantic-Qwen","messages":[{"role":"user","content":"Say ok."}],"max_tokens":8}'
-    grep -qi "^x-demo-classification:" /tmp/arm-h && break
+    grep -qi "^x-demo-classification:" /tmp/config-h && break
     sleep 2
   done
-  echo "praxis now running arm $1 ($(arm_config "$1"))"
+  echo "praxis now running config $config ($(config_file "$config"))"
 }
 
 # Request path via OpenShift Routes by default: port-forwards tunnel through
@@ -67,17 +80,20 @@ if [ "$USE_ROUTES" = "1" ]; then
   }
   ensure_route trace-ui-general 8080
   ensure_route trace-ui-sensitive 8083
+  ensure_route trace-ui-judgment 8086
+  ensure_route trace-ui-sensitive-judgment 8087
   GATEWAY="http://$(oc -n "$NS" get route trace-ui-general -o jsonpath='{.spec.host}')"
   SENSITIVE="http://$(oc -n "$NS" get route trace-ui-sensitive -o jsonpath='{.spec.host}')"
+  JUDGMENT="http://$(oc -n "$NS" get route trace-ui-judgment -o jsonpath='{.spec.host}')"
+  SENSITIVE_JUDGMENT="http://$(oc -n "$NS" get route trace-ui-sensitive-judgment -o jsonpath='{.spec.host}')"
 else
-  oc -n "$NS" port-forward svc/trace-ui "$LOCAL_PORT:8080" >/dev/null &
+  oc -n "$NS" port-forward svc/trace-ui "$LOCAL_PORT:8080" "$SENSITIVE_PORT:8083" "$JUDGMENT_PORT:8086" "$SENSITIVE_JUDGMENT_PORT:8087" >/dev/null &
   PF=$!
   trap 'kill $PF 2>/dev/null' EXIT
-  oc -n "$NS" port-forward svc/trace-ui "$SENSITIVE_PORT:8083" >/dev/null &
-  PF2=$!
-  trap 'kill $PF $PF2 2>/dev/null' EXIT
   GATEWAY="http://127.0.0.1:$LOCAL_PORT"
   SENSITIVE="http://127.0.0.1:$SENSITIVE_PORT"
+  JUDGMENT="http://127.0.0.1:$JUDGMENT_PORT"
+  SENSITIVE_JUDGMENT="http://127.0.0.1:$SENSITIVE_JUDGMENT_PORT"
 fi
 # Relay ports, for live metrics sampling during the runs (port-forwards by
 # design: a sampler failure loses a metric, never a request).
@@ -88,25 +104,32 @@ for i in $(seq 1 30); do curl -sf "$GATEWAY/_trace/healthz" >/dev/null 2>&1 && b
 
 curl -sf -H "Authorization: Bearer ${TRACE_API_TOKEN:-}" "$GATEWAY/v1/models" | grep -q Semantic-Qwen || { echo "gateway not reachable through trace-ui" >&2; exit 1; }
 
-for arm in $ARMS; do
-  out="$RUNS/arm-$arm"
+for requested in $CONFIGS; do
+  config=$(config_name "$requested")
+  out="$RUNS/$config"
   mkdir -p "$out"
   echo
-  echo "=== arm $arm ====================================================="
-  set_arm "$arm"
-  (cd demo && uv run hybrid-review \
+  echo "=== config $config ================================================"
+  set_config "$config"
+  doc_args=(--docs "$DOCS")
+  [ -n "$DOC_IDS" ] && doc_args=(--doc-ids "$DOC_IDS")
+  (cd demo && uv run hybrid-run --target gateway \
     --gateway "$GATEWAY" --sensitive-gateway "$SENSITIVE" \
-    --data "$DATA" --out "../$out" --arm "$arm" \
-    --docs "$DOCS" --concurrency "$CONCURRENCY" \
+    --judgment-gateway "$JUDGMENT" --sensitive-judgment-gateway "$SENSITIVE_JUDGMENT" \
+    --data "$DATA" --out "../$out" --config "$config" \
+    "${doc_args[@]}" --concurrency "$CONCURRENCY" \
+    "${prov_args[@]}" \
     --sample-metrics vllm-cpu=http://127.0.0.1:18081,vllm-gpu=http://127.0.0.1:18082,vllm-gpu-approved=http://127.0.0.1:18084,vllm-gpu-small=http://127.0.0.1:18085)
 done
 
-set_arm D
+set_config hybrid
 echo
 echo "=== report ========================================================="
 repo_dir=$(pwd)
 run_args=""
-for arm in $ARMS; do run_args="$run_args $repo_dir/$RUNS/arm-$arm"; done
+for requested in $CONFIGS; do
+  run_args="$run_args $repo_dir/$RUNS/$(config_name "$requested")"
+done
 # shellcheck disable=SC2086
 (cd demo && uv run hybrid-score report --runs $run_args \
   --data "$DATA" --out "$repo_dir/$RUNS/report.md") | tail -40

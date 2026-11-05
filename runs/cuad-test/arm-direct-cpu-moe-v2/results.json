@@ -1,0 +1,1401 @@
+{
+ "summary": {
+  "arm": "direct",
+  "mode": "direct",
+  "docs": 19,
+  "endpoint": "http://127.0.0.1:8002/v1",
+  "thinking": false
+ },
+ "records": [
+  {
+   "step": "classify",
+   "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "outcome": "served",
+   "latency_ms": 16846.6,
+   "content": {
+    "type": "NDA",
+    "initial_term_months": 36,
+    "ref": "Section 1(d)"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "outcome": "served",
+   "latency_ms": 12226.9,
+   "content": {
+    "clause": "termination",
+    "found": false,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "outcome": "served",
+   "latency_ms": 50891.2,
+   "content": {
+    "raw": "{\n  \"clause\": \"governing_law\",\n  \"found\": true,\n  \"text\": \"4. Governing Law. (a) THIS AGREEMENT SHALL BE GOVERNED BY AND CONSTRUED IN ACCORDANCE WITH THE INTERNAL LAWS OF THE COMMONWEALTH OF PENNSYLVANIA WITHOUT GIVING EFFECT TO ANY CHOICE OR CONFLICT OF LAW PROVISION OR RULE (WHETHER OF THE COMMONWEALTH OF PENNSYLVANIA OR ANY OTHER JURISDICTION). (b) ANY LEGAL SUIT, ACTION OR PROCEEDING ARISING OUT OF OR BASED UPON THIS AGREEMENT, THE OTHER TRANSACTION DOCUMENTS OR THE TRANSACTIONS CONTEMPLATED HEREBY OR THEREBY MAY BE INSTITUTED IN THE FEDERAL COURTS OF THE UNITED STATES OF AMERICA OR THE COURTS OF THE COMMONWEALTH OF PENNSYLVANIA IN EACH CASE LOCATED IN THE CITY OF PHILADELPHIA AND COUNTY OF PHILADELPHIA, AND EACH PARTY IRREVOCABLY SUBMITS TO THE EXCLUSIVE JURISDICTION OF SUCH COURTS IN ANY SUCH SUIT, ACTION OR PROCEEDING. SERVICE OF PROCESS, SUMMONS, NOTICE OR OTHER DOCUMENT BY MAIL TO SUCH PARTY'S ADDRESS SET FORTH HEREIN SHALL BE EFFECTIVE SERVICE OF PROCESS FOR ANY SUIT, ACTION OR OTHER PROCEEDING BROUGHT IN ANY SUCH COURT. THE PARTIES IRREVOCAB"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "outcome": "served",
+   "latency_ms": 6549.9,
+   "content": {
+    "clause": "liability_cap",
+    "found": false,
+    "text": null,
+    "ref": null
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "outcome": "served",
+   "latency_ms": 6446.8,
+   "content": {
+    "clause": "audit_rights",
+    "found": false,
+    "text": null,
+    "ref": null
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "outcome": "served",
+   "latency_ms": 7504.3,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Liability is uncapped or absent as no liability cap was found."
+    ],
+    "ref": "liability_cap"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "outcome": "served",
+   "latency_ms": 20786.3,
+   "content": {
+    "type": "SOW",
+    "initial_term_months": 12,
+    "ref": "Exhibit 10.22"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "outcome": "served",
+   "latency_ms": 42845.6,
+   "content": {
+    "raw": "{\n  \"clause\": \"termination\",\n  \"found\": true,\n  \"text\": \"2. Term and Termination. 2.1. Term. The initial term of this Agreement shall commence on the Effective Date, and shall continue thereafter for a period of twelve (12) months (the \\\"Initial Term\\\"). The Initial Term shall automatically renew for one-month periods thereafter unless either party provides 30- days advance notice of termination, unless earlier terminated pursuant to Section 2.2 hereof. For purposes hereof, the Initial Term, together with any extension or renewal terms, shall hereinafter be collectively referred to as the \\\"Term\\\". 2.2. Early Termination. 2.2.1. Either party may terminate this Agreement prior to expiration of the Term: (i) upon thirty (30) days prior written notice, or (ii) immediately upon written notice to the other party if: (a) the other party declares or a petition is filed in any court for insolvency or bankruptcy and such petition is not dismissed in thirty (30) days; (b) the other party reorganizes under the relevant bankruptcy act or any similar statute in such party's jurisdiction of incorporation; (c) the other party consents to the appointment of a trustee in bankruptcy or a receiver or similar entity; or (d) the Developer breaches DSS's Technology or Intellectual Property rights contained herein. 2."
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "outcome": "served",
+   "latency_ms": 20749.8,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "This Agreement shall be governed in accordance with the laws of the State of New York without regard to conflict of laws principles. It is hereby irrevocably agreed that legal jurisdiction and venue for any proceeding arising out of this Agreement shall be in the state or federal courts located in the County of Monroe, State of New York, United States.",
+    "ref": "Section 9.10"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "outcome": "served",
+   "latency_ms": 8948.7,
+   "content": {
+    "clause": "liability_cap",
+    "found": false,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "outcome": "served",
+   "latency_ms": 8233.5,
+   "content": {
+    "clause": "audit_rights",
+    "found": false,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "outcome": "served",
+   "latency_ms": 11681.5,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Liability is uncapped or absent as no liability cap was found.",
+     "Termination rights are absent."
+    ],
+    "ref": "Extracted clauses: termination found=false, liability_cap found=false"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "outcome": "served",
+   "latency_ms": 19154.4,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 0,
+    "ref": "3.1"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "outcome": "served",
+   "latency_ms": 42454.3,
+   "content": {
+    "raw": "{\n  \"clause\": \"termination\",\n  \"found\": true,\n  \"text\": \"4.0 Termination\\n4.1. Either party may terminate this Agreement on thirty (30) days written notice if the other materially breaches this Agreement; provided, however that the party in breach shall have the right to cure such breach within thirty (30) days after receipt of written notice of the other party's intention to terminate.\\n4.2. Client may terminate this Agreement on thirty (30) days written notice without cause. In the event of termination by Client for reasons other than default by CRO, Client shall pay all sums owing to CRO, but unpaid, for work performed to date of receipt of termination notice, and all reasonable and necessary costs associated with the termination itself or to which CRO is committed to pay. In the event of termination by Client, CRO shall use all efforts to minimize any such costs, including cancelling orders and services to the extent possible.\\n4.3. In the event of early termination under 4.1. above where CRO is in material breach, any credit held in favour of CRO shall be returned to Client within thirty (30) days following such termination, provided that the Client will then be liable for all outstanding third party costs lawfully incurred hereunder by CRO prior to the termination.\\n4.4. Either party shall be entitled forthwith to terminate this Agreement with immediate"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "outcome": "served",
+   "latency_ms": 11498.1,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "This Agreement shall be governed by the laws of the State of Connecticut, U.S.A. without regard to conflict of law principles.",
+    "ref": "12.7"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "outcome": "served",
+   "latency_ms": 31029.6,
+   "content": {
+    "clause": "liability_cap",
+    "found": true,
+    "text": "Notwithstanding any other provision of this Agreement, each party's total liability in respect of damages under this Agreement, any regulation or common law shall be limited to the sum of all amounts received from Client in terms of this Agreement; provided, however, that this limitation shall not apply with respect to any claims arising out of or relating to clause 6 (Inventions and Proprietary Information), indemnification obligations or damages arising from a party's gross negligence or willful misconduct.",
+    "ref": "5.4"
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "outcome": "served",
+   "latency_ms": 23548.9,
+   "content": {
+    "clause": "audit_rights",
+    "found": true,
+    "text": "8.2. Client may designate representatives who shall, upon reasonable notice to CRO, have access to and shall be permitted to review all documents, information, data and/or materials specifically related to the conduct of the projects covered by the Addenda.",
+    "ref": "8.2"
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "outcome": "served",
+   "latency_ms": 6479.7,
+   "content": {
+    "risk": "medium",
+    "reasons": [
+     "Termination clause is absent, limiting exit options to material breach scenarios only."
+    ],
+    "ref": "termination: found=false"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "outcome": "served",
+   "latency_ms": 21314.5,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 12,
+    "ref": "Section 1"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "outcome": "served",
+   "latency_ms": 10964.3,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "The Parties may terminate its performance of related obligations under this Agreement within thirty (30) days of receipt by the Party of written termination notice.",
+    "ref": "Section 21"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "outcome": "served",
+   "latency_ms": 11618.7,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "This Agreement and its application and interpretation will be governed exclusively by its terms and the laws of the State of Nevada (USA), and excluding any conflicts of law provisions which would require the application of any law other than Nevada.",
+    "ref": "Section 17"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "outcome": "served",
+   "latency_ms": 5252.1,
+   "content": {
+    "clause": "liability_cap",
+    "found": false,
+    "text": null,
+    "ref": null
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "outcome": "served",
+   "latency_ms": 9478.7,
+   "content": {
+    "clause": "audit_rights",
+    "found": false,
+    "text": null,
+    "ref": null
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "outcome": "served",
+   "latency_ms": 14325.0,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Liability is uncapped as no liability cap clause was found."
+    ],
+    "ref": "liability_cap"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "outcome": "served",
+   "latency_ms": 12012.6,
+   "content": {
+    "type": "SOW",
+    "initial_term_months": 6,
+    "ref": "Exhibit 10.3"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "outcome": "served",
+   "latency_ms": 25550.6,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "TERM AND TERMINATION\n\nThe term of this Agreement for the Hosted Site shall commence upon April 1, 1999 and shall continue for a period of six (6) months, unless earlier terminated in accordance with provisions hereof. This Agreement shall automatically be renewed for one (1) or more one (1) month periods unless either the Customer or i-on gives notice to the other party of its intention not to renew the Agreement, which notice must be given not less than fifteen (15) days before the end of the respective initial or renewal term.\n\nEither party may terminate this Agreement without cause at any time effective upon thirty (30) days' written notice. Notwithstanding anything to the contrary contained in this Agreement, no termination of this Agreement for any reason whatsoever shall relieve the Customer of the obligation to pay all amounts due to i-on and to make such payments on a timely basis.",
+    "ref": "Page 4, Section: TERM AND TERMINATION"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "outcome": "served",
+   "latency_ms": 19422.8,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "This Agreement was entered into in the State of Florida, and its validity, construction, interpretation, and legal effect shall be governed by the laws and judicial decisions of the State of Florida applicable to contracts entered into and performed entirely within the State of Florida.",
+    "ref": "MISCELLANEOUS section, paragraph 5"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "outcome": "served",
+   "latency_ms": 27066.9,
+   "content": {
+    "clause": "liability_cap",
+    "found": true,
+    "text": "i-on will not be liable under any circumstances for any lost profits or other consequential damages, even if i-on has been advised as to the possibility of such damages. i-on's liability for damages to the Customer for any cause whatsoever, regardless of the form of action, and whether in contract or in tort, including negligence, shall be limited to one (1) month's fees and the remaining portion of any prepaid fees.",
+    "ref": "LIMITATION OF LIABILITY"
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "outcome": "served",
+   "latency_ms": 6430.4,
+   "content": {
+    "clause": "audit_rights",
+    "found": false,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "outcome": "served",
+   "latency_ms": 15768.5,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "Liability is explicitly capped at one month's fees and prepaid amounts.",
+     "Termination rights exist for both parties without cause with 30 days' notice."
+    ],
+    "ref": "termination: 'Either party may terminate this Agreement without cause at any time effective upon thirty (30) days' written notice.'; liability_cap: 'i-on's liability... shall be limited to one (1) month's fees and the remaining portion of any prepaid fees.'"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "outcome": "served",
+   "latency_ms": 13154.1,
+   "content": {
+    "type": "SOW",
+    "initial_term_months": 12,
+    "ref": "Section 8"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "outcome": "served",
+   "latency_ms": 39165.2,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "Section 8. Term of Joint Venture. The Joint Venture shall commence on the 1st of March, 2003, and shall be effective until February 28, 2004 unless extended by written agreement of the Joint Venturers not less than thirty (30) days prior to scheduled termination. Section 11. Procedure on Termination and Liquidation. On any termination of the Joint Venture, its debt shall be paid or provided for in a manner satisfactory to the Joint Venturers. Then, any unexpended portion of Joint Venture funds shall be distributed to the Joint Venturers in accordance with their prorata ownership in the Joint Venture and all other assets of the Joint Venture shall be distributed as undivided interests to the Joint Venturers ratably according to their prorata interests in the Joint Venture as set forth in Section 6. If any asset is not capable of being distributed on an undivided basis, the Parties shall agree on a price for such asset and it shall be distributed to one Party and a corresponding balance, in cash or property, shall be made of the Joint Venture assets so that each Party receives his proportionate share of all the Joint Venture assets.",
+    "ref": "Sections 8 and 11"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "outcome": "served",
+   "latency_ms": 15113.0,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "The Joint Venturers declare that in entering into this Agreement, they have contracted with reference to the laws of the Commonwealth of Pennsylvania, and the construction and interpretation of the terms and provisions of this Agreement shall be interpreted and construed under the laws of the Commonwealth of Pennsylvania, except in such cases and to such extent as the laws of another jurisdiction shall necessarily control.",
+    "ref": "Section 14"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "outcome": "served",
+   "latency_ms": 4431.4,
+   "content": {
+    "clause": "liability_cap",
+    "found": false,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "outcome": "served",
+   "latency_ms": 18811.7,
+   "content": {
+    "clause": "audit_rights",
+    "found": true,
+    "text": "If requested by a Joint Venturer, the Joint Venture books and records shall be audited as of the close of each year by an independent accountant acceptable to both Joint Venturers.",
+    "ref": "Section 7"
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "outcome": "served",
+   "latency_ms": 5321.6,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Liability is uncapped as no liability cap clause was found."
+    ],
+    "ref": "liability_cap"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "outcome": "served",
+   "latency_ms": 13678.7,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 12,
+    "ref": "Section 5"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "outcome": "served",
+   "latency_ms": 19939.5,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "(m) Termination. Unless earlier terminated as provided in this Agreement, upon the expiration of the Support Period in accordance with Section 4, this Agreement shall immediately and automatically terminate in its entirety and no Party shall have any further rights or obligations under this Agreement; provided, however, no Party shall be released from any breach of this Agreement that occurred prior to the termination of this Agreement.",
+    "ref": "Section 7(m)"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "outcome": "served",
+   "latency_ms": 42577.7,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "(g) Governing Law; Choice of Venue. (i) This Agreement shall be governed by and construed in accordance with the internal laws of the State of Delaware applicable to agreements made and to be performed within that state. (ii) Each Party (A) consents to submit itself to the personal jurisdiction of the Court of Chancery or other federal or state courts of the State of Delaware in the event any dispute arises out of this Agreement or the transactions contemplated by this Agreement, (B) agrees that it shall not attempt to deny or defeat such personal jurisdiction by motion or other request for leave from any such court, (C) agrees that it shall not bring any action relating to this Agreement or the transactions contemplated by this Agreement in any court other than the Court of Chancery or other federal or state courts of the State of Delaware, and each Party irrevocably waives the right to trial by jury and (D) each Party irrevocably consents to service of process by a reputable overnight mail delivery service, signature requested, to the address of such Party's principal place of business or as otherwise provided by applicable law.",
+    "ref": "Section 7(g)"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "outcome": "served",
+   "latency_ms": 10210.1,
+   "content": {
+    "clause": "liability_cap",
+    "found": false,
+    "text": null,
+    "ref": null
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "outcome": "served",
+   "latency_ms": 9673.5,
+   "content": {
+    "clause": "audit_rights",
+    "found": false,
+    "text": null,
+    "ref": null
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "outcome": "served",
+   "latency_ms": 6503.5,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Liability cap is absent (found: false), resulting in uncapped liability."
+    ],
+    "ref": "liability_cap"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "outcome": "served",
+   "latency_ms": 14220.7,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 36,
+    "ref": "Section 1"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "outcome": "served",
+   "latency_ms": 7239.2,
+   "content": {
+    "clause": "termination",
+    "found": false,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "outcome": "served",
+   "latency_ms": 32218.9,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "All matters relating to arbitration will be governed by the Federal Arbitration Act (9 U.S.C. Sections 1 et seq.). Except to the extent governed by the Federal Arbitration Act or other federal law, this Agreement and all claims arising from the relationship between Hyatt (and/or any of its Affiliates) and Playa (and/or any of its Affiliates) under this Agreement will be governed by the laws of the State of Illinois (U.S.A.), without regard to its conflict of laws rules, except that any Illinois law or any other law regulating the offer or sale of franchises, business opportunities, or similar interests, or governing the relationship between a franchisor and a franchisee or any similar relationship, will not apply unless its jurisdictional requirements are met independently without reference to this Section 4.",
+    "ref": "Section 4"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "outcome": "served",
+   "latency_ms": 10998.4,
+   "content": {
+    "clause": "liability_cap",
+    "found": false,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "outcome": "served",
+   "latency_ms": 6330.3,
+   "content": {
+    "clause": "audit_rights",
+    "found": false,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "outcome": "served",
+   "latency_ms": 10674.3,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Liability is uncapped or absent as no liability cap clause was found.",
+     "Termination rights are absent as no termination clause was found."
+    ],
+    "ref": "Rubric: risk is high if liability is uncapped or absent; medium if termination is absent or only permitted for material breach that remains uncured; otherwise low."
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "outcome": "served",
+   "latency_ms": 9685.2,
+   "content": {
+    "type": "SOW",
+    "initial_term_months": 120,
+    "ref": "ARTICLE XII - TERM"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "outcome": "served",
+   "latency_ms": 46042.2,
+   "content": {
+    "raw": "{\n  \"clause\": \"termination\",\n  \"found\": true,\n  \"text\": \"12.1 This contract shall be effective as of November 1, 2002, and shall remain in force and effect, unless modified as per Exhibit B, until October 31, 2012. If the FERC or other governmental body having jurisdiction over the service rendered pursuant to this Agreement authorizes abandonment of such service, this Agreement shall terminate on the abandonment date permitted by the FERC or such other governmental body. 12.2 Any portions of this Agreement necessary to resolve or cash out imbalances under this Agreement as required by the General Terms and Conditions of Transporter's Tariff shall survive the other parts of this Agreement until such time as such balancing has been accomplished; provided, however, that Transporter notifies Shipper of such imbalance not later than twelve months after the termination of this Agreement. 12.3 This Agreement will terminate automatically upon written notice from Transporter in the event Shipper fails to pay all of the amount of any bill for service rendered by Transporter hereunder in accord with the terms and conditions of Article VI of the General Terms and Conditions of Transporter's FERC Gas Tariff. EXHIBIT B: ANY LIMITATIONS ON THE EXERCISE OF THE BUYOUT/TERMINATION OPTION AS BID BY THE SHIPPER: Shipper must notify Transporter on or before October 3"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "outcome": "served",
+   "latency_ms": 18044.5,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "THE INTERPRETATION AND PERFORMANCE OF THIS CONTRACT SHALL BE IN ACCORDANCE WITH AND CONTROLLED BY THE LAWS OF THE STATE OF TEXAS, WITHOUT REGARD TO THE DOCTRINES GOVERNING CHOICE OF LAW.",
+    "ref": "Article XV, Section 15.1"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "outcome": "served",
+   "latency_ms": 9055.0,
+   "content": {
+    "clause": "liability_cap",
+    "found": false,
+    "text": null,
+    "ref": null
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "outcome": "served",
+   "latency_ms": 9410.7,
+   "content": {
+    "clause": "audit_rights",
+    "found": false,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "outcome": "served",
+   "latency_ms": 6363.0,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Liability is uncapped or absent as no liability cap was found."
+    ],
+    "ref": "liability_cap"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+   "outcome": "served",
+   "latency_ms": 9532.6,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 0,
+    "ref": "Section 2.1, Section 2.2"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+   "outcome": "served",
+   "latency_ms": 4868.9,
+   "content": {
+    "clause": "termination",
+    "found": false,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+   "outcome": "served",
+   "latency_ms": 13196.2,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "This Agreement shall be construed in accordance with and governed by the substantive internal laws of the State of New York. MSCI Inc. is registered to do business in New York under the name NY MSCI.",
+    "ref": "Section 6.1(a)"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+   "outcome": "served",
+   "latency_ms": 68597.8,
+   "content": {
+    "raw": "{\n  \"clause\": \"liability_cap\",\n  \"found\": true,\n  \"text\": \"(a) MSCI agrees that neither MS nor its affiliates or subsidiaries (other than MSCI) (collectively, the \\\"MS Provider Group\\\") and the respective directors, officers, agents, and employees of the MS Provider Group shall have any liability, whether direct or indirect, in contract or tort or otherwise, to MSCI for or in connection with this Agreement or the transactions contemplated hereby or any actions or inactions by or on behalf of the MS Provider Group in connection with this Agreement and such transactions.\\n\\n(b) MS agrees that neither MSCI nor its subsidiaries (collectively, the \\\"MSCI Provider Group\\\") and the respective directors, officers, agents, and employees of the MSCI Provider Group shall have any liability, whether direct or indirect, in contract or tort or otherwise, to MS for or in connection with this Agreement or the transactions contemplated hereby or any actions or inactions by or on behalf of the MSCI Provider Group in connection with this Agreement and such transactions.\\n\\n(c) Notwithstanding the provisions of Section 5(a) and (b), none of the members of the MS Provider Group and the MSCI Provider Group shall be liable for any special, indirect, incidental, consequential or punitive damages of any kind whatsoever in any way due to, resulting from or arising in connection with the performance of or failure to perform MS's or MSCI's"
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+   "outcome": "served",
+   "latency_ms": 4537.6,
+   "content": {
+    "clause": "audit_rights",
+    "found": false,
+    "text": null,
+    "ref": null
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+   "outcome": "served",
+   "latency_ms": 3352.0,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Liability is uncapped or absent as no liability cap was found."
+    ],
+    "ref": "liability_cap"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "outcome": "served",
+   "latency_ms": 3391.0,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 0,
+    "ref": "Exhibit A"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "outcome": "served",
+   "latency_ms": 12817.5,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "This Agreement shall remain in full force and effect until revoked by any party hereto in a signed writing provided to each other party hereto, and then only with respect to such revoking party.",
+    "ref": "Paragraph 3"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "outcome": "served",
+   "latency_ms": 3281.2,
+   "content": {
+    "clause": "governing_law",
+    "found": false,
+    "text": null,
+    "ref": null
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "outcome": "served",
+   "latency_ms": 3334.9,
+   "content": {
+    "clause": "liability_cap",
+    "found": false,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "outcome": "served",
+   "latency_ms": 3403.8,
+   "content": {
+    "clause": "audit_rights",
+    "found": false,
+    "text": null,
+    "ref": null
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "outcome": "served",
+   "latency_ms": 7540.2,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Liability is uncapped as no liability cap clause was found."
+    ],
+    "ref": "liability_cap"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "outcome": "served",
+   "latency_ms": 8715.8,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 0,
+    "ref": "PCQUOTE COM INC, S-1/A, 7/21/1999"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "outcome": "served",
+   "latency_ms": 3339.0,
+   "content": {
+    "clause": "termination",
+    "found": false,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "outcome": "served",
+   "latency_ms": 2882.4,
+   "content": {
+    "clause": "governing_law",
+    "found": false,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "outcome": "served",
+   "latency_ms": 4345.6,
+   "content": {
+    "clause": "liability_cap",
+    "found": false,
+    "text": null,
+    "ref": null
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "outcome": "served",
+   "latency_ms": 5135.7,
+   "content": {
+    "clause": "audit_rights",
+    "found": false,
+    "text": null,
+    "ref": null
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "outcome": "served",
+   "latency_ms": 8689.5,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Liability is uncapped or absent as no liability cap was found.",
+     "Termination rights are absent as no termination clause was found."
+    ],
+    "ref": "Extracted clauses: termination found=false, liability_cap found=false"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "outcome": "served",
+   "latency_ms": 7892.6,
+   "content": {
+    "type": "SOW",
+    "initial_term_months": 12,
+    "ref": "Exhibit 10.1"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "outcome": "served",
+   "latency_ms": 17262.4,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "In the event that Oceanic Time Warner Cable removes the above content and or terminates this agreement prior to December 31, 2006, Oceanic Time Warner Cable agrees to pay a cancellation fee of Five Thousand Dollars ($5,000) per month multiplied by the number of months remain on the agreement.",
+    "ref": "Exhibit 10.1, Paragraph 5"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "outcome": "served",
+   "latency_ms": 7164.7,
+   "content": {
+    "clause": "governing_law",
+    "found": false,
+    "text": null,
+    "ref": null
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "outcome": "served",
+   "latency_ms": 7903.9,
+   "content": {
+    "clause": "liability_cap",
+    "found": false,
+    "text": null,
+    "ref": null
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "outcome": "served",
+   "latency_ms": 5423.4,
+   "content": {
+    "clause": "audit_rights",
+    "found": false,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "outcome": "served",
+   "latency_ms": 6253.3,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Liability is uncapped or absent as no liability cap clause was found."
+    ],
+    "ref": "liability_cap"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "outcome": "served",
+   "latency_ms": 9780.5,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 0,
+    "ref": "Section 7"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "outcome": "served",
+   "latency_ms": 10608.1,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "This Addendum may be terminated at any time by either Party in accordance with the termination provisions of the Distribution Agreement. The Addendum shall not have an Initial Period.",
+    "ref": "Section 7"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "outcome": "served",
+   "latency_ms": 11059.5,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "The terms of the Governing Law and Dispute Resolution provisions of the Distribution Agreement will apply to this Addendum.",
+    "ref": "Section 8"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "outcome": "served",
+   "latency_ms": 7519.0,
+   "content": {
+    "clause": "liability_cap",
+    "found": false,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "outcome": "served",
+   "latency_ms": 7370.9,
+   "content": {
+    "clause": "audit_rights",
+    "found": false,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "outcome": "served",
+   "latency_ms": 6087.7,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Liability is uncapped as no liability cap clause was found."
+    ],
+    "ref": "liability_cap"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "outcome": "served",
+   "latency_ms": 10288.5,
+   "content": {
+    "type": "SOW",
+    "initial_term_months": 6,
+    "ref": "Section 1"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "outcome": "served",
+   "latency_ms": 37359.4,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "(a) Either party may terminate this Agreement immediately if the other party (i) files a petition commencing a voluntary case under the Bankruptcy Code; (ii) makes a general assignment for the benefit of creditors; (iii) admits in writing its inability to pay its debts as they become due; (iv) seeks, consents to or acquiesces in the appointment of any trustee, receiver or liquidator of it or any part of its property; or (v) has commenced against it an involuntary case under the Bankruptcy Code or a proceeding under any receivership, composition, readjustment, liquidation, insolvency, dissolution or like law or statute, which case or proceeding is not dismissed or vacated within sixty (60) days.\n\n(b) Upon termination of this Agreement, NEITHER PARTY SHALL BE LIABLE TO THE OTHER FOR ANY CONSEQUENTIAL, EXEMPLARY, SPECIAL, INCIDENTAL OR PUNITIVE DAMAGES, EVEN IF IT HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES, WHICH ARE RELATED TO THE AGREEMENT OR ITS BREACH.",
+    "ref": "Section 2"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "outcome": "served",
+   "latency_ms": 20800.6,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "This Agreement is to be governed and construed according to the laws of the State of New York without regard to conflicts of law. The parties agree that each of them hereby submits to the jurisdiction of the New York State and federal courts for the purpose of resolving any dispute arising under this Agreement and that the exclusive venue for resolution of such disputes shall be state or federal courts located in Monroe County, New York.",
+    "ref": "Section 18"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "outcome": "served",
+   "latency_ms": 14756.7,
+   "content": {
+    "clause": "liability_cap",
+    "found": true,
+    "text": "Upon termination of this Agreement, NEITHER PARTY SHALL BE LIABLE TO THE OTHER FOR ANY CONSEQUENTIAL, EXEMPLARY, SPECIAL, INCIDENTAL OR PUNITIVE DAMAGES, EVEN IF IT HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES, WHICH ARE RELATED TO THE AGREEMENT OR ITS BREACH.",
+    "ref": "Section 2(b)"
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "outcome": "served",
+   "latency_ms": 8592.6,
+   "content": {
+    "clause": "audit_rights",
+    "found": false,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "outcome": "served",
+   "latency_ms": 8758.8,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "Termination rights are explicitly defined for specific events (e.g., bankruptcy).",
+     "Liability for consequential damages is capped/excluded."
+    ],
+    "ref": "termination clause (a) and liability_cap clause"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "outcome": "served",
+   "latency_ms": 9479.8,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 0,
+    "ref": "EXHIBIT D JOINT FILING AGREEMENT"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "outcome": "served",
+   "latency_ms": 2763.3,
+   "content": {
+    "clause": "termination",
+    "found": false,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "outcome": "served",
+   "latency_ms": 3156.7,
+   "content": {
+    "clause": "governing_law",
+    "found": false,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "outcome": "served",
+   "latency_ms": 5589.3,
+   "content": {
+    "clause": "liability_cap",
+    "found": false,
+    "text": null,
+    "ref": null
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "outcome": "served",
+   "latency_ms": 5505.4,
+   "content": {
+    "clause": "audit_rights",
+    "found": false,
+    "text": null,
+    "ref": null
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "outcome": "served",
+   "latency_ms": 5994.3,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Liability is uncapped or absent as no liability cap was found.",
+     "Termination rights are absent as no termination clause was found."
+    ],
+    "ref": "Extracted clauses: termination found=false, liability_cap found=false"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "outcome": "served",
+   "latency_ms": 13698.5,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 0,
+    "ref": "Revocation upon termination of Services Agreement or Investment Advisory Contract"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "outcome": "served",
+   "latency_ms": 17517.4,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "This Limited Power of Attorney shall be revoked and terminated automatically upon the cancellation or termination of the Services Agreement or as to any Fund upon the cancellation or termination of the Adviser's Investment Advisory Contract for such Fund. Except as provided in the immediately preceding sentence, the powers and authorities herein granted may be revoked or terminated by the Adviser at any time provided that no such revocation or termination shall be effective until FASC has received actual notice of such revocation or termination in writing from the Adviser.",
+    "ref": "Paragraph 7"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "outcome": "served",
+   "latency_ms": 34675.1,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "This Limited Power of Attorney shall be governed and construed in accordance with the laws of the Commonwealth of Pennsylvania without reference to principles of conflicts of laws. If any provision hereof, or any power or authority conferred upon FASC herein, would be invalid or unexercisable under applicable law, then such provision, power or authority shall be deemed modified to the extent necessary to render it valid or exercisable while most nearly preserving its original intent, and no provision hereof, or power or authority conferred upon FASC herein, shall be affected by the invalidity or the non-exercisability of another provision hereof, or of another power or authority conferred herein.",
+    "ref": "Paragraph 10"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "outcome": "served",
+   "latency_ms": 18456.2,
+   "content": {
+    "clause": "liability_cap",
+    "found": true,
+    "text": "Liability for or recourse under or upon any undertaking of FASC pursuant to the power or authority granted to FASC under this Limited Power of Attorney under any rule of law, statute or constitution or by the enforcement of any assessment or penalty or by legal or equitable proceedings or otherwise shall be limited only to the assets of the Fund on whose behalf FASC was acting pursuant to the authority granted hereunder.",
+    "ref": "Paragraph 6"
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "outcome": "served",
+   "latency_ms": 5060.7,
+   "content": {
+    "clause": "audit_rights",
+    "found": false,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "outcome": "served",
+   "latency_ms": 6634.6,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "Liability is capped to the assets of the Fund.",
+     "Termination rights are explicitly defined."
+    ],
+    "ref": "liability_cap, termination"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "outcome": "served",
+   "latency_ms": 13949.2,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 240,
+    "ref": "Clause 7.1"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "outcome": "served",
+   "latency_ms": 36391.5,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "8.1 XFN may terminate this Agreement by giving thirty (30) days written notice to the CEIS.\n\n8.2 Either Party may terminate this Agreement:\n\n(a) if the other Party commits a material breach of this Agreement which is not capable of being remedied;\n\n(b) if the other Party commits a material breach of this Agreement which is capable of being remedied but not remedied within thirty (30) days upon receiving written notice from the non-breaching party requiring remedy; and\n\n(c) if the other Party becomes insolvent or bankrupt.\n\n8.3 Upon termination of the Agreement:\n\n(a) CEIS shall terminate the transmission of the Content with immediate effect; and\n\n(b) in the event that this Agreement is terminated prior to the expiry of the Term, XFN shall recover any sums paid to CEIS in advance for the unexpired Term of this Agreement, together with interest from the date those sums were paid until the date of full refund.",
+    "ref": "Clause 8"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "outcome": "served",
+   "latency_ms": 18583.4,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "16.1 The English language version shall prevail in the event of any discrepancy between the interpretation of the English and the Chinese versions of this Agreement. This Agreement is governed by and shall be construed in accordance with the laws of Hong Kong",
+    "ref": "Clause 16.1"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "outcome": "served",
+   "latency_ms": 5279.1,
+   "content": {
+    "clause": "liability_cap",
+    "found": false,
+    "text": null,
+    "ref": null
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "outcome": "served",
+   "latency_ms": 7168.8,
+   "content": {
+    "clause": "audit_rights",
+    "found": false,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "outcome": "served",
+   "latency_ms": 5968.1,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Liability is uncapped as the liability_cap clause was not found."
+    ],
+    "ref": "liability_cap"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+   "outcome": "served",
+   "latency_ms": 16853.6,
+   "content": {
+    "type": "SOW",
+    "initial_term_months": 12,
+    "ref": "EXHIBIT 10.17"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+   "outcome": "served",
+   "latency_ms": 15543.8,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "Customer, upon thirty days prior written notice, may cancel this Agreement at the end of the Initial Term and thereafter on each anniversary of the end of the Initial Term. MMMW may cancel this Agreement if the Customer does not remit payment according to the terms of MMMW's invoice.",
+    "ref": "Section 2(d)"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+   "outcome": "served",
+   "latency_ms": 12744.6,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "This Agreement shall be interpreted in accordance with the laws of the State of Indiana.",
+    "ref": "Section 10(d)"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+   "outcome": "served",
+   "latency_ms": 32462.9,
+   "content": {
+    "clause": "liability_cap",
+    "found": true,
+    "text": "MMMW's entire liability and the Customer's sole and exclusive remedy for claims related to or arising out of this Agreement for any cause and regardless of the form of action, whether in contract or tort, including negligence and strict liability, shall be the remedies set forth in Section 8, provided that if MMMW fails after repeated attempts to perform those remedies, MMMW's entire liability shall be the Customer's actual, direct damages such as would be provided in a court of law, not to exceed the charge for service for the item that caused the damages. MMMW shall NOT be liable for INCIDENTAL or CONSEQUENTIAL DAMAGES, even if MMMW has been advised, knew or should have known of the possibility of such damages.",
+    "ref": "Section 9"
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+   "outcome": "served",
+   "latency_ms": 4336.8,
+   "content": {
+    "clause": "audit_rights",
+    "found": false,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+   "outcome": "served",
+   "latency_ms": 7291.4,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "Liability is explicitly capped at the charge for the specific service causing damages.",
+     "Termination rights are present for both parties (Customer for convenience at term end, Provider for non-payment)."
+    ],
+    "ref": "liability_cap, termination"
+   }
+  },
+  {
+   "step": "report",
+   "doc_id": null,
+   "outcome": "served",
+   "latency_ms": 0,
+   "content": {
+    "documents": 19,
+    "risk_counts": {
+     "high": 4,
+     "medium": 7,
+     "low": 8
+    },
+    "governing_law_counts": {
+     "Pennsylvania": 3,
+     "New York": 3,
+     "Connecticut": 1,
+     "Nevada": 1,
+     "Florida": 1,
+     "Delaware": 1,
+     "Illinois": 1,
+     "Texas": 1,
+     "Hong Kong": 1,
+     "Indiana": 1,
+     "Unknown": 3
+    },
+    "missing_data_protection": 19,
+    "highest_risk_ref": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-"
+   }
+  }
+ ]
+}

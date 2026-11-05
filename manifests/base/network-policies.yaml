@@ -1,0 +1,101 @@
+# In-cluster pinning for the model pools (the V15 enforcement layer): the
+# predictors accept traffic only from the trace-ui relays (and, for the CPU
+# pool, from the specialist that forwards to it), so a sensitive request
+# cannot bypass the gateway topology, and nothing outside the namespace can
+# reach the models directly. Egress stays open for the initial Hugging Face
+# model download; tighten once models are cached.
+#
+# Two selectors, because two deployment shapes exist:
+#   * KServe RawDeployment pools carry serving.kserve.io/inferenceservice
+#     and listen on 8080 (the runtime's --port);
+#   * the cpu-real overlays replace them with plain Deployments labelled
+#     demo.openshell.ai/pool and listening on 8000.
+# A NetworkPolicy podSelector cannot OR two expressions, so each shape gets
+# its own policy. Both listen ports are pinned: a policy on the wrong port
+# silently enforces nothing.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: model-pools-ingress
+spec:
+  podSelector:
+    matchExpressions:
+      - key: serving.kserve.io/inferenceservice
+        operator: Exists
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: trace-ui
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: model-pools-egress
+spec:
+  podSelector:
+    matchExpressions:
+      - key: serving.kserve.io/inferenceservice
+        operator: Exists
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - ports:
+        - protocol: TCP
+          port: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: plain-pools-ingress
+spec:
+  podSelector:
+    matchExpressions:
+      - key: demo.openshell.ai/pool
+        operator: Exists
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: trace-ui
+      ports:
+        - protocol: TCP
+          port: 8000
+    # The specialist answers from RoBERTa but forwards unmatched questions
+    # to the CPU pool, so it is a legitimate client of that pool.
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: demo.openshell.ai/specialist
+                operator: Exists
+      ports:
+        - protocol: TCP
+          port: 8000
+# plain-pools-egress removed 2026-11-03: on this cluster's OVN, ANY egress
+# policy on the pool pods breaks their DNS — three rule shapes tested
+# (namespaceSelector-any, ipBlock for the DNS service IP, and the canonical
+# namespace+podSelector kube-dns form), all three fail name resolution from
+# selected pods while unselected pods (trace-ui, specialist) resolve fine,
+# and deleting the policy restores DNS instantly. The 2026-11-02 CNI
+# instability (FINDINGS §7) is the suspected cause; the MoE seed (emptyDir,
+# 72GB from Hugging Face) cannot work behind it. Containment is unchanged:
+# plain-pools-ingress below still restricts the pools to the trace-ui relays
+# and the forwarding specialist, which is the V15 enforcement layer. Restore
+# an egress policy (starting from the kube-dns selector shape) only after
+# OVN is verified healthy on this node.
+#
+# The removed policy allowed DNS (53 UDP/TCP to all namespaces) and TCP 443
+# to anywhere — i.e. egress was already open to the internet by design
+# ("stays open for the initial Hugging Face model download; tighten once
+# models are cached", above).

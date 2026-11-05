@@ -39,20 +39,23 @@ services:
         condition: service_completed_successfully
 
   praxis:
+    # Custom build with the llm_d_sc filter. The Praxis 0.7.5 / ai-gateway
+    # 0.9.0 rebuild path is deploy/images/praxis-llm-d-sc/; this default stays
+    # on the published image until the replacement is built and pushed.
     image: quay.io/rmalone/praxis-ai-llm-d-sc:v0.7.0
     # In compose, `command` appends to the image ENTRYPOINT (unlike the k8s
     # `command` in the manifests, which replaces it), so set entrypoint here.
     entrypoint: ["praxis-ai"]
     environment:
       # praxis watches this file and hot-reloads; arms are swapped by copying
-      # manifests/praxis/<arm>.yaml over live.yaml (scripts/linux/set_arm.sh)
+      # manifests/base/praxis/<arm>.yaml over live.yaml (scripts/linux/set_arm.sh)
       # - no container restart, which also makes the kill switch a live flip.
       PRAXIS_CONFIG: /etc/praxis/${PRAXIS_CONFIG_FILE:-live.yaml}
     volumes:
       # Writable so the runner can swap the live config; Z relabels for
       # SELinux-enforcing hosts (RHEL). The same files are the source for the
-      # OpenShift praxis-config ConfigMap (manifests/kustomization.yaml).
-      - ../../manifests/praxis:/etc/praxis:Z
+      # OpenShift praxis-config ConfigMap (manifests/base/kustomization.yaml).
+      - ../../manifests/base/praxis:/etc/praxis:Z
     ports:
       - "19002:9902"
     depends_on:
@@ -66,6 +69,8 @@ services:
       TRACE_DB_PATH: /data/traces.db
       PRAXIS_UPSTREAM: http://praxis:8080
       SENSITIVE_UPSTREAM: http://praxis:8083
+      JUDGMENT_UPSTREAM: http://praxis:8086
+      SENSITIVE_JUDGMENT_UPSTREAM: http://praxis:8087
       TRACE_POOLS: vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small
       # Point at the real vLLM services when running --profile real
       # (scripts/linux/up.sh --real exports these).
@@ -75,11 +80,15 @@ services:
       VLLM_GPU_SMALL_UPSTREAM: ${VLLM_GPU_SMALL_UPSTREAM:-http://fake-gpu-small:8000}
       TRACE_INGRESS_PORT: "8080"
       SENSITIVE_INGRESS_PORT: "8083"
+      JUDGMENT_INGRESS_PORT: "8086"
+      SENSITIVE_JUDGMENT_INGRESS_PORT: "8087"
     volumes:
       - trace-data:/data
     ports:
       - "8080:8080"
       - "8083:8083"
+      - "8086:8086"
+      - "8087:8087"
       # Pool relays and praxis metrics, for the runner's scrapes and debugging.
       - "18081:8081"
       - "18082:8082"

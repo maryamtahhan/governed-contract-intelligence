@@ -8,6 +8,9 @@ hybrid CPU+GPU contract-review demo:
   minimal deployment or four (cpu, gpu, gpu-approved, gpu-small) in this demo
 - a second ingress relay (SENSITIVE_UPSTREAM / SENSITIVE_INGRESS_PORT) feeds
   the gateway's sensitive listener; every trace records which entry it used
+- optional judgment ingresses (JUDGMENT_UPSTREAM / JUDGMENT_INGRESS_PORT and
+  SENSITIVE_JUDGMENT_UPSTREAM / SENSITIVE_JUDGMENT_INGRESS_PORT) feed the
+  stage-aware listeners that carry risk/report to the GPU
 - /_trace/api/summary aggregates traces by route, label and entry, which the
   governance check and the measurement harness read as cluster-side evidence
 """
@@ -27,10 +30,21 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, parse_qsl, urlencode, urlsplit
 from urllib.request import Request, urlopen
 
+from . import otel
+
 DATABASE = Path(os.environ.get("TRACE_DB_PATH", "/data/traces.db"))
 UPSTREAM = os.environ.get("PRAXIS_UPSTREAM", "http://praxis:8080").rstrip("/")
 SENSITIVE_UPSTREAM = os.environ.get("SENSITIVE_UPSTREAM", "").rstrip("/")
 SENSITIVE_INGRESS_PORT = int(os.environ.get("SENSITIVE_INGRESS_PORT", "8083"))
+# Judgment ingresses carry risk + report to the GPU. They are optional so the
+# relay still serves stacks whose praxis config predates the judgment
+# listeners; the pipeline only uses them when both sides provide them.
+JUDGMENT_UPSTREAM = os.environ.get("JUDGMENT_UPSTREAM", "").rstrip("/")
+JUDGMENT_INGRESS_PORT = int(os.environ.get("JUDGMENT_INGRESS_PORT", "8086"))
+SENSITIVE_JUDGMENT_UPSTREAM = os.environ.get("SENSITIVE_JUDGMENT_UPSTREAM", "").rstrip("/")
+SENSITIVE_JUDGMENT_INGRESS_PORT = int(
+    os.environ.get("SENSITIVE_JUDGMENT_INGRESS_PORT", "8087")
+)
 INGRESS_PORT = int(os.environ.get("TRACE_INGRESS_PORT", "8080"))
 CONTEXT_PROBE_MARKER = os.environ.get("TRACE_CONTEXT_PROBE_MARKER", "")
 MAX_TRACES = int(os.environ.get("TRACE_MAX_TRACES", "250"))
@@ -203,9 +217,14 @@ def extract_question(path: str, body: bytes) -> str | None:
     return None
 
 
+def _is_sensitive_entry(entry: str | None) -> bool:
+    """Both the sensitive and the sensitive-judgment entries carry PII."""
+    return (entry or "").startswith("sensitive")
+
+
 def create_trace(trace_id: str, method: str, path: str, request_id: str, question: str | None,
                  entry: str) -> None:
-    if entry == "sensitive" and not STORE_SENSITIVE_CONTENT:
+    if _is_sensitive_entry(entry) and not STORE_SENSITIVE_CONTENT:
         question = None
     with DB_LOCK, db() as connection:
         connection.execute(
@@ -256,7 +275,7 @@ def complete_trace(trace_id: str, status: int, headers: dict[str, str], started:
             if row:
                 classification = classification or row[0]
                 route = route or row[1]
-        if row and row[2] == "sensitive" and not STORE_SENSITIVE_CONTENT:
+        if row and _is_sensitive_entry(row[2]) and not STORE_SENSITIVE_CONTENT:
             response_text = None
         # Degradation is an implication, not an equivalence: GPU-tier work on
         # a non-GPU pool is degraded, but SIMPLE/MEDIUM work on a GPU pool
@@ -273,6 +292,31 @@ def complete_trace(trace_id: str, status: int, headers: dict[str, str], started:
         ))
         connection.execute("DELETE FROM traces WHERE id NOT IN (SELECT id FROM traces ORDER BY started_at DESC LIMIT ?)", (MAX_TRACES,))
         connection.execute("DELETE FROM hops WHERE trace_id NOT IN (SELECT id FROM traces)")
+        # Optional portable export alongside SQLite (TRACE_OTEL=jsonl|otlp).
+        # Never let an exporter failure break the relay or lose the audit row.
+        row = connection.execute(
+            "SELECT id, started_at, completed_at, method, path, status, classification, "
+            "route, fallback, duration_ms, response_headers, entry, question, response, "
+            "response_tokens, response_tokens_est, error FROM traces WHERE id=?",
+            (trace_id,),
+        ).fetchone()
+        if row is not None:
+            columns = ("id", "started_at", "completed_at", "method", "path", "status",
+                       "classification", "route", "fallback", "duration_ms",
+                       "response_headers", "entry", "question", "response",
+                       "response_tokens", "response_tokens_est", "error")
+            hop_rows = connection.execute(
+                "SELECT route, arrived_at, ttfb_ms, total_ms, status, classifier_us, error "
+                "FROM hops WHERE trace_id=? ORDER BY arrived_at", (trace_id,)
+            ).fetchall()
+            hop_columns = ("route", "arrived_at", "ttfb_ms", "total_ms", "status",
+                           "classifier_us", "error")
+            try:
+                otel.emit_trace(dict(zip(columns, row, strict=False)),
+                                [dict(zip(hop_columns, hop, strict=False))
+                                 for hop in hop_rows])
+            except Exception as export_error:  # noqa: BLE001 - exporter must not break relay
+                print(f"traceui: OTel export failed: {export_error}")
 
 
 def routing_signal(headers: dict[str, str]) -> tuple[str | None, str | None, bool]:
@@ -524,7 +568,13 @@ def record_run(summary: dict) -> dict:
 
 
 def list_runs() -> list[dict]:
-    """Latest run per arm, newest first: the arms panel and report cross-check."""
+    """Latest run per arm, newest first: the configs panel and report cross-check.
+
+    Old summaries carry only ``arm``; new ones also carry the policy ``config``.
+    The page prefers ``config`` and falls back to the recorded letter, so this
+    file stays standalone (it is mounted as a single ConfigMap) and does not
+    import the Python config catalog.
+    """
     with DB_LOCK, db() as connection:
         rows = connection.execute(
             "SELECT id, ts, arm, summary FROM runs ORDER BY id DESC"
@@ -820,7 +870,7 @@ PAGE = r'''<!doctype html>
 </style>
 </head>
 <body><main>
-<header><div><h1>Hybrid routing request traces</h1><p>Live semantic routing across the CPU, GPU, approved-GPU and small-GPU pools; sensitive-entry requests are badged.</p></div><span class="live">LIVE</span></header>
+<header><div><h1>Hybrid routing request traces</h1><p>Live routing across the CPU, GPU, approved-GPU and small-GPU pools; sensitive, judgment and sensitive-judgment entries are badged.</p></div><span class="live">LIVE</span></header>
 <section class="graphic"><div class="canvas"><svg viewBox="0 0 980 850" role="img" aria-labelledby="diagram-title diagram-desc">
 <title id="diagram-title">Live Praxis request routing</title><desc id="diagram-desc">Clients send requests to Praxis. Praxis calls llm-d-sc for classification and routes each request to a CPU, GPU, approved-GPU or small-GPU pool.</desc>
 <defs><marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 z" fill="#64b5ff"/></marker><marker id="arrow-cyan" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 z" fill="#55e6d0"/></marker><marker id="arrow-red" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 z" fill="#ff4d5e"/></marker></defs>
@@ -838,7 +888,7 @@ PAGE = r'''<!doctype html>
 
 <section class="traces"><div class="section-heading"><h2>Recent requests <small id="count"></small></h2><div class="actions"><span id="traffic-status" class="traffic-status unknown"><i></i>Traffic: …</span><button id="traffic-toggle" type="button" disabled>Simulate Traffic</button><button id="clear-recents" type="button">Clear Recents</button></div></div><table><thead><tr><th>Time</th><th>Request</th><th>Classification</th><th>Destination</th><th>Status</th><th>Duration</th><th>Response</th></tr></thead><tbody id="traces"><tr><td colspan="6">Waiting for a request…</td></tr></tbody></table></section>
 
-<section class="traces"><div class="section-heading"><h2>Measurement arms <small id="arms-note"></small></h2><a class="small-link" href="/_trace/api/audit.jsonl">audit.jsonl</a></div><table><thead><tr><th>Arm</th><th>Mode</th><th>Docs</th><th>Wall s</th><th>CPU-served</th><th>GPU s/doc</th><th>Fallback</th><th>Errors</th><th>Sensitive violations</th></tr></thead><tbody id="arms"><tr><td colspan="9">No runs posted yet (run scripts/cluster/arms.sh or scripts/linux/arms.sh).</td></tr></tbody></table></section>
+<section class="traces"><div class="section-heading"><h2>Routing configs <small id="arms-note"></small></h2><a class="small-link" href="/_trace/api/audit.jsonl">audit.jsonl</a></div><table><thead><tr><th>Config</th><th>Mode</th><th>Docs</th><th>Wall s</th><th>CPU-served</th><th>GPU s/doc</th><th>Fallback</th><th>Errors</th><th>Sensitive violations</th></tr></thead><tbody id="arms"><tr><td colspan="9">No runs posted yet (run scripts/cluster/arms.sh or scripts/linux/arms.sh).</td></tr></tbody></table></section>
 </main><div id="drawer-backdrop" class="drawer-backdrop"></div><aside id="question-drawer" class="drawer" aria-hidden="true" aria-labelledby="question-title"><div class="drawer-header"><h2 id="question-title">Question</h2><button id="drawer-close" type="button" class="drawer-close" aria-label="Close question">×</button></div><div id="question-meta" class="drawer-meta"></div><p id="question-text" class="question-text"></p></aside><script>
 const $=id=>document.getElementById(id),dot=$('request-dot'),paths={source:$('packet-source'),classify:$('packet-classify'),result:$('packet-result'),cpu:$('packet-cpu'),gpu:$('packet-gpu')},flows={source:[$('flow-source')],classify:[$('flow-classify'),$('flow-result')],cpu:[$('flow-cpu'),$('flow-cpu-pod')],gpu:[$('flow-gpu'),$('flow-gpu-pod')]};let last='',lastAnimated='',selectedId='',dismissedThroughId='',traceItems=[],animating=false,animationGeneration=0,openTraces=new Set();
 const questionDrawer=$('question-drawer'),drawerBackdrop=$('drawer-backdrop');
@@ -846,11 +896,12 @@ function esc(x){return String(x??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 function isGpu(t){return t.route?t.route.toLowerCase().includes('gpu'):['COMPLEX','REASONING'].includes((t.classification||'').toUpperCase())}
 function timelineHtml(t){const hops=t.hops||[];if(!hops.length||!t.duration_ms)return'';const segs=[];let cursor=0;hops.forEach((h,i)=>{const gap=Math.max(0,h.offset_ms-cursor);if(i===0){const c=h.classifier_ms!=null?Math.min(h.classifier_ms,gap):0;if(c)segs.push({k:'classify',l:'classifier',ms:c});segs.push({k:'praxis',l:c?'Praxis':'Praxis + classifier',ms:gap-c})}else segs.push({k:'gap',l:'failover gap',ms:gap});const bad=h.status==null||h.status>=500||h.status===429;segs.push({k:bad?'fail':'backend',l:h.route+(bad?' (failed)':''),ms:h.total_ms||0,note:h.ttfb_ms!=null?'first byte '+h.ttfb_ms+' ms':(h.error||'no response')});cursor=h.offset_ms+(h.total_ms||0)});segs.push({k:'praxis',l:'Praxis return',ms:Math.max(0,t.duration_ms-cursor)});return`<div class="tl">${segs.map(x=>`<i class="k-${x.k}" style="flex:${Math.max(x.ms,0)}" title="${esc(x.l)} ${x.ms} ms"></i>`).join('')}</div>${segs.map(x=>`<span class="tl-line"><i class="sw k-${x.k}"></i>${esc(x.l)} <b>${x.ms} ms</b>${x.note?' · '+esc(x.note):''}</span>`).join('')}`}
-function pathText(t){if(!(t.route||t.classification))return'Client → Praxis (routing metadata unavailable)';return`Client → Praxis${t.entry==='sensitive'?' (sensitive entry)':''} → llm-d-sc → ${isGpu(t)?'vLLM GPU service':'vLLM CPU service'} → ${esc(t.route)} pod`}
+function entryNote(e){return e==='sensitive-judgment'?' (sensitive judgment entry)':e==='judgment'?' (judgment entry)':e==='sensitive'?' (sensitive entry)':''}
+function pathText(t){if(!(t.route||t.classification))return'Client → Praxis (routing metadata unavailable)';const via=t.entry==='judgment'||t.entry==='sensitive-judgment'?' → pinned judgment chain':' → llm-d-sc';return`Client → Praxis${entryNote(t.entry)}${via} → ${isGpu(t)?'vLLM GPU service':'vLLM CPU service'} → ${esc(t.route)} pod`}
 function highlight(t){Object.values(flows).flat().forEach(path=>path.classList.remove('selected'));if(!t)return;flows.source.forEach(path=>path.classList.add('selected'));if(t.route||t.classification){flows.classify.forEach(path=>path.classList.add('selected'));flows[isGpu(t)?'gpu':'cpu'].forEach(path=>path.classList.add('selected'))}}
 async function travel(path,color,duration){const length=path.getTotalLength(),started=performance.now();dot.style.display='block';dot.setAttribute('fill',color);dot.style.color=color;return new Promise(resolve=>{function frame(now){const progress=Math.min((now-started)/duration,1),point=path.getPointAtLength(length*progress);dot.setAttribute('cx',point.x);dot.setAttribute('cy',point.y);if(progress<1)requestAnimationFrame(frame);else resolve()}requestAnimationFrame(frame)})}
 async function animate(t){if(!t||animating||matchMedia('(prefers-reduced-motion: reduce)').matches)return;const generation=animationGeneration;animating=true;await travel(paths.source,'#64b5ff',450);if(generation!==animationGeneration){animating=false;return}if(t.route||t.classification){await travel(paths.classify,'#55e6d0',450);if(generation!==animationGeneration){animating=false;return}await travel(paths.result,'#55e6d0',450);if(generation!==animationGeneration){animating=false;return}await travel(paths[isGpu(t)?'gpu':'cpu'],isGpu(t)?'#ffc76a':'#ad9cff',900)}await sleep(300);dot.style.display='none';animating=false}
-function entryBadge(t){return t.entry==='sensitive'?'<span class="entry-badge" title="sent through the sensitive entry (approved pools only)">SENS</span>':''}
+function entryBadge(t){if(t.entry==='sensitive-judgment')return'<span class="entry-badge" title="judgment step through the pinned sensitive judgment chain (GPU only, no CPU failover)">SENS-JUDGE</span>';if(t.entry==='judgment')return'<span class="entry-badge" title="judgment step through the pinned GPU judgment chain (no CPU failover)">JUDGE</span>';return t.entry==='sensitive'?'<span class="entry-badge" title="sent through the sensitive entry (approved pools only)">SENS</span>':''}
 function render(){const items=traceItems;$('count').textContent=`(${items.length} saved)`;$('traces').innerHTML=items.length?items.map(t=>`<tr data-trace-id="${esc(t.id)}" tabindex="0" class="${t.id===selectedId?'selected-row':''}"><td>${new Date(t.started_at*1000).toLocaleTimeString()}</td><td><span class="tag">${esc(t.method)}</span> ${esc(t.path)}${t.question?`<button class="question-button" type="button" data-question-id="${esc(t.id)}">View question</button>`:'<span class="no-question">question unavailable</span>'}<details${openTraces.has(t.id)?' data-r="1" open':''}><summary>trace ${esc(t.request_id.slice(0,8))}</summary><div class="trace-detail"><span><b>Path:</b> ${esc(pathText(t))}</span><span><b>Request ID:</b> ${esc(t.request_id)}</span><span><b>Classification:</b> ${esc(t.classification||'label not emitted')}</span><span><b>Destination:</b> ${esc(t.route||'not emitted')}</span><span><b>Entry:</b> ${esc(t.entry||'general')}</span><span><b>Result:</b> ${esc(t.status||'in flight')} · ${t.duration_ms?esc(t.duration_ms+' ms'):'in progress'}${t.fallback?' · fallback':''}</span>${timelineHtml(t)}${t.error?`<span><b>Error:</b> ${esc(t.error)}</span>`:''}</div></details></td><td>${esc(t.classification||'not emitted')}${entryBadge(t)}</td><td class="${t.route?(isGpu(t)?'gpu':'cpu'):'unknown'}">${esc(t.route||'unavailable')}${t.fallback?'<small class="fellback">fell back</small>':t.route&&!t.classification&&t.status&&!t.error?'<small class="defaulted">no label &middot; default</small>':''}</td><td>${esc(t.status||'in flight')}</td><td>${t.duration_ms?esc(t.duration_ms+' ms'):'—'}</td><td>${t.response?`<button class="question-button" type="button" data-response-id="${esc(t.id)}">${t.response_tokens?(t.response_tokens_est?'~':'')+esc(t.response_tokens)+' tokens':'View'}</button>`:'<span class="no-question">—</span>'}</td></tr>`).join(''):'<tr><td colspan="7">Waiting for a request…</td></tr>'}
 function syncSelection(){document.querySelectorAll('tr[data-trace-id]').forEach(row=>row.dataset.traceId&&row.classList.toggle('selected-row',row.dataset.traceId===selectedId))}
 function clearSelection(){selectedId='';dismissedThroughId=(traceItems.find(t=>t.status&&(t.route||t.classification))||{}).id||'';animationGeneration++;dot.style.display='none';highlight(null);syncSelection();unpinState()}
@@ -894,7 +945,7 @@ async function pinState(t){const seq=++pinSeq;try{const d=await fetch('/_trace/a
 function unpinState(){pinSeq++;pinned=false;renderState(liveState,'')}
 load();setInterval(load,2000);loadTraffic();setInterval(loadTraffic,2000);loadState();setInterval(loadState,2000)
 let lastRunsKey=''
-async function loadRuns(){try{const d=await fetch('/_trace/api/runs',{cache:'no-store'}).then(r=>r.json());const runs=d.runs||[];const key=runs.map(x=>x.run_id).join();if(key===lastRunsKey)return;lastRunsKey=key;$('arms').innerHTML=runs.length?runs.map(s=>{const routes=s.routes||{},served=Object.values(routes).reduce((a,b)=>a+b,0)||1,cpu=(routes['vllm-cpu']||0)/served,gpuSdoc=(s.gpu_busy_ms||0)/1000/Math.max(s.docs||1,1),viol=(s.sensitive_violations==null?'—':s.sensitive_violations);return`<tr class="${viol&&viol>0?'bad':''}"><td><b>${esc(s.arm)}</b></td><td>${esc(s.mode||'—')}</td><td>${esc(s.docs??'—')}</td><td>${esc(s.wall_s??'—')}</td><td>${Math.round(cpu*100)}%</td><td>${gpuSdoc.toFixed(2)}</td><td>${esc(s.fallback??0)}</td><td>${esc(s.errors??0)}</td><td>${esc(viol)}</td></tr>`}).join(''):'<tr><td colspan="9">No runs posted yet (run scripts/cluster/arms.sh or scripts/linux/arms.sh).</td></tr>';$('arms-note').textContent=runs.length?`(${runs.length} arm${runs.length>1?'s':''}, latest per arm)`:''}catch(e){}}
+async function loadRuns(){try{const d=await fetch('/_trace/api/runs',{cache:'no-store'}).then(r=>r.json());const runs=d.runs||[];const key=runs.map(x=>x.run_id).join();if(key===lastRunsKey)return;lastRunsKey=key;$('arms').innerHTML=runs.length?runs.map(s=>{const routes=s.routes||{},served=Object.values(routes).reduce((a,b)=>a+b,0)||1,cpu=(routes['vllm-cpu']||0)/served,gpuSdoc=(s.gpu_busy_ms||0)/1000/Math.max(s.docs||1,1),viol=(s.sensitive_violations==null?'—':s.sensitive_violations);return`<tr class="${viol&&viol>0?'bad':''}"><td><b>${esc(s.config||s.arm)}</b></td><td>${esc(s.mode||'—')}</td><td>${esc(s.docs??'—')}</td><td>${esc(s.wall_s??'—')}</td><td>${Math.round(cpu*100)}%</td><td>${gpuSdoc.toFixed(2)}</td><td>${esc(s.fallback??0)}</td><td>${esc(s.errors??0)}</td><td>${esc(viol)}</td></tr>`}).join(''):'<tr><td colspan="9">No runs posted yet (run scripts/cluster/arms.sh or scripts/linux/arms.sh).</td></tr>';$('arms-note').textContent=runs.length?`(${runs.length} config${runs.length>1?'s':''}, latest per config)`:''}catch(e){}}
 loadRuns();setInterval(loadRuns,5000)
 </script></body></html>'''
 
@@ -908,14 +959,23 @@ def main() -> None:
             target=RelayServer(("0.0.0.0", port), upstream, route).serve_forever,
             daemon=True,
         ).start()
-    if SENSITIVE_UPSTREAM:
-        threading.Thread(
-            target=RelayServer(("0.0.0.0", SENSITIVE_INGRESS_PORT), SENSITIVE_UPSTREAM,
-                               entry="sensitive").serve_forever,
-            daemon=True,
-        ).start()
+    for upstream, port, entry in (
+        (SENSITIVE_UPSTREAM, SENSITIVE_INGRESS_PORT, "sensitive"),
+        (JUDGMENT_UPSTREAM, JUDGMENT_INGRESS_PORT, "judgment"),
+        (SENSITIVE_JUDGMENT_UPSTREAM, SENSITIVE_JUDGMENT_INGRESS_PORT,
+         "sensitive-judgment"),
+    ):
+        if upstream:
+            threading.Thread(
+                target=RelayServer(("0.0.0.0", port), upstream, entry=entry).serve_forever,
+                daemon=True,
+            ).start()
     print(json.dumps({"event": "trace-ui-start", "ingress": INGRESS_PORT,
                       "sensitive_ingress": SENSITIVE_INGRESS_PORT if SENSITIVE_UPSTREAM else None,
+                      "judgment_ingress": JUDGMENT_INGRESS_PORT if JUDGMENT_UPSTREAM else None,
+                      "sensitive_judgment_ingress": (
+                          SENSITIVE_JUDGMENT_INGRESS_PORT
+                          if SENSITIVE_JUDGMENT_UPSTREAM else None),
                       "pools": {r: p[1] for r, p in POOLS.items()}}), flush=True)
     RelayServer(("0.0.0.0", INGRESS_PORT), UPSTREAM).serve_forever()
 

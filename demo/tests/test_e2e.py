@@ -31,7 +31,7 @@ def routes(records: list[dict]) -> set:
     return {r["headers"].get("x-demo-route") for r in records}
 
 
-async def run(stack, arm: str, out: str, docs: int = 12) -> dict:
+async def run(stack, arm: str, out: str, docs: int = 12, judgment: bool = True) -> dict:
     return await run_arm(
         gateway_base=stack.gateway,
         sensitive_base=stack.sensitive_gateway,
@@ -40,6 +40,8 @@ async def run(stack, arm: str, out: str, docs: int = 12) -> dict:
         arm=arm,
         docs_limit=docs,
         concurrency=12,
+        judgment_base=stack.judgment_gateway if judgment else None,
+        sensitive_judgment_base=stack.sensitive_judgment_gateway if judgment else None,
     )
 
 
@@ -68,15 +70,24 @@ async def test_arm_d_full_matrix(stack, tmp_path):
     assert routes(per_clause) == {"vllm-cpu"}
 
     risk_steps = [r for r in records if r["step"] == "risk"]
-    assert routes(risk_steps) == {"vllm-cpu"}
+    # Non-sensitive judgment goes to the general GPU pool; sensitive judgment
+    # goes to the approved GPU pool. Neither may land on the CPU MoE.
+    assert routes(risk_steps) == {"vllm-gpu", "vllm-gpu-approved"}
+    assert {r["entry"] for r in risk_steps} == {"judgment", "sensitive-judgment"}
 
     report_steps = [r for r in records if r["step"] == "report"]
     assert report_steps and report_steps[0]["headers"]["x-demo-route"] == "vllm-gpu-approved"
+    assert report_steps[0]["entry"] == "sensitive-judgment"
 
     sensitive = [r for r in records if r["true_sensitive"]]
     assert sensitive
-    assert all(r["entry"] == "sensitive" for r in sensitive)
+    # Both sensitive entries carry PII; risk uses the judgment one.
+    assert all(r["entry"].startswith("sensitive") for r in sensitive)
     assert all(r["headers"].get("x-demo-route") in APPROVED for r in sensitive)
+    assert summary["judgment_split"] is True
+    assert summary["judgment_steps"] > 0
+    assert summary["judgment_on_gpu"] == summary["judgment_steps"]
+    assert summary["stage_routes"]["risk"].keys() <= {"vllm-gpu", "vllm-gpu-approved"}
 
     gov = governance_check(stack.gateway)
     assert gov["clean"] is True
@@ -107,7 +118,9 @@ async def test_pull_the_plug_fallback_and_recovery(stack, tmp_path):
     assert resp.headers["x-demo-route"] == "vllm-cpu"
     assert "x-praxis-fallback" not in resp.headers
 
-    summary = await run(stack, "D", str(tmp_path / "plug"), docs=6)
+    # This test is about the general entry's CPU failover; keep the legacy
+    # stage-agnostic path so the GPU-down judgment policy does not mask it.
+    summary = await run(stack, "D", str(tmp_path / "plug"), docs=6, judgment=False)
     assert summary["errors"] == 0
 
     stack.start_pool("vllm-gpu")
@@ -116,7 +129,7 @@ async def test_pull_the_plug_fallback_and_recovery(stack, tmp_path):
     assert resp.headers["x-demo-route"] == "vllm-gpu"
     assert "x-praxis-fallback" not in resp.headers
 
-    recovered = await run(stack, "D", str(tmp_path / "recovered"), docs=6)
+    recovered = await run(stack, "D", str(tmp_path / "recovered"), docs=6, judgment=False)
     assert recovered["fallback"] == 0
     assert recovered["errors"] == 0
 
@@ -140,16 +153,60 @@ async def test_fail_closed_when_approved_pool_down(stack, tmp_path):
 
     await run(stack, "D", str(tmp_path / "failclosed"), docs=8)
     results = json.loads((tmp_path / "failclosed" / "results.json").read_text())
-    reports = [r for r in results["records"] if r["step"] == "report"]
+    records = results["records"]
+    reports = [r for r in records if r["step"] == "report"]
     assert reports
     for r in reports:
-        assert r["outcome"] == "http_503"
+        assert r["outcome"].startswith("http_")
         assert r["headers"].get("x-demo-route") in (None, "vllm-gpu-approved")
-    served = [r for r in results["records"] if r["outcome"] == "served"]
+    # Sensitive risk is judgment work and must fail closed with the approved
+    # pool, not fail over to the CPU MoE.
+    sensitive_risk = [r for r in records if r["step"] == "risk" and r["true_sensitive"]]
+    assert sensitive_risk
+    for r in sensitive_risk:
+        assert r["outcome"].startswith("http_")
+        assert r["headers"].get("x-demo-route") in (None, "vllm-gpu-approved")
+    served = [r for r in records if r["outcome"] == "served"]
     assert served
 
     gov = governance_check(stack.gateway)
     assert gov["clean"] is True
+
+
+@pytest.mark.asyncio
+async def test_judgment_does_not_fall_back_to_cpu(stack, tmp_path):
+    stack.start_stub("config.yaml")
+    # Non-sensitive judgment targets the general GPU pool. Take it away and
+    # risk must fail rather than silently reproduce the all-CPU run the
+    # judgment entries exist to fix.
+    stack.kill_pool("vllm-gpu")
+    summary = await run(stack, "D", str(tmp_path / "judgment-down-gpu"), docs=6)
+    results = json.loads((tmp_path / "judgment-down-gpu" / "results.json").read_text())
+    records = results["records"]
+
+    risk = [r for r in records if r["step"] == "risk" and not r["true_sensitive"]]
+    assert risk
+    assert all(r["outcome"].startswith("http_") for r in risk)
+    assert all(r["headers"].get("x-demo-route") != "vllm-cpu" for r in risk)
+
+    served = [r for r in records if r["outcome"] == "served"]
+    assert served
+    # Extraction (and the sensitive report, which uses the still-healthy
+    # approved pool) keep working.
+    assert any(r["step"].startswith("extract:") for r in served)
+    assert summary["judgment_split"] is True
+
+
+@pytest.mark.asyncio
+async def test_hybrid_without_judgment_entries_keeps_cpu_first(stack, tmp_path):
+    stack.start_stub("config.yaml")
+    summary = await run(stack, "D", str(tmp_path / "legacy"), docs=6, judgment=False)
+    results = json.loads((tmp_path / "legacy" / "results.json").read_text())
+    risk = [r for r in results["records"] if r["step"] == "risk"]
+    assert risk
+    assert routes(risk) == {"vllm-cpu"}
+    assert summary["judgment_split"] is False
+    assert summary["judgment_steps"] == 0
 
 
 @pytest.mark.asyncio

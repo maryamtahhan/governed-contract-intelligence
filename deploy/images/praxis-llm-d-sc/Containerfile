@@ -1,0 +1,104 @@
+# Praxis AI 0.9.0 with the llm_d_sc filter, built from source.
+#
+# The upstream image (ghcr.io/praxis-proxy/ai:v0.9.0) is the correct gateway
+# but has no llm_d_sc filter. The filter is an out-of-tree crate; Praxis AI
+# discovers it through [package.metadata.praxis-filters] and registers it at
+# startup. The build context is produced by ./build.sh:
+#
+#   ai-gateway/                  praxis-proxy/ai at a pinned ref, already
+#                                wired with the filter dependency
+#   ai-gateway/vendor/llm-d-sc-praxis-filter/
+#   validate.yaml                startup validation config
+#
+# This deliberately does not use BuildKit cache mounts: OpenShift's
+# Docker-strategy BuildConfig uses buildah, and a binary build starts from a
+# fresh pod, so cache mounts buy nothing there.
+
+# syntax=docker/dockerfile:1
+
+FROM rust:1.99-alpine3.24 AS builder
+
+ARG PRAXIS_AI_FEATURES=full
+
+# The binary links OpenSSL dynamically. The musl target must therefore not
+# produce a static executable (the Alpine Rust image's default).
+ENV RUSTFLAGS="-C target-feature=-crt-static"
+ENV OPENSSL_STATIC=0
+
+RUN apk add --no-cache \
+      musl-dev \
+      openssl-dev \
+      pkgconf \
+      cmake \
+      make \
+      g++ \
+      protobuf \
+      protobuf-dev
+
+WORKDIR /src
+
+# The context is already a complete, minimally patched ai-gateway tree. Copying
+# it whole keeps the Dockerfile independent of the workspace member list, which
+# changes between ai-gateway releases.
+COPY ai-gateway/ /src/
+
+# Prove the external filter is wired exactly once. A silently unwired build
+# would produce a healthy gateway with no llm_d_sc filter, and the failure would
+# only surface at pod startup.
+RUN set -e; \
+    n=$(grep -c '^llm-d-sc-praxis-filter[[:space:]]*=' /src/server/Cargo.toml || true); \
+    if [ "$n" -ne 1 ]; then \
+      echo "FATAL: expected exactly 1 filter dependency in server/Cargo.toml, found $n" >&2; \
+      exit 1; \
+    fi; \
+    echo "OK: llm_d_sc filter wired into server/Cargo.toml"
+
+# Lower this if the builder pod is OOM-killed. Never switch to a debug build:
+# every latency figure depends on --release. Keep an integer: Cargo rejects a
+# literal "default" value for CARGO_BUILD_JOBS.
+ARG CARGO_BUILD_JOBS=4
+ENV CARGO_BUILD_JOBS=${CARGO_BUILD_JOBS}
+
+RUN cargo build --release -p praxis-ai-proxy \
+      --no-default-features --features "${PRAXIS_AI_FEATURES}" \
+ && cp target/release/praxis-ai /usr/local/bin/praxis-ai
+
+# Validate the real startup path: filter factory construction, chain expansion,
+# cluster alignment, and the llm_d_sc config schema. This performs no DNS and
+# no network I/O (the gRPC channel is lazy).
+COPY validate.yaml /tmp/validate.yaml
+RUN /usr/local/bin/praxis-ai --validate -c /tmp/validate.yaml \
+ && echo "OK: llm_d_sc is registered and the validation config passes"
+
+FROM alpine:3.24
+
+LABEL org.opencontainers.image.source="https://github.com/praxis-proxy/ai" \
+      org.opencontainers.image.description="Praxis AI proxy with the llm_d_sc semantic-classification routing filter" \
+      org.opencontainers.image.licenses="Apache-2.0"
+
+# libcrypto3/libssl3: the system OpenSSL the binary links dynamically.
+# libgcc: the unwinder a dynamically linked musl binary needs.
+RUN apk add --no-cache ca-certificates libcrypto3 libssl3 libgcc \
+    && addgroup -S praxis \
+    && adduser -S -G praxis -h /nonexistent -s /sbin/nologin praxis \
+    && mkdir -p /etc/praxis /var/lib/praxis \
+    && chown praxis:praxis /var/lib/praxis
+
+COPY --chown=root:root --chmod=0444 ai-gateway/LICENSE /usr/share/licenses/praxis-ai/LICENSE
+COPY --chown=root:root --chmod=0444 ai-gateway/NOTICE /usr/share/licenses/praxis-ai/NOTICE
+COPY --chown=root:root --chmod=0444 ai-gateway/integrations/llmd/ext-proc/NOTICE \
+    /usr/share/licenses/praxis-ai/integrations/llmd/ext-proc/NOTICE
+
+COPY --from=builder --chown=root:root --chmod=0555 \
+    /usr/local/bin/praxis-ai /usr/local/bin/praxis-ai
+
+USER praxis:praxis
+
+WORKDIR /etc/praxis
+
+EXPOSE 8080 9901
+
+HEALTHCHECK --interval=5s --timeout=3s --start-period=2s \
+    CMD wget -qO- http://127.0.0.1:9901/healthy || exit 1
+
+ENTRYPOINT ["praxis-ai"]

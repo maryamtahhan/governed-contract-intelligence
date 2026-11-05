@@ -26,23 +26,67 @@ retrieval = [
     "torch>=2.2,<3",
     "transformers>=4.40,<6",
 ]
+# Optional OSS adapters. None of these are on the measured default path; each
+# one is a swap that must be A/B tested (see docs/OPENSOURCE-REUSE.md).
+pii = [
+    "presidio-analyzer>=2.2,<3",
+]
+spans = [
+    "nervaluate>=0.2,<2",
+]
+stats = [
+    "statsmodels>=0.14,<1",
+]
+ranking = [
+    "ranx>=0.3,<1",
+]
+sparse = [
+    "bm25s>=0.2,<1",
+]
+ingest = [
+    "docling>=2.0,<3",
+    "docling-core>=2.0,<3",
+    "transformers>=4.40,<6",
+]
+cache = [
+    "redis>=5.0,<7",
+    "redisvl>=0.3,<1",
+]
+otel = [
+    "opentelemetry-sdk>=1.25,<2",
+    "opentelemetry-exporter-otlp-proto-http>=1.25,<2",
+]
+rag = [
+    "ragas>=0.2,<1",
+    "datasets>=2.20,<5",
+]
 
 [project.scripts]
 hybrid-gendata = "hybrid_demo.pipeline.generate:main"
 hybrid-review = "hybrid_demo.pipeline.review:main"
 hybrid-direct-arm = "hybrid_demo.pipeline.direct:main"
+hybrid-run = "hybrid_demo.pipeline.run:main"
 hybrid-score = "hybrid_demo.evalkit.score:main"
 hybrid-pool = "hybrid_demo.fakepool.server:main"
 hybrid-traceui = "hybrid_demo.traceui.server:main"
+hybrid-ui = "hybrid_demo.ui.server:main"
 hybrid-specialist = "hybrid_demo.specialist.server:main"
 hybrid-retrieval-eval = "hybrid_demo.retrieval.evaluate:main"
 hybrid-retrieval-e2e = "hybrid_demo.retrieval.endtoend:main"
+hybrid-pool-sim = "hybrid_demo.fakepool.llmd_sim:main"
+hybrid-index = "hybrid_demo.retrieval.index:main"
+hybrid-bench = "hybrid_demo.bench:main"
+hybrid-batch = "hybrid_demo.pipeline.batch:main"
+hybrid-pii = "hybrid_demo.pii:main"
+hybrid-eval-contract-steps = "hybrid_demo.evalkit.contract_steps:main"
 
 [dependency-groups]
 dev = [
     "pytest>=8.2,<9",
     "pytest-asyncio>=0.23,<2",
     "ruff>=0.5,<1",
+    # Tiny, pure-Python; keeps the offset-scoring adapter exercised in CI.
+    "nervaluate>=0.2,<2",
 ]
 
 [build-system]
