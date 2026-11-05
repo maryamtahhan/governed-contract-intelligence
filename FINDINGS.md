@@ -676,9 +676,10 @@ manifest keeps the public `v0.1.0` image and its TCP probe so other clusters
 can deploy without building; `oc apply -k manifests` restores that image, and
 the runbook has the build-and-pin commands.
 
-Also relevant now: the **sensitivity taxonomy ships built in**
-(`classifiers/sensitivity.json`: PUBLIC/INTERNAL/CONFIDENTIAL/REGULATED/
-NEVER_EGRESS, anchor-topk-mean method). A cheap, high-value experiment:
+Also relevant now: the **sensitivity taxonomy ships built into the
+llm-d-sc checkout** (upstream `classifiers/sensitivity.json`, not this
+repo: PUBLIC/INTERNAL/CONFIDENTIAL/REGULATED/NEVER_EGRESS,
+anchor-topk-mean method). A cheap, high-value experiment:
 run it against our CUAD documents and measure agreement with the
 pipeline's PII screen — if it agrees, the screen can move into the
 request path (with the fail-closed semantics preserved by the approved-set
