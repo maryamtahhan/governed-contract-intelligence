@@ -255,12 +255,19 @@ scripts/demo/pull-the-plug.sh [--restore]   # scale a GPU pool to zero mid-run
 scripts/demo/blocked-action.sh     # sandbox egress denials (after 03 + port-forward)
 ```
 
-Arms are swapped with `oc -n openshell-demo set env deploy/praxis
-PRAXIS_CONFIG=/etc/praxis/arm-a.yaml && oc -n openshell-demo rollout status
-deploy/praxis`. NetworkPolicies restrict the pools to the trace-ui relays
-(the V15 enforcement layer). The OpenClaw sandbox keeps its egress policy:
-praxis (read-write) and read-only api.github.com; everything else denied and
-logged (`openshell logs`).
+Routing configs are swapped by **policy name** (`hybrid`, `all-gpu`, …) —
+the one catalog of names, aliases and manifests is
+`demo/src/hybrid_demo/configs.json`, with `scripts/configs.sh` as its shell
+adapter. `scripts/cluster/arms.sh` is the measured path: `CONFIGS="all-gpu
+hybrid"` selects, the default runs the full matrix, and `hybrid-run --config
+hybrid` is the CLI form. A manual swap points the deployment at the manifest
+behind the name — the files keep their historical `arm-*` filenames for
+recorded-evidence compatibility, so `all-gpu` is
+`oc -n openshell-demo set env deploy/praxis PRAXIS_CONFIG=/etc/praxis/arm-a.yaml`
+— then `oc -n openshell-demo rollout status deploy/praxis`. NetworkPolicies
+restrict the pools to the trace-ui relays (the V15 enforcement layer). The
+OpenClaw sandbox keeps its egress policy: praxis (read-write) and read-only
+api.github.com; everything else denied and logged (`openshell logs`).
 
 The trace UI has no Route in the base install — the dashboard holds contract
 questions and responses. To publish it, set a token and opt in:
@@ -378,7 +385,7 @@ runs/cuad-test/          held-out test-split evidence (hybrid variants) + compar
 runs/gpu-measured/       g5 measured-GPU evidence
 runs/retrieval/          embedder evals, corrections, e2e runs (FINDINGS §11)
 docs/                    architecture + pipeline diagrams (SVG), OCTO business-case
-                         doc (v0.2), OSS-reuse map, routing taxonomy, review guide
+                         doc (v0.3), OSS-reuse map, routing taxonomy, review guide
 sandbox/policy.yaml      OpenShell sandbox egress policy (praxis + github RO)
 FINDINGS.md              the measurement record — read before quoting numbers
 DECISIONS.md             how measurement changed the approach, in order

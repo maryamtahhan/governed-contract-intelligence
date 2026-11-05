@@ -1,6 +1,7 @@
 # Handoff — config names, routes, models, and hardware
 
-Last updated: **2026-11-05**. All current changes are uncommitted.
+Last updated: **2026-11-05**, refreshed after the image publish (see "What
+changed on 2026-11-05, afternoon" near the end).
 
 This document exists because the names are overloaded. A run directory, a
 config name, a route name, a model name, and actual hardware are **five
@@ -296,7 +297,7 @@ Operational hardening of the stage UI's live mode (same day, review follow-up):
 Validation at handoff:
 
 ```text
-135 passed
+193 passed (green in CI at commit eacc019, the image switch)
 ruff OK (touched files)
 shell syntax OK
 SVG OK
@@ -306,10 +307,40 @@ B = runs/direct/gpu-moe
 /api/configs = all-gpu, gpu-small, round-robin, hybrid
 ```
 
+## What changed on 2026-11-05, afternoon
+
+- **The gci-* images are published.** The `publish-images` workflow (run
+  `42043729532`, manual dispatch from an amd64 runner) pushed
+  `quay.io/mtahhan/gci-praxis:v0.9.0`,
+  `quay.io/mtahhan/gci-llm-d-sc:main-e660fff` and the mirrored modelcar.
+  The digests — the reproducibility boundary for measured runs — are
+  recorded in FINDINGS §12 and
+  `deploy/images/praxis-llm-d-sc/README.md`.
+- **The stack runs them** (commit `eacc019`): base manifests, the Linux
+  compose file and the llm-d-sc readiness probe (now `grpc:`) switched to
+  the published pair; the opt-in `deploy/openshift/praxis-0.9.0/` overlay is
+  retired — base **is** the 0.9.0 stack now. Live clusters still on the
+  v0.7.0 pair roll with `oc apply -k manifests`. CI green at that commit.
+- **Corpus upload status codes travel on the error, not in its wording.**
+  `CorpusError` now carries `status_code` (413 for every size cap, 400 for
+  unreadable/binary/empty), and the route raises that code directly instead
+  of string-matching the message — a reworded size refusal can no longer
+  degrade to a 400. Three new tests cover it.
+- **Classifier removal from the default stack — in flight, uncommitted.**
+  llm-d-sc is dropped from the manifests and the Linux compose;
+  `config.yaml` is rewritten as pinned CPU-first routing (the measured
+  behaviour — 1,200 of 1,201 steps labelled MEDIUM — expressed directly,
+  no gRPC hop); `arm-b.yaml` leaves the shipped configmap (the file stays).
+  The praxis stub's config expectations and the two e2e fallback tests
+  still assert the old label-routed config and are red until that work
+  updates them. The classifier and modelcar images stay published for the
+  contract-step experiment (`docs/contract-step-routing.md`).
+
 ## Open decisions
 
-**Status 2026-11-05:** item 1 is still open. Items 2-6 were completed; the text
-below is retained as the original rationale.
+**Status 2026-11-05:** only item 1 is open. Items 2-6 are **done** — the
+sections below are the original rationale, kept for the record, not a
+backlog.
 
 ### 1. Decide whether `all-gpu` and `gpu-small` should be renamed again
 
@@ -425,8 +456,34 @@ Expected: `hybrid hybrid D`.
 
 ## One-sentence summary for tomorrow
 
-Config metadata is now one file (`demo/src/hybrid_demo/configs.json`), the
-dashboard and guide show the recorded pool hardware beside the config, and the
-report/trace labels say config; the only naming decision left is whether to
-rename `all-gpu` and `gpu-small` to behavior-only names (`one-pool`,
-`small-first`) with every old name kept as an alias.
+Config metadata is one file (`demo/src/hybrid_demo/configs.json`), the
+dashboard and guide show the recorded pool hardware beside the config, the
+report/trace labels say config, the rebuilt gateway and classifier are
+published as quay images with the base manifests switched, and the only
+naming decision left is whether to rename `all-gpu` and `gpu-small` to
+behavior-only names (`one-pool`, `small-first`) with every old name kept as
+an alias.
+
+## Next actions, in order
+
+1. **Land the in-flight classifier removal** (manifests, compose, workflow
+   and the FINDINGS note are in the working tree; the praxis stub's config
+   expectations and the e2e fallback tests still assert the old
+   label-routed `config.yaml`).
+2. **Rebuild ROSA** from `deploy/openshift/rosa/README.md`: g5 capacity
+   probe, both machine pools in one AZ, GPU operator,
+   `scripts/cluster/cpu-topology.sh` bind lists into `pools-cpu.yaml`,
+   storage + seeders, `oc apply -k deploy/openshift/rosa`, specialist
+   image rebuild (staging-dir `--from-dir`), then the 2-document smoke run
+   (1 sensitive + 1 non-sensitive, config hybrid).
+3. **Rerun the 200-document matrix** (`DOCS=200 scripts/cluster/arms.sh`)
+   plus the three direct baselines — this turns the D15-B judgment-routing
+   ~6x GPU-saving estimate into a measured number. Do not claim B numbers
+   until this is done.
+4. **Contract-step taxonomy eval on the same cluster**
+   (`hybrid-eval-contract-steps`; pass = same-document control 4/4 —
+   `docs/contract-step-routing.md`), then the CUAD test-split specialist
+   through-stack rerun at lower concurrency (FINDINGS §9).
+5. **Local, no cluster needed:** the Presidio A/B on a labelled sample and
+   the docling-offsets A/B on the D11 regression set (D14's next measured
+   actions), and the embedder-tier call (D6).
