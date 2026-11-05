@@ -8,5 +8,12 @@ demo/dist/
 /tmp/
 .pytest_cache/
 .ruff_cache/
-# Generated at stack start from manifests/praxis/config.yaml.
-manifests/praxis/live.yaml
+# Generated at stack start from manifests/base/praxis/config.yaml.
+manifests/base/praxis/live.yaml
+# Regenerable bench-prompt datasets (demo/tools/bench_prompts.py).
+runs/cuad-test/*-prompts.jsonl
+# Scratch reports from local arms.sh runs at the runs/ root; committed
+# evidence lives in per-run directories (runs/README.md).
+/runs/report.md
+/runs/report.json
+/runs/report.html
