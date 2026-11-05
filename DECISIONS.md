@@ -175,3 +175,67 @@ docling offsets on the D11 regression set. Evidence:
 `docs/OPENSOURCE-REUSE.md`, FINDINGS §16, 179 tests green; explicitly
 selected optional backends fail with an install/URL error, while `auto`
 modes fall back and record which backend ran.
+
+**D15 — Routing claims scoped to what the classifier measured** (Nov 4–5)
+Trigger: the ROSA 200-document hybrid run — the only config with 0 sensitive
+violations — ran as **all-CPU behind a governance gate**, not complexity
+routing: llm-d-sc labelled 1,200 of 1,201 steps MEDIUM, and the specialist
+composite's `--forward-to` pointed at the CPU MoE, so only the
+cross-document report reached the GPU. The 54× GPU saving is the same fact
+as the 99.9% CPU share: moving the ~600 forwarded generative calls to GPU
+would give back most of the cost headline. Change (decided 2026-11-05):
+**(A)** reword, no rerun — every description of the measured run now says
+"CPU-first policy with the GPU reserved for cross-document synthesis",
+never semantic/complexity routing (README, FINDINGS §15.1/§15.5, the OCTO
+doc, the stage walkthrough, `runs/rosa-200/`); **(B)** stage-aware judgment
+routing implemented — pinned praxis listeners (`:8086` general judgment →
+`vllm-gpu`, `:8087` sensitive judgment → `vllm-gpu-approved`, no classifier,
+no CPU failover, so a GPU outage fails closed), risk/report steps choose
+the judgment entries, sensitivity still beats stage, summaries record
+`stage_routes`/`judgment_split`, trace UI badges `JUDGE`/`SENS-JUDGE`.
+Alongside: the contract-step taxonomy candidate
+(`classifiers/contract-step.json` + the `hybrid-eval-contract-steps`
+offline harness) and a reproducible Praxis 0.7.5 / ai-gateway 0.9.0
+rebuild with the out-of-tree `llm_d_sc` filter
+(`deploy/images/praxis-llm-d-sc/`) as the path to real semantic routing.
+Status: A done; B built and tested but **not measured** — ROSA was torn
+down 2026-11-04, and the ~6× estimate (~201 GPU calls, ~0.33 GPU-s/doc)
+is an estimate, not a result; do not claim B numbers until it is rerun.
+Warnings that survive the rerun: do not just repoint the specialist's
+`--forward-to` (it forwards outside praxis and would bypass the approved
+set); the pool relay's `X-Demo-Route` hides the composite's real backend;
+and the 27 failed documents are a specialist termination-extraction issue,
+not a routing issue. Evidence: `runs/rosa-200/` (summary, results,
+classifier replay), FINDINGS §15.5, `docs/contract-step-routing.md`,
+`deploy/images/praxis-llm-d-sc/`, `deploy/openshift/praxis-0.9.0/`. The
+full analysis with the option table and reproduction snippets is
+preserved in git history (`docs/handoff-2026-11-04-rosa-routing.md` at
+commit `8798da3`).
+
+**D16 — CPU model choices checked against the vLLM xeon6 catalog** (Nov 4)
+Trigger: a scan of recipes.vllm.ai (221 recipes, 40 `hw=xeon6` renderings)
+found the deployed `Qwen3.5-35B-A3B` is the exact xeon6 recipe — but BF16
+only, with **no CPU-quantized variant** (the GPTQ/FP8 checkpoints render
+for XPU, not xeon6) — while two deployed models (`Qwen3.5-9B`,
+`Qwen2.5-1.5B`) have no xeon6 recipe at all. Change: recommendation only,
+**no manifest changed**. Keep `Qwen3.5-35B-A3B` (the cpu-real-moe flags
+already match the rendered recipe; `VLLM_ENGINE_READY_TIMEOUT_S ≥ 1800`
+stands); benchmark `openai/gpt-oss-20b` (3.6B active, native MXFP4,
+~16 GB — fits a 16-core/64 GiB pool with real KV headroom) as the
+CPU-synthesis challenger through the CUAD scorer; `Qwen3-30B-A3B` is the
+conservative MoE fallback (no experimental Mamba path); if the dense
+fallback is ever used for a quoted comparison, switch to `Qwen3-14B` or
+say plainly the 9B is off-catalog. The CUAD specialist and the embedders
+keep their custom serving — vLLM has no recipes for extractive QA or
+those embedders. Warnings: the xeon6 profile is a **multi-socket** node,
+so a recipe is a validated flag set, not a capacity claim for our
+16-core NUMA-local pool slices — never cite the 40 recipes as "supported
+on our CPU pool"; changing `--served-model-name` breaks the relays (all
+CPU pools serve as `Semantic-Qwen`); cold start, not steady state, is the
+rollout risk (seed caches, long readiness timeouts). Status: nothing
+promoted — this repo's rule is measured, not catalog-based; ranked test
+order: 35B-A3B (incumbent) → gpt-oss-20b → Qwen3-30B-A3B. Evidence: the
+2026-11-04 catalog scan (recipes.vllm.ai, `hw=xeon6`);
+`deploy/openshift/cpu-real*/`; FINDINGS §10–§11. The full review with
+rendered commands and the test plan is preserved in git history
+(`docs/handoff-2026-11-04-cpu-model-recipes.md` at commit `8798da3`).

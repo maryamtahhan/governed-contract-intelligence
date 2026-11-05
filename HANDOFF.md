@@ -219,7 +219,7 @@ Do not say "A is direct" or "B is through-stack" without naming the run.
   remains the implementation behind it.
 - Added `runs/README.md` and `runs/rosa-200/README.md`.
 - Added naming notes to `README.md`, `FINDINGS.md`, and
-  `docs/octo-demo-v0.2.md`.
+  `docs/octo-demo-v0.3.md` (then named v0.2).
 - Added `demo/tests/test_run_cli.py` tests for target dispatch and aliases.
 - Added/updated `docs/stage-review-walkthrough.html` sections explaining
   batch runner, endpoint, relay, praxis, pool, and config names.
