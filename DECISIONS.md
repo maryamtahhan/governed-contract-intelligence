@@ -207,7 +207,7 @@ set); the pool relay's `X-Demo-Route` hides the composite's real backend;
 and the 27 failed documents are a specialist termination-extraction issue,
 not a routing issue. Evidence: `runs/rosa-200/` (summary, results,
 classifier replay), FINDINGS §15.5, `docs/contract-step-routing.md`,
-`deploy/images/praxis-llm-d-sc/`, `deploy/openshift/praxis-0.9.0/`. The
+`deploy/images/praxis-llm-d-sc/`. The
 full analysis with the option table and reproduction snippets is
 preserved in git history (`docs/handoff-2026-11-04-rosa-routing.md` at
 commit `8798da3`).

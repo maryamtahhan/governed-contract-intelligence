@@ -18,7 +18,7 @@ spec:
       automountServiceAccountToken: false
       initContainers:
         - name: modelcar
-          image: quay.io/rmalone/llm-d-sc-modelcar:complexity
+          image: quay.io/mtahhan/gci-llm-d-sc-modelcar:complexity
           command: ["/bin/sh", "-c", "cp -R /models/. /shared/"]
           securityContext:
             allowPrivilegeEscalation: false
@@ -33,7 +33,7 @@ spec:
               mountPath: /shared
       containers:
         - name: llm-d-sc
-          image: quay.io/rmalone/llm-d-sc:v0.1.0
+          image: quay.io/mtahhan/gci-llm-d-sc:main-e660fff
           env:
             - name: LLM_D_SC_MODEL_DIR
               value: /models
@@ -45,18 +45,14 @@ spec:
             - name: grpc
               containerPort: 50051
               protocol: TCP
-          # TCP readiness, not the standard gRPC health probe: upstream main
-          # serves grpc.health.v1 (PR #42, 2026-10-08), but the pinned
-          # v0.1.0 image was built from the release tag, which predates it
-          # and contains no health service. A `grpc:` probe against this
-          # image fails and the pod never becomes Ready. The process logs
-          # "READY (resident Candle classifier loaded and warmed)"; that log
-          # is not exposed as a probe. Re-check the image before changing
-          # this to grpc. Until then, praxis's llm_d_sc 500 ms timeout with
-          # `default_cluster` is what protects a request that arrives before
-          # the model is warm (FINDINGS §7).
+          # gRPC readiness (standard grpc.health.v1, upstream PR #42): the
+          # pinned upstream e660fff binds the gRPC listener only after the
+          # resident classifier is loaded and warmed, and the health service
+          # reports SERVING from that point — so a passing probe means a warm
+          # model and a live gRPC stack, not just a bound socket. The previous
+          # v0.1.0 image predates the health service and needed a TCP probe.
           readinessProbe:
-            tcpSocket:
+            grpc:
               port: grpc
             initialDelaySeconds: 3
             periodSeconds: 2

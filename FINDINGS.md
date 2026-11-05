@@ -395,6 +395,30 @@ flightpath k8s (6 huge CPU nodes, no accelerators); g5.12xlarge AMI kept
   `runs/cuad-test/`.
 - The mixed-split numbers in §3 read optimistic next to the held-out split
   (MoE 0.80 → 0.712): quote test-split numbers only.
+- **CPU model choices vs the vLLM xeon6 catalog — a ranked test plan, not a
+  change (2026-11-04 scan)**: recipes.vllm.ai (221 recipes, 40 `hw=xeon6`
+  renderings) shows the deployed `Qwen3.5-35B-A3B` is the exact xeon6
+  recipe — BF16 only, **no CPU-quantized variant** (the GPTQ/FP8 checkpoints
+  render for XPU, not xeon6) — while `Qwen3.5-9B` and `Qwen2.5-1.5B` have
+  no xeon6 recipe at all. No manifest changed; this repo's rule is measured,
+  not catalog-based. Plan: keep `Qwen3.5-35B-A3B` (the cpu-real-moe flags
+  already match the rendered recipe; `VLLM_ENGINE_READY_TIMEOUT_S ≥ 1800`
+  stands); benchmark `openai/gpt-oss-20b` (3.6B active, native MXFP4,
+  ~16 GB — fits a 16-core/64 GiB pool with real KV headroom) as the
+  CPU-synthesis challenger through the CUAD scorer; `Qwen3-30B-A3B` is the
+  conservative MoE fallback (no experimental Mamba path); if the dense
+  fallback is ever used for a quoted comparison, switch to `Qwen3-14B` or
+  say plainly the 9B is off-catalog. The CUAD specialist and the embedders
+  keep their custom serving — vLLM has no recipes for extractive QA or
+  those embedders. Warnings for any test: the xeon6 profile is a
+  **multi-socket** node, so a recipe is a validated flag set, not a capacity
+  claim for our 16-core NUMA-local pool slices — never cite the 40 recipes
+  as "supported on our CPU pool"; changing `--served-model-name` breaks the
+  relays (all CPU pools serve as `Semantic-Qwen`); cold start, not steady
+  state, is the rollout risk (seed caches, long readiness timeouts).
+  Ranked test order: 35B-A3B (incumbent) → gpt-oss-20b → Qwen3-30B-A3B.
+  The full review with rendered commands is preserved in git history
+  (`docs/handoff-2026-11-04-cpu-model-recipes.md` at commit `8798da3`).
 - Open items: **the embedding-tier call — all inputs measured** (§11:
   corrected numbers + dinghy-8B; everything ties at the top; decide on
   cost/provenance/simplicity); **specialist + specialist-moe CUAD
@@ -732,6 +756,25 @@ alternative to our plain Deployments + config-watcher hot-swaps), a
 sensitivity-is-a-constraint matrix), and a **demos archive** (a natural
 contribution target for this demo once restructured).
 
+Executed 2026-11-05: the rebuild and the classifier are published images and
+the base manifests carry them. Gateway
+`quay.io/mtahhan/gci-praxis:v0.9.0`
+(`sha256:2187ab818efab9a8f3d1f911190d47fad960888bada7d3db8a973d3ad70ac992`),
+classifier `quay.io/mtahhan/gci-llm-d-sc:main-e660fff`
+(`sha256:d94c1f7226bfbaeb5a300f0efdbab0e8a8988fc16af7fd80cff0e008a11fa3e1`),
+modelcar mirrored unchanged
+(`sha256:299874af83c565d8435c8e061b87da1754cdd918ca15e977a7fecbf3aa17f491`,
+byte-identical to the source). All three come from the `publish-images`
+workflow (GitHub-hosted amd64 runner; the dev machines are arm64). The
+llm-d-sc readiness probe switched from TCP to `grpc:`: upstream `e660fff`
+binds its gRPC listener only after the resident classifier loads and warms
+and `grpc.health.v1` reports SERVING from that point, so the probe gates on
+model warmth, not just a bound socket. The digests above are the
+reproducibility boundary for measured runs on the new pair. The opt-in
+`deploy/openshift/praxis-0.9.0/` overlay is retired (base now carries
+v0.9.0); live clusters run the older pair until rolled, and the §12 warning
+stands: treat the rebuilt stack as new and re-run the measurement arms.
+
 ## 13. Measurement-compatibility notes (2026-11-03 corrections)
 
 A review pass (external) fixed several real defects in the measurement
@@ -992,6 +1035,20 @@ directory, workers and cache; praxis's `min_score` cannot separate
 margins of 0.3-0.99. The demo claim is therefore containment plus
 GPU-first economics, not "the AI decides what is hard".
 
+Follow-on (2026-11-05): **llm-d-sc was removed from the default stack.**
+The judgment entries (:8086/:8087) already route risk/report stage-aware
+without a classifier, and everything else the classifier saw was labelled
+MEDIUM -> CPU anyway, so the general (:8080) and sensitive (:8083)
+listeners are now **pinned CPU-first** (general fails over to any pool
+with the visible degraded flag; sensitive keeps the approved-only
+failover set, preserving fail-closed). This is a config change past the
+recorded runs: built and tested, **not measured** — every number in §15
+came from the classifier-in-path config. The classifier-routed arm B
+config and the llm-d-sc Deployment are preserved in git history
+(`manifests/base/praxis/arm-b.yaml`, `manifests/base/llm-d-sc.yaml` at
+commit `aa080e9`); the contract-step taxonomy remains the measured path
+back to semantic routing (`docs/contract-step-routing.md`).
+
 ### 15.6 Gaps this round leaves open
 
 - CPU core-seconds per document (above). GPU time and wall time are
@@ -1005,6 +1062,15 @@ GPU-first economics, not "the AI decides what is hard".
   all per-document work had run. The fix is one compact line per document
   (37.5k chars, the size the stacked run already proved), with a
   regression test.
+- **Warnings that survive any routing rerun** (from the 2026-11-05 routing
+  review; the analysis with the option table is preserved in git history,
+  `docs/handoff-2026-11-04-rosa-routing.md` at commit `8798da3`): do not
+  just repoint the specialist composite's `--forward-to` at another pool —
+  it forwards outside praxis and would bypass the approved set; the pool
+  relay's `X-Demo-Route` header hides the composite's real backend, so read
+  the composite's own logs for where forwarded calls actually went; and the
+  27 failed documents are a specialist termination-extraction issue, not a
+  routing issue — do not count them against any routing change.
 
 ### 15.7 Direct baselines (no router, same 200 documents)
 

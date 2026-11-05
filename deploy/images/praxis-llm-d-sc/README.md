@@ -1,12 +1,13 @@
 # praxis-ai with the llm_d_sc filter
 
-**Image name:** `quay.io/mtahhan/gci-praxis:v0.9.0` (not pushed yet)
+**Image name:** `quay.io/mtahhan/gci-praxis:v0.9.0` — published 2026-11-05,
+digest `sha256:2187ab818efab9a8f3d1f911190d47fad960888bada7d3db8a973d3ad70ac992`
 
-The deployed gateway is currently
-`quay.io/rmalone/praxis-ai-llm-d-sc:v0.7.0`. It is a custom Praxis build that
-contains the out-of-tree [`llm_d_sc` filter][filter]. Upstream
-`ghcr.io/praxis-proxy/ai` does not contain that filter, so updating the base
-image alone would silently remove semantic classification from the gateway.
+A custom Praxis build containing the out-of-tree [`llm_d_sc` filter][filter].
+Upstream `ghcr.io/praxis-proxy/ai` does not contain that filter, so updating
+the base image alone would silently remove semantic classification from the
+gateway. The previous published build was
+`quay.io/rmalone/praxis-ai-llm-d-sc:v0.7.0` (Praxis 0.7.0).
 
 This directory is the reproducible path to the current upstream stack:
 
@@ -101,10 +102,22 @@ quay robot account with push access to the three `quay.io/mtahhan/gci-*`
 repositories. Each job writes the pushed digest into the run summary; record
 that digest, not the tag, for measured runs.
 
+Published 2026-11-05 (run 42043729532):
+
+| Image | Digest |
+| --- | --- |
+| `quay.io/mtahhan/gci-praxis:v0.9.0` | `sha256:2187ab818efab9a8f3d1f911190d47fad960888bada7d3db8a973d3ad70ac992` |
+| `quay.io/mtahhan/gci-llm-d-sc:main-e660fff` | `sha256:d94c1f7226bfbaeb5a300f0efdbab0e8a8988fc16af7fd80cff0e008a11fa3e1` |
+| `quay.io/mtahhan/gci-llm-d-sc-modelcar:complexity` | `sha256:299874af83c565d8435c8e061b87da1754cdd918ca15e977a7fecbf3aa17f491` (mirror, byte-identical to the source) |
+
 ## Switching the manifests
 
-Do not point the base manifests at the new tag until the image exists in the
-registry. Once it does:
+The base manifests point at this image (since 2026-11-05) and the opt-in
+`deploy/openshift/praxis-0.9.0/` overlay is retired — base is the 0.9.0
+stack now. A live cluster still running the v0.7.0 pair rolls with
+`oc apply -k manifests` (or its own overlay), which lands the images, the
+mirrored modelcar and the llm-d-sc `grpc:` readiness probe together. To move
+only the gateway:
 
 ```bash
 oc -n openshell-demo set image deploy/praxis \
