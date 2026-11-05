@@ -346,8 +346,9 @@ def create_app(run_dir: Path, data_dir: Path, endpoint: str | None,
                 return documents_from_archive(str(archive.get("name") or "corpus"),
                                               decode_archive(str(archive.get("data") or "")))
         except CorpusError as e:
-            too_big = "limit" in str(e) or "characters" in str(e)
-            raise HTTPException(413 if too_big else 400, str(e)) from e
+            # The code travels on the error (413 = too big, 400 = not
+            # loadable); it must not be inferred from the message text.
+            raise HTTPException(e.status_code, str(e)) from e
         raise HTTPException(400, "send `files` or `archive`")
 
     @app.post("/api/corpus/stream")

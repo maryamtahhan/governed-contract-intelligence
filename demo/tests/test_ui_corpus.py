@@ -121,16 +121,43 @@ def test_decode_archive_returns_the_raw_bytes():
 def test_decode_archive_refuses_the_encoded_size_before_decoding(monkeypatch):
     monkeypatch.setattr(corpus, "MAX_ARCHIVE_BYTES", 1024)
     # "A" is valid base64, so only the pre-decode cap can refuse this.
-    with pytest.raises(corpus.CorpusError, match="base64 characters"):
+    with pytest.raises(corpus.CorpusError, match="base64 characters") as e:
         corpus.decode_archive("A" * 2000)
+    assert e.value.status_code == 413
 
 
 def test_decode_archive_refuses_the_decoded_size(monkeypatch):
     monkeypatch.setattr(corpus, "MAX_ARCHIVE_BYTES", 8)
-    with pytest.raises(corpus.CorpusError, match="bytes"):
+    with pytest.raises(corpus.CorpusError, match="bytes") as e:
         corpus.decode_archive(base64.b64encode(b"123456789").decode())
+    assert e.value.status_code == 413
 
 
 def test_decode_archive_rejects_non_base64():
-    with pytest.raises(corpus.CorpusError, match="not valid base64"):
+    with pytest.raises(corpus.CorpusError, match="not valid base64") as e:
         corpus.decode_archive("this is not base64 !!!")
+    assert e.value.status_code == 400
+
+
+def test_size_refusals_carry_the_status_not_a_keyword():
+    # The route once inferred 413 by matching words ("limit", "characters")
+    # in the message; a size refusal whose wording changed would have been
+    # answered with a 400. The code now travels on the error itself, so
+    # these pass whatever the message says.
+    for message in ("the archive is 20,000,001 bytes",
+                    "that upload cannot fit",
+                    "too much"):
+        assert corpus.CorpusError(message).status_code == 400
+        assert corpus.CorpusError(message, status_code=413).status_code == 413
+
+
+def test_the_batch_caps_are_size_refusals(monkeypatch):
+    monkeypatch.setattr(corpus, "MAX_DOCS", 1)
+    monkeypatch.setattr(corpus, "MAX_TOTAL_CHARS", 4)
+    with pytest.raises(corpus.CorpusError, match="documents found") as e:
+        corpus.documents_from_files([
+            {"name": "a.txt", "text": "one"}, {"name": "b.txt", "text": "two"}])
+    assert e.value.status_code == 413
+    with pytest.raises(corpus.CorpusError, match="characters") as e:
+        corpus.documents_from_files([{"name": "a.txt", "text": "too long"}])
+    assert e.value.status_code == 413
