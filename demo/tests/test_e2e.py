@@ -46,9 +46,15 @@ async def run(stack, arm: str, out: str, docs: int = 12, judgment: bool = True) 
 
 
 async def send(stack, entry: str, prompt: str) -> httpx.Response:
+    bases = {
+        "general": stack.gateway,
+        "sensitive": stack.sensitive_gateway,
+        "judgment": stack.judgment_gateway,
+        "sensitive-judgment": stack.sensitive_judgment_gateway,
+    }
     async with httpx.AsyncClient(timeout=120) as client:
         return await client.post(
-            f"{stack.gateway if entry == 'general' else stack.sensitive_gateway}/v1/chat/completions",
+            f"{bases[entry]}/v1/chat/completions",
             json={"model": "Semantic-Qwen", "temperature": 0, "max_tokens": 48,
                   "messages": [{"role": "user", "content": prompt}]},
         )
@@ -102,36 +108,45 @@ async def test_arm_d_full_matrix(stack, tmp_path):
 async def test_pull_the_plug_fallback_and_recovery(stack, tmp_path):
     stack.start_stub("config.yaml")
 
-    resp = await send(stack, "general", REASONING_PROMPT)
-    assert resp.status_code == 200
-    assert resp.headers["x-demo-route"] == "vllm-gpu"
-    assert "x-praxis-fallback" not in resp.headers
-
-    stack.kill_pool("vllm-gpu")
+    # The general entry is a CPU-first pin: no classifier, no GPU hop for
+    # single-document work, whatever the prompt shape.
     resp = await send(stack, "general", REASONING_PROMPT)
     assert resp.status_code == 200
     assert resp.headers["x-demo-route"] == "vllm-cpu"
+    assert "x-praxis-fallback" not in resp.headers
+
+    # Pull the CPU plug: the general entry degrades onto any pool with the
+    # visible fallback flag.
+    stack.kill_pool("vllm-cpu")
+    resp = await send(stack, "general", REASONING_PROMPT)
+    assert resp.status_code == 200
+    assert resp.headers["x-demo-route"] == "vllm-gpu"
     assert resp.headers.get("x-praxis-fallback") == "true"
 
+    # The judgment entry has no CPU failover: with the GPU pool down a
+    # judgment request fails closed even though the CPU pool is healthy.
+    stack.start_pool("vllm-cpu")
+    stack.kill_pool("vllm-gpu")
+    resp = await send(stack, "judgment", REASONING_PROMPT)
+    assert resp.status_code != 200
+    stack.start_pool("vllm-gpu")
+
+    # Recovery: the CPU pool back means the general entry serves from CPU
+    # again with no degraded flag.
     resp = await send(stack, "general", SIMPLE_PROMPT)
     assert resp.status_code == 200
     assert resp.headers["x-demo-route"] == "vllm-cpu"
     assert "x-praxis-fallback" not in resp.headers
 
-    # This test is about the general entry's CPU failover; keep the legacy
-    # stage-agnostic path so the GPU-down judgment policy does not mask it.
-    summary = await run(stack, "D", str(tmp_path / "plug"), docs=6, judgment=False)
-    assert summary["errors"] == 0
-
-    stack.start_pool("vllm-gpu")
-    resp = await send(stack, "general", REASONING_PROMPT)
-    assert resp.status_code == 200
-    assert resp.headers["x-demo-route"] == "vllm-gpu"
-    assert "x-praxis-fallback" not in resp.headers
-
-    recovered = await run(stack, "D", str(tmp_path / "recovered"), docs=6, judgment=False)
-    assert recovered["fallback"] == 0
-    assert recovered["errors"] == 0
+    # A run while the CPU pool is down stays error-free: per-document work
+    # degrades onto the GPU, sensitive work degrades only onto the approved
+    # pool. (The fake pools' tiered error rates can still add pool-level
+    # fallbacks, so the flag is asserted on the entry, not the run total.)
+    stack.kill_pool("vllm-cpu")
+    degraded = await run(stack, "D", str(tmp_path / "plug"), docs=6, judgment=False)
+    assert degraded["errors"] == 0
+    assert degraded["fallback"] > 0
+    stack.start_pool("vllm-cpu")
 
 
 @pytest.mark.asyncio
@@ -139,28 +154,46 @@ async def test_fail_closed_when_approved_pool_down(stack, tmp_path):
     stack.start_stub("config.yaml")
 
     stack.kill_pool("vllm-gpu-approved")
-    resp = await send(stack, "sensitive", REASONING_PROMPT)
+    # The sensitive-judgment entry is pinned to the approved pool with no
+    # failover: it fails closed when that pool is down.
+    resp = await send(stack, "sensitive-judgment", REASONING_PROMPT)
     assert resp.status_code != 200
-    assert resp.headers.get("x-demo-route") in (None, "vllm-gpu-approved")
 
-    resp = await send(stack, "sensitive", SIMPLE_PROMPT)
+    # The sensitive entry is CPU-first like the general one; the CPU pool is
+    # within the allowed set for sensitive work, so it keeps serving.
+    resp = await send(stack, "sensitive", REASONING_PROMPT)
     assert resp.status_code == 200
     assert resp.headers["x-demo-route"] == "vllm-cpu"
 
     resp = await send(stack, "general", REASONING_PROMPT)
     assert resp.status_code == 200
-    assert resp.headers["x-demo-route"] == "vllm-gpu"
+    assert resp.headers["x-demo-route"] == "vllm-cpu"
+
+    # With both the CPU pool and the approved pool down, the sensitive entry
+    # fails closed rather than spill to a non-approved pool.
+    stack.kill_pool("vllm-cpu")
+    resp = await send(stack, "sensitive", REASONING_PROMPT)
+    assert resp.status_code != 200
+    stack.start_pool("vllm-cpu")
 
     await run(stack, "D", str(tmp_path / "failclosed"), docs=8)
     results = json.loads((tmp_path / "failclosed" / "results.json").read_text())
     records = results["records"]
+    # Judgment (risk) work goes to the general GPU pool and is served.
+    risk = [r for r in records if r["step"] == "risk" and not r["true_sensitive"]]
+    assert risk
+    for r in risk:
+        assert r["outcome"] == "served"
+        assert r["headers"].get("x-demo-route") == "vllm-gpu"
+    # The report aggregates sensitive documents, so it is sensitive judgment
+    # work: it must fail closed with the approved pool, not fail over.
     reports = [r for r in records if r["step"] == "report"]
     assert reports
     for r in reports:
         assert r["outcome"].startswith("http_")
         assert r["headers"].get("x-demo-route") in (None, "vllm-gpu-approved")
-    # Sensitive risk is judgment work and must fail closed with the approved
-    # pool, not fail over to the CPU MoE.
+    # Sensitive risk is sensitive judgment work on the approved pool: same
+    # fail-closed rule, never the CPU MoE.
     sensitive_risk = [r for r in records if r["step"] == "risk" and r["true_sensitive"]]
     assert sensitive_risk
     for r in sensitive_risk:
@@ -219,15 +252,18 @@ async def test_arm_a_all_gpu(stack, tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_arm_b_gpu_split(stack, tmp_path):
+async def test_arm_b_small_gpu_pin(stack, tmp_path):
     stack.start_stub("arm-b.yaml")
     summary = await run(stack, "B", str(tmp_path / "b"))
-    assert "vllm-gpu-small" in summary["routes"]
-    assert "vllm-gpu" in summary["routes"]
+    # The skeptic's baseline: everything on the small GPU pool. The measured
+    # run behaved this way too - the classifier labelled every per-document
+    # step MEDIUM (FINDINGS §15.5) - so the pin reproduces it without one.
+    assert set(summary["routes"]) == {"vllm-gpu-small"}
     results = json.loads((tmp_path / "b" / "results.json").read_text())
     per_clause = [r for r in results["records"]
                   if r["step"].startswith("extract:") or r["step"] == "classify"]
     assert routes(per_clause) == {"vllm-gpu-small"}
+    assert summary["judgment_split"] is False
 
 
 @pytest.mark.asyncio

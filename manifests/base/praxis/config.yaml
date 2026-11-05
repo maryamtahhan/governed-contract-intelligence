@@ -1,26 +1,30 @@
 # Arm D - the full hybrid stack (default config).
 #
-# Four listeners implement the plan's routing matrix:
-#   - general (:8080):  complexity via llm-d-sc; SIMPLE/MEDIUM -> CPU pool,
-#     COMPLEX/REASONING -> GPU pool; on failure, fail over to any general pool
-#     with X-Praxis-Fallback: true (the visible "degraded" flag).
+# Four listeners implement the plan's routing matrix. None of them consults
+# a classifier: llm-d-sc was removed from the stack on 2026-11-05 because
+# the measured runs showed it labels every per-document step MEDIUM (FINDINGS
+# §15.5) — the routing that actually happened is expressed directly here.
+#   - general (:8080):  pinned CPU-first. On failure, fail over to any
+#     general pool with X-Praxis-Fallback: true (the visible "degraded"
+#     flag).
 #   - sensitive (:8083): the pipeline's PII screen sends documents containing
-#     personal data here. COMPLEX/REASONING -> the approved in-cluster GPU pool
-#     only; SIMPLE/MEDIUM -> the in-cluster CPU pool. Its failover pool
-#     contains ONLY the approved GPU backend, so when that pool is down a
-#     REASONING request fails closed with an explicit error instead of
+#     personal data here. Also pinned CPU-first, but its failover pool
+#     contains ONLY the approved in-cluster GPU backend, so when that pool
+#     is down the request fails closed with an explicit error instead of
 #     spilling to a non-approved pool.
 #   - judgment (:8086) and sensitive-judgment (:8087): stage-aware policy
 #     routing for the judgment steps (risk + report). They are pinned to the
-#     GPU with no classifier and no CPU failover: judgment is the work worth a
-#     GPU, and a rerun must not silently reproduce the all-CPU result. The
-#     sensitive judgment entry pins to the approved GPU only, so it fails
-#     closed if that pool is down.
+#     GPU with no CPU failover: judgment is the work worth a GPU, and a
+#     rerun must not silently reproduce the all-CPU result. The sensitive
+#     judgment entry pins to the approved GPU only, so it fails closed if
+#     that pool is down.
 #
-# Structure follows the proven config in RMalone8/llm-d-sc-demo: Praxis reaches
-# the predictors only through the trace-ui relays (per-pool recording hops),
-# health checks are per cluster, and llm-d-sc gets 500 ms before the default
-# cluster is used.
+# Structure follows the proven config in RMalone8/llm-d-sc-demo: Praxis
+# reaches the predictors only through the trace-ui relays (per-pool
+# recording hops) and health checks are per cluster. The gateway image is
+# the fork that carries the llm_d_sc filter (deploy/images/praxis-llm-d-sc/)
+# — the filter is unused by this config but stays in the image for the
+# contract-step taxonomy experiment (docs/design.md).
 insecure_options:
   allow_private_upstreams: true
 
@@ -131,35 +135,24 @@ filter_chains:
         body: >-
           {"object":"list","data":[{"id":"Semantic-Qwen","object":"model","created":0,"owned_by":"praxis"}]}
       - filter: iterative_request_router
-        initial_step: classify-and-route
+        initial_step: route
         max_iterations: 3
         timeout_ms: 300000
         step_timeout_ms: 120000
         steps:
-          - name: classify-and-route
+          # CPU-first pin, no classifier. The measured ROSA run showed
+          # llm-d-sc labelled 1,200 of 1,201 steps MEDIUM -> CPU (FINDINGS
+          # §15.5), so this pin reproduces the recorded routing without the
+          # gRPC classification hop. Judgment and cross-document report work
+          # goes to the :8086/:8087 entries by stage, not by label.
+          - name: route
             filters:
-              - filter: llm_d_sc
-                endpoint: "llm-d-sc:50051"
-                default_cluster: vllm-cpu
+              - filter: router
                 routes:
-                  - label: SIMPLE
+                  - path_prefix: "/"
                     cluster: vllm-cpu
-                  - label: MEDIUM
-                    cluster: vllm-cpu
-                  - label: COMPLEX
-                    cluster: vllm-gpu
-                  - label: REASONING
-                    cluster: vllm-gpu
-                timeout_ms: 500
-                connect_timeout_ms: 1000
-                min_score: 0.0
-                on_unavailable: default_cluster
-                on_resource_exhausted: default_cluster
-                emit_headers: true
               - filter: load_balancer
                 clusters:
-                  - name: vllm-gpu
-                    endpoints: ["trace-ui:8082"]
                   - name: vllm-cpu
                     endpoints: ["trace-ui:8081"]
             on_result:
@@ -206,35 +199,23 @@ filter_chains:
         body: >-
           {"object":"list","data":[{"id":"Semantic-Qwen","object":"model","created":0,"owned_by":"praxis"}]}
       - filter: iterative_request_router
-        initial_step: classify-and-route
+        initial_step: route
         max_iterations: 3
         timeout_ms: 300000
         step_timeout_ms: 120000
         steps:
-          - name: classify-and-route
+          # CPU-first pin for sensitive documents, no classifier (same
+          # reasoning as the general entry). What makes this entry sensitive
+          # is the failover set below: only the approved GPU pool, so a
+          # request never spills to a pool outside the approved set.
+          - name: route
             filters:
-              - filter: llm_d_sc
-                endpoint: "llm-d-sc:50051"
-                default_cluster: vllm-cpu
+              - filter: router
                 routes:
-                  - label: SIMPLE
+                  - path_prefix: "/"
                     cluster: vllm-cpu
-                  - label: MEDIUM
-                    cluster: vllm-cpu
-                  - label: COMPLEX
-                    cluster: vllm-gpu-approved
-                  - label: REASONING
-                    cluster: vllm-gpu-approved
-                timeout_ms: 500
-                connect_timeout_ms: 1000
-                min_score: 0.0
-                on_unavailable: default_cluster
-                on_resource_exhausted: default_cluster
-                emit_headers: true
               - filter: load_balancer
                 clusters:
-                  - name: vllm-gpu-approved
-                    endpoints: ["trace-ui:8084"]
                   - name: vllm-cpu
                     endpoints: ["trace-ui:8081"]
             on_result:
@@ -245,10 +226,10 @@ filter_chains:
               - default: true
                 done: true
           # Failover for the sensitive entry is restricted to the approved GPU
-          # pool on purpose: a REASONING request fails closed when that pool is
-          # down rather than degrading onto a pool not approved for sensitive
-          # data. (A SIMPLE request whose CPU pool died lands on the approved
-          # GPU pool, which is also within the allowed set.)
+          # pool on purpose: a request fails closed when that pool is down
+          # rather than degrading onto a pool not approved for sensitive
+          # data. (A request whose CPU pool died lands on the approved GPU
+          # pool, which is also within the allowed set.)
           - name: failover
             filters:
               - filter: headers
@@ -270,7 +251,7 @@ filter_chains:
               - default: true
                 done: true
 
-  # Judgment entries: no llm_d_sc, no CPU fallback. The pipeline sends risk
+  # Judgment entries: no CPU fallback. The pipeline sends risk
   # and the cross-document report here by step type, not by model confidence.
   - name: judgment-routing
     filters:

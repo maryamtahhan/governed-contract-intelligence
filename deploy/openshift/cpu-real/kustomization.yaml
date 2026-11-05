@@ -2,7 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 # All-real, all-CPU variant (see pools.yaml header). The base contributes the
-# real CPU pool, llm-d-sc, praxis, trace-ui, netpols and the OpenShell-facing
+# real CPU pool, praxis, trace-ui, netpols and the OpenShell-facing
 # Service; this overlay points the trace-ui relays at the CPU-served pools and
 # parks the NVIDIA InferenceServices at zero replicas.
 namespace: openshell-demo

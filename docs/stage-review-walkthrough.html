@@ -561,7 +561,7 @@ footer .mono { font-size: 11.5px; }
         <tr><td><b>Endpoint</b></td><td>A running vLLM server. It exposes <span class="mono">/v1/chat/completions</span> and does the inference.</td></tr>
         <tr><td><b>Entry (general / sensitive)</b></td><td>Which door the request uses. The batch runner screens the document for personal data: clean documents go to the general entry (<span class="mono">:8080</span>); documents with personal data go to the sensitive entry (<span class="mono">:8083</span>), which fails closed instead of spilling to an unapproved pool.</td></tr>
         <tr><td><b>Ingress relay</b></td><td>The trace-ui service at the entry. It writes the request into the audit trail and forwards it to praxis. It does not choose a pool or run a model.</td></tr>
-        <tr><td><b>Praxis</b></td><td>The policy gate. It reads the entry, asks the classifier for a complexity label (SIMPLE, MEDIUM, COMPLEX, REASONING) and picks a pool using the active routing config (<span class="mono">all-gpu</span>, <span class="mono">gpu-small</span>, <span class="mono">round-robin</span> or <span class="mono">hybrid</span>). It does not run the model.</td></tr>
+        <tr><td><b>Praxis</b></td><td>The policy gate. It reads the entry and picks a pool using the active routing config (<span class="mono">all-gpu</span>, <span class="mono">gpu-small</span>, <span class="mono">round-robin</span> or <span class="mono">hybrid</span>) — pinned policy, no classifier in the request path (removed 2026-11-05; the measured runs it recorded are described below). It does not run the model.</td></tr>
         <tr><td><b>Pool relay</b></td><td>The second trace-ui hop. After praxis picks a pool, this relay records the actual model call and forwards it to that pool's vLLM server. It also does not run a model.</td></tr>
         <tr><td><b>Pool</b></td><td>A named destination such as <span class="mono">vllm-cpu</span> or <span class="mono">vllm-gpu-approved</span>. The name is a routing tier, not a promise about the hardware behind it; the deployment behind the name is what actually runs.</td></tr>
         <tr><td><b>Routing config</b></td><td>One of four named policies over the same pools: <span class="mono">all-gpu</span>, <span class="mono">gpu-small</span>, <span class="mono">round-robin</span> or <span class="mono">hybrid</span>. The config name describes routing behavior, not hardware: read the pool map to see what actually answered. Praxis hot-swaps them without a restart, which is how the same stack was measured under each policy. The old word “arm” meant the same thing, and old run directories still contain <span class="mono">arm-</span>.</td></tr>
@@ -763,7 +763,8 @@ footer .mono { font-size: 11.5px; }
     answered by the CPU specialist, the remaining single-document calls were forwarded to the CPU MoE, and
     only the portfolio report reached the GPU. The 99.9% CPU-served share is the policy, not demonstrated
     semantic routing. The honest claim is governance and cost, not that the classifier separated simple from
-    complex work.</p>
+    complex work. That measurement is also why the classifier was removed from the request path
+    (2026-11-05): the routing it actually produced is now expressed directly as pinned policy.</p>
   </div>
   <p><b>CUAD ROSA baseline: still pending.</b> The stage replay on this page remains the pre-ROSA CUAD example.
     To replace it, record a CUAD test-split run on ROSA with <span class="mono">--environment rosa</span>;

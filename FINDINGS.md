@@ -756,8 +756,8 @@ alternative to our plain Deployments + config-watcher hot-swaps), a
 sensitivity-is-a-constraint matrix), and a **demos archive** (a natural
 contribution target for this demo once restructured).
 
-Executed 2026-11-05: the rebuild and the classifier are published images and
-the base manifests carry them. Gateway
+Executed 2026-11-05: the rebuild and the classifier are published images.
+Gateway
 `quay.io/mtahhan/gci-praxis:v0.9.0`
 (`sha256:2187ab818efab9a8f3d1f911190d47fad960888bada7d3db8a973d3ad70ac992`),
 classifier `quay.io/mtahhan/gci-llm-d-sc:main-e660fff`
@@ -774,6 +774,11 @@ reproducibility boundary for measured runs on the new pair. The opt-in
 `deploy/openshift/praxis-0.9.0/` overlay is retired (base now carries
 v0.9.0); live clusters run the older pair until rolled, and the §12 warning
 stands: treat the rebuilt stack as new and re-run the measurement arms.
+Of the three images, only the gateway is consumed by the base manifests:
+the classifier was removed from the default stack the same day (§15.5
+follow-on), and its image and the modelcar mirror stay published for the
+contract-step taxonomy experiment. The design rationale and the digests
+table are in `docs/design.md` (§3.2, §6).
 
 ## 13. Measurement-compatibility notes (2026-11-03 corrections)
 
@@ -1047,7 +1052,7 @@ came from the classifier-in-path config. The classifier-routed arm B
 config and the llm-d-sc Deployment are preserved in git history
 (`manifests/base/praxis/arm-b.yaml`, `manifests/base/llm-d-sc.yaml` at
 commit `aa080e9`); the contract-step taxonomy remains the measured path
-back to semantic routing (`docs/contract-step-routing.md`).
+back to semantic routing (`docs/design.md` §5).
 
 ### 15.6 Gaps this round leaves open
 

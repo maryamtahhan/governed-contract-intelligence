@@ -1,12 +1,15 @@
 # Classifier definitions
 
 This directory holds llm-d-sc taxonomy definitions that are not compiled into
-the upstream llm-d-sc binary.
+the upstream llm-d-sc binary. Note that **llm-d-sc is not part of the base
+stack** (removed 2026-11-05; the Deployment is preserved in git history at
+commit `aa080e9`) — these definitions are data for the experiment that would
+re-add it.
 
 - [`contract-step.json`](contract-step.json) labels the four contract pipeline
   stages (`CLASSIFY`, `EXTRACT`, `RISK`, `REPORT`). It is a **candidate**
   taxonomy: evaluate it before routing on it. See
-  [`docs/contract-step-routing.md`](../docs/contract-step-routing.md).
+  [`docs/design.md`](../docs/design.md) §5.
 
 The definition is mounted as a file and selected with
 `LLM_D_SC_CLASSIFIER=/path/to/contract-step.json`. The `model_repo` and

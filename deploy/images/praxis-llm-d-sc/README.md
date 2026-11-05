@@ -89,35 +89,39 @@ The amd64 images are published from a GitHub Actions runner (native amd64,
 unlike this repo's arm64 dev machines, where the default `--platform
 linux/amd64` build runs emulated and slow).
 [`publish-images.yml`](../../.github/workflows/publish-images.yml) runs on
-manual dispatch only and publishes the whole namespace:
+manual dispatch only:
 
 | Job | Image |
 | --- | --- |
 | gateway | `quay.io/mtahhan/gci-praxis:v0.9.0` — this directory's `build.sh --push` |
-| classifier | `quay.io/mtahhan/gci-llm-d-sc:main-e660fff` — upstream `llm-d-semantic-classifier` at `e660fff` |
-| modelcar | mirror of `quay.io/rmalone/llm-d-sc-modelcar:complexity` → `quay.io/mtahhan/gci-llm-d-sc-modelcar:complexity` |
 
 The workflow needs the `QUAY_USERNAME` / `QUAY_PASSWORD` repository secrets: a
-quay robot account with push access to the three `quay.io/mtahhan/gci-*`
+quay robot account with push access to the `quay.io/mtahhan/gci-*`
 repositories. Each job writes the pushed digest into the run summary; record
 that digest, not the tag, for measured runs.
 
+The classifier (`quay.io/mtahhan/gci-llm-d-sc:main-e660fff`) and its mirrored
+modelcar were published once (2026-11-05) but are **not consumed by the
+default stack** — llm-d-sc was removed from the request path the same day
+(FINDINGS §15.5). The images stay in the registry for the contract-step
+taxonomy experiment (`docs/design.md` §5); the workflow jobs are
+gone, and a rebuild means restoring them from git history (commit `aa080e9`).
+
 Published 2026-11-05 (run 42043729532):
 
-| Image | Digest |
-| --- | --- |
-| `quay.io/mtahhan/gci-praxis:v0.9.0` | `sha256:2187ab818efab9a8f3d1f911190d47fad960888bada7d3db8a973d3ad70ac992` |
-| `quay.io/mtahhan/gci-llm-d-sc:main-e660fff` | `sha256:d94c1f7226bfbaeb5a300f0efdbab0e8a8988fc16af7fd80cff0e008a11fa3e1` |
-| `quay.io/mtahhan/gci-llm-d-sc-modelcar:complexity` | `sha256:299874af83c565d8435c8e061b87da1754cdd918ca15e977a7fecbf3aa17f491` (mirror, byte-identical to the source) |
+| Image | Digest | Consumed by the default stack |
+| --- | --- | --- |
+| `quay.io/mtahhan/gci-praxis:v0.9.0` | `sha256:2187ab818efab9a8f3d1f911190d47fad960888bada7d3db8a973d3ad70ac992` | yes |
+| `quay.io/mtahhan/gci-llm-d-sc:main-e660fff` | `sha256:d94c1f7226bfbaeb5a300f0efdbab0e8a8988fc16af7fd80cff0e008a11fa3e1` | no — experiment only |
+| `quay.io/mtahhan/gci-llm-d-sc-modelcar:complexity` | `sha256:299874af83c565d8435c8e061b87da1754cdd918ca15e977a7fecbf3aa17f491` (mirror, byte-identical to the source) | no — experiment only |
 
 ## Switching the manifests
 
 The base manifests point at this image (since 2026-11-05) and the opt-in
 `deploy/openshift/praxis-0.9.0/` overlay is retired — base is the 0.9.0
 stack now. A live cluster still running the v0.7.0 pair rolls with
-`oc apply -k manifests` (or its own overlay), which lands the images, the
-mirrored modelcar and the llm-d-sc `grpc:` readiness probe together. To move
-only the gateway:
+`oc apply -k manifests` (or its own overlay); since the classifier removal
+that apply also drops the llm-d-sc Deployment. To move only the gateway:
 
 ```bash
 oc -n openshell-demo set image deploy/praxis \

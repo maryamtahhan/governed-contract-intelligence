@@ -12,7 +12,6 @@ namespace: openshell-demo
 # InferenceService/ServingRuntime objects, so `oc apply -k manifests` keeps
 # producing exactly the same set as before the split.
 resources:
-  - llm-d-sc.yaml
   - praxis.yaml
   - trace-ui.yaml
   - traffic-gen.yaml
@@ -28,5 +27,4 @@ configMapGenerator:
     files:
       - config.yaml=praxis/config.yaml
       - arm-a.yaml=praxis/arm-a.yaml
-      - arm-b.yaml=praxis/arm-b.yaml
       - arm-c.yaml=praxis/arm-c.yaml

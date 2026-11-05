@@ -1,7 +1,8 @@
-# The praxis gateway with the llm_d_sc filter: four listeners (general :8080,
-# sensitive :8083, judgment :8086, sensitive-judgment :8087), four pools
-# behind the trace-ui relays. The four configs
-# (config.yaml = arm D + the A/B/C baselines) come from deploy/linux/praxis/
+# The praxis gateway: four listeners (general :8080, sensitive :8083,
+# judgment :8086, sensitive-judgment :8087), four pools
+# behind the trace-ui relays, no classifier in the request path (removed
+# 2026-11-05; FINDINGS §15.5). The three configs
+# (config.yaml = arm D + the A/C baselines) come from deploy/linux/praxis/
 # via the kustomize configMapGenerator, so the Linux stack and OpenShift run
 # byte-identical routing configs. Arms are swapped with
 #   oc -n openshell-demo set env deploy/praxis PRAXIS_CONFIG=/etc/praxis/arm-a.yaml
@@ -26,7 +27,9 @@ spec:
         - name: praxis
           # Custom build: Praxis 0.7.5 / ai-gateway 0.9.0 + the out-of-tree
           # llm_d_sc filter, published by the publish-images workflow. The
-          # rebuild path is deploy/images/praxis-llm-d-sc/.
+          # filter is unused by the shipped configs (no classifier in the
+          # request path) but stays in the image for the contract-step
+          # experiment; the rebuild path is deploy/images/praxis-llm-d-sc/.
           image: quay.io/mtahhan/gci-praxis:v0.9.0
           command: ["praxis-ai"]
           env:
