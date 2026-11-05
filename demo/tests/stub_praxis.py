@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
-"""A local stand-in for praxis-ai-llm-d-sc, used only by the test suite.
+"""A local stand-in for praxis-ai, used only by the test suite.
 
 It parses the SAME praxis YAML configs the Linux and OpenShift stacks use
-(deploy/linux/praxis/*.yaml) and reproduces the externally visible contract:
+(manifests/base/praxis/*.yaml) and reproduces the externally visible
+contract:
 
-- listeners and filter chains per config (general :8080, sensitive :8083)
-- label -> cluster routing from the llm_d_sc filter's routes (labels come from
-  hybrid_demo.classifier.classify_complexity, standing in for the real
-  classifier model)
-- X-Llm-D-Sc-Label / X-Llm-D-Sc-Latency-Us request headers (the trace-ui
-  relays turn these into X-Demo-Classification and per-hop classifier timing)
-- failover per the config's failover step, adding X-Praxis-Fallback: true
-- pin and round-robin chains for arms A and C
+- listeners and filter chains per config (general :8080, sensitive :8083,
+  judgment :8086, sensitive-judgment :8087)
+- pin + failover routing: every chain pins a primary cluster and, when the
+  config has a failover step, degrades onto the failover cluster with
+  X-Praxis-Fallback: true
+- round-robin across a cluster's endpoints (arm C)
 - the static /v1/models response
+
+There is no classifier: llm-d-sc was removed from the stack (2026-11-05,
+FINDINGS §15.5), so the stub neither invents labels nor emits
+classification headers.
 
 It is a test double, not a gateway: no health polling (each request attempts
 its endpoints directly), no circuit breakers, no streaming.
@@ -22,7 +25,6 @@ from __future__ import annotations
 import argparse
 import asyncio
 import re
-import time
 
 import httpx
 import uvicorn
@@ -53,7 +55,7 @@ def parse_config(path: str, endpoint_map: dict[str, str]) -> dict:
     chains = {}
     for chain in raw.get("filter_chains", []):
         name = chain["name"]
-        parsed = {"kind": "unknown", "routes": {}, "failover": None, "pin": None}
+        parsed = {"kind": "unknown", "pin": None, "failover": None}
         for f in chain.get("filters", []):
             if f.get("filter") == "router" and parsed["kind"] == "unknown":
                 routes = f.get("routes", [])
@@ -61,23 +63,21 @@ def parse_config(path: str, endpoint_map: dict[str, str]) -> dict:
                     parsed["kind"] = "pin"
                     parsed["pin"] = routes[0].get("cluster")
             elif f.get("filter") == "iterative_request_router":
-                parsed["kind"] = "iterative"
+                # Iterative chains are a pin plus an optional failover step:
+                # the first step pins the primary cluster; a step named
+                # "failover" names the degraded set.
+                parsed["kind"] = "pin"
                 for step in f.get("steps", []):
-                    if step.get("name") == "classify-and-route":
-                        for sf in step.get("filters", []):
-                            if sf.get("filter") == "llm_d_sc":
-                                for r in sf.get("routes", []):
-                                    parsed["routes"][r["label"]] = r["cluster"]
-                            elif sf.get("filter") == "load_balancer":
-                                _register_lb_clusters(step.get("filters", []), clusters, endpoint_map)
-                    elif step.get("name") == "failover":
-                        for sf in step.get("filters", []):
-                            if sf.get("filter") == "router":
-                                for r in sf.get("routes", []):
-                                    parsed["failover"] = r.get("cluster")
-                            elif sf.get("filter") == "load_balancer":
-                                _register_lb_clusters(step.get("filters", []), clusters, endpoint_map)
-        if parsed["kind"] == "unknown" and not parsed["routes"]:
+                    for sf in step.get("filters", []):
+                        if sf.get("filter") == "router":
+                            cluster = sf.get("routes", [{}])[0].get("cluster")
+                            if step.get("name") == "failover":
+                                parsed["failover"] = cluster
+                            elif parsed["pin"] is None:
+                                parsed["pin"] = cluster
+                        elif sf.get("filter") == "load_balancer":
+                            _register_lb_clusters(step.get("filters", []), clusters, endpoint_map)
+        if parsed["kind"] == "unknown":
             parsed["kind"] = "pin"
             parsed["pin"] = "vllm-any"
         chains[name] = parsed
@@ -108,8 +108,6 @@ class StubState:
 
 
 def create_stub_app(state: StubState, chain: dict) -> FastAPI:
-    from hybrid_demo.classifier import classify_complexity
-
     app = FastAPI(docs_url=None, redoc_url=None)
 
     @app.get("/v1/models")
@@ -122,34 +120,11 @@ def create_stub_app(state: StubState, chain: dict) -> FastAPI:
 
     @app.post("/v1/chat/completions")
     async def completions(request: Request, body: dict = Body(...)):
-        prompt = "\n".join(
-            m.get("content", "") for m in body.get("messages", [])
-            if isinstance(m, dict) and isinstance(m.get("content"), str)
-        )
-        # Pin chains have no llm_d_sc filter in the real config (arms A/C and
-        # the judgment entries), so the stub must not invent a label for them.
-        label = None
-        classifier_us = None
-        if chain["kind"] == "iterative":
-            t0 = time.perf_counter_ns()
-            label = classify_complexity(prompt)
-            classifier_us = (time.perf_counter_ns() - t0) // 1000 + 150
-
-        if chain["kind"] == "pin":
-            attempts = [chain["pin"], chain["failover"]]
-            attempts = [a for a in attempts if a]
-        else:
-            primary = chain["routes"].get(label, "vllm-cpu")
-            attempts = [primary] + ([chain["failover"]] if chain["failover"] and
-                                    chain["failover"] != primary else [])
-
+        attempts = [a for a in (chain["pin"], chain["failover"]) if a]
         forward_headers = {
             k: v for k, v in request.headers.items()
             if k.lower() not in {"host", "content-length", "connection", "accept-encoding"}
         }
-        if label is not None:
-            forward_headers["X-Llm-D-Sc-Label"] = label
-            forward_headers["X-Llm-D-Sc-Latency-Us"] = str(classifier_us)
         path = request.url.path
         if request.url.query:
             path += "?" + request.url.query
@@ -164,16 +139,9 @@ def create_stub_app(state: StubState, chain: dict) -> FastAPI:
                 start = state.rr[cluster] % len(endpoints)
                 endpoints = endpoints[start:] + endpoints[:start]
             for endpoint in endpoints:
-                # Mirror praxis: the failover step starts with empty headers,
-                # so a failover attempt carries no classifier label.
-                attempt_headers = dict(forward_headers)
-                if cluster != attempts[0]:
-                    for key in list(attempt_headers):
-                        if key.lower().startswith("x-llm-d-sc"):
-                            del attempt_headers[key]
                 try:
                     resp = await state.client.post(
-                        endpoint + path, json=body, headers=attempt_headers
+                        endpoint + path, json=body, headers=forward_headers
                     )
                 except httpx.HTTPError as exc:
                     last_error = f"{type(exc).__name__}: {exc}"

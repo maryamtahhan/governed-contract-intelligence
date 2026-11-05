@@ -4,9 +4,9 @@ A legal-ops demo, fully measured: a corpus of contracts is screened for
 personal data, clause extraction runs on a fine-tuned specialist (CPU,
 milliseconds per clause, **cannot hallucinate — it returns spans of the
 source document**), risk judgment and cross-document synthesis escalate to a
-Qwen3.5-35B-A3B MoE, and **every request is classified, routed and audited
-by [Praxis](https://github.com/praxis-proxy/ai)** with the
-[llm-d-sc](https://quay.io/mtahhan/gci-llm-d-sc) semantic classifier. Documents
+Qwen3.5-35B-A3B MoE, and **every request is routed and audited by
+[Praxis](https://github.com/praxis-proxy/ai)** — no classifier in the
+request path (removed 2026-11-05; FINDINGS §15.5). Documents
 containing personal data are pinned to approved in-cluster pools only and
 **fail closed** rather than spill. Batch volume runs on CPU; GPU is for
 governed work, interactive drill-down and burst. Quality is scored against
@@ -20,18 +20,19 @@ measured regime (within-doc 0.6B on CPU, cross-doc portfolio queries on
 the 8B — FINDINGS §11), specialist span extraction, MoE
 synthesis over the
 retrieved evidence, governance at every hop. See
-[DECISIONS.md](DECISIONS.md) for how measurement changed the approach,
 [FINDINGS.md](FINDINGS.md) §11 for the design and §3/§10 for the measured
 results that justify it.
 
 Built on [RMalone8/llm-d-sc-demo](https://github.com/RMalone8/llm-d-sc-demo)
-(Praxis + llm-d-sc + trace UI), extended with the specialist pool, the CUAD
+(Praxis gateway + trace UI), extended with the specialist pool, the CUAD
 pipeline, the measurement harness and the OpenShell sandbox. **Read
 "What is measured vs simulated" before quoting any number.**
 
-**Picking this up after 2026-11-04?** Read [HANDOFF.md](HANDOFF.md): it separates
-routing-policy names, route names, models, and actual hardware, and lists the
-open naming decisions.
+**New to the repo?** Read [docs/design.md](docs/design.md): the system map
+and naming model (routing-policy names, route names, models, and actual
+hardware are five different things), the routing/governance design and why
+there is no classifier, the upstream-composition policy, the
+semantic-routing path, and the open decisions.
 
 ## Status: built vs designed
 
@@ -43,11 +44,11 @@ open naming decisions.
 | Semantic cache in the specialist (V5 ordering rules, zero-FP threshold) | **built, measured** |
 | Four-arm measurement (A/B/C/D) + model-variant comparison on OCP | **built** |
 | Trace UI (waterfall, arms panel, dashboard, audit) | **built** |
-| Test suite | **193 tests green** (`cd demo && uv run pytest`) |
-| Contract-step taxonomy + evaluation harness | **candidate, not measured** — evaluate before routing ([docs](docs/contract-step-routing.md)) |
+| Test suite | **196 tests green** (`cd demo && uv run pytest`) |
+| Contract-step taxonomy + evaluation harness | **candidate, not measured** — evaluate before routing ([design §5](docs/design.md)) |
 | Praxis 0.9.0 / ai-gateway 0.9.0 gateway rebuild | **built and published** — `quay.io/mtahhan/gci-praxis:v0.9.0`, base manifests switched ([docs](deploy/images/praxis-llm-d-sc/README.md)) |
 | Retrieval evaluation (chunking + recall@k/MRR vs annotation spans) | **run, both regimes — ordering inverts within-doc, restores cross-doc (FINDINGS §11)** |
-| OSS adapters (Presidio, nervaluate, ranx, docling, RedisVL, OTel, RAGAS, llm-d sim/batch/bench) | **built as opt-in swaps, default path unchanged** (docs/OPENSOURCE-REUSE.md) |
+| OSS adapters (Presidio, nervaluate, ranx, docling, RedisVL, OTel, RAGAS, llm-d sim/batch/bench) | **built as opt-in swaps, default path unchanged** ([design §4](docs/design.md)) |
 | docling ingestion + PII screen at ingest | adapter built; default remains builtin/regex, not yet measured on the corpus (§11, FINDINGS §16) |
 | hybrid-bench concurrency sweep, thinking-mode A/B, V2 tool-calling | wrapper built; sweep open (FINDINGS §9) |
 
@@ -70,35 +71,34 @@ Qwen3.5-35B-A3B synthesis: risk judgment, cross-doc report        [built]
 Every hop goes through the same governed request path — the part that is
 built, governed and measured end-to-end today:
 
-![As-built architecture: clients (pipeline, sandboxed agent) → trace-ui / praxis gateway → llm-d-sc classification → pools; the dashed green boundary marks the approved set, inside which sensitive data is processed](docs/architecture-as-built.svg)
+![As-built architecture: clients (pipeline, sandboxed agent) → trace-ui / praxis gateway → pools; the dashed green boundary marks the approved set, inside which sensitive data is processed](docs/architecture-as-built.svg)
 
-- **Complexity is a preference, sensitivity is a constraint.** The general
-  listener routes by the llm-d-sc complexity label (SIMPLE/MEDIUM → CPU,
-  COMPLEX/REASONING → GPU). Measured behaviour on contract steps is
-  CPU-first: single-document work lands on CPU and the cross-document report
-  on GPU (FINDINGS §15.5). The sensitive listener — fed by the PII screen —
-  routes the same labels but only to approved pools, and its failover pool
-  contains *only* the approved GPU backend, so when that pool is down a
-  REASONING request **fails closed** (explicit 502, verified in the traces).
-  General REASONING work degrades to CPU with a visible signal (the trace's
-  "fell back" badge).
+- **Sensitivity is a constraint; batch is CPU-first.** The general listener
+  pins single-document work to the CPU pool (the measured behaviour: the
+  classifier used to label 1,200 of 1,201 steps MEDIUM, FINDINGS §15.5, so
+  the pin reproduces the recorded routing without it). The sensitive
+  listener — fed by the PII screen — pins to CPU too, but its failover pool
+  contains *only* the approved GPU backend, so when both are down a request
+  **fails closed** (explicit 502, verified in the traces). General work
+  degrades to any pool with a visible signal (the trace's "fell back"
+  badge).
 - **Praxis reaches the pools only through the trace-ui relays** — every
-  request recorded with label, route, per-hop timings; SQLite is the audit
+  request recorded with route, per-hop timings; SQLite is the audit
   trail, exported as `audit.jsonl`.
-- **The same four praxis configs** (`manifests/base/praxis/`) drive the Linux
+- **The same praxis configs** (`manifests/base/praxis/`) drive the Linux
   stack and OpenShift, so routing is byte-identical on both.
 - **Arms** (measurement baselines, swapped live): **A** all-GPU large model,
   **B** all-GPU small model, **C** naive hybrid round-robin, **D** the hybrid
-  policy — classifier-routed general/sensitive entries plus pinned judgment
-  entries for risk and report (GPU), with fail-closed sensitive failover. The
-  judgment entries are an implemented policy, not yet a measured ROSA result;
-  the measured D run predates them (FINDINGS §15.5).
+  policy — CPU-first pinned general/sensitive entries plus pinned judgment
+  entries for risk and report (GPU), with fail-closed sensitive failover.
+  The pinned judgment entries are an implemented policy, not yet a measured
+  ROSA result; the measured D run predates them (FINDINGS §15.5).
 
 ## What runs where
 
 | Environment | What runs | How |
 |---|---|---|
-| **Linux host (podman/docker)** | Real Praxis + llm-d-sc + trace-ui, simulated vLLM backends | `scripts/linux/up.sh` |
+| **Linux host (podman/docker)** | Real Praxis + trace-ui, simulated vLLM backends | `scripts/linux/up.sh` |
 | **g5.12xlarge (stopped, AMI kept)** | Real vLLM: 1.5B CPU, 7B/1.5B GPU — the measured GPU-vs-CPU story | warm-restart the AMI |
 | **OpenShift (rhgaudi3s2 SNO)** — validation | Real vLLM pools, all CPU-served (1.5B / 7B / 9B / 35B-A3B MoE / specialist), full platform validation | `deploy/openshift/*` overlays |
 | **ROSA HCP — demo target (measured, torn down 2026-11-04)** | x8i.24xlarge CPU (48 cores, AMX) + g5.12xlarge (4× A10G, TP=4) in one AZ, explicit OMP binding, per-node gp3 caches | `deploy/openshift/rosa` |
@@ -118,7 +118,7 @@ chunker, containment scoring, SQLite trace store and dependency-free exact
 McNemar all still run with the base install. Each item below is an **opt-in
 swap**, because a component swap changes a number and must be A/B tested, not
 silently adopted. The full audit, licences and measurement caveats are in
-[docs/OPENSOURCE-REUSE.md](docs/OPENSOURCE-REUSE.md).
+[docs/design.md §4](docs/design.md).
 
 | upstream | module / flag | default | why it is a swap |
 |---|---|---|---|
@@ -187,7 +187,7 @@ node if you want one, cluster-admin, `oc`, `helm`, the `openshell` CLI.
 oc login ...
 ./scripts/00-prereqs.sh            # checks + Agent Sandbox CRD/controller
 ./scripts/01-install-openshell.sh  # OpenShell gateway (Helm)
-./scripts/02-apply.sh              # praxis, llm-d-sc, trace-ui, netpols
+./scripts/02-apply.sh              # praxis, trace-ui, netpols
 ./scripts/03-create-sandbox.sh     # OpenClaw sandbox, egress: praxis only
 ```
 
@@ -217,34 +217,19 @@ and the opt-in transparent-hugepages experiment. Without the profile the
 pods still run, but their cpuset is not deterministic and their latency is
 not comparable with the recorded runs.
 
-The classifier image is separate. Upstream publishes no container image for
-`llm-d-semantic-classifier`, so this repo publishes its own: the base
-manifest runs `quay.io/mtahhan/gci-llm-d-sc:main-e660fff` (upstream `e660fff`)
-with a `grpc:` readiness probe — that upstream serves the standard gRPC
-health service and binds it only after the model is warm, which the previous
-tag (`quay.io/rmalone/llm-d-sc:v0.1.0`) could not do. To run current source
-instead, build it in the cluster and pin the deployment to the result:
-
-```bash
-oc -n openshell-demo new-build --binary --name=llm-d-sc-upstream --strategy=docker
-oc -n openshell-demo patch bc/llm-d-sc-upstream --type=merge \
-  -p '{"spec":{"strategy":{"dockerStrategy":{"dockerfilePath":"Containerfile"}}}}'
-oc -n openshell-demo start-build llm-d-sc-upstream \
-  --from-dir=/path/to/llm-d-semantic-classifier --follow
-oc -n openshell-demo set image deploy/llm-d-sc \
-  llm-d-sc=image-registry.openshift-image-registry.svc:5000/openshell-demo/llm-d-sc-upstream:latest
-```
-
-Pin the digest
-(`oc -n openshell-demo get is llm-d-sc-upstream -o jsonpath='{.status.tags[?(@.tag=="latest")].items[0].image}'`)
-if the run is measured: `:latest` moves. `oc apply -k manifests` restores the
-published `main-e660fff` image; re-run `set image` after it. The gateway is
-the same story one level up: upstream `ai` has no `llm_d_sc` filter, so the
-repo publishes its own build of the fork — `quay.io/mtahhan/gci-praxis:v0.9.0`
-(Praxis 0.7.5 / ai-gateway 0.9.0, FINDINGS §12). Both images, plus a mirrored
-modelcar, are built by the `publish-images` workflow
-([deploy/images/praxis-llm-d-sc/](deploy/images/praxis-llm-d-sc/README.md));
-the in-cluster BuildConfig above remains the from-source path.
+The gateway image is published by this repo: upstream `ai` has no
+`llm_d_sc` filter, so the repo publishes its own build of the fork —
+`quay.io/mtahhan/gci-praxis:v0.9.0` (Praxis 0.7.5 / ai-gateway 0.9.0,
+FINDINGS §12) — via the `publish-images` workflow
+([deploy/images/praxis-llm-d-sc/](deploy/images/praxis-llm-d-sc/README.md)).
+The filter is unused by the shipped configs (no classifier in the request
+path) but stays in the image for the contract-step taxonomy experiment. The
+classifier (`quay.io/mtahhan/gci-llm-d-sc:main-e660fff`) and its mirrored
+modelcar were published once (2026-11-05) and stay in the registry for that
+experiment, but nothing in the default stack deploys them; the workflow
+jobs were removed with the classifier. The llm-d-sc Deployment and the
+classifier-routed arm B config are preserved in git history (commit
+`aa080e9`).
 
 Then:
 
@@ -292,9 +277,10 @@ compares:
 - **Quality vs ground truth**: clause extraction P/R/F1 (exact spans vs
   expert annotations), risk accuracy (vs majority-class baseline), report
   accuracy, documents fully correct.
-- **Classifier**: predicted labels vs step types (real llm-d-sc labels all
-  contract-analysis steps MEDIUM, the cross-doc report REASONING — reported
-  honestly, FINDINGS §4).
+- **Classifier (historical)**: the recorded arms carry predicted labels vs
+  step types (real llm-d-sc labels labelled all contract-analysis steps
+  MEDIUM, the cross-doc report REASONING — reported honestly, FINDINGS §4,
+  §15.5). New runs have no classifier and no label column.
 - **Routing and governance**: CPU-served share; sensitive steps on approved
   pools; violations. Target for the hybrid config: **zero**, verified from the
   trace UI's own records, independently of the pipeline.
@@ -349,7 +335,6 @@ before quoting any of these:
 | Component | Linux stack | OpenShift (ROSA / g5) |
 |---|---|---|
 | Praxis routing, failover, health checks | real | real |
-| llm-d-sc classification | real | real |
 | trace UI / audit trail | real | real |
 | Model pools | simulated (`hybrid-pool`) | real vLLM |
 | Quality, device-time, dollars | simulated, labelled as such | measured (dollars an illustrative-rate sweep until V17) |
@@ -369,7 +354,7 @@ demo/src/hybrid_demo/
 demo/tools/              classifier probes, prompt calibration, validators,
                          paired-significance tests (mcnemar.py), PII compare
 demo/tests/             193 tests incl. e2e against a praxis stub
-manifests/               OpenShift base (pools, llm-d-sc, praxis, trace-ui, netpols)
+manifests/               OpenShift base (pools, praxis, trace-ui, netpols)
 manifests/base/          non-KServe base; base/praxis/ holds the four routing
                          configs, shared with the Linux stack
 deploy/linux/            docker-compose / podman-compose stack
@@ -384,11 +369,11 @@ runs/cuad-mixed/         mixed-split evidence (historical; quote test-split only
 runs/cuad-test/          held-out test-split evidence (hybrid variants) + comparisons/
 runs/gpu-measured/       g5 measured-GPU evidence
 runs/retrieval/          embedder evals, corrections, e2e runs (FINDINGS §11)
-docs/                    architecture + pipeline diagrams (SVG), OCTO business-case
-                         doc (v0.3), OSS-reuse map, routing taxonomy, review guide
+docs/                    design.md (the design doc), architecture + pipeline
+                         diagrams (SVG), OCTO business-case doc (v0.3),
+                         review guide
 sandbox/policy.yaml      OpenShell sandbox egress policy (praxis + github RO)
 FINDINGS.md              the measurement record — read before quoting numbers
-DECISIONS.md             how measurement changed the approach, in order
 ```
 
 ## Manage the sandbox
@@ -425,8 +410,10 @@ scripts/linux/down.sh -v             # Linux stack, -v deletes traces too
   before sharing). The trace UI can be published with an opt-in Route plus
   `TRACE_API_TOKEN`, but the gateway path itself has no auth.
 - The sensitive entry is chosen by the pipeline's PII screen (a DLP-style
-  gate); llm-d-sc's sensitivity modelcar exists but two-label routing in
-  one praxis chain is unvalidated (V19). Network policies provide the
-  enforcement layer either way (V15).
+  gate). Moving that decision into the gateway — llm-d-sc's sensitivity
+  taxonomy over gRPC, two-label routing in one praxis chain — is unvalidated
+  (V19) and would mean re-adding the classifier (git history, commit
+  `aa080e9`). Network policies provide the enforcement layer either way
+  (V15).
 - rhgaudi3s2 was found emptied of our workloads on 2026-10-31 (FINDINGS
   §7); redeploy from the runbooks above before any cluster-dependent demo.

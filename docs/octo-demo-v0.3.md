@@ -14,8 +14,11 @@ three environments (Linux/podman, a g5.12xlarge with real GPUs, and OpenShift
 SNO), against expert-annotated real contracts (CUAD), with a four-arm
 measurement design; the demo itself is being re-baselined on a managed ROSA
 HCP stack (§3). Every value hypothesis in §1 held. The architecture
-settled on the Praxis gateway with the llm-d-sc semantic classifier (V13's
-"unknown gateway" resolved). The demo scenario has since been extended from
+settled on the Praxis gateway (V13's "unknown gateway" resolved); the
+llm-d-sc semantic classifier it originally carried was measured, found to
+label effectively every contract step MEDIUM, and **removed from the
+request path** (2026-11-05) — the routing that actually happened is
+expressed directly as pinned policy. The demo scenario has since been extended from
 single-contract review toward **contract portfolio intelligence**
 (retrieval-first, evidence-first) after retrieval measurements showed method
 beating backbone — that pivot and its first end-to-end number are in §2b.
@@ -420,14 +423,18 @@ the event stream, so the presenter can say what was ignored.
 
 ## 3. Architecture (as built)
 
-![As-built architecture: clients (pipeline, sandboxed agent) → trace-ui / praxis gateway → llm-d-sc classification → pools; the dashed green boundary marks the approved set, inside which sensitive data is processed](architecture-as-built.svg)
+![As-built architecture: clients (pipeline, sandboxed agent) → trace-ui / praxis gateway → pools; the dashed green boundary marks the approved set, inside which sensitive data is processed](architecture-as-built.svg)
 
 *(Editable source: `docs/architecture-as-built.svg`.)*
 
-- **Praxis** is the gateway (V13 resolved); **llm-d-sc** supplies
-  complexity labels (the pipeline's PII screen is what picks the
-  sensitive entry — two labels in one routing chain remains open, V19);
-  four routing configurations implement the
+- **Praxis** is the gateway (V13 resolved), routing by **pinned policy**
+  with no classifier in the request path: the general and sensitive entries
+  are CPU-first (the measured runs showed the llm-d-sc complexity labels
+  were effectively all MEDIUM → CPU, so the pins reproduce the recorded
+  routing without the gRPC hop; FINDINGS §15.5), and the judgment entries
+  pin risk/report to the GPU pools (the pipeline's PII screen picks the
+  sensitive entries — two labels in one routing chain remains open, V19);
+  the routing configurations implement the
   measurement arms; the same configs drive Linux and OpenShift byte-identically.
 - Pools are plain vLLM Deployments on OpenShift (KServe's storage-initializer
   cannot reach HuggingFace from this cluster — documented, worked around;
@@ -565,7 +572,7 @@ summary of what these checks mean is in "Results in plain language" above.
 | V10 | Sandbox → gateway path | **Validated** — in-cluster plain-HTTP policy proxy; egress praxis-only, default-deny, logged |
 | V11 | Observability plumbing | **Validated** — trace waterfall, arms panel, dashboard, metrics sampler, JSONL audit export |
 | V12 | Licences | **Validated** — Apache-2.0 models; CUAD CC BY 4.0 (confirmed on the Atticus site); no customer data |
-| V13 | Define the "Praxis gateway" | **Resolved** — Praxis is the gateway; llm-d-sc the classifier; four config-driven arms |
+| V13 | Define the "Praxis gateway" | **Resolved** — Praxis is the gateway; four config-driven arms; the llm-d-sc classifier was carried, measured (§6.2), then removed from the request path (2026-11-05) |
 | V14 | Classifier transfer to contract steps | **Validated with a twist** — llm-d-sc labels all contract-analysis steps MEDIUM, only cross-doc reports REASONING; within-tier composition lives in the composite pool; prompt wording calibrated so report prompts label REASONING; disagreement reported, never hidden |
 | V15 | Sensitivity enforcement beyond the classifier | **Validated** — PII screen (P 1.0 / R 1.0 synthetic; 5–12/20 CUAD docs flagged), NetworkPolicies, and gateway-record verification; two-label routing in a single chain remains **open** (V19) |
 | V16 | GPU-removal for in-flight REASONING | **Validated** — bounded degradation with visible badge; fail-closed for sensitive; recovery verified |
@@ -780,6 +787,8 @@ significance is computed where per-pair data exists.
 - Source repository: demo code, runbooks, evidence packs (`runs*/`),
   and the full measurement record (`FINDINGS.md`) — the primary reference.
 - CUAD: the Atticus Project (CC BY 4.0).
-- Praxis gateway; llm-d-sc semantic classifier; vLLM; OpenShell / OpenClaw.
+- Praxis gateway; vLLM; OpenShell / OpenClaw. (The llm-d-sc semantic
+  classifier was part of the measured stack and remains published for the
+  contract-step experiment; it is no longer in the request path.)
 - External CUAD method ladder and SOTA: see FINDINGS §3.5 (aggregators —
   verify against primary papers before external publication).

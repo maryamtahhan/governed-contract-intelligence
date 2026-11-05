@@ -47,15 +47,15 @@ set_config() {
   config=$(config_name "$1")
   oc -n "$NS" set env deploy/praxis "PRAXIS_CONFIG=/etc/praxis/$(config_file "$config")" >/dev/null
   oc -n "$NS" rollout status deploy/praxis --timeout=300s >/dev/null
-  # A fresh praxis can serve its first request through a cold gRPC
-  # connection to llm-d-sc (classification skipped, no label). Warm it with
-  # one request before measuring.
+  # A fresh praxis can serve its first request before its upstream pools
+  # are warm. Warm it with one routed request before measuring (the warm-up
+  # used to wait for a classifier label; there is no classifier any more).
   for i in $(seq 1 10); do
     curl -s -m 120 -D /tmp/config-h -o /dev/null "$GATEWAY/v1/chat/completions" \
       -H 'Content-Type: application/json' \
       -H "Authorization: Bearer ${TRACE_API_TOKEN:-}" \
       -d '{"model":"Semantic-Qwen","messages":[{"role":"user","content":"Say ok."}],"max_tokens":8}'
-    grep -qi "^x-demo-classification:" /tmp/config-h && break
+    grep -qi "^x-demo-route:" /tmp/config-h && break
     sleep 2
   done
   echo "praxis now running config $config ($(config_file "$config"))"

@@ -1,8 +1,8 @@
 # Local Linux stack for the hybrid CPU+GPU contract-review demo.
 #
 # Real routing components from RMalone8/llm-d-sc-demo (Praxis with the
-# llm_d_sc filter, the llm-d-sc classifier, trace-ui relays) with two backend
-# sets, selected by profile:
+# llm_d_sc filter, trace-ui relays; no classifier — removed 2026-11-05,
+# FINDINGS §15.5) with two backend sets, selected by profile:
 #
 #   scripts/linux/up.sh                  # --profile fake (default): simulated
 #                                        # vLLM backends, runs on any host
@@ -17,31 +17,12 @@
 name: hybrid-demo
 
 services:
-  # One-shot: copies the classifier model into the shared volume, like the
-  # ModelCar init container in the Kubernetes deployment. llm-d-sc waits for
-  # it to complete (service_completed_successfully).
-  modelcar:
-    image: quay.io/mtahhan/gci-llm-d-sc-modelcar:complexity
-    entrypoint: ["/bin/sh", "-c", "cp -R /models/. /shared/ && echo model-car copied"]
-    volumes:
-      - model:/shared
-
-  llm-d-sc:
-    image: quay.io/mtahhan/gci-llm-d-sc:main-e660fff
-    environment:
-      LLM_D_SC_MODEL_DIR: /models
-      LLM_D_SC_CLASSIFIER: complexity
-      LLM_D_SC_LISTEN: "0.0.0.0:50051"
-    volumes:
-      - model:/models
-    depends_on:
-      modelcar:
-        condition: service_completed_successfully
-
   praxis:
     # Custom build with the llm_d_sc filter (Praxis 0.7.5 / ai-gateway 0.9.0),
     # published by the publish-images workflow; rebuild path is
-    # deploy/images/praxis-llm-d-sc/.
+    # deploy/images/praxis-llm-d-sc/. The filter is unused by the shipped
+    # configs (no classifier in the request path) but stays in the image
+    # for the contract-step experiment.
     image: quay.io/mtahhan/gci-praxis:v0.9.0
     # In compose, `command` appends to the image ENTRYPOINT (unlike the k8s
     # `command` in the manifests, which replaces it), so set entrypoint here.
@@ -59,7 +40,6 @@ services:
     ports:
       - "19002:9902"
     depends_on:
-      - llm-d-sc
       - trace-ui
 
   trace-ui:
@@ -176,5 +156,4 @@ services:
 
 volumes:
   trace-data:
-  model:
   hf-cache:

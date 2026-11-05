@@ -2,7 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 # The CPU-only variant of the demo stack: everything from the base (real CPU
-# pool, llm-d-sc, praxis, trace-ui, netpols) plus simulated GPU pools, with
+# pool, praxis, trace-ui, netpols) plus simulated GPU pools, with
 # the real GPU InferenceServices scaled to zero. Switch back to the real GPU
 # pools with `oc apply -k manifests` once the cluster has GPU nodes.
 namespace: openshell-demo

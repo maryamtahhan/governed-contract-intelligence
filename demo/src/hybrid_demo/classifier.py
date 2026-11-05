@@ -1,12 +1,13 @@
-"""Heuristics that stand in for llm-d-sc outside the container stack.
+"""Heuristics that stand in for gateway-side components outside the container
+stack.
 
 Two roles, both clearly scoped:
 
-- ``classify_complexity`` mirrors the label set of the llm-d-sc *complexity*
-  classifier (SIMPLE / MEDIUM / COMPLEX / REASONING). The real stack gets its
-  labels from llm-d-sc over gRPC; this function is only used by the local
-  test stub so the demo machinery can be exercised without containers, and by
-  tests. It is not in the production request path.
+- ``classify_complexity`` mirrors the label set the llm-d-sc *complexity*
+  classifier used to produce (SIMPLE / MEDIUM / COMPLEX / REASONING). llm-d-sc
+  was removed from the stack on 2026-11-05 (FINDINGS §15.5), so no request
+  path calls this any more; it is kept for the label vocabulary in tests and
+  for tools that replay the historical label behaviour.
 - ``detect_sensitivity`` is the PII screen the review pipeline runs before
   choosing the gateway entry: documents whose text matches PII patterns go to
   the sensitive listener, whose pool set contains only approved in-cluster

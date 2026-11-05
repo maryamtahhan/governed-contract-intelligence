@@ -17,20 +17,23 @@ def test_matrix_config_parses():
     sensitive = parsed["listeners"][8083]
     judgment = parsed["listeners"][8086]
     sensitive_judgment = parsed["listeners"][8087]
-    # Judgment entries are stage-aware pins, not classifier routes.
+    # No classifier anywhere: every entry is a pin. The general and sensitive
+    # entries are CPU-first (the measured runs showed everything labelling
+    # MEDIUM -> CPU, FINDINGS §15.5); the judgment entries are GPU pins.
+    assert general["kind"] == "pin"
+    assert general["pin"] == "vllm-cpu"
+    assert general["failover"] == "vllm-any"
+    assert sensitive["kind"] == "pin"
+    assert sensitive["pin"] == "vllm-cpu"
+    # The sensitive entry may only degrade onto the approved pool: that is
+    # the fail-closed governance constraint.
+    assert sensitive["failover"] == "vllm-approved-only"
     assert judgment["kind"] == "pin"
     assert judgment["pin"] == "vllm-gpu"
-    assert judgment["routes"] == {}
+    assert judgment["failover"] is None
     assert sensitive_judgment["kind"] == "pin"
     assert sensitive_judgment["pin"] == "vllm-gpu-approved"
-    assert sensitive_judgment["routes"] == {}
-    assert general["kind"] == "iterative"
-    assert general["routes"] == {"SIMPLE": "vllm-cpu", "MEDIUM": "vllm-cpu",
-                                 "COMPLEX": "vllm-gpu", "REASONING": "vllm-gpu"}
-    assert general["failover"] == "vllm-any"
-    assert sensitive["routes"]["REASONING"] == "vllm-gpu-approved"
-    assert sensitive["routes"]["SIMPLE"] == "vllm-cpu"
-    assert sensitive["failover"] == "vllm-approved-only"
+    assert sensitive_judgment["failover"] is None
     assert parsed["clusters"]["vllm-any"]["endpoints"] == [MAP["trace-ui:8081"], MAP["trace-ui:8082"]]
     assert parsed["clusters"]["vllm-approved-only"]["endpoints"] == [MAP["trace-ui:8084"]]
 
@@ -39,14 +42,10 @@ def test_arm_configs_parse():
     a = parse_config(str(CONFIGS / "arm-a.yaml"), MAP)
     assert a["listeners"][8080]["kind"] == "pin"
     assert a["listeners"][8080]["pin"] == "vllm-gpu"
-    assert 8083 not in a["listeners"]
-
     b = parse_config(str(CONFIGS / "arm-b.yaml"), MAP)
-    routes = b["listeners"][8080]["routes"]
-    assert routes["SIMPLE"] == "vllm-gpu-small"
-    assert routes["REASONING"] == "vllm-gpu"
-
+    assert b["listeners"][8080]["kind"] == "pin"
+    assert b["listeners"][8080]["pin"] == "vllm-gpu-small"
+    assert b["listeners"][8080]["failover"] == "vllm-gpu-any"
     c = parse_config(str(CONFIGS / "arm-c.yaml"), MAP)
-    chain = c["listeners"][8080]
-    assert chain["pin"] == "vllm-any"
-    assert len(c["clusters"]["vllm-any"]["endpoints"]) == 2
+    assert c["listeners"][8080]["kind"] == "pin"
+    assert c["listeners"][8080]["pin"] == "vllm-any"

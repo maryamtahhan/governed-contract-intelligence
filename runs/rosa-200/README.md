@@ -14,7 +14,7 @@ The directory name is the routing policy, not the hardware.
 `runs/direct/gpu-moe/`. It is also **not** demonstrated complexity routing:
 llm-d-sc labelled 1,200 of 1,201 steps MEDIUM, and the specialist forwarded the
 non-extraction calls to the CPU MoE. The GPU served only the cross-document
-report. See [`../../DECISIONS.md`](../../DECISIONS.md) D15 and
-[`FINDINGS.md`](../../FINDINGS.md) §15.5.
+report. See [`FINDINGS.md`](../../FINDINGS.md) §15.5 for the analysis and the
+follow-on note on the classifier's removal.
 
 See `../README.md` for the full run map.

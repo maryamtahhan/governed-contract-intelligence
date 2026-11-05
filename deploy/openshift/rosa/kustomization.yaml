@@ -62,7 +62,7 @@ kind: Kustomization
 # 5. Node placement: all inference nodes are tainted machine pools in one
 #    AZ (colocated - the measured request path must not cross AZs, and gp3
 #    volumes are AZ-locked). Pools tolerate demo.openshell.ai/cpu-infer; the
-#    GPU pool tolerates nvidia.com/gpu. praxis, llm-d-sc and trace-ui run
+#    GPU pool tolerates nvidia.com/gpu. praxis and trace-ui run
 #    untolerated on the small default pool.
 #
 # Bring-up order (cluster must exist and be ready first):
@@ -84,7 +84,7 @@ kind: Kustomization
 namespace: openshell-demo
 
 resources:
-  # Non-KServe base (see divergence 1 above): praxis, llm-d-sc, trace-ui,
+  # Non-KServe base (see divergence 1 above): praxis, trace-ui,
   # traffic-gen, network policies, and the praxis-config generator all arrive
   # through this directory reference - kustomize evaluates the generator's
   # file paths against manifests/base/, so the routing ConfigMap is the same
