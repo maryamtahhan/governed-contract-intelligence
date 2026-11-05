@@ -6,7 +6,7 @@ milliseconds per clause, **cannot hallucinate — it returns spans of the
 source document**), risk judgment and cross-document synthesis escalate to a
 Qwen3.5-35B-A3B MoE, and **every request is classified, routed and audited
 by [Praxis](https://github.com/praxis-proxy/ai)** with the
-[llm-d-sc](https://quay.io/rmalone/llm-d-sc) semantic classifier. Documents
+[llm-d-sc](https://quay.io/mtahhan/gci-llm-d-sc) semantic classifier. Documents
 containing personal data are pinned to approved in-cluster pools only and
 **fail closed** rather than spill. Batch volume runs on CPU; GPU is for
 governed work, interactive drill-down and burst. Quality is scored against
@@ -45,7 +45,7 @@ open naming decisions.
 | Trace UI (waterfall, arms panel, dashboard, audit) | **built** |
 | Test suite | **193 tests green** (`cd demo && uv run pytest`) |
 | Contract-step taxonomy + evaluation harness | **candidate, not measured** — evaluate before routing ([docs](docs/contract-step-routing.md)) |
-| Praxis 0.9.0 / ai-gateway 0.9.0 gateway rebuild | **build path verified**; amd64 image not pushed ([docs](deploy/images/praxis-llm-d-sc/README.md)) |
+| Praxis 0.9.0 / ai-gateway 0.9.0 gateway rebuild | **built and published** — `quay.io/mtahhan/gci-praxis:v0.9.0`, base manifests switched ([docs](deploy/images/praxis-llm-d-sc/README.md)) |
 | Retrieval evaluation (chunking + recall@k/MRR vs annotation spans) | **run, both regimes — ordering inverts within-doc, restores cross-doc (FINDINGS §11)** |
 | OSS adapters (Presidio, nervaluate, ranx, docling, RedisVL, OTel, RAGAS, llm-d sim/batch/bench) | **built as opt-in swaps, default path unchanged** (docs/OPENSOURCE-REUSE.md) |
 | docling ingestion + PII screen at ingest | adapter built; default remains builtin/regex, not yet measured on the corpus (§11, FINDINGS §16) |
@@ -218,10 +218,12 @@ pods still run, but their cpuset is not deterministic and their latency is
 not comparable with the recorded runs.
 
 The classifier image is separate. Upstream publishes no container image for
-`llm-d-semantic-classifier`, and the newest published tag
-(`quay.io/rmalone/llm-d-sc:v0.1.0`) predates the standard gRPC health
-service, so the base manifest keeps a TCP readiness probe. To run current
-source, build it in the cluster and pin the deployment to the result:
+`llm-d-semantic-classifier`, so this repo publishes its own: the base
+manifest runs `quay.io/mtahhan/gci-llm-d-sc:main-e660fff` (upstream `e660fff`)
+with a `grpc:` readiness probe — that upstream serves the standard gRPC
+health service and binds it only after the model is warm, which the previous
+tag (`quay.io/rmalone/llm-d-sc:v0.1.0`) could not do. To run current source
+instead, build it in the cluster and pin the deployment to the result:
 
 ```bash
 oc -n openshell-demo new-build --binary --name=llm-d-sc-upstream --strategy=docker
@@ -235,18 +237,12 @@ oc -n openshell-demo set image deploy/llm-d-sc \
 
 Pin the digest
 (`oc -n openshell-demo get is llm-d-sc-upstream -o jsonpath='{.status.tags[?(@.tag=="latest")].items[0].image}'`)
-if the run is measured: `:latest` moves. `oc apply -k manifests` restores the public
-`v0.1.0` image; re-run `set image` after it. The praxis image is a
-different case — the only published fork tag is `v0.7.0`, and upstream
-`ai` v0.9.0 has no `llm_d_sc` filter, so upgrading it means rebuilding the
-fork (FINDINGS §12).
-
-The 2026-11 rebuild publishes both as quay images instead: the gateway as
-`quay.io/mtahhan/gci-praxis:v0.9.0` and the classifier as
-`quay.io/mtahhan/gci-llm-d-sc:main-e660fff` (upstream `e660fff`, which serves
-the standard gRPC health service, so the manifest's TCP readiness probe can
-become a `grpc:` probe once it switches to that image). The `publish-images`
-workflow builds and pushes them and mirrors the modelcar
+if the run is measured: `:latest` moves. `oc apply -k manifests` restores the
+published `main-e660fff` image; re-run `set image` after it. The gateway is
+the same story one level up: upstream `ai` has no `llm_d_sc` filter, so the
+repo publishes its own build of the fork — `quay.io/mtahhan/gci-praxis:v0.9.0`
+(Praxis 0.7.5 / ai-gateway 0.9.0, FINDINGS §12). Both images, plus a mirrored
+modelcar, are built by the `publish-images` workflow
 ([deploy/images/praxis-llm-d-sc/](deploy/images/praxis-llm-d-sc/README.md));
 the in-cluster BuildConfig above remains the from-source path.
 

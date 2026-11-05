@@ -24,11 +24,10 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: praxis
-          # Custom build: Praxis 0.7.0 + the out-of-tree llm_d_sc filter. The
-          # 0.7.5 / ai-gateway 0.9.0 rebuild is in
-          # deploy/images/praxis-llm-d-sc/ and is opt-in via
-          # deploy/openshift/praxis-0.9.0/ only after the amd64 image is pushed.
-          image: quay.io/rmalone/praxis-ai-llm-d-sc:v0.7.0
+          # Custom build: Praxis 0.7.5 / ai-gateway 0.9.0 + the out-of-tree
+          # llm_d_sc filter, published by the publish-images workflow. The
+          # rebuild path is deploy/images/praxis-llm-d-sc/.
+          image: quay.io/mtahhan/gci-praxis:v0.9.0
           command: ["praxis-ai"]
           env:
             - name: PRAXIS_CONFIG
