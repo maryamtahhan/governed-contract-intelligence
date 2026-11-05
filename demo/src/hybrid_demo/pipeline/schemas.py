@@ -25,10 +25,6 @@ from __future__ import annotations
 import os
 from typing import Any
 
-CLAUSE_ENUM = ["termination", "governing_law", "liability_cap", "data_protection",
-               "confidentiality", "indemnification", "assignment", "renewal_term",
-               "notice_period", "payment_terms"]
-
 CLASSIFY_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {

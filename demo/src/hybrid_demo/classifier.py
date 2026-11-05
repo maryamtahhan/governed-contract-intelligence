@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import re
 
-from .pii import PII_PATTERNS, is_sensitive
+from .pii import is_sensitive
 
 SIMPLE = "SIMPLE"
 MEDIUM = "MEDIUM"
@@ -51,13 +51,6 @@ MEDIUM_PATTERNS = [
     r"summar(?:y|ise|ize)",
     r"compare and aggregate",
 ]
-
-# PII_PATTERNS now lives in ``pii.py`` and is re-exported here for callers
-# that still import it from the classifier.  The default detector is the same
-# regex list, so recorded routing is unchanged; set HYBRID_PII_DETECTOR to
-# switch to presidio/taxonomy/composite after measuring the swap.
-_ = PII_PATTERNS  # explicit re-export (kept for import compatibility)
-
 
 def _hits(patterns: list[str], text: str) -> list[str]:
     return [p for p in patterns if re.search(p, text)]

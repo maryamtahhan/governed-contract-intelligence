@@ -116,14 +116,6 @@ def evaluate_records(records: list[dict], data_dir: str | None = None) -> dict:
     return {"samples": len(results), **summary, "per_sample": results}
 
 
-def ragas_available() -> bool:
-    try:
-        import ragas  # noqa: F401
-        return True
-    except ImportError:
-        return False
-
-
 def ragas_scores(samples: Iterable[dict[str, Any]], llm: Any = None,
                  metrics: Sequence[str] = ("faithfulness", "answer_relevancy",
                                            "context_precision"),

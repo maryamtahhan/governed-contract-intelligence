@@ -50,11 +50,6 @@ def jsonl_path() -> Path:
     return Path(os.environ.get("TRACE_OTEL_JSONL", str(_DEFAULT_PATH)))
 
 
-def status() -> dict[str, Any]:
-    return {"mode": mode(), "jsonl": str(jsonl_path()),
-            "otlp_ready": _OTLP_READY, "otlp_error": _OTLP_ERROR}
-
-
 def _estimate_tokens(text: str | None) -> int:
     return max(1, (len(text or "") + 3) // 4) if text else 0
 

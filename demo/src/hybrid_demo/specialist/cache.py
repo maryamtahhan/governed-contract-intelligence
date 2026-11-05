@@ -35,8 +35,6 @@ class CacheStats:
     misses: int = 0
     stores: int = 0
     sensitive_skips: int = 0
-    fp_checks: int = 0
-    fp_mismatches: int = 0
 
 
 class SemanticCache:
@@ -103,26 +101,6 @@ class SemanticCache:
                 self._exact.pop((evicted.clause, evicted.fingerprint), None)
             self.stats.stores += 1
 
-    def check_fp(self, clause: str, context: str, fresh_answer: dict) -> bool:
-        """Validation helper: would the cache serve what a fresh compute says?
-
-        Used by the measurement tooling to report the false-positive rate: a
-        similarity hit whose answer disagrees with the freshly computed one.
-        """
-        cached, served_as = self.get(clause, context)
-        # A miss is not a false positive, and an exact hit is by construction
-        # the same input: only similarity-served answers can be wrong.
-        if cached is None or served_as != "similarity":
-            return True
-        self.stats.fp_checks += 1
-        same = (
-            cached.get("found") == fresh_answer.get("found")
-            and cached.get("text") == fresh_answer.get("text")
-        )
-        if not same:
-            self.stats.fp_mismatches += 1
-        return same
-
     def snapshot(self) -> dict:
         s = self.stats
         served = s.hits_exact + s.hits_similarity
@@ -135,9 +113,6 @@ class SemanticCache:
             "stores": s.stores,
             "sensitive_skips": s.sensitive_skips,
             "hit_rate": round(served / max(served + s.misses, 1), 3),
-            "fp_checks": s.fp_checks,
-            "fp_mismatches": s.fp_mismatches,
-            "fp_rate": round(s.fp_mismatches / max(s.fp_checks, 1), 3),
         }
 
 
@@ -212,17 +187,6 @@ class RedisSemanticCache:
                           metadata={"clause": clause.strip().lower()})
         self.stats.stores += 1
 
-    def check_fp(self, clause: str, context: str, fresh_answer: dict) -> bool:
-        cached, served_as = self.get(clause, context)
-        if cached is None or served_as != "similarity":
-            return True
-        self.stats.fp_checks += 1
-        same = (cached.get("found") == fresh_answer.get("found")
-                and cached.get("text") == fresh_answer.get("text"))
-        if not same:
-            self.stats.fp_mismatches += 1
-        return same
-
     def snapshot(self) -> dict:
         s = self.stats
         served = s.hits_exact + s.hits_similarity
@@ -234,9 +198,6 @@ class RedisSemanticCache:
             "stores": s.stores,
             "sensitive_skips": s.sensitive_skips,
             "hit_rate": round(served / max(served + s.misses, 1), 3),
-            "fp_checks": s.fp_checks,
-            "fp_mismatches": s.fp_mismatches,
-            "fp_rate": round(s.fp_mismatches / max(s.fp_checks, 1), 3),
         }
 
 
