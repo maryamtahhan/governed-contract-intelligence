@@ -8,12 +8,12 @@ kind: Kustomization
 # deploy/openshift/rosa ships, so this is a like-for-like gateway swap and not
 # a routing change.
 #
-# Apply it only after deploying/images/praxis-llm-d-sc/build.sh has built and
-# pushed the amd64 image. The base manifests intentionally keep the older,
-# existing image until that is true; pointing them at a missing tag would turn
-# every stack into ImagePullBackOff.
+# Apply it only after quay.io/mtahhan/gci-praxis:v0.9.0 exists (the
+# publish-images workflow, or build.sh --push on an amd64 host). The base
+# manifests intentionally keep the older, existing image until that is true;
+# pointing them at a missing tag would turn every stack into ImagePullBackOff.
 #
-#   ./deploy/images/praxis-llm-d-sc/build.sh --push
+#   gh workflow run publish-images.yml
 #   oc apply -k deploy/openshift/praxis-0.9.0
 #
 # Pin the digest in a quoted run:
@@ -24,4 +24,5 @@ resources:
 
 images:
   - name: quay.io/rmalone/praxis-ai-llm-d-sc
+    newName: quay.io/mtahhan/gci-praxis
     newTag: v0.9.0

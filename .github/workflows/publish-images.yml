@@ -1,0 +1,149 @@
+name: publish-images
+
+on:
+  workflow_dispatch:
+    inputs:
+      praxis:
+        description: Build and push quay.io/mtahhan/gci-praxis:v0.9.0
+        type: boolean
+        default: true
+      llm-d-sc:
+        description: Build and push quay.io/mtahhan/gci-llm-d-sc:main-e660fff
+        type: boolean
+        default: true
+      modelcar:
+        description: Mirror the modelcar to quay.io/mtahhan/gci-llm-d-sc-modelcar
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+# The destination tags are fixed, so concurrent runs would race the same
+# destinations. Queue instead of cancelling: a half-pushed tag is worse than
+# a queued run.
+concurrency:
+  group: publish-images
+  cancel-in-progress: false
+
+env:
+  PRAXIS_IMAGE: quay.io/mtahhan/gci-praxis:v0.9.0
+  LLM_D_SC_IMAGE: quay.io/mtahhan/gci-llm-d-sc:main-e660fff
+  LLM_D_SC_REPO: https://github.com/llm-d-incubation/llm-d-semantic-classifier
+  # Upstream main at 2026-11-03: the first commit that serves the standard
+  # gRPC health service. The main- prefix records a main-branch build, not an
+  # upstream release.
+  LLM_D_SC_REF: e660fff
+  MODELCAR_SRC: quay.io/rmalone/llm-d-sc-modelcar:complexity
+  MODELCAR_DST: quay.io/mtahhan/gci-llm-d-sc-modelcar:complexity
+
+jobs:
+  praxis:
+    name: gci-praxis (gateway)
+    runs-on: ubuntu-latest
+    if: ${{ inputs.praxis }}
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to quay
+        env:
+          QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
+          QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+        run: |
+          if [[ -z "$QUAY_USERNAME" || -z "$QUAY_PASSWORD" ]]; then
+            echo "FATAL: set the QUAY_USERNAME and QUAY_PASSWORD repository secrets" >&2
+            exit 1
+          fi
+          printf '%s' "$QUAY_PASSWORD" | podman login quay.io \
+            --username "$QUAY_USERNAME" --password-stdin
+
+      # Same script, pins, and self-validating Containerfile as a local build;
+      # this job adds no build logic of its own. IMAGE selects the destination
+      # (it is also the build.sh default). The runner is amd64, so the
+      # linux/amd64 default is native, not emulated.
+      - name: Build and push
+        run: IMAGE="$PRAXIS_IMAGE" ./deploy/images/praxis-llm-d-sc/build.sh --push
+
+      - name: Record digest
+        run: |
+          digest="$(skopeo inspect --format '{{.Digest}}' "docker://$PRAXIS_IMAGE")"
+          {
+            echo "### gci-praxis (gateway)"
+            echo "- \`$PRAXIS_IMAGE\` -> \`$digest\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  llm-d-sc:
+    name: gci-llm-d-sc (classifier)
+    runs-on: ubuntu-latest
+    if: ${{ inputs.llm-d-sc }}
+    timeout-minutes: 90
+    steps:
+      - name: Log in to quay
+        env:
+          QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
+          QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+        run: |
+          if [[ -z "$QUAY_USERNAME" || -z "$QUAY_PASSWORD" ]]; then
+            echo "FATAL: set the QUAY_USERNAME and QUAY_PASSWORD repository secrets" >&2
+            exit 1
+          fi
+          printf '%s' "$QUAY_PASSWORD" | podman login quay.io \
+            --username "$QUAY_USERNAME" --password-stdin
+
+      - name: Clone upstream at the pinned commit
+        run: |
+          git clone --quiet --filter=blob:none "$LLM_D_SC_REPO" \
+            "$RUNNER_TEMP/llm-d-semantic-classifier"
+          git -C "$RUNNER_TEMP/llm-d-semantic-classifier" checkout --quiet "$LLM_D_SC_REF"
+
+      # Upstream's Containerfile needs no build args and its context is the
+      # repo root. The image is model-agnostic: the model arrives as a
+      # modelcar mount, so this build does not need it.
+      - name: Build and push
+        run: |
+          podman build --platform linux/amd64 \
+            -f "$RUNNER_TEMP/llm-d-semantic-classifier/Containerfile" \
+            -t "$LLM_D_SC_IMAGE" \
+            "$RUNNER_TEMP/llm-d-semantic-classifier"
+          podman push "$LLM_D_SC_IMAGE"
+
+      - name: Record digest
+        run: |
+          digest="$(skopeo inspect --format '{{.Digest}}' "docker://$LLM_D_SC_IMAGE")"
+          {
+            echo "### gci-llm-d-sc (classifier)"
+            echo "- \`$LLM_D_SC_IMAGE\` -> \`$digest\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  modelcar:
+    name: gci-llm-d-sc-modelcar (mirror)
+    runs-on: ubuntu-latest
+    if: ${{ inputs.modelcar }}
+    timeout-minutes: 30
+    steps:
+      - name: Log in to quay
+        env:
+          QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
+          QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
+        run: |
+          if [[ -z "$QUAY_USERNAME" || -z "$QUAY_PASSWORD" ]]; then
+            echo "FATAL: set the QUAY_USERNAME and QUAY_PASSWORD repository secrets" >&2
+            exit 1
+          fi
+          printf '%s' "$QUAY_PASSWORD" | skopeo login quay.io \
+            --username "$QUAY_USERNAME" --password-stdin
+
+      # The complexity modelcar the stack already runs, mirrored unchanged so
+      # the namespace is self-contained. The source is a single OCI manifest
+      # (not a list), so a plain copy preserves it exactly.
+      - name: Mirror
+        run: skopeo copy "docker://$MODELCAR_SRC" "docker://$MODELCAR_DST"
+
+      - name: Record digest
+        run: |
+          digest="$(skopeo inspect --format '{{.Digest}}' "docker://$MODELCAR_DST")"
+          {
+            echo "### gci-llm-d-sc-modelcar (mirror)"
+            echo "- \`$MODELCAR_DST\` -> \`$digest\`"
+          } >> "$GITHUB_STEP_SUMMARY"

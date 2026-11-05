@@ -241,6 +241,15 @@ different case — the only published fork tag is `v0.7.0`, and upstream
 `ai` v0.9.0 has no `llm_d_sc` filter, so upgrading it means rebuilding the
 fork (FINDINGS §12).
 
+The 2026-11 rebuild publishes both as quay images instead: the gateway as
+`quay.io/mtahhan/gci-praxis:v0.9.0` and the classifier as
+`quay.io/mtahhan/gci-llm-d-sc:main-e660fff` (upstream `e660fff`, which serves
+the standard gRPC health service, so the manifest's TCP readiness probe can
+become a `grpc:` probe once it switches to that image). The `publish-images`
+workflow builds and pushes them and mirrors the modelcar
+([deploy/images/praxis-llm-d-sc/](deploy/images/praxis-llm-d-sc/README.md));
+the in-cluster BuildConfig above remains the from-source path.
+
 Then:
 
 ```bash
