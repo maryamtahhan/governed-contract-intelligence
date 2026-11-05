@@ -1,0 +1,27 @@
+{
+  "vllm-cpu": {
+    "model": "Qwen/Qwen3.5-35B-A3B",
+    "hardware": "cpu (ROSA x8i.24xlarge, Granite Rapids, 16 pinned cores, OMP-bind, no static CPU manager)",
+    "deployment": "cpureal-vllm-cpu"
+  },
+  "vllm-gpu": {
+    "model": "Qwen/Qwen3.5-35B-A3B",
+    "hardware": "4x A10G (ROSA g5.12xlarge, TP=4)",
+    "deployment": "gpumoe-vllm"
+  },
+  "vllm-gpu-approved": {
+    "model": "Qwen/Qwen3.5-35B-A3B",
+    "hardware": "4x A10G (ROSA g5.12xlarge, TP=4, shared with vllm-gpu)",
+    "deployment": "gpumoe-vllm (shared with vllm-gpu)"
+  },
+  "vllm-gpu-small": {
+    "model": "Qwen/Qwen2.5-1.5B-Instruct",
+    "hardware": "cpu (ROSA x8i.24xlarge, 12 pinned cores, OMP-bind)",
+    "deployment": "cpureal-vllm-gpu-small"
+  },
+  "specialist": {
+    "model": "CUAD RoBERTa-large QA (fine-tuned 2021 checkpoint)",
+    "hardware": "cpu (ROSA x8i.24xlarge, 2 cores, composite relay to cpureal-vllm-cpu)",
+    "deployment": "cpureal-specialist"
+  }
+}

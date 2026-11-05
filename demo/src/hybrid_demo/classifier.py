@@ -17,6 +17,8 @@ from __future__ import annotations
 
 import re
 
+from .pii import PII_PATTERNS, is_sensitive
+
 SIMPLE = "SIMPLE"
 MEDIUM = "MEDIUM"
 COMPLEX = "COMPLEX"
@@ -50,21 +52,11 @@ MEDIUM_PATTERNS = [
     r"compare and aggregate",
 ]
 
-PII_PATTERNS = [
-    r"[\w.+-]+@[\w-]+\.[\w.]+",
-    r"\bEMP-\d{4,}\b",
-    r"\bACCT-\d{4,}\b",
-    r"\bCUST-\d{4,}\b",
-    r"\b[A-Z]{2}\d{2}[A-Z0-9]{8,}\b",
-    r"personal data",
-    r"data controller",
-    r"data processor",
-    r"special categories of personal data",
-    r"passport",
-    r"tax identification",
-    r"identification number",
-    r"\+\d{1,3}[\s-]\d",
-]
+# PII_PATTERNS now lives in ``pii.py`` and is re-exported here for callers
+# that still import it from the classifier.  The default detector is the same
+# regex list, so recorded routing is unchanged; set HYBRID_PII_DETECTOR to
+# switch to presidio/taxonomy/composite after measuring the swap.
+_ = PII_PATTERNS  # explicit re-export (kept for import compatibility)
 
 
 def _hits(patterns: list[str], text: str) -> list[str]:
@@ -85,4 +77,10 @@ def classify_complexity(prompt: str) -> str:
 
 
 def detect_sensitivity(prompt: str) -> bool:
-    return bool(_hits(PII_PATTERNS, prompt))
+    """The PII screen used to choose the gateway entry.
+
+    Delegates to ``pii.is_sensitive`` so the detector is selectable
+    (HYBRID_PII_DETECTOR) without changing this call site.  Default remains
+    the regex screen, so recorded routing is unchanged.
+    """
+    return is_sensitive(prompt)

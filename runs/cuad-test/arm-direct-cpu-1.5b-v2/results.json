@@ -1,0 +1,1429 @@
+{
+ "summary": {
+  "arm": "direct",
+  "mode": "direct",
+  "docs": 19,
+  "endpoint": "http://127.0.0.1:8001/v1",
+  "thinking": false
+ },
+ "records": [
+  {
+   "step": "classify",
+   "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "outcome": "served",
+   "latency_ms": 6973.7,
+   "content": {
+    "type": "MSA|NDA|SOW|DPA",
+    "initial_term_months": 2,
+    "ref": "Exhibit 10.2"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "outcome": "served",
+   "latency_ms": 5302.8,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "Until and unless each party has received a counterpart hereof signed by the other party, this Agreement shall have no effect and none of the parties shall have any right or obligation hereunder (whether by virtue of any other oral or written agreement or other communication).",
+    "ref": "Section 9"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "outcome": "served",
+   "latency_ms": 6506.0,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "THIS AGREEMENT SHALL BE GOVERNED BY AND CONSTRUED IN ACCORDANCE WITH THE INTERNAL LAWS OF THE COMMONWEALTH OF PENNSYLVANIA WITHOUT GIVING EFFECT TO ANY CHOICE OR CONFLICT OF LAW PROVISION OR RULE (WHETHER OF THE COMMONWEALTH OF PENNSYLVANIA OR ANY OTHER JURISDICTION).",
+    "ref": "Section 4"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "outcome": "served",
+   "latency_ms": 5721.3,
+   "content": {
+    "clause": "liability_cap",
+    "found": true,
+    "text": "WHEREAS, Gulf Houghton Lubricants Ltd., Gulf Oil International Limited, and Gulf Oil Lubricants India, Ltd. are executing this Agreement solely for purposes of Section 1(c)",
+    "ref": "WHEREAS, Gulf Houghton Lubricants Ltd., Gulf Oil International Limited, and Gulf Oil Lubricants India, Ltd. are executing this Agreement solely for purposes of Section 1(c)"
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "outcome": "served",
+   "latency_ms": 5836.2,
+   "content": {
+    "clause": "audit_rights",
+    "found": true,
+    "text": "WHEREAS, Gulf Houghton Lubricants Ltd., Gulf International, and Gulf Oil are executing this Agreement solely for purposes of Section 1(c)",
+    "ref": "WHEREAS, Gulf Houghton Lubricants Ltd., Gulf International, and Gulf Oil are executing this Agreement solely for purposes of Section 1(c)"
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "outcome": "served",
+   "latency_ms": 4114.9,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "The contract does not mention uncapped liability, termination without cure, or absence of governing law.",
+     "Governing law clause specifies Pennsylvania's internal laws.",
+     "Liability cap is mentioned but not explicitly capped.",
+     "Audit rights clause is present but does not indicate lack of audit rights."
+    ]
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "outcome": "served",
+   "latency_ms": 7419.5,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 12,
+    "ref": "HF ENTERPRISES INC., S-1, 12/23/2019"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "outcome": "served",
+   "latency_ms": 9492.6,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "2.2.1. Either party may terminate this Agreement prior to expiration of the Term: (i) upon thirty (30) days prior written notice, or (ii) immediately upon written notice to the other party if: (a) the other party declares or a petition is filed in any court for insolvency or bankruptcy and such petition is not dismissed in thirty (30) days; (b) the other party reorganizes under the relevant bankruptcy act or any similar statute in such party's jurisdiction of incorporation; (c) the other party consents to the appointment of a trustee in bankruptcy or a receiver or similar entity; or (d) the Developer breaches DSS's Technology or Intellectual Property rights contained herein.",
+    "ref": "Section 2.2"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "outcome": "served",
+   "latency_ms": 4385.8,
+   "content": {
+    "raw": "{\n  \"clause\": \"governing_law\",\n  \"found\": true,\n  \"text\": \"This Outsource Technology Development Agreement (this \\\"Agreement\\\") is entered into and effective as of this 1s t day of March, 2018 (the \\\"Effective Date\\\") by and between Document Security Systems, Inc., a corporation organized and existing under the laws of the State of New York (\\\"DSS\\\"),\n  \"ref\": \"RECITALS\"\n}"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "outcome": "served",
+   "latency_ms": 4606.8,
+   "content": {
+    "clause": "liability_cap",
+    "found": true,
+    "text": "Developer shall be fully liable, without limitation, for money damages resulting from its improper or unauthorized use, modification, alteration, licensing or transfer of the Technology or Improvements, or resulting from its failure to provide functional and merchantable Improvements hereunder, which failure shall be deemed a material breach of this Agreement by Developer.",
+    "ref": "6"
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "outcome": "served",
+   "latency_ms": 6529.0,
+   "content": {
+    "clause": "audit_rights",
+    "found": true,
+    "text": "The parties acknowledge that they have entered into that certain Mutual Non-Disclosure Agreement dated as of January 18, 2018 (the \"NDA\"); the terms of the NDA shall be deemed to be incorporated by reference into this Agreement, mutatis mutandis.",
+    "ref": "HF ENTERPRISES INC., S-1, 12/23/2019"
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "outcome": "served",
+   "latency_ms": 3328.6,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "Liability is capped at money damages.",
+     "No mention of termination clause.",
+     "Governing law is not specified but does not affect risk assessment.",
+     "Audit rights are mentioned but do not impact contractual risk."
+    ]
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "outcome": "served",
+   "latency_ms": 5946.4,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 3,
+    "ref": "Exhibit 10.12"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "outcome": "served",
+   "latency_ms": 4974.6,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "This Agreement shall take effect on the date of signature of the Agreement by both parties and shall terminate when all obligations required of both parties hereunder are performed unless either terminated earlier or extended by the parties pursuant to the terms of this Agreement subject to clause 4.0.",
+    "ref": "4.0"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "outcome": "served",
+   "latency_ms": 2751.0,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "Certain identified information has been excluded because it is both not material and would likely cause competitive harm if publicly disclosed.",
+    "ref": "Addenda"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "outcome": "served",
+   "latency_ms": 3252.8,
+   "content": {
+    "clause": "liability_cap",
+    "found": true,
+    "text": "Not found.",
+    "ref": "Certain identified information has been excluded because it is both not material and would likely cause competitive harm if publicly disclosed."
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "outcome": "served",
+   "latency_ms": 4964.5,
+   "content": {
+    "clause": "audit_rights",
+    "found": true,
+    "text": "Certain identified information has been excluded because it is both not material and would likely cause competitive harm if publicly disclosed.",
+    "ref": "[***]"
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "outcome": "served",
+   "latency_ms": 2341.3,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "Liability cap is present.",
+     "Governing law is specified.",
+     "Audit rights are included."
+    ]
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "outcome": "served",
+   "latency_ms": 5911.4,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 1,
+    "ref": "January 5, 2015"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "outcome": "served",
+   "latency_ms": 4237.6,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "The Parties may terminate its performance of related obligations under this Agreement within thirty (30) days of receipt by the Party of written termination notice.",
+    "ref": "21"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "outcome": "served",
+   "latency_ms": 5590.2,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "This Cooperation Agreement is made by and between HPIL ENERGYTECH Inc., a Nevada (USA) corporation (hereafter \"HPIL ET\") and GINARES GROUP AG, a private company domiciled in Switzerland (hereafter \"GINARES\").",
+    "ref": "Section 17"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "outcome": "served",
+   "latency_ms": 11774.3,
+   "content": {
+    "clause": "liability_cap",
+    "found": true,
+    "text": "HPIL ET shall indemnify, defend, and hold harmless GINARES from, against and with respect to any claim, liability, obligations, loss, damage, assessment, judgment, cost and expense (including, without limitation, reasonable attorneys' and accountants' fees and costs and expenses reasonably incurred in investigating, preparing, defending against or prosecuting any litigation or claim, action, suit, proceeding or demand) or any kind or character (collectively, 'Losses') arising out of or in any manner, incident, relating or attributable to: any inaccuracy in any representation or breach of warranty of GINARES contained in this Agreement and (ii) any failure by HPIL ET to perform or observe, or to have performed or observed in full any covenant, agreement or condition to be performed or observed by HPIL ET under this Agreement or any of the other agreements or instruments executed and delivered by HPIL ET on the Closing Date.",
+    "ref": "Section 9"
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "outcome": "served",
+   "latency_ms": 3517.7,
+   "content": {
+    "clause": "audit_rights",
+    "found": true,
+    "text": "The Parties agree to develop a list of target cooperation projects and common goals, and consequent agreements if required, within six (6) Months of signing this Agreement.",
+    "ref": "Recitals"
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "outcome": "served",
+   "latency_ms": 3973.9,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "Liability cap is present and capped at Losses arising from inaccuracies in representations or breaches of warranties.",
+     "Governing law clause specifies jurisdiction, which is neutral.",
+     "Audit rights clause outlines future actions but does not affect current contractual obligations."
+    ],
+    "ref": {
+     "governing_law": "This Cooperation Agreement is made by and between HPIL ENERGYTECH Inc., a Nevada (USA) corporation (hereafter \"HPIL ET\") and GINARES GROUP AG, a private company domiciled in Switzerland (hereafter \"GINARES\")."
+    }
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "outcome": "served",
+   "latency_ms": 3039.5,
+   "content": {
+    "type": "SOW",
+    "initial_term_months": 6,
+    "ref": "Exhibit 10.3"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "outcome": "served",
+   "latency_ms": 1877.0,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "...",
+    "ref": "Term and Termination"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "outcome": "served",
+   "latency_ms": 4826.1,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "This WEB SITE HOSTING AGREEMENT ('this Agreement') is entered into this 6th day of April, 1999 by and between Centrack International, a Florida corporation ('the Customer'), and i-on interactive, a Florida corporation ('i-on').",
+    "ref": "1"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "outcome": "served",
+   "latency_ms": 4794.1,
+   "content": {
+    "clause": "liability_cap",
+    "found": true,
+    "text": "i-on's liability for damages to the Customer for any cause whatsoever, regardless of the form of action, and whether in contract or in tort, including negligence, shall be limited to one (1) month's fees and the remaining portion of any prepaid fees.",
+    "ref": "LIMITATION OF LIABILITY"
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "outcome": "served",
+   "latency_ms": 3124.2,
+   "content": {
+    "clause": "audit_rights",
+    "found": true,
+    "text": "...",
+    "ref": "..."
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "outcome": "served",
+   "latency_ms": 3587.2,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "Liability cap exists, limiting damages to one month's fees.",
+     "Governing law specifies U.S. jurisdiction.",
+     "Audit rights are mentioned but not detailed.",
+     "Termination clause found."
+    ]
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "outcome": "served",
+   "latency_ms": 3924.2,
+   "content": {
+    "type": "MSA|NDA|SOW|DPA",
+    "initial_term_months": 12,
+    "ref": "Exhibit 10.13"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "outcome": "served",
+   "latency_ms": 3991.4,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "On any termination of the Joint Venture, its debt shall be paid or provided for in a manner satisfactory to the Joint Venturers.",
+    "ref": "Section 11"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "outcome": "served",
+   "latency_ms": 2210.1,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "...",
+    "ref": "not found"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "outcome": "served",
+   "latency_ms": 2089.0,
+   "content": {
+    "clause": "liability_cap",
+    "found": true,
+    "text": "...",
+    "ref": "Not Found"
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "outcome": "served",
+   "latency_ms": 2052.5,
+   "content": {
+    "clause": "audit_rights",
+    "found": true,
+    "text": "...",
+    "ref": "not found"
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "outcome": "served",
+   "latency_ms": 2356.0,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "The contract does not mention uncapped liability or absence of termination rights.",
+     "It specifies how debt will be handled upon termination but does not indicate an absence of such provisions.",
+     "There is a governing law clause and audit rights mentioned, which suggests some form of oversight and structure."
+    ]
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "outcome": "served",
+   "latency_ms": 3515.9,
+   "content": {
+    "type": "MSA|NDA|SOW|DPA",
+    "initial_term_months": 30,
+    "ref": "Exhibit 10.1"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "outcome": "served",
+   "latency_ms": 2524.4,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "unless earlier terminated as provided in this Agreement",
+    "ref": "Section 4"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "outcome": "served",
+   "latency_ms": 8310.2,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "this Cooperation Agreement ('Agreement') is entered into as of June 18, 2020, by and between Sp\u00f4k Holdings, Inc., a Delaware corporation (the 'Company'), and White Hat Strategic Partners LP, a Delaware limited partnership, White Hat SP GP LLC, a Delaware limited liability company, White Hat Capital Partners LP, a Delaware limited partnership, and White Hat Capital Partners GP LLC, a Delaware limited liability company (collectively, the 'White Hat Parties') (each of the Company and the White Hat Parties, a 'Party' to this Agreement, and collectively, the 'Parties').",
+    "ref": "Recitals"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "outcome": "served",
+   "latency_ms": 3328.6,
+   "content": {
+    "clause": "liability_cap",
+    "found": true,
+    "text": "Nothing in this Agreement shall be deemed to abridge or limit the fiduciary duties of any member of the Board under Delaware law.",
+    "ref": "Recitals"
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "outcome": "served",
+   "latency_ms": 2858.2,
+   "content": {
+    "clause": "audit_rights",
+    "found": true,
+    "text": "Nothing in this Agreement shall be deemed to abridge or limit the fiduciary duties of any member of the Board under Delaware law.",
+    "ref": "Recitals"
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "outcome": "served",
+   "latency_ms": 1769.3,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "Liability cap exists",
+     "Governing law specifies Delaware law",
+     "No mention of uncapped liability or absence of termination rights"
+    ],
+    "ref": "extracted_clauses"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "outcome": "served",
+   "latency_ms": 2928.5,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 12,
+    "ref": "Exhibit 10.22"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "outcome": "served",
+   "latency_ms": 3137.5,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "The Parties agree to terminate the Master Development Agreement and to enter into this Agreement.",
+    "ref": "Recitals"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "outcome": "served",
+   "latency_ms": 8133.1,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "Except to the extent governed by the Federal Arbitration Act or other federal law, this Agreement and all claims arising from the relationship between Hyatt (and/or any of its Affiliates) and Playa (and/or any of its Affiliates) under this Agreement will be governed by the laws of the State of Illinois (U.S.A.), without regard to its conflict of laws rules, except that any Illinois law or any other law regulating the offer or sale of franchises, business opportunities, or similar interests, or governing the relationship between a franchisor and a franchisee or any similar relationship, will not apply unless its jurisdictional requirements are met independently without reference to this Section 4.",
+    "ref": "Section 4"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "outcome": "served",
+   "latency_ms": 7364.1,
+   "content": {
+    "clause": "liability_cap",
+    "found": true,
+    "text": "each Party (the \"Offering Party\") agrees to provide to the other Party (the \"Receiving Party\") a right of first offer with respect to any proposed offer or arrangement, which the Offering Party (or its affiliate) desires to accept, under which the Offering Party or one of its affiliates would acquire the ownership of real property in the Market Area (the \"Development Property\") on which a Hyatt All-Inclusive Resort would operate (a \"Development Opportunity\").",
+    "ref": "Section 1"
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "outcome": "served",
+   "latency_ms": 5189.3,
+   "content": {
+    "clause": "audit_rights",
+    "found": true,
+    "text": "The Parties acknowledge and agree that no guarantee is made to the other as to any amount of income to be received by Hyatt or Playa or as to the future financial success of the business contemplated under this Agreement.",
+    "ref": "Section 12"
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "outcome": "served",
+   "latency_ms": 1995.5,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "Liability cap exists.",
+     "No uncapped liability found.",
+     "Governing law specifies Illinois law excluding certain regulations.",
+     "Audit rights clause does not indicate significant risk."
+    ],
+    "ref": "extracted_clauses.json"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "outcome": "served",
+   "latency_ms": 2332.7,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 12,
+    "ref": "November 1, 2002"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "outcome": "served",
+   "latency_ms": 4057.0,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "ARTICLE XII - TERM\n12.1 This contract shall be effective as of November 1, 2002, and shall remain in force and effect, unless modified as per Exhibit B, until October 31, 2012.",
+    "ref": "ARTICLE XII"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "outcome": "served",
+   "latency_ms": 5496.2,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "This Agreement is made and entered into as of the 1st day of November, 2002, by and between TENNESSEE GAS PIPELINE COMPANY, a Delaware Corporation, hereinafter referred to as \"Transporter\" and LOUISVILLE GAS AND ELECTRIC COMPANY, a Kentucky Corporation, hereinafter referred to as \"Shipper.\"",
+    "ref": "Article XII"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "outcome": "served",
+   "latency_ms": 6188.3,
+   "content": {
+    "clause": "liability_cap",
+    "found": true,
+    "text": "Except as provided to the contrary in any written or electronic agreement(s) between Transporter and Shipper in effect during the term of this Agreement Shipper shall pay Transporter the applicable maximum rate(s) and all other applicable charges and surcharges specified in the Summary of Rates in Transporter's FERC Gas Tariff and in this Rate Schedule.",
+    "ref": "Article VI"
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "outcome": "served",
+   "latency_ms": 2518.3,
+   "content": {
+    "clause": "audit_rights",
+    "found": true,
+    "text": "ARTICLE XVI - AUDITS AND INSPECTIONS",
+    "ref": "ARTICLE XVI"
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "outcome": "served",
+   "latency_ms": 2533.3,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "The contract does not mention uncapped liability or absence of termination rights.",
+     "Governing law is explicitly stated.",
+     "Liability cap is clearly defined.",
+     "Audit rights clause exists but is not detailed."
+    ]
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+   "outcome": "served",
+   "latency_ms": 2107.2,
+   "content": {
+    "type": "MSA|NDA|SOW|DPA",
+    "initial_term_months": 1,
+    "ref": "Exhibit 10.10"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+   "outcome": "served",
+   "latency_ms": 2714.0,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "In the event of any dispute over the interpretation or application of this Agreement, the Parties agree to submit the dispute to binding arbitration in accordance with the rules of the American Arbitration Association.",
+    "ref": "6.1"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+   "outcome": "served",
+   "latency_ms": 3450.2,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "this Intellectual Property Agreement (the \"Agreement\") is entered into as of November 20, 2007 (the \"Effective Date\",",
+    "ref": "In Exhibit 10.10"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+   "outcome": "served",
+   "latency_ms": 2275.8,
+   "content": {
+    "clause": "liability_cap",
+    "found": true,
+    "text": "Not found.",
+    "ref": "not found"
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+   "outcome": "served",
+   "latency_ms": 1434.3,
+   "content": {
+    "clause": "audit_rights",
+    "found": true,
+    "text": "...",
+    "ref": "not found"
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+   "outcome": "served",
+   "latency_ms": 1867.3,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "No uncapped liability.",
+     "Termination clause exists but does not specify conditions.",
+     "Governing law and audit rights are standard terms."
+    ],
+    "ref": "extracted_clauses.json"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "outcome": "served",
+   "latency_ms": 2302.4,
+   "content": {
+    "type": "MSA|NDA|SOW|DPA",
+    "initial_term_months": 6,
+    "ref": "[Galera Therapeutics, Inc. - Joint Filing Agreement]"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "outcome": "served",
+   "latency_ms": 2417.3,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "This Agreement may be executed in any number of counterparts all of which taken together shall constitute one and the same instrument.",
+    "ref": "[Galera Therapeutics, Inc. - Joint Filing Agreement]"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "outcome": "served",
+   "latency_ms": 3137.1,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "Pursuant to and in accordance with the Securities Exchange Act of 1934, as amended, and the rules and regulations thereunder (the \"Exchange Act\")",
+    "ref": "Exhibit A"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "outcome": "served",
+   "latency_ms": 2351.2,
+   "content": {
+    "clause": "liability_cap",
+    "found": true,
+    "text": "...",
+    "ref": "[Galera Therapeutics, Inc. - Joint Filing Agreement]"
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "outcome": "served",
+   "latency_ms": 2300.3,
+   "content": {
+    "clause": "audit_rights",
+    "found": true,
+    "text": "...",
+    "ref": "[Galera Therapeutics, Inc. - Joint Filing Agreement]"
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "outcome": "served",
+   "latency_ms": 2673.4,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "The contract does not mention uncapped liability or absence of termination rights.",
+     "It specifies governing law but does not indicate uncapped liability or lack of termination rights.",
+     "There is a cap on liability."
+    ]
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "outcome": "served",
+   "latency_ms": 2269.9,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 0,
+    "ref": "PCQUOTE COM INC, S-1/A, 7/21/1999"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "outcome": "served",
+   "latency_ms": 1395.3,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "not found",
+    "ref": "not found"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "outcome": "served",
+   "latency_ms": 1472.0,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "Section 2, Part B of the Co-Branding Agreement",
+    "ref": "Co-Branding Agreement"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "outcome": "served",
+   "latency_ms": 998.7,
+   "content": {
+    "clause": "liability_cap",
+    "found": true,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "outcome": "served",
+   "latency_ms": 1163.5,
+   "content": {
+    "clause": "audit_rights",
+    "found": true,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "outcome": "served",
+   "latency_ms": 952.4,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "No uncapped liability or absence of termination clause"
+    ],
+    "ref": "extracted_clauses"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "outcome": "served",
+   "latency_ms": 2084.0,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 6,
+    "ref": "Exhibit 10.1"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "outcome": "served",
+   "latency_ms": 5177.4,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "in the event that Oceanic Time Warner Cable removes the above content and or terminates this agreement prior to December 31, 2006, Oceanic Time Warner Cable agrees to pay a cancellation fee of Five Thousand Dollars ($5,000) per month multiplied by the number of months remain on the agreement.",
+    "ref": "not found"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "outcome": "served",
+   "latency_ms": 2680.1,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "Effective Dates: September 1, 2006, August 31, 2007",
+    "ref": "Exhibit 10.1"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "outcome": "served",
+   "latency_ms": 1528.6,
+   "content": {
+    "clause": "liability_cap",
+    "found": true,
+    "text": "Five Thousand Dollars ($5,000)",
+    "ref": "not found"
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "outcome": "served",
+   "latency_ms": 3374.2,
+   "content": {
+    "clause": "audit_rights",
+    "found": true,
+    "text": "Watchit will reserve the right to modify the content to reflect sponsorship by an advertiser and advertisers.",
+    "ref": "Watchit Media/Date"
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "outcome": "served",
+   "latency_ms": 2064.4,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "Liability cap exists at $5,000 per month.",
+     "Termination clause specifies specific conditions (removal of content, termination before Dec 31, 2006)."
+    ],
+    "ref": "extracted_clauses"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "outcome": "served",
+   "latency_ms": 2782.9,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 6,
+    "ref": "Exhibit 10.2"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "outcome": "served",
+   "latency_ms": 3229.6,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "This Addendum may be terminated at any time by either Party in accordance with the termination provisions of the Distribution Agreement.",
+    "ref": "Article 8"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "outcome": "served",
+   "latency_ms": 4381.5,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "The terms of the Governing Law and Dispute Resolution provisions of the Distribution Agreement will apply to this Addendum.",
+    "ref": "Source: SCANSOURCE, INC., 10-Q, 5/9/2019"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "outcome": "served",
+   "latency_ms": 2101.1,
+   "content": {
+    "clause": "liability_cap",
+    "found": true,
+    "text": "...",
+    "ref": "not found"
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "outcome": "served",
+   "latency_ms": 6577.5,
+   "content": {
+    "clause": "audit_rights",
+    "found": true,
+    "text": "Commencing on the Effective Date hereof, Xplore Products will be considered for all intents and purposes of the Distributor Agreement as Products and the purchase and sale thereof will be conducted in accordance with, and be subject to the terms and conditions of the Distributor Agreement, unless otherwise set out in this section:",
+    "ref": "Article 3"
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "outcome": "served",
+   "latency_ms": 1592.9,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "Liability cap is present (uncapped),",
+     "Governing law is specified (not absent)",
+     "Audit rights are defined (not absent)"
+    ],
+    "ref": "Distribution Agreement's termination provision"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "outcome": "served",
+   "latency_ms": 3915.1,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 12,
+    "ref": "481 Schuylkill Road, Phoenixville, PA 19460"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "outcome": "served",
+   "latency_ms": 5197.3,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "(b) Upon termination of this Agreement, NEITHER PARTY SHALL BE LIABLE TO THE OTHER FOR ANY CONSEQUENTIAL, EXEMPLARY, SPECIAL, INCIDENTAL OR PUNITIVE DAMAGES, EVEN IF IT HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES, WHICH ARE RELATED TO THE AGREEMENT OR ITS BREACH.",
+    "ref": "Section 2"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "outcome": "served",
+   "latency_ms": 4679.9,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "THIS AGREEMENT IS TO BE GOVERNED AND CONSTRUED ACCORDING TO THE LAWS OF THE STATE OF NEW YORK WITHOUT REGARD TO CONFLICTS OF LAW.",
+    "ref": "20. ENTIRE AGREEMENT"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "outcome": "served",
+   "latency_ms": 2572.3,
+   "content": {
+    "clause": "liability_cap",
+    "found": true,
+    "text": "Not found.",
+    "ref": "NOT_FOUND"
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "outcome": "served",
+   "latency_ms": 1993.0,
+   "content": {
+    "clause": "audit_rights",
+    "found": true,
+    "text": "Not found.",
+    "ref": "NOT_FOUND"
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "outcome": "served",
+   "latency_ms": 2768.2,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "Liability cap is not mentioned.",
+     "Governing law specifies New York state law.",
+     "No mention of termination rights."
+    ]
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "outcome": "served",
+   "latency_ms": 1852.4,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 6,
+    "ref": "Exhibit D"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "outcome": "served",
+   "latency_ms": 2029.2,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "...",
+    "ref": "..."
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "outcome": "served",
+   "latency_ms": 1760.9,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "...",
+    "ref": "..."
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "outcome": "served",
+   "latency_ms": 1690.9,
+   "content": {
+    "clause": "liability_cap",
+    "found": true,
+    "text": "...",
+    "ref": "..."
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "outcome": "served",
+   "latency_ms": 1300.0,
+   "content": {
+    "clause": "audit_rights",
+    "found": true,
+    "text": "...",
+    "ref": "..."
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "outcome": "served",
+   "latency_ms": 1666.5,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "Liability cap exists and is capped at $10 million.",
+     "Governing law specifies US law.",
+     "Audit rights are granted to the buyer."
+    ],
+    "ref": "Contract terms analyzed."
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "outcome": "served",
+   "latency_ms": 2536.1,
+   "content": {
+    "type": "Limited Power of Attorney",
+    "initial_term_months": null,
+    "ref": "http://www.federated.com"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "outcome": "served",
+   "latency_ms": 5210.7,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "Except as provided in the immediately preceding sentence, the powers and authorities herein granted may be revoked or terminated by the Adviser at any time provided that no such revocation or termination shall be effective until FASC has received actual notice of such revocation or termination in writing from the Adviser.",
+    "ref": "this section"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "outcome": "served",
+   "latency_ms": 3019.7,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "...",
+    "ref": "LIMITED POWER OF ATTORNEY"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "outcome": "served",
+   "latency_ms": 1899.9,
+   "content": {
+    "clause": "liability_cap",
+    "found": true,
+    "text": "...",
+    "ref": "LIMITED POWER OF ATTORNEY"
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "outcome": "served",
+   "latency_ms": 2550.0,
+   "content": {
+    "clause": "audit_rights",
+    "found": true,
+    "text": "...",
+    "ref": "Limited Power of Attorney"
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "outcome": "served",
+   "latency_ms": 1210.3,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "Liability cap exists, governing law is specified, audit rights are mentioned"
+    ],
+    "ref": "extracted_clauses"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "outcome": "served",
+   "latency_ms": 3302.5,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 20,
+    "ref": "Exhibit 99.4"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "outcome": "served",
+   "latency_ms": 2161.0,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "Upon termination of the Agreement:",
+    "ref": "8.3"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "outcome": "served",
+   "latency_ms": 3574.5,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "This Agreement is governed by and shall be construed in accordance with the laws of Hong Kong",
+    "ref": "16.1"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "outcome": "served",
+   "latency_ms": 4277.1,
+   "content": {
+    "clause": "liability_cap",
+    "found": true,
+    "text": "This Agreement constitutes the entire agreement between CEIS and XFN and supersedes any prior written or oral agreement between them in relation to its subject matter.",
+    "ref": "10."
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "outcome": "served",
+   "latency_ms": 2058.3,
+   "content": {
+    "clause": "audit_rights",
+    "found": true,
+    "text": "...",
+    "ref": "..."
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "outcome": "served",
+   "latency_ms": 1892.8,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "Liability is capped at $10 million.",
+     "Termination can occur upon CEIS' request.",
+     "Governing law specifies Hong Kong's laws.",
+     "Audit rights are not mentioned."
+    ],
+    "ref": "extracted_clauses.json"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+   "outcome": "served",
+   "latency_ms": 3959.0,
+   "content": {
+    "type": "MSA|NDA|SOW|DPA",
+    "initial_term_months": 12,
+    "ref": "Exhibit 10.17"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+   "outcome": "served",
+   "latency_ms": 5261.8,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "If MMMW notifies the Customer of any increase in charges in accordance with paragraph (a) above, the Customer may cancel the forthcoming service by advising MMMW in writing within thirty (30) days after notification of the change.",
+    "ref": "Section 5(b)"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+   "outcome": "served",
+   "latency_ms": 3338.0,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "This Agreement is the SOLE AND EXCLUSIVE AGREEMENT BETWEEN THE PARTIES RELATING TO SERVICES FOR THE ABOVE ITEMS.",
+    "ref": "Terms and Conditions"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+   "outcome": "served",
+   "latency_ms": 2325.9,
+   "content": {
+    "clause": "liability_cap",
+    "found": true,
+    "text": "...",
+    "ref": "Section 8"
+   }
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+   "outcome": "served",
+   "latency_ms": 3024.8,
+   "content": {
+    "clause": "audit_rights",
+    "found": true,
+    "text": "[ ] Technical Support\nHours Maximum: [*]; If\nRetainer $[*]         support extends beyond [*] hours,                                          Support will be charged at [*] per                                          hour.",
+    "ref": "The attached Terms and Conditions are part of this Agreement."
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+   "outcome": "served",
+   "latency_ms": 955.9,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "Liability cap exists and is capped at $[*]."
+    ],
+    "ref": "governing law clause"
+   }
+  },
+  {
+   "step": "report",
+   "doc_id": null,
+   "outcome": "served",
+   "latency_ms": 0,
+   "content": {
+    "documents": 19,
+    "risk_counts": {
+     "contracts": 19,
+     "governing_laws": 19,
+     "missing_data_protection_clauses": 0,
+     "audit_rights": 19
+    },
+    "governing_law_counts": {
+     "commonwealth_of_pennsylvania": 19,
+     "state_of_illinois": 1,
+     "hong_kong": 1
+    },
+    "missing_data_protection": 0,
+    "highest_risk_ref": "PaxMedica-INC_07_02_2020-EX-10-12-Master-Service"
+   }
+  }
+ ]
+}

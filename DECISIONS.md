@@ -142,3 +142,36 @@ transparent hugepages are an opt-in experiment. Evidence:
 `deploy/openshift/cpu-isolation/`; the lists were checked against the
 node's `lscpu` and all three manifests pass `oc apply --dry-run=server`
 on 2026-11-03.
+
+**D14 — Reuse the commodity parts, keep the measurement path** (Nov 5)
+Trigger: an audit of the demo found several places where we maintain
+mechanics that a mature upstream already owns (PII recognition, span
+scoring, ranking metrics, PDF→chunk provenance, vector/semantic cache
+storage, OTel export, load generation, the fake OpenAI server). At the
+same time, the audit found the opposite failure mode in the obvious
+"just adopt it" answers: replacing the trace relay, batching the Python
+runner, or swapping the PII screen would move a measured number or
+bypass governance. Change: implemented the upstream pieces as **opt-in
+adapters** and left every measured default byte-identical. Adopted:
+Presidio (`HYBRID_PII_DETECTOR`, default regex), nervaluate (extra span
+views; containment stays primary), statsmodels (exact McNemar backend,
+fallback kept), ranx (NDCG/MAP backend, internal fallback kept),
+docling `HybridChunker` (`--chunk-backend`, default builtin, provenance
+offsets corroborated before use), LanceDB + BM25 (`hybrid-index`;
+memory default), RedisVL for similarity plus Redis for exact keys
+(`--cache-backend redis`; policy stays in our wrapper), OpenTelemetry
+GenAI-shaped JSONL/OTLP export alongside SQLite, RAGAS plus a
+deterministic lexical groundedness screen, `llm-d-inference-sim` behind
+a proxy that deliberately does **not** fabricate `X-Busy-Ms`, the
+`llm-d-batch-gateway` `/v1/files`+`/v1/batches` client, and
+`vllm bench serve`/GuideLLM command builders. Rejected as replacements:
+the custom trace relay/dashboard, `pipeline/review.py` and
+`evalkit/score.py` domain logic, the composite specialist, the
+containment metric itself, and any batch path that points at a pool
+instead of the praxis ingress. Status: adapters and tests are in tree;
+no quality/cost number has been swapped yet. The next measured action
+is an A/B per row, starting with Presidio on a labelled sample and
+docling offsets on the D11 regression set. Evidence:
+`docs/OPENSOURCE-REUSE.md`, FINDINGS §16, 179 tests green; explicitly
+selected optional backends fail with an install/URL error, while `auto`
+modes fall back and record which backend ran.

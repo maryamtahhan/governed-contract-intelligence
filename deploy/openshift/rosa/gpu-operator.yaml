@@ -1,0 +1,44 @@
+# NVIDIA GPU operator for the g5 (A10G) node. Same recipe models-arch-ocp
+# runs (verified 2026-11-04: subscription gpu-operator-certified, channel
+# v26.3, source certified-operators): the operator deploys the driver
+# container, container toolkit, device plugin and DCGM on any node NFD
+# labels with NVIDIA hardware. Its DaemonSets tolerate the nvidia.com/gpu
+# taint this cluster's GPU machine pool carries; NFD itself tolerates any
+# NoSchedule taint.
+#
+# Apply this FIRST in the bring-up (it takes ~10-15 min for the driver to
+# install on a fresh node) — before the pools, before anything that
+# requests nvidia.com/gpu.
+#
+# The clusterpolicy that lands is named gpu-cluster-policy; check with:
+#   oc -n nvidia-gpu-operator wait --for=condition=ready clusterpolicy/gpu-cluster-policy --timeout=1200s
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nvidia-gpu-operator
+---
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: nvidia-gpu-operator
+  namespace: nvidia-gpu-operator
+spec:
+  # SingleNamespace, not the default AllNamespaces: the GPU operator's CSV
+  # does not advertise AllNamespaces, and with an empty targetNamespaces OLM
+  # fails the install with UnsupportedOperatorGroup. Restricting the
+  # OperatorGroup to its own namespace is what models-arch-ocp runs.
+  targetNamespaces:
+    - nvidia-gpu-operator
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: gpu-operator-certified
+  namespace: nvidia-gpu-operator
+spec:
+  channel: v26.3
+  installPlanApproval: Automatic
+  name: gpu-operator-certified
+  source: certified-operators
+  sourceNamespace: openshift-marketplace
+  startingCSV: gpu-operator-certified.v26.3.3

@@ -8,8 +8,10 @@ from typing import Any
 import httpx
 
 from ..common import normalize_text
+from ..configs import name_for_key
 from ..routes import APPROVED_ROUTES, CPU_ROUTES, GPU_ROUTES
 from . import cost as cost_model
+from . import spans as span_scoring
 
 # Extraction is scored by containment, not span-equality: a prediction is
 # correct when either normalised string contains the other. This rewards a
@@ -23,6 +25,39 @@ def text_matches(predicted: str | None, truth: str | None) -> bool:
         return False
     p, t = normalize_text(predicted), normalize_text(truth)
     return p == t or p in t or t in p
+
+
+# The report's governing-law counts name jurisdictions, but ground truth stores
+# the whole annotated clause ("...the laws of the State of New York"). Counting
+# those keys directly made the check unwinnable: every document produced a
+# distinct key and a model answering "New York" could never match. Both sides
+# are reduced to the jurisdiction they name before counting. Longest names
+# match first so "West Virginia" and "Indiana" are not read as "Virginia" and
+# "India".
+_JURISDICTIONS = (
+    "alabama", "alaska", "arizona", "arkansas", "california", "colorado",
+    "connecticut", "delaware", "district of columbia", "florida", "georgia",
+    "hawaii", "idaho", "illinois", "indiana", "iowa", "kansas", "kentucky",
+    "louisiana", "maine", "maryland", "massachusetts", "michigan", "minnesota",
+    "mississippi", "missouri", "montana", "nebraska", "nevada", "new hampshire",
+    "new jersey", "new mexico", "new york", "north carolina", "north dakota",
+    "ohio", "oklahoma", "oregon", "pennsylvania", "rhode island",
+    "south carolina", "south dakota", "tennessee", "texas", "utah", "vermont",
+    "virginia", "washington", "west virginia", "wisconsin", "wyoming",
+    "england and wales", "england", "scotland", "northern ireland", "ireland",
+    "hong kong", "singapore", "australia", "new zealand", "canada", "ontario",
+    "quebec", "india", "japan", "china", "germany", "france", "netherlands",
+    "switzerland", "south africa", "united kingdom",
+)
+_JURISDICTIONS_BY_LENGTH = sorted(_JURISDICTIONS, key=len, reverse=True)
+
+
+def jurisdiction(value: str | None) -> str | None:
+    """The jurisdiction a clause or a model's answer names, if any."""
+    if not value:
+        return None
+    low = normalize_text(str(value))
+    return next((name for name in _JURISDICTIONS_BY_LENGTH if name in low), None)
 
 
 def majority_risk_baseline(truth_docs: dict[str, dict], doc_ids: set[str]) -> float | None:
@@ -43,7 +78,8 @@ def load_run(run_dir: str | Path) -> dict:
     return data
 
 
-def extraction_scores(records: list[dict], truth_docs: dict[str, dict]) -> dict:
+def extraction_scores(records: list[dict], truth_docs: dict[str, dict],
+                      doc_texts: dict[str, str] | None = None) -> dict:
     tp = fp = fn = 0
     correct_fields = 0
     total_fields = 0
@@ -52,17 +88,23 @@ def extraction_scores(records: list[dict], truth_docs: dict[str, dict]) -> dict:
             continue
         clause = r["step"].split(":", 1)[1]
         truth = (truth_docs.get(r["doc_id"], {}).get("clauses") or {}).get(clause)
-        content = r.get("content", {})
+        content = r.get("content") or {}
         found = bool(content.get("found"))
         text = content.get("text")
+        # A call that never returned cannot have answered "no clause". It is
+        # neither a correct absence nor a false positive — it is a field the
+        # run failed to fill, and it must not lift precision by default.
+        served = r.get("outcome", "served") == "served"
         total_fields += 1
         if truth is None:
+            if not served:
+                continue
             if not found:
                 correct_fields += 1
             else:
                 fp += 1
         else:
-            if found and text_matches(text, truth):
+            if found and served and text_matches(text, truth):
                 tp += 1
                 correct_fields += 1
             elif found:
@@ -72,12 +114,21 @@ def extraction_scores(records: list[dict], truth_docs: dict[str, dict]) -> dict:
     precision = tp / (tp + fp) if tp + fp else 0.0
     recall = tp / (tp + fn) if tp + fn else 0.0
     f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
+    # Additive views: the historical containment numbers above stay exactly
+    # where they were, so old reports remain comparable.  Exact/partial and
+    # nervaluate's offset strategies are extra evidence, not a replacement.
+    views = span_scoring.score_records(records, truth_docs, doc_texts)
     return {
         "precision": round(precision, 3),
         "recall": round(recall, 3),
         "f1": round(f1, 3),
         "fields_correct": correct_fields,
         "fields_total": total_fields,
+        "match_metric": MATCH_METRIC,
+        "by_mode": views["by_mode"],
+        "absence": views["absence"],
+        "offset": views["offset"],
+        "offset_backend": views["offset_backend"],
     }
 
 
@@ -88,19 +139,41 @@ def step_accuracy(records: list[dict], truth_docs: dict[str, dict], step: str,
         if r["step"] != step:
             continue
         truth = truth_docs.get(r["doc_id"], {})
+        content = r.get("content") or {}
         if step == "classify":
             expected = truth.get("type")
-            got = r.get("content", {}).get("type")
+            got = content.get("type")
         elif step == "risk":
             expected = truth.get("risk")
-            got = r.get("content", {}).get("risk")
+            got = content.get("risk")
         else:
-            expected, got = truth.get(field), r.get("content", {}).get(field)
+            expected, got = truth.get(field), content.get(field)
         if expected is None:
             continue
         hits += int(got == expected)
         misses += int(got != expected)
     return round(hits / (hits + misses), 3) if hits + misses else None
+
+
+def _law_counts(predicted: Any) -> dict[str, int]:
+    """A report's governing-law counts, keyed by jurisdiction.
+
+    Models answer with law names ("New York"); merging them after the same
+    normalisation as the truth lets the two distributions be compared. Keys
+    that name no known jurisdiction stay as written, so they still count
+    against the answer.
+    """
+    counts: dict[str, int] = {}
+    if not isinstance(predicted, dict):
+        return counts
+    for key, value in predicted.items():
+        try:
+            count = int(value)
+        except (TypeError, ValueError):
+            continue
+        name = jurisdiction(str(key)) or normalize_text(str(key))
+        counts[name] = counts.get(name, 0) + count
+    return counts
 
 
 def _count_closeness(predicted: Any, truth: dict[str, int]) -> float:
@@ -123,35 +196,45 @@ def _count_closeness(predicted: Any, truth: dict[str, int]) -> float:
     return max(0.0, 1.0 - error / total)
 
 
-def report_score(records: list[dict], truth_docs: dict[str, dict]) -> float | None:
+def report_checks(records: list[dict], truth_docs: dict[str, dict]) -> dict | None:
+    """Per-field report results, against the ground truth for the run's documents.
+
+    The blended score hides which field failed; this keeps the breakdown so a
+    report violation can be attributed (documents, risk counts, governing law,
+    highest-risk reference) instead of guessed at.
+    """
     recs = [r for r in records if r["step"] == "report"]
     if not recs:
         return None
     content = recs[-1].get("content", {})
     if not content or "documents" not in content:
-        return 0.0
+        return {"score": 0.0, "checks": {}, "predicted": content, "expected": {}}
     run_doc_ids = {r["doc_id"] for r in records if r["doc_id"]}
     docs = [truth_docs[d] for d in sorted(run_doc_ids) if d in truth_docs]
     risk_counts = {"low": 0, "medium": 0, "high": 0}
     law_counts: dict[str, int] = {}
     missing_dp = 0
-    highest = None
     has_data_protection = any(
         "data_protection" in (d.get("clauses") or {}) for d in docs
     )
     for d in docs:
         risk_counts[d.get("risk", "low")] = risk_counts.get(d.get("risk", "low"), 0) + 1
-        law = d.get("clauses", {}).get("governing_law") or "missing"
+        clause = d.get("clauses", {}).get("governing_law")
+        law = jurisdiction(clause) or ("missing" if not clause else normalize_text(clause))
         law_counts[law] = law_counts.get(law, 0) + 1
         if not d.get("clauses", {}).get("data_protection"):
             missing_dp += 1
-        if d.get("risk") == "high" and (highest is None or d["doc_id"] < highest):
-            highest = d["doc_id"]
+    # More than one contract can truthfully be "the highest risk" (CUAD marks
+    # 13 of these 19 high), so any reference to a truth-high document counts.
+    # Picking one by doc_id made the check depend on alphabetical order.
+    high_ids = sorted(d["doc_id"] for d in docs if d.get("risk") == "high")
+    highest = high_ids[0] if high_ids else None
+    predicted_law_counts = _law_counts(content.get("governing_law_counts"))
     checks = {
         "documents": 1.0 if content.get("documents") == len(docs) else 0.0,
         "risk_counts": _count_closeness(content.get("risk_counts"), risk_counts),
-        "highest_risk_ref": 1.0 if content.get("highest_risk_ref") == highest else 0.0,
-        "governing_law_counts": _count_closeness(content.get("governing_law_counts"), law_counts),
+        "highest_risk_ref": 1.0 if content.get("highest_risk_ref") in high_ids else 0.0,
+        "governing_law_counts": _count_closeness(predicted_law_counts, law_counts),
     }
     # CUAD does not annotate a data-protection category; scoring a count the
     # prompt never requested would be a category error.
@@ -159,7 +242,29 @@ def report_score(records: list[dict], truth_docs: dict[str, dict]) -> float | No
         checks["missing_data_protection"] = (
             1.0 if content.get("missing_data_protection") == missing_dp else 0.0
         )
-    return round(sum(checks.values()) / len(checks), 3)
+    expected = {
+        "documents": len(docs),
+        "risk_counts": risk_counts,
+        "governing_law_counts": law_counts,
+        "highest_risk_ref": highest,
+        "high_risk_count": len(high_ids),
+    }
+    if has_data_protection:
+        expected["missing_data_protection"] = missing_dp
+    return {
+        "score": round(sum(checks.values()) / len(checks), 3),
+        "checks": checks,
+        "predicted": content,
+        # Same normalisation as the truth, so a viewer can put the two count
+        # dicts side by side without reimplementing jurisdiction matching.
+        "predicted_governing_law_counts": predicted_law_counts,
+        "expected": expected,
+    }
+
+
+def report_score(records: list[dict], truth_docs: dict[str, dict]) -> float | None:
+    result = report_checks(records, truth_docs)
+    return None if result is None else result["score"]
 
 
 def docs_fully_correct(records: list[dict], truth_docs: dict[str, dict]) -> int:
@@ -173,18 +278,25 @@ def docs_fully_correct(records: list[dict], truth_docs: dict[str, dict]) -> int:
         ok = True
         for r in recs:
             clause = r["step"].split(":", 1)[1] if r["step"].startswith("extract:") else None
+            # Same rule as the per-field scorer: a failed call has no answer,
+            # so it cannot complete a document, even when the annotation says
+            # the right answer was "no clause".
+            served = r.get("outcome", "served") == "served"
             if clause:
                 expected = (truth.get("clauses") or {}).get(clause)
-                content = r.get("content", {})
+                content = r.get("content") or {}
                 if expected is None:
-                    ok = ok and not content.get("found")
+                    ok = ok and served and not content.get("found")
                 else:
-                    ok = ok and bool(content.get("found")) and text_matches(content.get("text"), expected)
+                    ok = (ok and served and bool(content.get("found"))
+                          and text_matches(content.get("text"), expected))
             elif r["step"] == "risk":
-                ok = ok and r.get("content", {}).get("risk") == truth.get("risk")
+                ok = (ok and served
+                      and (r.get("content") or {}).get("risk") == truth.get("risk"))
             elif r["step"] == "classify":
                 if truth.get("type") is not None:
-                    ok = ok and r.get("content", {}).get("type") == truth.get("type")
+                    ok = (ok and served
+                          and (r.get("content") or {}).get("type") == truth.get("type"))
         correct += int(bool(ok) and bool(recs))
     return correct
 
@@ -215,12 +327,18 @@ def routing_scores(records: list[dict], docs_in_run: int, cores_per_cpu_replica:
     sensitive_steps = 0
     sensitive_violations = 0
     sensitive_ok = 0
+    judgment_steps = 0
+    judgment_on_gpu = 0
     fallback = 0
     errors = 0
     for r in records:
         route = (r.get("headers", {}) or {}).get("x-demo-route")
         if route:
             by_route[route] = by_route.get(route, 0) + 1
+            if "judgment" in (r.get("entry") or ""):
+                judgment_steps += 1
+                if route in GPU_ROUTES:
+                    judgment_on_gpu += 1
         busy = (r.get("headers", {}) or {}).get("x-busy-ms")
         try:
             busy = float(busy) if busy else None
@@ -245,46 +363,109 @@ def routing_scores(records: list[dict], docs_in_run: int, cores_per_cpu_replica:
     docs = max(docs_in_run, 1)
 
     # Measured device-time from the metrics sampler wins over the simulated
-    # pools' response headers; the report labels which source was used.
-    cost_method = "simulated (X-Busy-Ms headers from the fake pools)"
+    # pools' response headers; the report labels which source was used. A
+    # direct run against real vLLM has neither, and must say so rather than
+    # inherit the fake pools' label.
+    cost_method = "unmeasured (no device gauges or busy headers in this run)"
     gpu_seconds = gpu_busy_ms / 1000
     cpu_core_seconds = cpu_busy_ms * cores_per_cpu_replica / 1000
+    gpu_time_measured = bool(gpu_busy_ms)
+    cpu_time_measured = bool(cpu_busy_ms)
     if metrics:
         gpu_s = 0.0
         cpu_s = 0.0
         for pool, summary in metrics.items():
+            if not isinstance(summary, dict):
+                continue
             active = (summary or {}).get("device_active_s")
             if active is None:
                 continue
             if pool in GPU_ROUTES:
                 gpu_s += active
+                gpu_time_measured = True
             elif pool in CPU_ROUTES:
                 cpu_s += active
+                cpu_time_measured = True
         if gpu_s or cpu_s:
-            method = next((s.get("method") for s in metrics.values() if s and s.get("method")),
-                          "metrics.json sampler")
-            cost_method = f"measured ({method})"
+            cost_method = "measured (vLLM /metrics samples; per-pool method in metrics.json)"
             gpu_seconds = gpu_s
             cpu_core_seconds = cpu_s * cores_per_cpu_replica if cpu_s else cpu_s
+    elif gpu_busy_ms or cpu_busy_ms:
+        cost_method = "simulated (X-Busy-Ms headers from the fake pools)"
 
     return {
         "routes": by_route,
         "cpu_served_share": round(by_route.get("vllm-cpu", 0) / served, 3),
+        "needs_cpu": by_route.get("vllm-cpu", 0) > 0,
+        "needs_gpu": any(by_route.get(p, 0) for p in GPU_ROUTES),
         "gpu_seconds": round(gpu_seconds, 1),
         "cpu_core_seconds": round(cpu_core_seconds, 1),
         "gpu_seconds_per_doc": round(gpu_seconds / docs, 3),
         "cpu_core_seconds_per_doc": round(cpu_core_seconds / docs, 3),
+        "gpu_time_measured": gpu_time_measured,
+        "cpu_time_measured": cpu_time_measured,
         "device_time_measured": gpu_seconds or cpu_core_seconds,
         "cost_method": cost_method,
         "sensitive_steps": sensitive_steps,
         "sensitive_on_approved": sensitive_ok,
         "sensitive_violations": sensitive_violations,
+        "judgment_steps": judgment_steps,
+        "judgment_on_gpu": judgment_on_gpu,
         "fallback": fallback,
         "errors": errors,
     }
 
 
-def score_run(run: dict, truth_docs: dict[str, dict], cores_per_cpu_replica: int) -> dict:
+def sensitivity_breakdown(records: list[dict], truth_docs: dict[str, dict]) -> dict:
+    """Quality and routes split by the dataset's own sensitivity label.
+
+    The label is the dataset's truth, never the pipeline's screen: the screen
+    decides routing, so scoring against its own decision would be circular.
+    CUAD ships no sensitivity truth (``sensitive: None``); those documents are
+    counted as unlabelled and must not be folded into "non-sensitive".
+    """
+    groups: dict[str, dict] = {
+        "sensitive": {"docs": set(), "records": []},
+        "non-sensitive": {"docs": set(), "records": []},
+    }
+    unlabelled: set[str] = set()
+    for r in records:
+        doc_id = r.get("doc_id")
+        if not doc_id:
+            continue
+        label = (truth_docs.get(doc_id) or {}).get("sensitive")
+        if label is None:
+            unlabelled.add(doc_id)
+            continue
+        key = "sensitive" if label else "non-sensitive"
+        groups[key]["docs"].add(doc_id)
+        groups[key]["records"].append(r)
+
+    out: dict[str, dict | None] = {}
+    for key, group in groups.items():
+        recs = group["records"]
+        if not recs:
+            out[key] = None
+            continue
+        routes: dict[str, int] = {}
+        for r in recs:
+            route = (r.get("headers", {}) or {}).get("x-demo-route")
+            if route:
+                routes[route] = routes.get(route, 0) + 1
+        out[key] = {
+            "docs": len(group["docs"]),
+            "steps": len(recs),
+            "extraction": extraction_scores(recs, truth_docs),
+            "risk_accuracy": step_accuracy(recs, truth_docs, "risk", "risk"),
+            "type_accuracy": step_accuracy(recs, truth_docs, "classify", "type"),
+            "docs_fully_correct": docs_fully_correct(recs, truth_docs),
+            "routes": routes,
+        }
+    return {"groups": out, "unlabelled_docs": len(unlabelled)}
+
+
+def score_run(run: dict, truth_docs: dict[str, dict], cores_per_cpu_replica: int,
+              doc_texts: dict[str, str] | None = None) -> dict:
     records = run["records"]
     summary = run["summary"]
     run_doc_ids = {r["doc_id"] for r in records if r["doc_id"]}
@@ -293,19 +474,38 @@ def score_run(run: dict, truth_docs: dict[str, dict], cores_per_cpu_replica: int
     metrics_path = Path(run["dir"]) / "metrics.json"
     if metrics_path.exists():
         metrics = json.loads(metrics_path.read_text())
+        # The sampler summary is a dict of pool -> summary. A direct run writes
+        # its *quality* scores to the same filename (floats and one dict), so
+        # never hand that to the routing scorer: it is not device-time.
+        if not isinstance(metrics, dict) or not all(
+                isinstance(v, dict) for v in metrics.values()):
+            metrics = None
+    arm = summary.get("arm")
+    if summary.get("mode") == "direct":
+        # Every direct run calls itself "direct". Use the pool directory
+        # (cpu-moe / gpu-moe / cpu-small) so three pools can share one report
+        # without three identical rows.
+        arm = Path(run["dir"]).name
+    # Display name from the canonical map; old runs only carry the letter.
+    # Direct runs are not routing configs, so they keep their pool directory.
+    config = summary.get("config") or name_for_key(summary.get("arm"))
+    if config is None and summary.get("mode") == "direct":
+        config = f"direct/{arm}"
     return {
-        "arm": summary.get("arm"),
+        "arm": arm,
+        "config": config or arm,
         "mode": summary.get("mode"),
         "docs": summary.get("docs"),
         "wall_s": summary.get("wall_s"),
         "run_doc_ids": sorted(run_doc_ids),
-        "extraction": extraction_scores(records, truth_docs),
+        "extraction": extraction_scores(records, truth_docs, doc_texts),
         "risk_accuracy": step_accuracy(records, truth_docs, "risk", "risk"),
         "type_accuracy": step_accuracy(records, truth_docs, "classify", "type"),
         "report_accuracy": report_score(records, truth_docs),
         "docs_fully_correct": docs_fully_correct(records, truth_docs),
         "classifier": classifier_scores(records),
         "screen": summary.get("screen"),
+        "sensitivity": sensitivity_breakdown(records, truth_docs),
         "routing": routing_scores(records, docs_in_run, cores_per_cpu_replica, metrics),
     }
 
@@ -326,35 +526,41 @@ def build_report(run_dirs: list[str], data_dir: str, cores_per_cpu_replica: int,
                  rates: dict | None = None) -> tuple[str, dict]:
     manifest = json.loads((Path(data_dir) / "ground_truth.json").read_text())
     truth_docs = {d["doc_id"]: d for d in manifest["documents"]}
-    scored = [score_run(load_run(d), truth_docs, cores_per_cpu_replica) for d in run_dirs]
+    doc_texts: dict[str, str] = {}
+    documents_dir = Path(data_dir) / "documents"
+    if documents_dir.is_dir():
+        for path in documents_dir.glob("*.txt"):
+            doc_texts[path.stem] = path.read_text(errors="replace")
+    scored = [score_run(load_run(d), truth_docs, cores_per_cpu_replica, doc_texts)
+              for d in run_dirs]
     dataset = dataset_description(manifest)
 
     lines: list[str] = []
     lines.append("# Hybrid CPU+GPU demo - measurement report")
     lines.append("")
     lines.append(f"Ground truth: {dataset}.")
-    lines.append("Each arm's table row names the number of documents it actually ran.")
+    lines.append("Each config's table row names the number of documents it actually ran.")
     lines.append("Device-time and dollar figures are SIMULATED where the fake pool backends were "
                  "used; against real vLLM pools only request counts, routes and wall-clock hold.")
     lines.append("")
 
-    lines.append("## Arms overview")
+    lines.append("## Configs overview")
     lines.append("")
-    lines.append("| arm | mode | docs | wall s | errors | fallback (degraded) |")
+    lines.append("| config | mode | docs | wall s | errors | fallback (degraded) |")
     lines.append("|---|---|---|---|---|---|")
     for s in scored:
-        lines.append(f"| {s['arm']} | {s['mode']} | {s['docs']} | {s['wall_s']} | "
+        lines.append(f"| {s['config']} | {s['mode']} | {s['docs']} | {s['wall_s']} | "
                      f"{s['routing']['errors']} | {s['routing']['fallback']} |")
     lines.append("")
 
     lines.append("## Quality vs ground truth")
     lines.append("")
-    lines.append(f"| arm | extract P ({MATCH_METRIC}) | extract R ({MATCH_METRIC}) | extract F1 | "
+    lines.append(f"| config | extract P ({MATCH_METRIC}) | extract R ({MATCH_METRIC}) | extract F1 | "
                  "risk acc | type acc | report acc | docs fully correct |")
     lines.append("|---|---|---|---|---|---|---|---|")
     for s in scored:
         e = s["extraction"]
-        lines.append(f"| {s['arm']} | {e['precision']} | {e['recall']} | {e['f1']} | "
+        lines.append(f"| {s['config']} | {e['precision']} | {e['recall']} | {e['f1']} | "
                      f"{s['risk_accuracy']} | {s['type_accuracy']} | {s['report_accuracy']} | "
                      f"{s['docs_fully_correct']}/{s['docs']} |")
     baseline = majority_risk_baseline(truth_docs, {d for s in scored for d in s.get("run_doc_ids", [])})
@@ -367,6 +573,10 @@ def build_report(run_dirs: list[str], data_dir: str, cores_per_cpu_replica: int,
     lines.append(f"  without a quality cost. Scoring is {MATCH_METRIC} (normalised substring in")
     lines.append("  either direction), not span-exact: a wider quote that contains the annotated")
     lines.append("  clause passes, and a correct paraphrase fails.")
+    lines.append("  The JSON alongside this report also carries `exact` (string equality) and")
+    lines.append("  `partial` (token Jaccard) views, plus nervaluate's strict/exact/partial/type")
+    lines.append("  offset strategies when document text and nervaluate are available. The table")
+    lines.append("  keeps containment as the primary number so historical runs stay comparable.")
     lines.append("- **Risk accuracy** is rubric-following judgment. Compare it against the majority")
     lines.append(f"  baseline ({baseline} on this document set): a model at the baseline is not")
     lines.append("  applying the rubric at all. A model below it is worse than always guessing")
@@ -378,9 +588,43 @@ def build_report(run_dirs: list[str], data_dir: str, cores_per_cpu_replica: int,
     lines.append("  upstream error (propagation), plus its own synthesis errors.")
     lines.append("")
 
+    lines.append("## Sensitive vs non-sensitive documents")
+    lines.append("")
+    labelled = any(
+        (s["sensitivity"]["groups"]["sensitive"] or s["sensitivity"]["groups"]["non-sensitive"])
+        for s in scored)
+    if labelled:
+        lines.append("| config | class | docs | extract F1 | risk acc | type acc | docs fully correct | routes |")
+        lines.append("|---|---|---|---|---|---|---|---|")
+        for s in scored:
+            for key in ("non-sensitive", "sensitive"):
+                g = s["sensitivity"]["groups"][key]
+                if not g:
+                    continue
+                routes = ", ".join(f"{k}:{v}" for k, v in sorted(g["routes"].items())) or "—"
+                lines.append(f"| {s['config']} | {key} | {g['docs']} | {g['extraction']['f1']} | "
+                             f"{g['risk_accuracy']} | {g['type_accuracy']} | "
+                             f"{g['docs_fully_correct']}/{g['docs']} | {routes} |")
+        lines.append("")
+        lines.append("Class comes from the dataset's own `sensitive` label, never from the")
+        lines.append("pipeline's screen: the screen decides routing, so scoring against its own")
+        lines.append("decision would be circular. Enforcement (sensitive steps on non-approved")
+        lines.append("pools) is still counted from the screen's decisions in the next section.")
+        unlabelled = max((s["sensitivity"]["unlabelled_docs"] for s in scored), default=0)
+        if unlabelled:
+            lines.append("")
+            lines.append(f"{unlabelled} document(s) in these runs carry no sensitivity label "
+                         "and are excluded from this table.")
+        lines.append("")
+    else:
+        lines.append("This dataset carries no sensitivity ground truth (CUAD ships")
+        lines.append("`sensitive: None`), so a sensitive/non-sensitive quality split is not")
+        lines.append("measurable here; only the enforcement counts in the next section apply.")
+        lines.append("")
+
     lines.append("## Classifier and sensitivity screen")
     lines.append("")
-    lines.append("| arm | labelled | complexity accuracy | screen tp/fp/tn/fn | screen precision | screen recall |")
+    lines.append("| config | labelled | complexity accuracy | screen tp/fp/tn/fn | screen precision | screen recall |")
     lines.append("|---|---|---|---|---|---|")
     for s in scored:
         screen = s["screen"] or {}
@@ -388,75 +632,124 @@ def build_report(run_dirs: list[str], data_dir: str, cores_per_cpu_replica: int,
         fn, tn = screen.get("fn", 0), screen.get("tn", 0)
         precision = round(tp / (tp + fp), 3) if tp + fp else None
         recall = round(tp / (tp + fn), 3) if tp + fn else None
-        lines.append(f"| {s['arm']} | {s['classifier']['labelled']} | {s['classifier']['accuracy']} | "
+        lines.append(f"| {s['config']} | {s['classifier']['labelled']} | {s['classifier']['accuracy']} | "
                      f"{tp}/{fp}/{tn}/{fn} | {precision} | {recall} |")
     lines.append("")
     # Do not let a high CPU-served share imply good routing: when the
     # classifier labels nearly every step MEDIUM, CPU-first routing produces
     # that share without separating the classes at all.
-    weak = [s for s in scored if (s["classifier"]["accuracy"] or 0) < 0.6]
+    weak = [s for s in scored
+            if s["classifier"].get("labelled")
+            and (s["classifier"]["accuracy"] or 0) < 0.6]
     if weak:
         lines.append("**Classifier caveat:** " + ", ".join(
-            f"arm {s['arm']} accuracy {s['classifier']['accuracy']}" for s in weak)
-            + ". At this accuracy the label does not separate the step types; a high "
-              "CPU-served share reflects the CPU-first preference, not demonstrated "
-              "complexity routing. Report the confusion matrix, not only the share.")
+            f"config {s['config']} agreement {s['classifier']['accuracy']}" for s in weak)
+            + ". This column compares the classifier's prompt-difficulty label with the "
+              "dataset's per-step label: a low value means the two taxonomies differ, "
+              "not that the classifier failed - read the confusion matrix. At this value "
+              "a high CPU-served share reflects the CPU-first policy, not demonstrated "
+              "four-way complexity separation.")
         lines.append("")
     confusion = scored[-1]["classifier"]["confusion"] if scored else {}
     if confusion:
-        lines.append("Label confusion (truth->predicted, arm D): "
+        lines.append("Label confusion (truth->predicted, hybrid config): "
                      + ", ".join(f"{k}={v}" for k, v in sorted(confusion.items())))
         lines.append("")
 
     lines.append("## Routing and governance")
     lines.append("")
-    lines.append("| arm | CPU-served share | sensitive steps | on approved pool | violations |")
+    lines.append("| config | CPU-served share | sensitive steps | on approved pool | violations |")
     lines.append("|---|---|---|---|---|")
+    unrouted: list[str] = []
     for s in scored:
         r = s["routing"]
-        lines.append(f"| {s['arm']} | {r['cpu_served_share']} | {r['sensitive_steps']} | "
+        if not r["routes"]:
+            unrouted.append(s["config"])
+            lines.append(f"| {s['config']} | n/a | n/a | n/a | n/a |")
+            continue
+        lines.append(f"| {s['config']} | {r['cpu_served_share']} | {r['sensitive_steps']} | "
                      f"{r['sensitive_on_approved']} | {r['sensitive_violations']} |")
     lines.append("")
     lines.append("Violations count sensitive-document steps served by a pool outside the approved "
                  "set (vllm-cpu, vllm-gpu-approved). Target for the governed arm: zero.")
+    judgment = [s for s in scored if s["routing"].get("judgment_steps")]
+    if judgment:
+        lines.append("")
+        lines.append("Judgment split (risk + report through dedicated entries): "
+                     + ", ".join(f"config {s['config']} {s['routing']['judgment_on_gpu']}/"
+                                 f"{s['routing']['judgment_steps']} on GPU" for s in judgment)
+                     + ".")
+    if unrouted:
+        lines.append("")
+        lines.append("Direct run(s) " + ", ".join(unrouted) + " carry no route headers: one bare "
+                     "endpoint receives every request, so routing and governance are not scored. "
+                     "`n/a` is not zero - by construction each direct run served all of its "
+                     "sensitive documents on that single pool.")
     lines.append("")
 
     lines.append("## Cost (device-time, then priced as a sweep - no single $ figure)")
     lines.append("")
-    methods = {s["routing"].get("cost_method", "simulated") for s in scored}
-    for method in sorted(methods):
-        lines.append(f"- device-time source: {method}")
+    by_method: dict[str, list[str]] = {}
+    for s in scored:
+        by_method.setdefault(s["routing"].get("cost_method", "simulated"), []).append(s["config"])
+    for method, arms in sorted(by_method.items()):
+        lines.append(f"- device-time source: {method.split(' (')[0]} ({', '.join(arms)})")
     lines.append("")
-    lines.append("| arm | GPU-s/doc | CPU core-s/doc |")
+    lines.append("| config | GPU-s/doc | CPU core-s/doc |")
     lines.append("|---|---|---|")
     for s in scored:
         r = s["routing"]
-        lines.append(f"| {s['arm']} | {r['gpu_seconds_per_doc']} | {r['cpu_core_seconds_per_doc']} |")
+        if not r["routes"]:
+            lines.append(f"| {s['config']} | n/a | n/a |")
+            continue
+        if not r.get("needs_gpu"):
+            gpu = "—"
+        else:
+            gpu = r["gpu_seconds_per_doc"] if r.get("gpu_time_measured", True) else "n/a"
+        if not r.get("needs_cpu"):
+            cpu = "—"
+        else:
+            cpu = r["cpu_core_seconds_per_doc"] if r.get("cpu_time_measured", True) else "n/a"
+        lines.append(f"| {s['config']} | {gpu} | {cpu} |")
     lines.append("")
-    if any(s["routing"]["device_time_measured"] for s in scored):
+    unmeasured = {s["config"] for s in scored
+                  if (s["routing"].get("needs_cpu")
+                      and not s["routing"].get("cpu_time_measured", True))
+                  or (s["routing"].get("needs_gpu")
+                      and not s["routing"].get("gpu_time_measured", True))}
+    if unmeasured:
+        lines.append(f"Config(s) {', '.join(sorted(unmeasured))}: device time is **not measured** "
+                     "for a pool that served steps (the relay front-end does not expose vLLM's "
+                     "in-flight gauges), so no dollar figure is quoted; `n/a` is not zero.")
+        lines.append("")
+    if any(not s["routing"]["routes"] for s in scored):
+        lines.append("Direct runs have no route headers, so their GPU/CPU split is not "
+                     "attributable either; `n/a` is not zero.")
+        lines.append("")
+    priced = [s for s in scored
+              if s["config"] not in unmeasured and s["routing"]["device_time_measured"]]
+    if priced:
         lines.append("Dollar sweep (ILLUSTRATIVE rates; replace with the agreed cost model before "
                      "any number leaves this repo):")
         lines.append("")
-        for s in scored:
+        for s in priced:
             r = s["routing"]
-            if not r["device_time_measured"]:
-                continue
-            lines.append(f"- arm {s['arm']}:")
+            lines.append(f"- config {s['config']}:")
             for row in cost_model.sweep(r["gpu_seconds"], r["cpu_core_seconds"], s["docs"], rates):
                 lines.append(f"  - {row['scenario']}: ${row['dollar_per_doc']}/document "
                              f"(gpu ${row['gpu_hour']}/h, core ${row['core_hour']}/h)")
         lines.append("")
     else:
-        lines.append("No device-time headers captured (real vLLM backends); price from pool "
-                     "/metrics scrapes instead.")
+        lines.append("No config has both GPU and CPU device time measured; no dollar figure is "
+                     "quoted until the unmeasured pool is backfilled.")
         lines.append("")
 
     lines.append("## Resilience")
     lines.append("")
-    lines.append("| arm | fallback (degraded) | errors |")
+    lines.append("| config | fallback (degraded) | errors |")
     lines.append("|---|---|---|")
     for s in scored:
-        lines.append(f"| {s['arm']} | {s['routing']['fallback']} | {s['routing']['errors']} |")
+        lines.append(f"| {s['config']} | {s['routing']['fallback']} | {s['routing']['errors']} |")
     lines.append("")
 
     report_json = {"truth_docs": len(truth_docs), "dataset": dataset, "arms": scored}
@@ -476,10 +769,15 @@ def governance_check(trace_ui_base: str, run_dir: str | None = None) -> dict:
     violations = []
     sensitive_total = 0
     for group in summary.get("groups", []):
-        if group.get("entry") != "sensitive":
+        # Both the stage-agnostic sensitive entry and the sensitive-judgment
+        # entry carry PII; a check that only matched "sensitive" would miss
+        # risk/report traces and understate the audit.
+        if not (group.get("entry") or "").startswith("sensitive"):
             continue
         sensitive_total += group["count"]
-        if group.get("route") not in APPROVED_ROUTES:
+        # A failed step with no route is not evidence of a leak; only a
+        # recorded non-approved destination is.
+        if group.get("route") and group["route"] not in APPROVED_ROUTES:
             violations.append(group)
     result = {
         "trace_total": summary.get("total"),
@@ -548,11 +846,13 @@ def render_html(report_json: dict) -> str:
     note = ("Device-time and dollar figures are SIMULATED where the fake pool backends were used; "
             f"ground truth: {dataset}.")
     weak = [s for s in report_json.get("arms", [])
-            if (s.get("classifier", {}).get("accuracy") or 0) < 0.6]
+            if s.get("classifier", {}).get("labelled")
+            and (s["classifier"]["accuracy"] or 0) < 0.6]
     if weak:
-        note += (" Classifier caveat: accuracy is "
-                 + ", ".join(f"{s['arm']}={s['classifier']['accuracy']}" for s in weak)
-                 + "; the CPU-served share is not evidence of complexity routing.")
+        note += (" Classifier caveat: agreement "
+                 + ", ".join(f"{s['config']}={s['classifier']['accuracy']}" for s in weak)
+                 + " (taxonomy mismatch, not a failure - read the confusion matrix); "
+                   "the CPU-served share is not evidence of four-way complexity routing.")
     return HTML_PAGE.replace("__NOTE__", note).replace("__BODY__", "\n".join(parts))
 
 
@@ -560,38 +860,46 @@ def _html_tables(report_json: dict) -> list[tuple[str, list[str], list[tuple[lis
     arms = report_json.get("arms", [])
     tables = []
 
-    headers = ["arm", "mode", "docs", "wall s", "errors", "fallback (degraded)"]
+    headers = ["config", "mode", "docs", "wall s", "errors", "fallback (degraded)"]
     rows = []
     for s in arms:
-        rows.append(([s["arm"], s["mode"], s["docs"], s["wall_s"],
+        rows.append(([s["config"], s["mode"], s["docs"], s["wall_s"],
                       s["routing"]["errors"], s["routing"]["fallback"]],
                      ["", "", "", "", "", ""]))
-    tables.append(("Arms overview", headers, rows))
+    tables.append(("Configs overview", headers, rows))
 
-    headers = ["arm", f"extract P ({MATCH_METRIC})", f"extract R ({MATCH_METRIC})",
+    headers = ["config", f"extract P ({MATCH_METRIC})", f"extract R ({MATCH_METRIC})",
                "extract F1", "risk acc", "type acc", "report acc", "docs fully correct"]
     rows = []
     for s in arms:
         e = s["extraction"]
-        rows.append(([s["arm"], e["precision"], e["recall"], e["f1"], s["risk_accuracy"],
+        rows.append(([s["config"], e["precision"], e["recall"], e["f1"], s["risk_accuracy"],
                       s["type_accuracy"], s["report_accuracy"],
                       f"{s['docs_fully_correct']}/{s['docs']}"], [""] * 8))
     tables.append(("Quality vs ground truth", headers, rows))
 
-    headers = ["arm", "CPU-served share", "sensitive steps", "on approved pool", "violations"]
+    headers = ["config", "CPU-served share", "sensitive steps", "on approved pool", "violations"]
     rows = []
     for s in arms:
         r = s["routing"]
-        rows.append(([s["arm"], r["cpu_served_share"], r["sensitive_steps"],
+        rows.append(([s["config"], r["cpu_served_share"], r["sensitive_steps"],
                       r["sensitive_on_approved"], r["sensitive_violations"]],
                      ["", "", "", "", ' class="bad"' if r["sensitive_violations"] else ' class="good"']))
     tables.append(("Routing and governance", headers, rows))
 
-    headers = ["arm", "GPU-s/doc", "CPU core-s/doc"]
+    headers = ["config", "GPU-s/doc", "CPU core-s/doc"]
     rows = []
     for s in arms:
         r = s["routing"]
-        rows.append(([s["arm"], r["gpu_seconds_per_doc"], r["cpu_core_seconds_per_doc"]], ["", "", ""]))
+        if not r.get("needs_gpu"):
+            gpu = "—"
+        else:
+            gpu = r["gpu_seconds_per_doc"] if r.get("gpu_time_measured", True) else "n/a"
+        if not r.get("needs_cpu"):
+            cpu = "—"
+        else:
+            cpu = r["cpu_core_seconds_per_doc"] if r.get("cpu_time_measured", True) else "n/a"
+        rows.append(([s["config"], gpu, cpu], ["", "", ""]))
     methods = {s["routing"].get("cost_method", "") for s in arms}
     source = "measured" if methods and all(m.startswith("measured") for m in methods) else "see device-time source"
     tables.append((f"Cost (device-time; {source})", headers, rows))
@@ -603,7 +911,9 @@ def main() -> None:
     sub = parser.add_subparsers(dest="command")
 
     report = sub.add_parser("report", help="build the measurement report from run dirs")
-    report.add_argument("--runs", nargs="+", required=True)
+    # action="append" so the documented `--runs A --runs B ...` form works;
+    # a single `--runs A B ...` keeps working too.
+    report.add_argument("--runs", nargs="+", action="append", required=True)
     report.add_argument("--data", default="data/synthetic")
     report.add_argument("--out", required=True, help="output path for report.md (json alongside)")
     report.add_argument("--cores-per-cpu-replica", type=int, default=8)
@@ -618,7 +928,8 @@ def main() -> None:
         print(json.dumps(governance_check(args.trace_ui, args.run), indent=1))
         return
     rates = json.loads(Path(args.rates_json).read_text()) if args.rates_json else None
-    text, data = build_report(args.runs, args.data, args.cores_per_cpu_replica, rates)
+    runs = [run_dir for group in args.runs for run_dir in group]
+    text, data = build_report(runs, args.data, args.cores_per_cpu_replica, rates)
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(text)

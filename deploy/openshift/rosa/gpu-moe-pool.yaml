@@ -1,0 +1,108 @@
+# GPU MoE pool for ROSA: Qwen3.5-35B-A3B on 4x A10G (the g5.12xlarge
+# machine pool), serving the SAME checkpoint as the CPU pool - the
+# controlled CPU-vs-GPU comparison (same weights, same prompts, same
+# scorer; only the hardware differs). Derived from
+# deploy/openshift/gpu-moe/gpu-moe.yaml; the only change is the cache
+# volume: model-cache-gpu (this cluster's per-node gp3 cache) instead of
+# the SNO's shared NFS PVC.
+#
+# Placement: nodeSelector nvidia.com/gpu.present=true is set by NFD once
+# the node's NVIDIA PCI devices are enumerated (the GPU operator's stack
+# tolerates the nvidia.com/gpu taint this cluster's GPU machine pool
+# carries; NFD tolerates any NoSchedule). The manifest's own toleration
+# already matches.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gpumoe-vllm
+  labels:
+    app: gpumoe-vllm
+    demo.openshell.ai/pool: vllm-gpu
+    demo.openshell.ai/accelerator: gpu
+spec:
+  replicas: 1
+  # Recreate, not RollingUpdate: the pod holds all four GPUs, so a second
+  # one can never schedule and a rolling update would deadlock.
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: gpumoe-vllm}}
+  template:
+    metadata:
+      labels:
+        app: gpumoe-vllm
+        demo.openshell.ai/pool: vllm-gpu
+        demo.openshell.ai/accelerator: gpu
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        nvidia.com/gpu.present: "true"
+      tolerations:
+        - {key: nvidia.com/gpu, operator: Exists, effect: NoSchedule}
+      containers:
+        - name: vllm
+          # Same CUDA runtime image the KServe GPU pools use; pinned by digest
+          # so the base and this overlay cannot drift apart silently.
+          image: registry.redhat.io/rhaii/vllm-cuda-rhel9@sha256:ba060ec145e1b7ac3a3b25b89fc75f7d146746156990ff5858235eaa9d158e32
+          command: ["python", "-m", "vllm.entrypoints.openai.api_server"]
+          args: ["--model", "Qwen/Qwen3.5-35B-A3B",
+                 "--served-model-name", "Semantic-Qwen",
+                 "--port", "8000", "--max-model-len", "16384", "--max-num-seqs", "32",
+                 "--gpu-memory-utilization", "0.92", "--tensor-parallel-size", "4",
+                 "--trust-remote-code", "--enable-auto-tool-choice",
+                 "--tool-call-parser", "qwen3_coder", "--reasoning-parser", "qwen3"]
+          env:
+            - {name: HF_HOME, value: /cache/hf}
+            - {name: HOME, value: /cache}
+            - {name: XDG_CACHE_HOME, value: /cache/xdg}
+            # Warm cache only; seed with seeders.yaml (model-cache-gpu) first.
+            - {name: HF_HUB_OFFLINE, value: "1"}
+            - {name: HF_HUB_DISABLE_XET, value: "1"}
+            # A cold 67 GiB load on this storage class takes longer than
+            # vLLM's default engine-ready window.
+            - {name: VLLM_ENGINE_READY_TIMEOUT_S, value: "3600"}
+          ports: [{containerPort: 8000, name: http}]
+          startupProbe:
+            httpGet: {path: /health, port: 8000}
+            periodSeconds: 15
+            failureThreshold: 80
+          readinessProbe:
+            httpGet: {path: /health, port: 8000}
+            periodSeconds: 15
+          resources:
+            # Guaranteed QoS: the four GPUs are an indivisible unit, and being
+            # evicted for CPU pressure would cost a 15-minute model load.
+            requests: {cpu: "16", memory: 128Gi, nvidia.com/gpu: "4"}
+            limits: {cpu: "16", memory: 128Gi, nvidia.com/gpu: "4"}
+          volumeMounts:
+            - {name: shm, mountPath: /dev/shm}
+            - {name: hf-cache, mountPath: /cache}
+      volumes:
+        # vLLM's multiprocess transport uses /dev/shm heavily under TP=4;
+        # the 64 MiB default is the classic silent hang.
+        - {name: shm, emptyDir: {medium: Memory, sizeLimit: 8Gi}}
+        - {name: hf-cache, persistentVolumeClaim: {claimName: model-cache-gpu}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gpumoe-vllm
+spec:
+  selector: {app: gpumoe-vllm}
+  ports: [{name: http, port: 8000, targetPort: 8000}]
+---
+# The sensitive entry routes COMPLEX/REASONING here. By default this Service
+# selects the same pods as gpumoe-vllm: the "approved" promise in this demo is
+# that a sensitive request may only land on the GPU pool, and both names then
+# point at identical hardware and identical weights.
+#
+# It is NOT a second isolated replica. If the claim to defend is "a sensitive
+# request never shares a process with a general one", give this Service its own
+# Deployment — copy gpumoe-vllm, rename it, change its `app` label, and point
+# this selector at it — which needs another 4 GPUs. Say which promise the demo
+# is making before pointing at this.
+apiVersion: v1
+kind: Service
+metadata:
+  name: gpumoe-vllm-approved
+spec:
+  selector: {app: gpumoe-vllm}
+  ports: [{name: http, port: 8000, targetPort: 8000}]

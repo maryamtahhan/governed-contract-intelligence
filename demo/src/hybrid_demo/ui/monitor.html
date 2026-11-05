@@ -1,0 +1,731 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pool Telemetry — contract pipeline</title>
+<style>
+:root {
+  --bg: #f6f6f2;
+  --panel: #ffffff;
+  --panel-2: #fbfbf8;
+  --ink: #191d1a;
+  --muted: #5f665f;
+  --faint: #8b928b;
+  --line: #dcded6;
+  --line-2: #e9eae4;
+  --accent: #1c6b47;
+  --accent-soft: #e4efe8;
+  --ok: #1c6b47;
+  --ok-soft: #e4efe8;
+  --bad: #a23329;
+  --bad-soft: #f7e5e2;
+  --warn: #8a5a12;
+  --warn-soft: #f6edd9;
+  --shadow: 0 1px 2px rgba(25, 29, 26, .05);
+  /* Categorical slots 1 and 2 of the validated viz palette. */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --grid: #e9eae4;
+  --tooltip: #ffffff;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1311;
+    --panel: #171c19;
+    --panel-2: #141816;
+    --ink: #e7eae4;
+    --muted: #9aa49b;
+    --faint: #77817a;
+    --line: #2a312c;
+    --line-2: #212722;
+    --accent: #66c99b;
+    --accent-soft: #1a2b22;
+    --ok: #66c99b;
+    --ok-soft: #1a2b22;
+    --bad: #ef9186;
+    --bad-soft: #2d1c1a;
+    --warn: #e0b064;
+    --warn-soft: #2b2317;
+    --shadow: none;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --grid: #212722;
+    --tooltip: #1d231f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1311;
+  --panel: #171c19;
+  --panel-2: #141816;
+  --ink: #e7eae4;
+  --muted: #9aa49b;
+  --faint: #77817a;
+  --line: #2a312c;
+  --line-2: #212722;
+  --accent: #66c99b;
+  --accent-soft: #1a2b22;
+  --ok: #66c99b;
+  --ok-soft: #1a2b22;
+  --bad: #ef9186;
+  --bad-soft: #2d1c1a;
+  --warn: #e0b064;
+  --warn-soft: #2b2317;
+  --shadow: none;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --grid: #212722;
+  --tooltip: #1d231f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 13px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 48px;
+}
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+header.top {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding: 14px 0 12px; border-bottom: 1px solid var(--line); margin-bottom: 18px;
+}
+.brand { display: flex; flex-direction: column; gap: 2px; min-width: 0; margin-right: auto; }
+.brand h1 { margin: 0; font-size: 15px; letter-spacing: -.01em; font-weight: 650; }
+.brand p { margin: 0; color: var(--muted); font-size: 12px; }
+.chips { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  border: 1px solid var(--line); background: var(--panel);
+  color: var(--muted); border-radius: 999px; padding: 2px 9px;
+  font-size: 11.5px; white-space: nowrap;
+}
+.chip.ok { color: var(--ok); border-color: var(--accent-soft); background: var(--ok-soft); }
+.chip.bad { color: var(--bad); border-color: var(--bad-soft); background: var(--bad-soft); }
+.chip .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.btn {
+  appearance: none; border: 1px solid var(--line); background: var(--panel);
+  color: var(--ink); border-radius: 7px; padding: 4px 10px;
+  font: inherit; font-size: 12px; cursor: pointer; text-decoration: none;
+  display: inline-flex; align-items: center;
+}
+.btn:hover { border-color: var(--faint); }
+.wrap { max-width: 1180px; margin: 0 auto; }
+section.card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 16px; margin-bottom: 16px; box-shadow: var(--shadow); min-width: 0;
+}
+section.card > header { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+section.card h2 { margin: 0; font-size: 13.5px; font-weight: 650; letter-spacing: -.005em; }
+section.card header p { margin: 0; color: var(--muted); font-size: 12px; }
+.note { color: var(--muted); font-size: 12px; margin: 6px 0 0; max-width: 78ch; }
+.note code { font-size: 11.5px; background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 4px; padding: 0 4px; }
+.empty {
+  border: 1px dashed var(--line); border-radius: 8px; padding: 14px;
+  color: var(--muted); background: var(--panel-2); font-size: 12.5px;
+}
+.pools { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; margin-top: 12px; }
+.pool { border: 1px solid var(--line-2); border-radius: 9px; padding: 12px; background: var(--panel-2); min-width: 0; }
+.pool-head { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+.pool-head h3 { margin: 0; font-size: 13px; font-weight: 650; }
+.pool-head .chip { margin-left: auto; }
+.pool .url { margin: 0; color: var(--faint); font-size: 11px; overflow-wrap: anywhere; }
+.pool .model { margin: 4px 0 0; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+.stat { min-width: 0; }
+.stat .k { display: block; color: var(--faint); font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; }
+.stat .v { display: block; font-size: 17px; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.stat .v small { font-size: 10.5px; color: var(--muted); letter-spacing: 0; }
+.spark { display: block; width: 100%; height: 30px; margin-top: 8px; }
+.controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+.controls label { color: var(--muted); font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
+select {
+  font: inherit; font-size: 12px; color: var(--ink); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 7px; padding: 4px 8px;
+  max-width: 100%;
+}
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-top: 12px; }
+.chart { border: 1px solid var(--line-2); border-radius: 9px; padding: 10px 10px 4px; background: var(--panel-2); min-width: 0; position: relative; }
+.chart h3 { margin: 0 0 2px; font-size: 12px; font-weight: 600; }
+.chart .sub { margin: 0 0 6px; color: var(--faint); font-size: 11px; }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; margin: 2px 0 4px; }
+.legend span { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font-size: 11px; }
+.legend i { width: 10px; height: 3px; border-radius: 2px; display: inline-block; }
+.viz { display: block; width: 100%; height: auto; overflow: visible; }
+.viz text { fill: var(--muted); font-size: 10px; font-variant-numeric: tabular-nums; }
+.viz text.title { fill: var(--ink); font-size: 10.5px; }
+.viz .grid { stroke: var(--grid); stroke-width: 1; }
+.viz .axis { stroke: var(--line); stroke-width: 1; }
+.viz .s1 { color: var(--series-1); }
+.viz .s2 { color: var(--series-2); }
+.viz .marker { stroke: var(--panel-2); stroke-width: 2; }
+.viz .hit { fill: transparent; cursor: crosshair; }
+.tip {
+  position: absolute; pointer-events: none; z-index: 5;
+  background: var(--tooltip); border: 1px solid var(--line); border-radius: 7px;
+  box-shadow: var(--shadow); padding: 6px 8px; font-size: 11.5px; min-width: 120px;
+  opacity: 0; transition: opacity .08s linear;
+}
+.tip b { display: block; font-size: 10.5px; color: var(--muted); font-weight: 600; margin-bottom: 3px; }
+.tip .row { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.tip .row i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+.tip .row .n { margin-left: auto; font-variant-numeric: tabular-nums; }
+table { border-collapse: collapse; width: 100%; font-size: 12px; }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line-2); white-space: nowrap; }
+th { color: var(--faint); font-weight: 600; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.scroll { overflow-x: auto; }
+details.tbl { margin-top: 12px; }
+details.tbl summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+details.tbl .scroll { margin-top: 8px; }
+.poolbars { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.pbrow { display: grid; grid-template-columns: minmax(90px, 150px) 1fr minmax(64px, auto); gap: 10px; align-items: center; }
+.pbrow .name { font-size: 11.5px; color: var(--muted); overflow-wrap: anywhere; }
+.pbrow .track { background: var(--panel); border: 1px solid var(--line-2); border-radius: 5px; height: 22px; position: relative; overflow: hidden; }
+.pbrow .fill { display: block; height: 100%; background: var(--series-1); border-radius: 0 4px 4px 0; }
+.pbrow .val { font-size: 11.5px; font-variant-numeric: tabular-nums; color: var(--muted); text-align: right; }
+@media (max-width: 560px) {
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pbrow { grid-template-columns: 1fr auto; gap: 4px 10px; }
+  .pbrow .name { grid-column: 1 / -1; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <h1>Pool telemetry</h1>
+    <p>What each routing tier is doing now, and what every recorded run and sweep spent.</p>
+  </div>
+  <div class="chips">
+    <span class="chip" id="liveChip"><span class="dot"></span>checking…</span>
+    <a class="btn" href="/">← Stage review</a>
+    <button class="btn" id="themeBtn" title="Switch theme">Theme</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="card">
+    <header>
+      <h2>Pools now</h2>
+      <p id="liveWhen">live vLLM /metrics, polled by the demo server</p>
+    </header>
+    <div id="liveBody"><div class="empty">Loading…</div></div>
+    <p class="note" id="liveNote"></p>
+  </section>
+
+  <section class="card">
+    <header>
+      <h2>Where a run's work landed</h2>
+      <p>whole-run totals across every stage — not per-request rates</p>
+    </header>
+    <div class="controls">
+      <label>Run <select id="runSel"></select></label>
+      <label>Measure <select id="measureSel">
+        <option value="prompt_tokens">prompt tokens</option>
+        <option value="generation_tokens">generation tokens</option>
+        <option value="device_active_s">device-active seconds</option>
+      </select></label>
+    </div>
+    <div class="poolbars" id="poolBars"></div>
+    <p class="note" id="poolNote"></p>
+  </section>
+
+  <section class="card">
+    <header>
+      <h2 id="sweepTitle">Concurrency sweep</h2>
+      <p id="sweepSub">the same prompts at concurrency 1, 4 and 16</p>
+    </header>
+    <div class="controls">
+      <label>Prompt set <select id="setSel"></select></label>
+    </div>
+    <div class="charts" id="charts"></div>
+    <p class="note" id="sweepNote"></p>
+    <details class="tbl">
+      <summary>What these numbers mean</summary>
+      <div class="note" style="margin-top:8px">
+        <p style="margin:0 0 6px"><b>Concurrency</b> is how many requests the benchmark sent at once.
+        <b>Output tok/s</b> is how many tokens the pool wrote per second across all of them.
+        <b>TTFT</b> is the wait before the first token arrives; <b>TPOT</b> is the delay between
+        tokens once writing starts. <b>p50</b> is the middle request and <b>p95</b> is the slow tail —
+        one request in twenty is worse than the p95.</p>
+        <p style="margin:0">The sweep measures this endpoint's own throughput. It is not the
+        pipeline's end-to-end time: a full run makes several calls per document (classify, four
+        extracts, risk), so the run totals in the section above describe different work and do not
+        divide by these rates.</p>
+      </div>
+    </details>
+    <details class="tbl">
+      <summary>Table view — every sweep point</summary>
+      <div class="scroll"><table id="sweepTable"></table></div>
+    </details>
+  </section>
+
+  <section class="card">
+    <header>
+      <h2>Recorded runs</h2>
+      <p>whole-run totals, every stage, as each run left them</p>
+    </header>
+    <div class="scroll"><table id="runsTable"></table></div>
+    <p class="note">Runs are listed only when their <code>metrics.json</code> carries pool telemetry; a direct run's metrics file is its score, not a pool record. <em>device_active_s</em> counts seconds a pool had requests in flight, so a pool with no work reads zero rather than inheriting the run's wall time.</p>
+  </section>
+</div>
+
+<script>
+"use strict";
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g,
+  (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const nf = (v, d = 0) => v == null || v === "" ? "—"
+  : Number(v).toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d });
+const S = { data: null, run: null, measure: "prompt_tokens", set: null, timer: null };
+
+const store = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+const save = (k, v) => { try { localStorage.setItem(k, v); } catch { /* private mode */ } };
+
+const theme = store("stage-ui-theme");
+if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
+$("#themeBtn").addEventListener("click", () => {
+  const dark = document.documentElement.dataset.theme === "dark"
+    || (!document.documentElement.dataset.theme
+        && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const next = dark ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  save("stage-ui-theme", next);
+});
+
+/* ---------- SVG helpers ---------- */
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, text) {
+  const n = document.createElementNS(NS, tag);
+  for (const k in attrs || {}) if (attrs[k] != null) n.setAttribute(k, attrs[k]);
+  if (text != null) n.textContent = text;
+  return n;
+}
+function niceStep(v) {
+  if (!v || v <= 0) return 1;
+  const p = Math.pow(10, Math.floor(Math.log10(v)));
+  const m = v / p;
+  const step = m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10;
+  return step * p;
+}
+/* Top of the y axis: a round step, and the smallest round multiple of it that
+   clears the data. Ticks are that step, so a chart topping out at 219 reads
+   0..250 rather than 0..500. */
+function axisScale(values) {
+  const top = Math.max(...values, 1) * 1.08;
+  const step = niceStep(top / 5);
+  const count = Math.max(1, Math.ceil(top / step - 1e-9));
+  const ticks = Array.from({ length: count + 1 }, (_, i) => i * step);
+  return { yMax: count * step, ticks };
+}
+function tooltip(host) {
+  const tip = document.createElement("div");
+  tip.className = "tip";
+  host.appendChild(tip);
+  return tip;
+}
+function showTip(tip, host, html, clientX) {
+  const box = host.getBoundingClientRect();
+  tip.innerHTML = html;
+  tip.style.opacity = "1";
+  const w = tip.offsetWidth;
+  const x = Math.min(Math.max(clientX - box.left, 4), box.width - w - 4);
+  tip.style.left = x + "px";
+  tip.style.top = "8px";
+}
+
+/* Line chart: one x axis, one y axis, one or two series. Never two y scales. */
+function lineChart(host, cfg) {
+  host.innerHTML = "";
+  const width = Math.max(260, host.clientWidth || 320);
+  const H = 218, pad = { l: 54, r: 16, t: 12, b: 44 };
+  const iw = width - pad.l - pad.r, ih = H - pad.t - pad.b;
+  const xs = cfg.xs;
+  const all = cfg.series.flatMap((s) => s.values).filter((v) => v != null);
+  const { yMax, ticks } = axisScale(all);
+  const X = (i) => pad.l + (xs.length === 1 ? iw / 2 : (i * iw) / (xs.length - 1));
+  const Y = (v) => pad.t + ih - (v / yMax) * ih;
+  const svg = el("svg", { viewBox: `0 0 ${width} ${H}`, class: "viz", role: "img",
+    "aria-label": cfg.title + " by concurrency" });
+
+  ticks.forEach((v) => {
+    svg.appendChild(el("line", { class: "grid", x1: pad.l, x2: width - pad.r,
+      y1: Y(v), y2: Y(v) }));
+    svg.appendChild(el("text", { x: pad.l - 7, y: Y(v) + 3.5, "text-anchor": "end" },
+      cfg.fmt(v)));
+  });
+  svg.appendChild(el("line", { class: "axis", x1: pad.l, x2: width - pad.r,
+    y1: pad.t + ih, y2: pad.t + ih }));
+  xs.forEach((x, i) => svg.appendChild(
+    el("text", { x: X(i), y: H - 26, "text-anchor": "middle" }, String(x))));
+  // Axis names: the x label sits under its ticks, the y name above the plot.
+  svg.appendChild(el("text", { x: pad.l + iw / 2, y: H - 8, "text-anchor": "middle",
+    class: "title" }, "concurrency"));
+  svg.appendChild(el("text", { x: pad.l, y: pad.t - 1, class: "title" }, cfg.yLabel));
+
+  const tip = tooltip(host);
+  cfg.series.forEach((s) => {
+    const pts = s.values.map((v, i) => v == null ? null : [X(i), Y(v)]);
+    let d = "";
+    pts.forEach((p, i) => {
+      if (!p) return;
+      d += (d && pts[i - 1] ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1) + " ";
+    });
+    svg.appendChild(el("path", { d: d.trim(), fill: "none", stroke: "currentColor",
+      "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round",
+      class: s.cls }));
+    pts.forEach((p) => p && svg.appendChild(el("circle", { cx: p[0], cy: p[1], r: 4,
+      fill: "currentColor", class: s.cls + " marker" })));
+  });
+
+  // Direct-label the last point of each series, nudged apart when they collide.
+  const ends = cfg.series.filter((s) => s.values[s.values.length - 1] != null)
+    .map((s) => ({ s, x: X(xs.length - 1), y: Y(s.values[s.values.length - 1]),
+                   v: s.values[s.values.length - 1] }));
+  if (ends.length === 2 && Math.abs(ends[0].y - ends[1].y) < 15) {
+    const hi = ends[0].y <= ends[1].y ? ends[0] : ends[1];
+    const lo = hi === ends[0] ? ends[1] : ends[0];
+    hi.dy = -9; lo.dy = 15;
+  } else ends.forEach((e) => { e.dy = -9; });
+  // Direct labels carry the value; identity still comes from the legend and
+  // the marker, so the label text stays in the ink token.
+  ends.forEach((e) => svg.appendChild(el("text", {
+    x: Math.min(e.x, width - pad.r - 2), y: e.y + e.dy,
+    "text-anchor": "end", class: "title" },
+    cfg.fmt(e.v) + (cfg.unit || ""))));
+
+  // Hover: one hit band per x position, reporting every series at that point.
+  const band = iw / Math.max(1, xs.length - 1);
+  xs.forEach((x, i) => {
+    const hit = el("rect", { class: "hit", x: X(i) - band / 2, y: pad.t,
+      width: band, height: ih });
+    hit.addEventListener("mousemove", (ev) => {
+      const rows = cfg.series.map((s) => {
+        const v = s.values[i];
+        return `<div class="row"><i style="background:var(--${s.cls === "s1" ? "series-1" : "series-2"})"></i>${esc(s.label)}<span class="n">${v == null ? "—" : cfg.fmt(v) + (cfg.unit || "")}</span></div>`;
+      }).join("");
+      showTip(tip, host, `<b>concurrency ${x}</b>${rows}`, ev.clientX);
+    });
+    hit.addEventListener("mouseleave", () => { tip.style.opacity = "0"; });
+    svg.appendChild(hit);
+  });
+  host.appendChild(svg);
+}
+
+/* Horizontal ranked bars: magnitude, one hue, values direct-labelled. */
+function barRow(host, rows, fmt) {
+  host.innerHTML = "";
+  if (!rows.length) { host.innerHTML = '<div class="empty">No pool carried this measure in the selected run.</div>'; return; }
+  const max = Math.max(...rows.map((r) => r.value || 0), 1);
+  rows.forEach((r) => {
+    const row = document.createElement("div");
+    row.className = "pbrow";
+    row.innerHTML = `<span class="name">${esc(r.name)}</span>
+      <span class="track"><span class="fill" style="width:${Math.max(1, (r.value || 0) / max * 100)}%"></span></span>
+      <span class="val">${fmt(r.value)}</span>`;
+    row.title = `${r.name}: ${fmt(r.value)}`;
+    host.appendChild(row);
+  });
+}
+
+function sparkline(points) {
+  if (points.length < 2) return "";
+  const w = 200, h = 30, pad = 2;
+  const vals = points.map((p) => p.gen_tps || 0);
+  const max = Math.max(...vals, 1);
+  const d = vals.map((v, i) => `${i ? "L" : "M"}${(pad + i * (w - 2 * pad) / (vals.length - 1)).toFixed(1)} ${(h - pad - (v / max) * (h - 2 * pad)).toFixed(1)}`).join(" ");
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
+    <path d="${d}" fill="none" style="stroke:var(--series-1)" stroke-width="1.5"/></svg>`;
+}
+
+/* ---------- rendering ---------- */
+function renderLive(live) {
+  const chip = $("#liveChip");
+  const body = $("#liveBody");
+  const when = $("#liveWhen");
+  $("#liveNote").textContent = live.note || "";
+  if (!live.enabled) {
+    chip.className = "chip";
+    chip.innerHTML = '<span class="dot"></span>no pools configured';
+    body.innerHTML = `<div class="empty">No pool was configured. Start the server with one
+      <code>--pool name=url</code> per tier to poll vLLM's <code>/metrics</code>, for example
+      <code>--pool cpu=http://vllm-cpu:8000 --pool gpu=http://vllm-gpu:8000</code>.
+      Recorded sweeps and runs below need no endpoint.</div>`;
+    when.textContent = "live vLLM /metrics, off";
+    return;
+  }
+  const pools = live.pools || [];
+  const down = pools.filter((p) => p.error).length;
+  chip.className = "chip " + (down === pools.length ? "bad" : down ? "" : "ok");
+  chip.innerHTML = `<span class="dot"></span>${pools.length - down}/${pools.length} pools answering`;
+  when.textContent = "sampled " + new Date().toLocaleTimeString();
+  if (!pools.length) { body.innerHTML = '<div class="empty">No pools answering.</div>'; return; }
+  body.innerHTML = '<div class="pools">' + pools.map((p) => {
+    if (p.error) {
+      return `<article class="pool"><div class="pool-head"><h3>${esc(p.name)}</h3>
+        <span class="chip bad">unreachable</span></div>
+        <p class="url mono">${esc(p.url)}</p>
+        <p class="model">${esc(p.error)}</p></article>`;
+    }
+    const rate = p.first_sample
+      ? `<p class="note">First sample: rates appear after the next poll.</p>`
+      : `<p class="note">Rates measured between the last two polls.</p>`;
+    return `<article class="pool">
+      <div class="pool-head"><h3>${esc(p.name)}</h3><span class="chip ok">answering</span></div>
+      <p class="url mono">${esc(p.url)}</p>
+      <p class="model">${esc(p.model || "model not reported")}</p>
+      <div class="stats">
+        <div class="stat"><span class="k">running</span><span class="v">${nf(p.running)}</span></div>
+        <div class="stat"><span class="k">waiting</span><span class="v">${nf(p.waiting)}</span></div>
+        <div class="stat"><span class="k">gen</span><span class="v">${nf(p.gen_tps, 1)}<small> tok/s</small></span></div>
+        <div class="stat"><span class="k">prompt</span><span class="v">${nf(p.prompt_tps, 1)}<small> tok/s</small></span></div>
+        <div class="stat"><span class="k" title="average time to first token over the last interval">ttft</span><span class="v">${p.avg_ttft_ms == null ? "—" : nf(p.avg_ttft_ms)}<small> ms</small></span></div>
+        <div class="stat"><span class="k">cache</span><span class="v">${p.cache_pct == null ? "—" : nf(p.cache_pct * 100, 1)}<small> %</small></span></div>
+      </div>
+      ${sparkline(p.history || [])}
+      ${rate}
+    </article>`;
+  }).join("") + "</div>";
+}
+
+function runsWithPools() {
+  const runs = (S.data.artifacts.runs || []);
+  return runs.filter((r) => r.active_pools && r.active_pools.length);
+}
+
+function renderRunPicker() {
+  const sel = $("#runSel");
+  const runs = runsWithPools();
+  if (!runs.length) { sel.innerHTML = '<option>no run recorded pool telemetry</option>'; sel.disabled = true; return; }
+  sel.disabled = false;
+  const current = runs.some((r) => r.run === S.run) ? S.run : null;
+  sel.innerHTML = runs.map((r) => `<option value="${esc(r.run)}">${esc(r.run)}${r.active_pools.length > 1 ? " — " + r.active_pools.length + " pools" : ""}${r.arm && r.arm !== r.run ? " (" + esc(r.arm) + ")" : ""}</option>`).join("");
+  // Default to the run that actually spread work across more than one pool.
+  const pick = current || (runs.find((r) => r.active_pools.length > 1) || runs[0]).run;
+  S.run = pick;
+  sel.value = pick;
+}
+
+function renderPoolBars() {
+  const run = (S.data.artifacts.runs || []).find((r) => r.run === S.run);
+  const host = $("#poolBars");
+  const sel = $("#measureSel");
+  sel.value = S.measure;
+  if (!run) { host.innerHTML = '<div class="empty">Pick a run with pool telemetry.</div>'; return; }
+  const measure = S.measure;
+  const rows = Object.entries(run.pools)
+    .map(([name, p]) => ({ name, value: p[measure] }))
+    .filter((r) => r.value != null)
+    .sort((a, b) => (b.value || 0) - (a.value || 0));
+  const total = rows.reduce((a, r) => a + (r.value || 0), 0);
+  const fmt = measure === "device_active_s"
+    ? (v) => v == null ? "—" : nf(v, 1) + " s"
+    : (v) => nf(v);
+  barRow(host, rows, fmt);
+  const summary = run.docs ? `${nf(run.docs)} documents, ${nf(run.wall_s, 1)} s wall. ` : "";
+  $("#poolNote").textContent = summary
+    + `Bars share one scale across this run's pools; ${nf(total)} ${measure.replace(/_/g, " ")} in total. `
+    + "These are whole-run totals across every stage, not a per-request rate, and they are not comparable to the sweep below. "
+    + "A pool name is a routing tier — the deployment's own configuration is what binds a tier to a process. "
+    + "Zero means the pool appears in the run's telemetry with no work.";
+}
+
+function sweepPoints() {
+  return (S.data.artifacts.perf || []).filter((p) => p.set === S.set);
+}
+
+/* A prompt set is a named, fixed list of prompts. The name alone ("mix",
+   "cuad") says nothing about what the numbers mean, so every surface spells
+   out what the set contains and how many prompts it has. */
+function workloadName(s) {
+  return s === "mix" ? "Mixed stages (extract + classify + risk)"
+    : s === "cuad" ? "Extraction only (one prompt per clause)"
+    : s + " prompts";
+}
+
+function renderSetPicker() {
+  const perf = S.data.artifacts.perf || [];
+  const sets = [...new Set(perf.map((p) => p.set))].sort();
+  const sel = $("#setSel");
+  if (!sets.length) { sel.innerHTML = '<option>no sweep recorded</option>'; sel.disabled = true; return; }
+  sel.disabled = false;
+  const cover = (s) => new Set(perf.filter((p) => p.set === s).map((p) => p.hardware)).size;
+  const promptsIn = (s) => {
+    const p = perf.find((q) => q.set === s && q.prompts != null);
+    return p ? p.prompts : null;
+  };
+  // Start with the set that has the most hardware recorded: that is the view
+  // where CPU and GPU appear side by side. Ties keep the alphabetical order.
+  if (!sets.includes(S.set)) S.set = [...sets].sort((a, b) => cover(b) - cover(a))[0];
+  sel.innerHTML = sets.map((s) => {
+    const n = promptsIn(s);
+    return `<option value="${esc(s)}">${esc(workloadName(s))}${n == null ? "" : ` — ${n} prompts`}</option>`;
+  }).join("");
+  sel.value = S.set;
+}
+
+let chartDraws = [];
+let resizeTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => chartDraws.forEach((d) => d()), 150);
+});
+
+function drawCharts() {
+  const host = $("#charts");
+  host.innerHTML = "";
+  chartDraws = [];
+  const pts = sweepPoints();
+  if (!pts.length) {
+    host.innerHTML = '<div class="empty">No sweep files found beside the runs. The page reads <code>perf/*.json</code> from the runs directory.</div>';
+    return;
+  }
+  const xs = [...new Set(pts.map((p) => p.concurrency))].sort((a, b) => a - b);
+  const hardware = [...new Set(pts.map((p) => p.hardware))].sort();
+  const at = (hw, x) => pts.find((p) => p.hardware === hw && p.concurrency === x) || {};
+  const series = hardware.map((hw, i) => ({
+    label: hw === "cpu" ? "CPU" : "GPU",
+    cls: "s" + (i + 1),
+    hw,
+  }));
+  const charts = [
+    { title: "Output throughput", sub: "tokens written per second across every request in flight",
+      unit: " tok/s", yLabel: "tok/s",
+      fmt: (v) => nf(v, v > 0 && v < 10 ? 1 : 0), key: "output_tps" },
+    { title: "Time to first token, p95", sub: "the slow tail waited this long; 95 in 100 were faster",
+      unit: " ms", yLabel: "ms", fmt: (v) => nf(v), key: "ttft_p95" },
+    { title: "Time per output token, p50", sub: "median delay between tokens once writing starts",
+      unit: " ms", yLabel: "ms",
+      fmt: (v) => nf(v, v > 0 && v < 10 ? 1 : 0), key: "tpot_p50" },
+  ];
+  // Build every card before drawing any: a chart sizes its SVG from its own
+  // column, and a column is not its final width until its siblings exist.
+  const plots = charts.map((c) => {
+    const card = document.createElement("div");
+    card.className = "chart";
+    // A single series needs no legend box: the card title names it.
+    const legend = series.length > 1
+      ? `<div class="legend">${series.map((s) => `<span><i style="background:var(--series-${s.cls.slice(1)})"></i>${s.label}</span>`).join("")}</div>`
+      : "";
+    card.innerHTML = `<h3>${c.title}</h3><p class="sub">${c.sub}</p>${legend}<div class="plot"></div>`;
+    host.appendChild(card);
+    return { c, plot: card.querySelector(".plot") };
+  });
+  plots.forEach(({ c, plot }) => {
+    const draw = () => lineChart(plot, {
+      xs,
+      title: c.title,
+      yLabel: c.yLabel,
+      unit: c.unit,
+      fmt: c.fmt,
+      series: series.map((s) => ({
+        label: s.label,
+        cls: s.cls,
+        values: xs.map((x) => at(s.hw, x)[c.key] ?? null),
+      })),
+    });
+    draw();
+    chartDraws.push(draw);
+  });
+  // Legend labels the hardware, but the sweep file name is the authority; say
+  // so, and say what a point is, in case someone reads a bar as a guarantee.
+  const prompts = [...new Set(pts.map((p) => p.prompts))].filter((v) => v != null);
+  const failed = pts.reduce((a, p) => a + (p.failed || 0), 0);
+  const missing = hardware.length === 1
+    ? (hardware[0] === "cpu" ? "GPU" : "CPU") : null;
+  $("#sweepTitle").textContent = "Concurrency sweep — "
+    + (S.set === "mix" ? "mixed stages" : S.set === "cuad" ? "extraction only" : S.set);
+  $("#sweepSub").textContent =
+    `${prompts.join("/") || "?"} prompts, the same set at concurrency 1, 4 and 16`;
+  $("#sweepNote").textContent =
+    `${workloadName(S.set)}: ${prompts.join("/")} prompts per point. `
+    + (failed ? `${failed} failed request${failed === 1 ? "" : "s"} across the recorded points. `
+              : "no failed requests in the recorded points. ")
+    + (missing ? `Only ${hardware[0].toUpperCase()} points are recorded for this prompt set so far; `
+                 + `${missing} points appear when that sweep finishes. ` : "")
+    // The two sets are different prompts, so a number from one means nothing
+    // beside a number from the other. Say it where both are one click apart.
+    + "The prompt sets are fixed and differ in content and count, so a CPU-vs-GPU "
+    + "comparison is only valid inside one set — never between the two. "
+    + "Points come from vLLM's own benchmark at concurrency 1, 4 and 16; they measure "
+    + "the endpoint, not the pipeline's end-to-end latency.";
+  renderSweepTable();
+}
+
+function renderSweepTable() {
+  const rows = (S.data.artifacts.perf || []);
+  const head = `<thead><tr><th>hardware</th><th>workload</th><th class="num">conc.</th>
+    <th class="num">prompts</th><th class="num">failed</th><th class="num">out tok/s</th>
+    <th class="num">ttft p50</th><th class="num">ttft p95</th><th class="num">tpot p50</th>
+    <th class="num">tpot p95</th><th class="num">e2e p50</th></tr></thead>`;
+  const body = rows.map((p) => `<tr><td>${esc(p.hardware)}</td><td>${esc(p.set)}</td>
+    <td class="num">${p.concurrency}</td><td class="num">${nf(p.prompts)}</td>
+    <td class="num">${nf(p.failed)}</td><td class="num">${nf(p.output_tps, 1)}</td>
+    <td class="num">${nf(p.ttft_p50)}</td><td class="num">${nf(p.ttft_p95)}</td>
+    <td class="num">${nf(p.tpot_p50, 1)}</td><td class="num">${nf(p.tpot_p95, 1)}</td>
+    <td class="num">${nf(p.e2e_p50)}</td></tr>`).join("");
+  $("#sweepTable").innerHTML = head + `<tbody>${body || '<tr><td colspan="11">No points.</td></tr>'}</tbody>`;
+}
+
+function renderRunsTable() {
+  const runs = runsWithPools();
+  const head = `<thead><tr><th>run</th><th class="num">docs</th><th class="num">wall s</th>
+    <th>pools with work</th><th class="num">prompt tok</th>
+    <th class="num">gen tok</th><th class="num">device s</th></tr></thead>`;
+  const body = runs.map((r) => {
+    const sum = (k) => Object.values(r.pools).reduce((a, p) => a + (p[k] || 0), 0);
+    return `<tr><td>${esc(r.run)}</td><td class="num">${nf(r.docs)}</td>
+      <td class="num">${nf(r.wall_s, 1)}</td>
+      <td>${esc(r.active_pools.join(", ") || "—")}</td>
+      <td class="num">${nf(sum("prompt_tokens"))}</td>
+      <td class="num">${nf(sum("generation_tokens"))}</td>
+      <td class="num">${nf(sum("device_active_s"), 1)}</td></tr>`;
+  }).join("");
+  $("#runsTable").innerHTML = head + `<tbody>${body || '<tr><td colspan="7">No run recorded pool telemetry.</td></tr>'}</tbody>`;
+}
+
+function renderAll() {
+  if (!S.data) return;
+  renderLive(S.data.live);
+  renderRunPicker();
+  renderPoolBars();
+  renderSetPicker();
+  drawCharts();
+  renderRunsTable();
+}
+
+async function load(first) {
+  try {
+    const r = await fetch("/api/telemetry", { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    S.data = await r.json();
+  } catch (e) {
+    if (first) {
+      $("#liveBody").innerHTML = `<div class="empty">The telemetry endpoint did not answer: ${esc(e.message)}</div>`;
+    }
+    return;
+  }
+  if (first) renderAll();
+  else {
+    // Only the live section changes between polls; re-rendering the sweep
+    // would throw away the table's open state and any fresh chart layout.
+    renderLive(S.data.live);
+    $("#liveNote").textContent = S.data.live.note || "";
+  }
+}
+
+$("#runSel").addEventListener("change", (e) => { S.run = e.target.value; renderPoolBars(); });
+$("#measureSel").addEventListener("change", (e) => { S.measure = e.target.value; renderPoolBars(); });
+$("#setSel").addEventListener("change", (e) => { S.set = e.target.value; drawCharts(); });
+
+load(true);
+setInterval(() => { if (!document.hidden) load(false); }, 8000);
+</script>
+</body>
+</html>

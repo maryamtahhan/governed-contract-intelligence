@@ -1,0 +1,22 @@
+{
+  "vllm-cpu": {
+    "model": "Qwen/Qwen3.5-35B-A3B",
+    "hardware": "cpu (SNO, 16 cores)",
+    "deployment": "cpureal-vllm-cpu"
+  },
+  "vllm-gpu": {
+    "model": "Qwen/Qwen3.5-35B-A3B",
+    "hardware": "4x A10G (TP=4)",
+    "deployment": "gpumoe-vllm"
+  },
+  "vllm-gpu-approved": {
+    "model": "Qwen/Qwen3.5-35B-A3B",
+    "hardware": "4x A10G (TP=4)",
+    "deployment": "gpumoe-vllm (shared with vllm-gpu)"
+  },
+  "vllm-gpu-small": {
+    "model": "Qwen/Qwen2.5-1.5B-Instruct",
+    "hardware": "cpu (SNO)",
+    "deployment": "cpureal-vllm-gpu-small"
+  }
+}

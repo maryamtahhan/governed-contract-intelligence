@@ -1,0 +1,896 @@
+{
+ "summary": {
+  "arm": "direct",
+  "mode": "direct",
+  "docs": 19,
+  "endpoint": "http://localhost:8000/v1",
+  "thinking": true
+ },
+ "records": [
+  {
+   "step": "classify",
+   "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "outcome": "served",
+   "latency_ms": 13277.1,
+   "content": {}
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "outcome": "served",
+   "latency_ms": 23588.4,
+   "content": {}
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "outcome": "served",
+   "latency_ms": 21981.4,
+   "content": {}
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "outcome": "served",
+   "latency_ms": 22129.8,
+   "content": {}
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "outcome": "served",
+   "latency_ms": 22140.4,
+   "content": {}
+  },
+  {
+   "step": "risk",
+   "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "outcome": "served",
+   "latency_ms": 18638.8,
+   "content": {}
+  },
+  {
+   "step": "classify",
+   "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "outcome": "served",
+   "latency_ms": 13291.6,
+   "content": {}
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "outcome": "served",
+   "latency_ms": 21822.6,
+   "content": {}
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "outcome": "served",
+   "latency_ms": 21702.1,
+   "content": {
+    "raw": "\n\n{\"clause\": \"governing_law\", \"found\": true, \"text\": \"This Agreement shall be governed in accordance with the laws of the State of New York without regard to conflict of laws principles. It is hereby irrevocably agreed that legal jurisdiction and venue for any proceeding arising out"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "outcome": "served",
+   "latency_ms": 21784.1,
+   "content": {}
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "outcome": "served",
+   "latency_ms": 21753.1,
+   "content": {}
+  },
+  {
+   "step": "risk",
+   "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "outcome": "served",
+   "latency_ms": 16393.7,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "No data-protection clause found",
+     "Liability cap is absent"
+    ],
+    "ref": "data_protection.found=false, liability_cap.found=false"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "outcome": "served",
+   "latency_ms": 13850.2,
+   "content": {}
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "outcome": "served",
+   "latency_ms": 21811.8,
+   "content": {}
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "outcome": "served",
+   "latency_ms": 17888.2,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "This Agreement shall be governed by the laws of the State of Connecticut, U.S.A. without regard to conflict of law principles.",
+    "ref": "12.7"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "outcome": "served",
+   "latency_ms": 21448.8,
+   "content": {}
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "outcome": "served",
+   "latency_ms": 21397.2,
+   "content": {}
+  },
+  {
+   "step": "risk",
+   "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "outcome": "served",
+   "latency_ms": 18488.6,
+   "content": {}
+  },
+  {
+   "step": "classify",
+   "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "outcome": "served",
+   "latency_ms": 14801.0,
+   "content": {}
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "outcome": "served",
+   "latency_ms": 21734.8,
+   "content": {}
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "outcome": "served",
+   "latency_ms": 21374.5,
+   "content": {}
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "outcome": "served",
+   "latency_ms": 21489.5,
+   "content": {}
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "outcome": "served",
+   "latency_ms": 21447.5,
+   "content": {}
+  },
+  {
+   "step": "risk",
+   "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "outcome": "served",
+   "latency_ms": 18433.9,
+   "content": {}
+  },
+  {
+   "step": "classify",
+   "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "outcome": "served",
+   "latency_ms": 12773.1,
+   "content": {}
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "outcome": "served",
+   "latency_ms": 21693.6,
+   "content": {}
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "outcome": "served",
+   "latency_ms": 21351.6,
+   "content": {}
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "outcome": "served",
+   "latency_ms": 21432.1,
+   "content": {}
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "outcome": "served",
+   "latency_ms": 21395.2,
+   "content": {}
+  },
+  {
+   "step": "risk",
+   "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "outcome": "served",
+   "latency_ms": 13579.7,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "No data-protection clause found",
+     "Liability cap is absent"
+    ],
+    "ref": "data_protection, liability_cap"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "outcome": "served",
+   "latency_ms": 12763.2,
+   "content": {}
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "outcome": "served",
+   "latency_ms": 21896.6,
+   "content": {}
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "outcome": "served",
+   "latency_ms": 21760.5,
+   "content": {}
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "outcome": "served",
+   "latency_ms": 21761.5,
+   "content": {}
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "outcome": "served",
+   "latency_ms": 21744.6,
+   "content": {}
+  },
+  {
+   "step": "risk",
+   "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "outcome": "served",
+   "latency_ms": 18422.1,
+   "content": {}
+  },
+  {
+   "step": "classify",
+   "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "outcome": "served",
+   "latency_ms": 12864.1,
+   "content": {}
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "outcome": "served",
+   "latency_ms": 21907.3,
+   "content": {}
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "outcome": "served",
+   "latency_ms": 21794.3,
+   "content": {}
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "outcome": "served",
+   "latency_ms": 21785.4,
+   "content": {}
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "outcome": "served",
+   "latency_ms": 21780.2,
+   "content": {}
+  },
+  {
+   "step": "risk",
+   "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "outcome": "served",
+   "latency_ms": 11681.5,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "No data-protection clause found",
+     "Liability cap is absent"
+    ],
+    "ref": "data_protection, liability_cap"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "outcome": "served",
+   "latency_ms": 12847.5,
+   "content": {}
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "outcome": "served",
+   "latency_ms": 22131.7,
+   "content": {}
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "outcome": "served",
+   "latency_ms": 21272.5,
+   "content": {}
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "outcome": "served",
+   "latency_ms": 20429.0,
+   "content": {}
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "outcome": "served",
+   "latency_ms": 20443.0,
+   "content": {}
+  },
+  {
+   "step": "risk",
+   "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "outcome": "served",
+   "latency_ms": 12450.0,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "No data-protection clause found",
+     "Liability cap is absent"
+    ],
+    "ref": "data_protection.found=false, liability_cap.found=false"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "outcome": "served",
+   "latency_ms": 11396.3,
+   "content": {}
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "outcome": "served",
+   "latency_ms": 20317.6,
+   "content": {}
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "outcome": "served",
+   "latency_ms": 16750.0,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "THE INTERPRETATION AND PERFORMANCE OF THIS CONTRACT SHALL BE IN ACCORDANCE WITH AND CONTROLLED BY THE LAWS OF THE STATE OF TEXAS, WITHOUT REGARD TO THE DOCTRINES GOVERNING CHOICE OF LAW.",
+    "ref": "Article XV, Section 15.1"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "outcome": "served",
+   "latency_ms": 21216.7,
+   "content": {}
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "outcome": "served",
+   "latency_ms": 21219.5,
+   "content": {}
+  },
+  {
+   "step": "risk",
+   "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "outcome": "served",
+   "latency_ms": 18488.7,
+   "content": {}
+  },
+  {
+   "step": "classify",
+   "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+   "outcome": "served",
+   "latency_ms": 11384.9,
+   "content": {}
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+   "outcome": "served",
+   "latency_ms": 19303.8,
+   "content": {}
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+   "outcome": "served",
+   "latency_ms": 19463.7,
+   "content": {}
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+   "outcome": "served",
+   "latency_ms": 19480.4,
+   "content": {}
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+   "outcome": "served",
+   "latency_ms": 19482.5,
+   "content": {}
+  },
+  {
+   "step": "risk",
+   "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+   "outcome": "served",
+   "latency_ms": 18418.2,
+   "content": {}
+  },
+  {
+   "step": "classify",
+   "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "outcome": "served",
+   "latency_ms": 10733.7,
+   "content": {}
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "outcome": "served",
+   "latency_ms": 19282.0,
+   "content": {}
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "outcome": "served",
+   "latency_ms": 19510.9,
+   "content": {}
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "outcome": "served",
+   "latency_ms": 19517.8,
+   "content": {}
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "outcome": "served",
+   "latency_ms": 19516.5,
+   "content": {}
+  },
+  {
+   "step": "risk",
+   "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "outcome": "served",
+   "latency_ms": 18416.2,
+   "content": {}
+  },
+  {
+   "step": "classify",
+   "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "outcome": "served",
+   "latency_ms": 9963.9,
+   "content": {}
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "outcome": "served",
+   "latency_ms": 18506.1,
+   "content": {}
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "outcome": "served",
+   "latency_ms": 19790.2,
+   "content": {}
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "outcome": "served",
+   "latency_ms": 19800.6,
+   "content": {}
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "outcome": "served",
+   "latency_ms": 19781.4,
+   "content": {}
+  },
+  {
+   "step": "risk",
+   "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "outcome": "served",
+   "latency_ms": 15091.7,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "No data-protection clause found",
+     "Liability cap is absent"
+    ],
+    "ref": "data_protection, liability_cap"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "outcome": "served",
+   "latency_ms": 11371.2,
+   "content": {}
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "outcome": "served",
+   "latency_ms": 19806.6,
+   "content": {}
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "outcome": "served",
+   "latency_ms": 19945.4,
+   "content": {}
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "outcome": "served",
+   "latency_ms": 19964.6,
+   "content": {}
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "outcome": "served",
+   "latency_ms": 19955.7,
+   "content": {}
+  },
+  {
+   "step": "risk",
+   "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "outcome": "served",
+   "latency_ms": 18451.5,
+   "content": {}
+  },
+  {
+   "step": "classify",
+   "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "outcome": "served",
+   "latency_ms": 11393.8,
+   "content": {}
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "outcome": "served",
+   "latency_ms": 17267.3,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "7. Term and Termination. This Addendum may be terminated at any time by either Party in accordance with the termination provisions of the Distribution Agreement. The Addendum shall not have an Initial Period.",
+    "ref": "Section 7"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "outcome": "served",
+   "latency_ms": 20504.6,
+   "content": {}
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "outcome": "served",
+   "latency_ms": 20483.4,
+   "content": {}
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "outcome": "served",
+   "latency_ms": 20489.3,
+   "content": {}
+  },
+  {
+   "step": "risk",
+   "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "outcome": "served",
+   "latency_ms": 18536.1,
+   "content": {}
+  },
+  {
+   "step": "classify",
+   "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "outcome": "served",
+   "latency_ms": 11940.7,
+   "content": {}
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "outcome": "served",
+   "latency_ms": 21291.2,
+   "content": {}
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "outcome": "served",
+   "latency_ms": 20708.2,
+   "content": {
+    "raw": "\n\n{\"clause\": \"governing_law\", \"found\": true, \"text\": \"This Agreement is to be governed and construed according to the laws of the State of New York without regard to conflicts of law. The parties agree that each of them"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "outcome": "served",
+   "latency_ms": 20508.2,
+   "content": {}
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "outcome": "served",
+   "latency_ms": 20500.4,
+   "content": {}
+  },
+  {
+   "step": "risk",
+   "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "outcome": "served",
+   "latency_ms": 18542.9,
+   "content": {}
+  },
+  {
+   "step": "classify",
+   "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "outcome": "served",
+   "latency_ms": 11776.9,
+   "content": {}
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "outcome": "served",
+   "latency_ms": 21269.6,
+   "content": {}
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "outcome": "served",
+   "latency_ms": 20806.6,
+   "content": {}
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "outcome": "served",
+   "latency_ms": 20797.6,
+   "content": {}
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "outcome": "served",
+   "latency_ms": 20816.7,
+   "content": {}
+  },
+  {
+   "step": "risk",
+   "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "outcome": "served",
+   "latency_ms": 14970.1,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "No data-protection clause found",
+     "Liability cap is absent"
+    ],
+    "ref": "data_protection.found=false,liability_cap.found=false"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "outcome": "served",
+   "latency_ms": 12969.6,
+   "content": {}
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "outcome": "served",
+   "latency_ms": 21650.9,
+   "content": {}
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "outcome": "served",
+   "latency_ms": 21656.0,
+   "content": {}
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "outcome": "served",
+   "latency_ms": 21682.2,
+   "content": {}
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "outcome": "served",
+   "latency_ms": 20710.0,
+   "content": {}
+  },
+  {
+   "step": "risk",
+   "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "outcome": "served",
+   "latency_ms": 14563.3,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "No data-protection clause found",
+     "Liability cap is absent"
+    ],
+    "ref": "data_protection.found=false, liability_cap.found=false"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "outcome": "served",
+   "latency_ms": 12969.6,
+   "content": {}
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "outcome": "served",
+   "latency_ms": 22038.3,
+   "content": {}
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "outcome": "served",
+   "latency_ms": 22776.0,
+   "content": {}
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "outcome": "served",
+   "latency_ms": 22130.4,
+   "content": {}
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "outcome": "served",
+   "latency_ms": 19578.7,
+   "content": {}
+  },
+  {
+   "step": "risk",
+   "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "outcome": "served",
+   "latency_ms": 11881.2,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "No data-protection clause found",
+     "Liability cap is absent"
+    ],
+    "ref": "data_protection, liability_cap"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+   "outcome": "served",
+   "latency_ms": 13064.9,
+   "content": {}
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+   "outcome": "served",
+   "latency_ms": 21949.0,
+   "content": {}
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+   "outcome": "served",
+   "latency_ms": 14284.8,
+   "content": {
+    "clause": "governing_law",
+    "found": true,
+    "text": "This Agreement shall be interpreted in accordance with the laws of the State of Indiana.",
+    "ref": "10(d)"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+   "outcome": "served",
+   "latency_ms": 22018.8,
+   "content": {}
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+   "outcome": "served",
+   "latency_ms": 20195.5,
+   "content": {}
+  },
+  {
+   "step": "risk",
+   "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+   "outcome": "served",
+   "latency_ms": 14926.1,
+   "content": {}
+  },
+  {
+   "step": "report",
+   "doc_id": null,
+   "outcome": "served",
+   "latency_ms": 0,
+   "content": {}
+  }
+ ]
+}

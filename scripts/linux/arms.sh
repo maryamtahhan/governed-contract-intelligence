@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# Run the measurement arms (A all-GPU, B gpu-split, C round-robin, D matrix)
-# on the same documents, then build the report. Each arm swaps the praxis
+# Run the four routing policies (all-gpu, gpu-small, round-robin, hybrid)
+# on the same documents, then build the report. Each policy swaps the praxis
 # config, waits for readiness, scrapes pool/praxis metrics before and after,
 # and runs the review pipeline through the trace UI so every request is
 # recorded. Device-time comes from the simulated pools' X-Busy-Ms headers.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
+source scripts/configs.sh
 STACK=deploy/linux
 COMPOSE="${COMPOSE:-docker compose}"
 RUNS="${RUNS:-runs}"
@@ -14,7 +15,9 @@ DATA="${DATA:-data/synthetic}"
 CONCURRENCY="${CONCURRENCY:-12}"
 GATEWAY="${GATEWAY:-http://127.0.0.1:8080}"
 SENSITIVE="${SENSITIVE:-http://127.0.0.1:8083}"
-ARMS="${ARMS:-A B C D}"
+JUDGMENT="${JUDGMENT:-http://127.0.0.1:8086}"
+SENSITIVE_JUDGMENT="${SENSITIVE_JUDGMENT:-http://127.0.0.1:8087}"
+CONFIGS="${CONFIGS:-${ARMS:-all-gpu gpu-small round-robin hybrid}}"
 
 for c in curl uv; do command -v "$c" >/dev/null || { echo "missing: $c" >&2; exit 1; }; done
 $COMPOSE version >/dev/null 2>&1 || { echo "compose not usable: $COMPOSE" >&2; exit 1; }
@@ -28,7 +31,7 @@ if [ ! -f "demo/$DATA/ground_truth.json" ]; then
   echo "dataset not found: demo/$DATA" >&2; exit 1
 fi
 
-set_arm() { bash scripts/linux/set_arm.sh "$1" >/dev/null; }
+set_config() { bash scripts/linux/set_config.sh "$1" >/dev/null; }
 
 scrape() {  # scrape <outdir> <tag>
   mkdir -p "$1"
@@ -45,16 +48,18 @@ if curl -sf -m 3 http://127.0.0.1:18081/health >/dev/null 2>&1; then
   SAMPLE_ARGS="--sample-metrics vllm-cpu=http://127.0.0.1:18081,vllm-gpu=http://127.0.0.1:18082,vllm-gpu-approved=http://127.0.0.1:18084,vllm-gpu-small=http://127.0.0.1:18085"
 fi
 
-for arm in $ARMS; do
-  out="$RUNS/arm-$arm"
+for requested in $CONFIGS; do
+  config=$(config_name "$requested")
+  out="$RUNS/$config"
   mkdir -p "$out"
   echo
-  echo "=== arm $arm ====================================================="
-  set_arm "$arm"
+  echo "=== config $config ================================================"
+  set_config "$config"
   scrape "$out" before
-  (cd demo && uv run hybrid-review \
+  (cd demo && uv run hybrid-run --target gateway \
     --gateway "$GATEWAY" --sensitive-gateway "$SENSITIVE" \
-    --data "$DATA" --out "../$out" --arm "$arm" \
+    --judgment-gateway "$JUDGMENT" --sensitive-judgment-gateway "$SENSITIVE_JUDGMENT" \
+    --data "$DATA" --out "../$out" --config "$config" \
     --docs "$DOCS" --concurrency "$CONCURRENCY" $SAMPLE_ARGS)
   scrape "$out" after
 done
@@ -63,11 +68,13 @@ echo
 echo "=== report ========================================================="
 repo_dir=$(pwd)
 run_args=""
-for arm in $ARMS; do run_args="$run_args $repo_dir/$RUNS/arm-$arm"; done
+for requested in $CONFIGS; do
+  run_args="$run_args $repo_dir/$RUNS/$(config_name "$requested")"
+done
 # shellcheck disable=SC2086
 (cd demo && uv run hybrid-score report --runs $run_args \
   --data "$DATA" --out "$repo_dir/$RUNS/report.md")
 echo
 echo "report:    $RUNS/report.md (+ .json, .html)"
-echo "arms table is also live on the trace UI: http://127.0.0.1:8080"
+echo "configs table is also live on the trace UI: http://127.0.0.1:8080"
 echo "audit pack: curl -s http://127.0.0.1:8080/_trace/api/audit.jsonl > $RUNS/audit.jsonl"

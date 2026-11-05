@@ -29,6 +29,10 @@ Built on [RMalone8/llm-d-sc-demo](https://github.com/RMalone8/llm-d-sc-demo)
 pipeline, the measurement harness and the OpenShell sandbox. **Read
 "What is measured vs simulated" before quoting any number.**
 
+**Picking this up after 2026-11-04?** Read [HANDOFF.md](HANDOFF.md): it separates
+routing-policy names, route names, models, and actual hardware, and lists the
+open naming decisions.
+
 ## Status: built vs designed
 
 | capability | state |
@@ -39,10 +43,13 @@ pipeline, the measurement harness and the OpenShell sandbox. **Read
 | Semantic cache in the specialist (V5 ordering rules, zero-FP threshold) | **built, measured** |
 | Four-arm measurement (A/B/C/D) + model-variant comparison on OCP | **built** |
 | Trace UI (waterfall, arms panel, dashboard, audit) | **built** |
-| Test suite | **58 tests green** (`cd demo && uv run pytest`) |
+| Test suite | **193 tests green** (`cd demo && uv run pytest`) |
+| Contract-step taxonomy + evaluation harness | **candidate, not measured** — evaluate before routing ([docs](docs/contract-step-routing.md)) |
+| Praxis 0.9.0 / ai-gateway 0.9.0 gateway rebuild | **build path verified**; amd64 image not pushed ([docs](deploy/images/praxis-llm-d-sc/README.md)) |
 | Retrieval evaluation (chunking + recall@k/MRR vs annotation spans) | **run, both regimes — ordering inverts within-doc, restores cross-doc (FINDINGS §11)** |
-| docling ingestion + PII screen at ingest | designed (§11) |
-| hybrid-bench concurrency sweep, thinking-mode A/B, V2 tool-calling | open (FINDINGS §9) |
+| OSS adapters (Presidio, nervaluate, ranx, docling, RedisVL, OTel, RAGAS, llm-d sim/batch/bench) | **built as opt-in swaps, default path unchanged** (docs/OPENSOURCE-REUSE.md) |
+| docling ingestion + PII screen at ingest | adapter built; default remains builtin/regex, not yet measured on the corpus (§11, FINDINGS §16) |
+| hybrid-bench concurrency sweep, thinking-mode A/B, V2 tool-calling | wrapper built; sweep open (FINDINGS §9) |
 
 ## How it fits together
 
@@ -67,7 +74,9 @@ built, governed and measured end-to-end today:
 
 - **Complexity is a preference, sensitivity is a constraint.** The general
   listener routes by the llm-d-sc complexity label (SIMPLE/MEDIUM → CPU,
-  COMPLEX/REASONING → GPU). The sensitive listener — fed by the PII screen —
+  COMPLEX/REASONING → GPU). Measured behaviour on contract steps is
+  CPU-first: single-document work lands on CPU and the cross-document report
+  on GPU (FINDINGS §15.5). The sensitive listener — fed by the PII screen —
   routes the same labels but only to approved pools, and its failover pool
   contains *only* the approved GPU backend, so when that pool is down a
   REASONING request **fails closed** (explicit 502, verified in the traces).
@@ -76,11 +85,14 @@ built, governed and measured end-to-end today:
 - **Praxis reaches the pools only through the trace-ui relays** — every
   request recorded with label, route, per-hop timings; SQLite is the audit
   trail, exported as `audit.jsonl`.
-- **The same four praxis configs** (`manifests/praxis/`) drive the Linux
+- **The same four praxis configs** (`manifests/base/praxis/`) drive the Linux
   stack and OpenShift, so routing is byte-identical on both.
 - **Arms** (measurement baselines, swapped live): **A** all-GPU large model,
-  **B** all-GPU small model, **C** naive hybrid round-robin, **D** the full
-  matrix — classifier + two entries + fail-closed sensitive failover.
+  **B** all-GPU small model, **C** naive hybrid round-robin, **D** the hybrid
+  policy — classifier-routed general/sensitive entries plus pinned judgment
+  entries for risk and report (GPU), with fail-closed sensitive failover. The
+  judgment entries are an implemented policy, not yet a measured ROSA result;
+  the measured D run predates them (FINDINGS §15.5).
 
 ## What runs where
 
@@ -88,7 +100,8 @@ built, governed and measured end-to-end today:
 |---|---|---|
 | **Linux host (podman/docker)** | Real Praxis + llm-d-sc + trace-ui, simulated vLLM backends | `scripts/linux/up.sh` |
 | **g5.12xlarge (stopped, AMI kept)** | Real vLLM: 1.5B CPU, 7B/1.5B GPU — the measured GPU-vs-CPU story | warm-restart the AMI |
-| **OpenShift (rhgaudi3s2 SNO)** | Real vLLM pools, all CPU-served (1.5B / 7B / 9B / 35B-A3B MoE / specialist), full platform validation | `deploy/openshift/*` overlays |
+| **OpenShift (rhgaudi3s2 SNO)** — validation | Real vLLM pools, all CPU-served (1.5B / 7B / 9B / 35B-A3B MoE / specialist), full platform validation | `deploy/openshift/*` overlays |
+| **ROSA HCP — demo target (measured, torn down 2026-11-04)** | x8i.24xlarge CPU (48 cores, AMX) + g5.12xlarge (4× A10G, TP=4) in one AZ, explicit OMP binding, per-node gp3 caches | `deploy/openshift/rosa` |
 | **Dev machine (tests)** | Fake pools + trace-ui + a praxis stub that parses the real configs | `cd demo && uv run pytest` |
 
 The simulated backends speak the OpenAI subset, report device-time, simulate
@@ -97,6 +110,42 @@ governance, failover and measurement run on a CPU-only instance and in CI.
 **Quality and dollar numbers from them are simulation** — point the stack at
 real vLLM pools (Linux compose profile `real`, the g5, or OpenShift) for
 measured numbers.
+
+## Optional open-source integrations
+
+The measured default path is unchanged: the built-in regex screen, built-in
+chunker, containment scoring, SQLite trace store and dependency-free exact
+McNemar all still run with the base install. Each item below is an **opt-in
+swap**, because a component swap changes a number and must be A/B tested, not
+silently adopted. The full audit, licences and measurement caveats are in
+[docs/OPENSOURCE-REUSE.md](docs/OPENSOURCE-REUSE.md).
+
+| upstream | module / flag | default | why it is a swap |
+|---|---|---|---|
+| Presidio | `hybrid_demo.pii`, `HYBRID_PII_DETECTOR=presidio` | regex | NER raises the sensitive share; no CUAD PII labels to score it |
+| nervaluate | `hybrid_demo.evalkit.spans` | containment | adds SemEval offset metrics; paraphrases still fail offsets |
+| statsmodels | `hybrid_demo.evalkit.stats` | exact binomial | same test, standard implementation/backend label |
+| ranx | `hybrid_demo.retrieval.metrics`, `--metrics-backend` | internal | NDCG/MAP implementation can differ at ties |
+| docling `HybridChunker` | `hybrid_demo.retrieval.docling_chunking`, `--chunk-backend docling` | builtin | chunk boundaries move; offsets are regression-checked |
+| LanceDB + BM25 | `hybrid_demo.retrieval.index`, `hybrid-index` | memory | cross-doc ranking changes with the backend |
+| RedisVL + Redis | `--cache-backend redis` | in-memory | cache hits change cost/latency; policy stays ours |
+| OpenTelemetry | `TRACE_OTEL=jsonl` or `otlp` | SQLite only | export is additive; no content for sensitive entries |
+| RAGAS | `hybrid_demo.evalkit.rag` | lexical screen | judge-dependent numbers are not comparable across judges |
+| llm-d-inference-sim | `hybrid-pool-sim` | `hybrid-pool` | simulator covers transport/latency, not tiered answer corruption or device time |
+| llm-d-batch-gateway | `hybrid-batch` | Python runner | batch must target the praxis ingress, never a pool directly |
+| vLLM bench / GuideLLM | `hybrid-bench` | `tools/gpu_bench.py` | load generator CLI churns; pin versions in a measured run |
+
+Quick checks that need no model or GPU:
+
+```bash
+cd demo
+uv run python -m hybrid_demo.pii                      # detector availability
+uv run python tools/compare_pii.py --data data/synthetic --detectors regex
+uv run python -m hybrid_demo.bench --backend vllm \
+  --base-url http://localhost:8080 --model Semantic-Qwen --dry-run
+uv run python -m hybrid_demo.fakepool.llmd_sim \
+  --upstream http://localhost:8001 --pool vllm-cpu --port 8000 --print-simulator-cmd
+```
 
 ## Linux runbook (podman or docker)
 
@@ -112,16 +161,16 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 export COMPOSE="$HOME/pv/bin/podman-compose"    # or "docker compose"
 export PATH="$HOME/.local/bin:$PATH"
 
-scripts/linux/up.sh        # build + start the stack (arm D), wait for readiness
-scripts/linux/smoke.sh     # 12 assertions: matrix, fallback, fail-closed, governance, audit
-DOCS=40 scripts/linux/arms.sh   # arms A-D on the same documents + report
+scripts/linux/up.sh        # build + start the stack (hybrid config), wait for readiness
+scripts/linux/smoke.sh     # 12 assertions: routing, fallback, fail-closed, governance, audit
+DOCS=40 scripts/linux/arms.sh   # all four routing configs on the same documents + report
 scripts/linux/demo.sh      # choreographed on-stage run (pauses between acts)
 scripts/linux/down.sh      # stop (-v also deletes the trace database)
 ```
 
-Outputs: `runs/report.md` (+ `.json`, `.html`), per-arm `runs/arm-*/`, and
-the live dashboard on http://127.0.0.1:8080. Pull the plug yourself:
-`podman stop hybrid-demo_fake-gpu_1`.
+Outputs: `runs/report.md` (+ `.json`, `.html`), per-config directories such as
+`runs/hybrid/`, and the live dashboard on http://127.0.0.1:8080. Pull the plug
+yourself: `podman stop hybrid-demo_fake-gpu_1`.
 
 Real contracts instead of synthetic: `scripts/data/fetch-cuad.sh`, convert
 with `hybrid_demo.pipeline.cuad` (CUAD v1, CC BY 4.0 — verify before use;
@@ -144,8 +193,8 @@ oc login ...
 
 Model pools are plain Deployments applied by CPU-model overlays — swap
 variants with `scripts/cluster/model-comparison.sh {base|moe|9b|specialist|specialist-moe}`
-(each applies `deploy/openshift/cpu-real-*`, warms praxis, runs arm D on the
-CUAD test split into `runs/cuad-test/arm-D-<variant>` with metrics
+(each applies `deploy/openshift/cpu-real-*`, warms praxis, runs config hybrid
+on the CUAD test split into `runs/cuad-test/hybrid-<variant>` with metrics
 sampling). The overlays carry the platform fixes from FINDINGS §7 (cpu
 limits, writable cache volumes, /dev/shm sizing, model-cache PVC for small
 models, emptyDir for the MoE — read it before changing anything).
@@ -235,8 +284,8 @@ compares:
   contract-analysis steps MEDIUM, the cross-doc report REASONING — reported
   honestly, FINDINGS §4).
 - **Routing and governance**: CPU-served share; sensitive steps on approved
-  pools; violations. Target for arm D: **zero**, verified from the trace
-  UI's own records, independently of the pipeline.
+  pools; violations. Target for the hybrid config: **zero**, verified from the
+  trace UI's own records, independently of the pipeline.
 - **Cost**: GPU-seconds and CPU core-seconds per document, priced as a sweep
   (cloud list vs owned at 25/50/75% utilisation) — never a single $ figure.
 - **Resilience**: degraded (fell-back) answers, fail-closed errors, recovery.
@@ -246,17 +295,33 @@ compares:
 All numbers, protocols and caveats in [FINDINGS.md](FINDINGS.md) — read it
 before quoting any of these:
 
-- **Governance**: arm D = 0 sensitive violations (requests the screen
-  labelled sensitive) on every stack, every dataset; A/B = 25, C = 12–24.
-  This is a containment result — routing, not PII ground truth (FINDINGS §2).
-- **Quality (CUAD held-out test split)**: 1.5B F1 0.242 (recall 1.0,
-  precision ~0.15 — always answers, usually wrong: the worst failure shape
-  for legal work); 35B-A3B MoE 0.712 (risk 0.65 with real discrimination).
-  On the mixed split the MoE hit 0.80 vs the 7B-on-GPU's 0.761 — the CPU
-  tier reached the GPU tier's quality.
-- **Cost**: arm D used 0.21 GPU-s/doc vs arm A's 9.35 (45×) on the g5; a
-  200-doc batch costs ≈ $0.01 of rented GPU time hybrid vs ≈ $0.57 all-GPU
-  (calculated from measured rates).
+- **Governance**: the hybrid config = 0 sensitive violations on every stack,
+  every dataset — including 0/247 sensitive steps on the 200-document ROSA
+  run. Ungoverned controls leak: ROSA all-gpu/gpu-small 247/247, round-robin
+  122/247; earlier SNO/CUAD all-gpu/gpu-small 25, round-robin 12–24. This is a
+  containment result — routing, not PII ground truth (FINDINGS §2).
+- **Quality (CUAD held-out test split, 19 unique contracts)**: 1.5B F1 0.242
+  (recall 1.0, precision ~0.15 — always answers, usually wrong: the worst
+  failure shape for legal work); 35B-A3B MoE F1 0.690, risk 0.632 with real
+  discrimination, identical on CPU and 4× A10G (same weights). The 7B was
+  never run on the test split, so the old mixed-split comparison is retired.
+  The retrieval-first specialist reaches F1 0.800 — a local direct run, not
+  through-stack.
+- **Direct parity (ROSA, 200 docs)**: the same 35B-A3B weights score
+  identically on a bare CPU and a bare GPU (extract F1 1.0, risk 1.0; report
+  0.746 vs 0.768), and all-CPU is 9.2× slower (2095 s vs 228 s). The only
+  quality loss in the governed path is the specialist (F1 0.982), not the
+  device; direct runs are ungoverned by construction (all 247 sensitive
+  steps on one endpoint).
+- **Cost (ROSA demo stack, 200 synthetic docs)**: the hybrid config used
+  **0.036 GPU-s/doc vs the all-gpu config's 1.974 (54×)** — 7.3 vs 394.8
+  GPU-seconds total — at extract F1 0.982 vs 1.0 and risk 0.995 vs 1.0. That
+  GPU time is one cross-document report per run: the measured hybrid arm is a
+  **CPU-first policy** (classify, extraction and risk on CPU; the portfolio
+  report on GPU), not demonstrated semantic routing (FINDINGS §15.5). The
+  earlier g5 validation
+  measured 45× (0.21 vs 9.35). At the illustrative $1.10/GPU-hour that is
+  ≈ $0.002 vs ≈ $0.12 of GPU time for the batch.
 - **Retrieval (single runs)**: regime decides the winner. Within-document
   (the retrieve-then-extract regime) the MTEB(Law) ordering inverts — the
   0.6B litil beats the top-scoring 8B by ~10 points on R@1/MRR
@@ -269,7 +334,7 @@ before quoting any of these:
 
 ## What is measured vs simulated
 
-| Component | Linux stack | OpenShift / g5 |
+| Component | Linux stack | OpenShift (ROSA / g5) |
 |---|---|---|
 | Praxis routing, failover, health checks | real | real |
 | llm-d-sc classification | real | real |
@@ -281,30 +346,34 @@ before quoting any of these:
 
 ```
 demo/src/hybrid_demo/
-    pipeline/            generator, review pipeline, CUAD converter
+    pipeline/            generator, review pipeline, CUAD converter, batch client
     specialist/          composite specialist pool + semantic cache (V5)
-    retrieval/           chunking, retrieval eval, end-to-end harness (§11)
-    evalkit/             scorer, live metrics sampler, cost sweep
-    fakepool/            simulated OpenAI-compatible backends
-    traceui/             recording relays, dashboard, audit export
+    retrieval/           chunking, docling adapter, index, retrieval eval (§11)
+    evalkit/             scorer, span/stats/RAG checks, live sampler, cost sweep
+    fakepool/            simulated backends + llm-d-inference-sim adapter
+    traceui/             recording relays, dashboard, audit, OTel export
+    pii.py               pluggable PII detectors (regex default)
+    bench.py             vLLM bench / GuideLLM command builder
 demo/tools/              classifier probes, prompt calibration, validators,
-                         paired-significance tests (mcnemar.py)
-demo/tests/              58 tests incl. e2e against a praxis stub
+                         paired-significance tests (mcnemar.py), PII compare
+demo/tests/             193 tests incl. e2e against a praxis stub
 manifests/               OpenShift base (pools, llm-d-sc, praxis, trace-ui, netpols)
-manifests/praxis/        the four routing configs, shared with the Linux stack
+manifests/base/          non-KServe base; base/praxis/ holds the four routing
+                         configs, shared with the Linux stack
 deploy/linux/            docker-compose / podman-compose stack
 deploy/openshift/        cpu-real model-pool overlays: base | moe | moe-thinking |
                          9b | specialist | specialist-moe
-scripts/linux/           up, down, smoke, arms, set_arm, demo choreography
+scripts/linux/           up, down, smoke, arms, set_config, demo choreography
 scripts/cluster/         model-comparison series (routes + port-forward fallback)
 scripts/demo/            pull-the-plug, blocked-action
 scripts/data/            CUAD fetch
-runs/simulated/          simulated-stack evidence (arms A–D + reports)
+runs/simulated/          simulated-stack evidence (four routing configs + reports)
 runs/cuad-mixed/         mixed-split evidence (historical; quote test-split only)
-runs/cuad-test/          held-out test-split evidence (arm-D variants) + comparisons/
+runs/cuad-test/          held-out test-split evidence (hybrid variants) + comparisons/
 runs/gpu-measured/       g5 measured-GPU evidence
 runs/retrieval/          embedder evals, corrections, e2e runs (FINDINGS §11)
-docs/                    architecture (SVG/PNG), OCTO business-case doc (v0.2)
+docs/                    architecture + pipeline diagrams (SVG), OCTO business-case
+                         doc (v0.2), OSS-reuse map, routing taxonomy, review guide
 sandbox/policy.yaml      OpenShell sandbox egress policy (praxis + github RO)
 FINDINGS.md              the measurement record — read before quoting numbers
 DECISIONS.md             how measurement changed the approach, in order

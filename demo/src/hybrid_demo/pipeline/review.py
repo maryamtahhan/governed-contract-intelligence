@@ -11,27 +11,47 @@ from typing import Any
 import httpx
 
 from ..classifier import detect_sensitivity
+from ..common import parse_pools, run_provenance
+from ..configs import (
+    CONFIG_ALIASES,
+    CONFIG_MODES,
+    CONFIG_NAMES,
+    GOVERNED_CONFIGS,
+    resolve_config,
+)
 from ..routes import APPROVED_ROUTES, GPU_ROUTES
 from .generate import CLAUSE_KEYS
 from .risk import DATA_PROTECTION_KEY, rubric_text
+from .schemas import apply as apply_schema
 
-ARM_MODES = {
-    "A": "all-gpu",
-    "B": "gpu-split",
-    "C": "round-robin",
-    "D": "matrix",
-}
-ARMS_WITH_GOVERNANCE = {"D"}
+# Steps whose work is judgment rather than extraction. The hybrid config gives
+# them their own praxis listeners pinned to the GPU, so the split is a policy
+# decision by step type, not the classifier's guess.
+JUDGMENT_STEPS = {"risk", "report"}
 
-# Thinking mode (the untested quality lever, FINDINGS §8): Qwen3.5 emits
+# Thinking mode (the quality lever tested in FINDINGS §8): Qwen3.5 emits
 # <think/>...</think/> blocks that consume the token budget before the
 # answer, so each step's max_tokens scales when HYBRID_THINKING=1 and the
 # parser strips think blocks before JSON extraction. Default unchanged.
+#
+# The thinking budgets are sized from measurement, not guesswork. On
+# Qwen3.5-35B-A3B (4x A10G, TP4, 2026-11-03) a 1500-token extract budget
+# finished with `finish_reason=length` and an EMPTY answer - the whole
+# budget went to the think block - while 6000 tokens finished at 3526 and
+# returned valid JSON. A short budget does not make thinking cheaper, it
+# makes the arm measure truncation. Extract prompts are ~2.7k tokens, so
+# 8000 keeps prompt + answer inside --max-model-len 16384.
+#
+# The report step is the exception: its prompt is ~8.7k tokens over 19
+# documents, leaving <7.7k to generate, and 7661 tokens still ended in
+# `finish_reason=length` with no answer. No client-side budget completes
+# a thinking report at max-model-len 16384; raise the server's context
+# window before reading anything into report accuracy in this mode.
 THINKING = os.environ.get("HYBRID_THINKING", "") == "1"
 STEP_TOKENS = {
-    "classify": (200, 800),
-    "extract": (300, 1500),
-    "risk": (300, 1500),
+    "classify": (200, 4000),
+    "extract": (300, 8000),
+    "risk": (300, 8000),
     "report": (1200, 3000),
 }
 
@@ -63,7 +83,7 @@ CAPTURE_HEADERS = (
 
 
 def classify_body(doc_text: str) -> dict:
-    return {
+    return apply_schema({
         "model": "Semantic-Qwen",
         "temperature": 0,
         **_gen_params("classify"),
@@ -78,11 +98,11 @@ def classify_body(doc_text: str) -> dict:
                 ),
             },
         ],
-    }
+    }, "classify")
 
 
 def extract_body(doc_text: str, clause: str) -> dict:
-    return {
+    return apply_schema({
         "model": "Semantic-Qwen",
         "temperature": 0,
         **_gen_params("extract"),
@@ -98,7 +118,7 @@ def extract_body(doc_text: str, clause: str) -> dict:
                 ),
             },
         ],
-    }
+    }, "extract")
 
 
 def risk_body(clauses: dict, sensitive: bool) -> dict:
@@ -107,7 +127,7 @@ def risk_body(clauses: dict, sensitive: bool) -> dict:
     )
     has_data_protection = DATA_PROTECTION_KEY in clauses
     note = "This document contains personal data (see Schedule 3)." if sensitive else ""
-    return {
+    return apply_schema({
         "model": "Semantic-Qwen",
         "temperature": 0,
         **_gen_params("risk"),
@@ -124,7 +144,7 @@ def risk_body(clauses: dict, sensitive: bool) -> dict:
                 ),
             },
         ],
-    }
+    }, "risk")
 
 
 def report_body(doc_lines: list[str], count: int,
@@ -132,7 +152,7 @@ def report_body(doc_lines: list[str], count: int,
     dp_request = (", count contracts missing a data-protection clause"
                   if has_data_protection else "")
     dp_field = (', "missing_data_protection": N' if has_data_protection else "")
-    return {
+    return apply_schema({
         "model": "Semantic-Qwen",
         "temperature": 0,
         **_gen_params("report"),
@@ -154,7 +174,7 @@ def report_body(doc_lines: list[str], count: int,
                 ),
             },
         ],
-    }
+    }, "report")
 
 
 def parse_content(content: str | None) -> dict:
@@ -198,20 +218,26 @@ def parse_content(content: str | None) -> dict:
 class ReviewRun:
     def __init__(self, general_base: str, sensitive_base: str | None, concurrency: int,
                  governance: bool, clause_keys: list[str] | None = None,
-                 timeout: float = 600.0, token: str | None = None) -> None:
+                 timeout: float = 600.0, token: str | None = None,
+                 judgment_base: str | None = None,
+                 sensitive_judgment_base: str | None = None) -> None:
         self.clause_keys = clause_keys or list(CLAUSE_KEYS)
         # When the trace UI is exposed through a Route it can require a
         # bearer token; the relay forwards the header, so the same token
-        # works for the ingress and the sensitive entry.
+        # works for every entry.
         headers = {"Authorization": f"Bearer {token}"} if token else {}
-        self.general = httpx.AsyncClient(base_url=general_base, timeout=timeout,
-                                         headers=headers)
-        self.sensitive = (
-            httpx.AsyncClient(base_url=sensitive_base, timeout=timeout,
-                              headers=headers)
-            if sensitive_base
-            else None
-        )
+
+        def client(base: str | None) -> httpx.AsyncClient | None:
+            return (httpx.AsyncClient(base_url=base, timeout=timeout, headers=headers)
+                    if base else None)
+
+        self.general = client(general_base)
+        self.sensitive = client(sensitive_base)
+        # The judgment entries are optional: when they are not configured the
+        # pipeline keeps the previous stage-agnostic behaviour (and records
+        # judgment_split=false), so older stacks still run.
+        self.judgment = client(judgment_base)
+        self.sensitive_judgment = client(sensitive_judgment_base)
         self.concurrency = max(1, concurrency)
         self.sem = asyncio.Semaphore(self.concurrency)
         self.governance = governance
@@ -220,14 +246,32 @@ class ReviewRun:
         self.screen_stats = {"tp": 0, "fp": 0, "tn": 0, "fn": 0}
 
     async def close(self) -> None:
-        await self.general.aclose()
-        if self.sensitive:
-            await self.sensitive.aclose()
+        for client in (self.general, self.sensitive, self.judgment,
+                       self.sensitive_judgment):
+            if client:
+                await client.aclose()
 
-    def entry_for(self, screened_sensitive: bool) -> httpx.AsyncClient:
+    def entry_for_step(self, screened_sensitive: bool,
+                       step: str) -> tuple[httpx.AsyncClient, str]:
+        """Pick the entry (and its trace label) for one pipeline step.
+
+        Judgment steps use the judgment listeners when configured; otherwise
+        they fall back to the stage-agnostic entries. A sensitive document
+        always stays on an approved entry: that is a governance constraint,
+        independent of which stage is calling.
+        """
+        stage = step.split(":", 1)[0]
+        if stage in JUDGMENT_STEPS and self.governance:
+            if screened_sensitive:
+                if self.sensitive_judgment:
+                    return self.sensitive_judgment, "sensitive-judgment"
+                if self.sensitive:
+                    return self.sensitive, "sensitive"
+            elif self.judgment:
+                return self.judgment, "judgment"
         if screened_sensitive and self.governance and self.sensitive:
-            return self.sensitive
-        return self.general
+            return self.sensitive, "sensitive"
+        return self.general, "general"
 
     def note_screen(self, screened: bool, truth: bool | None) -> None:
         """Score the screen only where an independent label exists.
@@ -251,7 +295,8 @@ class ReviewRun:
         true_complexity: str,
         true_sensitive: bool,
     ) -> dict:
-        headers = {"Content-Type": "application/json", "X-Demo-Step": step}
+        headers = {"Content-Type": "application/json", "X-Demo-Step": step,
+                   "X-Demo-Entry": entry}
         if doc_id:
             headers["X-Demo-Doc"] = doc_id
         record: dict[str, Any] = {
@@ -306,6 +351,11 @@ class ReviewRun:
             record.update(
                 {
                     "outcome": "fallback" if fallback else "served",
+                    # What answered, as the server named it. A specialist pool
+                    # returns its own id ("cuad-specialist") while a forwarded
+                    # prompt returns the served alias, so this is the only
+                    # per-stage evidence of which checkpoint did the work.
+                    "response_model": data.get("model"),
                     "content": parse_content(
                         data.get("choices", [{}])[0].get("message", {}).get("content")
                     ),
@@ -319,16 +369,17 @@ class ReviewRun:
         screened = detect_sensitivity(doc_text)
         self.screened[doc_id] = screened
         self.note_screen(screened, doc.get("sensitive"))
-        client = self.entry_for(screened)
-        entry = "sensitive" if client is not self.general else "general"
+        client, entry = self.entry_for_step(screened, "classify")
         await self.call(client, entry, "classify", classify_body(doc_text), doc_id, "SIMPLE", screened)
         clauses: dict[str, str | None] = {}
+        client, entry = self.entry_for_step(screened, "extract")
         for clause in self.clause_keys:
             display = clause.replace("_", " ")
             rec = await self.call(client, entry, f"extract:{clause}", extract_body(doc_text, display),
                                   doc_id, "SIMPLE", screened)
             content = rec.get("content", {})
             clauses[clause] = content.get("text") if content.get("found") else None
+        client, entry = self.entry_for_step(screened, "risk")
         await self.call(client, entry, "risk", risk_body(clauses, screened), doc_id, "COMPLEX", screened)
         return clauses
 
@@ -379,8 +430,7 @@ class ReviewRun:
                 )
             )
         prefixed = [f"- {line}" for line in doc_lines]
-        client = self.entry_for(any_sensitive)
-        entry = "sensitive" if client is not self.general else "general"
+        client, entry = self.entry_for_step(any_sensitive, "report")
         has_data_protection = DATA_PROTECTION_KEY in self.clause_keys
         await self.call(client, entry, "report",
                         report_body(prefixed, len(docs), has_data_protection), None,
@@ -388,13 +438,29 @@ class ReviewRun:
         self.wall_s = time.time() - t0
 
 
-def load_documents(data_dir: str | Path, limit: int | None = None
+def load_documents(data_dir: str | Path, limit: int | None = None,
+                   doc_ids: list[str] | None = None
                    ) -> tuple[list[dict], dict[str, str], list[str]]:
+    """Load documents, optionally by explicit id.
+
+    ``limit`` keeps the historical behaviour of preferring the manifest's
+    golden set, which is right for a statistical run but means ``--docs 1``
+    always picks the first golden document - and on the synthetic set that
+    document is not sensitive. A demo that has to show the sensitive path
+    picks its documents explicitly instead; ``doc_ids`` wins over ``limit``.
+    """
     data = Path(data_dir)
     manifest = json.loads((data / "ground_truth.json").read_text())
     clause_keys = manifest.get("clause_keys") or CLAUSE_KEYS
     docs = manifest["documents"]
-    if limit:
+    if doc_ids:
+        wanted = set(doc_ids)
+        known = {d["doc_id"] for d in docs}
+        missing = sorted(wanted - known)
+        if missing:
+            raise SystemExit(f"doc ids not in {data_dir}: {missing}")
+        docs = [d for d in docs if d["doc_id"] in wanted]
+    elif limit:
         golden = set(manifest.get("golden", []))
         docs = [d for d in docs if d["doc_id"] in golden] + [
             d for d in docs if d["doc_id"] not in golden
@@ -411,6 +477,11 @@ def summarise(records: list[dict], screen_stats: dict) -> dict:
     by_route: dict[str, int] = {}
     by_label: dict[str, int] = {}
     by_entry: dict[str, int] = {}
+    by_model: dict[str, int] = {}
+    stage_models: dict[str, dict[str, int]] = {}
+    stage_routes: dict[str, dict[str, int]] = {}
+    judgment_steps = 0
+    judgment_on_gpu = 0
     fallback = 0
     errors = 0
     classifier_us: list[int] = []
@@ -422,12 +493,25 @@ def summarise(records: list[dict], screen_stats: dict) -> dict:
     for r in records:
         h = r.get("headers", {})
         route = h.get("x-demo-route")
+        step = r.get("step", "")
+        stage = step.split(":", 1)[0] or "unknown"
         if route:
             by_route[route] = by_route.get(route, 0) + 1
+            per_stage_routes = stage_routes.setdefault(stage, {})
+            per_stage_routes[route] = per_stage_routes.get(route, 0) + 1
+            if "judgment" in (r.get("entry") or ""):
+                judgment_steps += 1
+                if route in GPU_ROUTES:
+                    judgment_on_gpu += 1
         label = h.get("x-demo-classification")
         if label:
             by_label[label] = by_label.get(label, 0) + 1
         by_entry[r.get("entry", "general")] = by_entry.get(r.get("entry", "general"), 0) + 1
+        model = r.get("response_model")
+        if model:
+            by_model[model] = by_model.get(model, 0) + 1
+            per_stage = stage_models.setdefault(stage, {})
+            per_stage[model] = per_stage.get(model, 0) + 1
         if r.get("outcome") == "fallback" or h.get("x-praxis-fallback") == "true":
             fallback += 1
         if r.get("outcome", "").startswith(("http_", "transport")):
@@ -458,6 +542,16 @@ def summarise(records: list[dict], screen_stats: dict) -> dict:
         "routes": by_route,
         "labels": by_label,
         "entries": by_entry,
+        # What each response said answered it. Older runs predate this field
+        # and report an empty map rather than a guess.
+        "models": by_model,
+        "stage_models": stage_models,
+        "stage_routes": stage_routes,
+        # Risk/report steps that used a judgment entry; on_gpu counts the ones
+        # whose selected route was a GPU pool. Both zero when the judgment
+        # entries are not configured (legacy stage-agnostic run).
+        "judgment_steps": judgment_steps,
+        "judgment_on_gpu": judgment_on_gpu,
         "fallback": fallback,
         "errors": errors,
         "screen": screen_stats,
@@ -483,25 +577,37 @@ async def run_arm(
     sample_metrics: str | None = None,
     timeout: float = 600.0,
     token: str | None = None,
+    model: str | None = None,
+    environment: str | None = None,
+    cluster: str | None = None,
+    pools: dict | None = None,
+    doc_ids: list[str] | None = None,
+    judgment_base: str | None = None,
+    sensitive_judgment_base: str | None = None,
 ) -> dict:
-    mode = ARM_MODES.get(arm, arm)
-    governance = arm in ARMS_WITH_GOVERNANCE or arm == "matrix"
+    arm = CONFIG_ALIASES.get(str(arm).strip().lower(), arm)
+    mode = CONFIG_MODES.get(arm, arm)
+    governance = arm in GOVERNED_CONFIGS
     if governance and not sensitive_base:
-        raise SystemExit("arm D needs --sensitive-gateway (the sensitive entry URL)")
-    docs, texts, clause_keys = load_documents(data_dir, docs_limit)
+        raise SystemExit("config hybrid needs --sensitive-gateway (the sensitive entry URL)")
+    docs, texts, clause_keys = load_documents(data_dir, docs_limit, doc_ids)
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
+    started_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
     sampler = None
     if sample_metrics:
         from ..evalkit.sampler import MetricsSampler
 
-        pools = dict(kv.split("=", 1) for kv in sample_metrics.split(",") if "=" in kv)
-        sampler = MetricsSampler({k: v.rstrip("/") + "/metrics" for k, v in pools.items()})
+        metric_pools = dict(kv.split("=", 1) for kv in sample_metrics.split(",")
+                            if "=" in kv)
+        sampler = MetricsSampler({k: v.rstrip("/") + "/metrics"
+                                  for k, v in metric_pools.items()})
         sampler.start()
 
     run = ReviewRun(gateway_base, sensitive_base, concurrency, governance, clause_keys,
-                    timeout=timeout, token=token)
+                    timeout=timeout, token=token, judgment_base=judgment_base,
+                    sensitive_judgment_base=sensitive_judgment_base)
     await run.run(docs, texts)
     await run.close()
 
@@ -513,12 +619,28 @@ async def run_arm(
 
     summary = {
         "arm": arm,
+        "config": CONFIG_NAMES.get(arm, arm),
         "mode": mode,
         "governance": governance,
         "docs": len(docs),
+        "model": model,
         "concurrency": run.concurrency,
+        "timeout_s": timeout,
+        "started_at": started_at,
         "wall_s": round(run.wall_s, 2),
+        # Whether the stage-aware split was active. A run with the flags
+        # omitted is still valid, but it is a CPU-first run by fallback, not
+        # evidence for the judgment-on-GPU policy. The flags are ignored by
+        # the ungoverned baselines (A/B/C), so they must not be recorded as
+        # active there either: arms.sh passes all gateways to every config.
+        "judgment_split": governance and run.judgment is not None,
+        "sensitive_judgment_split": (governance
+                                     and run.sensitive_judgment is not None),
         **summarise(run.records, run.screen_stats),
+        # Routes and labels say which pool answered; they cannot say what was
+        # in the pool. Recording the deploy-time mapping with the run keeps
+        # "direct vs through-stack" answerable months later.
+        **run_provenance(environment, cluster, pools),
     }
     (out / "results.json").write_text(
         json.dumps({"summary": summary, "records": run.records}, indent=1)
@@ -534,15 +656,40 @@ async def run_arm(
     return summary
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="contract-review pipeline")
     parser.add_argument("--gateway", required=True, help="general entry base URL (trace-ui ingress)")
     parser.add_argument("--sensitive-gateway", default=None,
-                        help="sensitive entry base URL; required for arm D")
+                        help="sensitive entry base URL; required for the hybrid config")
+    parser.add_argument("--judgment-gateway", default=os.environ.get("HYBRID_JUDGMENT_GATEWAY") or None,
+                        help="judgment entry base URL (risk + report on GPU); "
+                             "defaults to HYBRID_JUDGMENT_GATEWAY, then the "
+                             "stage-agnostic entries")
+    parser.add_argument("--sensitive-judgment-gateway",
+                        default=os.environ.get("HYBRID_SENSITIVE_JUDGMENT_GATEWAY") or None,
+                        help="approved judgment entry base URL for sensitive "
+                             "documents; defaults to "
+                             "HYBRID_SENSITIVE_JUDGMENT_GATEWAY, then the "
+                             "sensitive entry")
     parser.add_argument("--data", default="data/synthetic")
     parser.add_argument("--out", required=True)
-    parser.add_argument("--arm", required=True, help="A, B, C, D")
-    parser.add_argument("--docs", type=int, default=None)
+    parser.add_argument("--config", default=None,
+                        help="routing policy, not hardware: all-gpu, gpu-small, "
+                             "round-robin or hybrid")
+    # Legacy alias. Kept so old scripts and recorded commands still run, but
+    # hidden from help: the policy names are the supported interface.
+    parser.add_argument("--arm", default=None, help=argparse.SUPPRESS)
+    parser.add_argument("--docs", type=int, default=None,
+                        help="run the first N documents; with --doc-ids unset, "
+                             "golden documents are preferred (so --docs 1 is not "
+                             "the sensitive demo document)")
+    parser.add_argument("--doc-ids", default=None,
+                        help="comma-separated document ids, e.g. "
+                             "C-2026-0001,C-2026-0003; overrides --docs")
+    parser.add_argument("--model", default=None,
+                        help="checkpoint label recorded in the summary, e.g. "
+                             "Qwen/Qwen3.5-35B-A3B; a gateway alias alone does not "
+                             "identify the weights")
     parser.add_argument("--concurrency", type=int, default=12)
     parser.add_argument("--timeout", type=float, default=600.0,
                         help="per-request client timeout (seconds); thinking "
@@ -554,11 +701,32 @@ def main() -> None:
     parser.add_argument("--token", default=os.environ.get("TRACE_API_TOKEN") or None,
                         help="bearer token for a trace UI protected by "
                              "TRACE_API_TOKEN (default: that env var)")
-    args = parser.parse_args()
+    parser.add_argument("--environment", default=None,
+                        help="where this ran, e.g. g5.12xlarge-instance or sno; "
+                             "defaults to HYBRID_ENVIRONMENT")
+    parser.add_argument("--cluster", default=None,
+                        help="cluster identity, e.g. sno-rh-dev; defaults to HYBRID_CLUSTER")
+    parser.add_argument("--pools", default=None,
+                        help="route → {model, hardware, deployment} JSON, or @path; "
+                             "the harness cannot discover what sits behind a route")
+    args = parser.parse_args(argv)
+    chosen = args.config or args.arm
+    if not chosen:
+        parser.error("--config is required; choose all-gpu, gpu-small, "
+                     "round-robin or hybrid")
+    try:
+        config = resolve_config(chosen)
+    except ValueError as exc:
+        parser.error(str(exc))
+    doc_ids = ([d.strip() for d in args.doc_ids.split(",") if d.strip()]
+               if args.doc_ids else None)
     summary = asyncio.run(
-        run_arm(args.gateway, args.sensitive_gateway, args.data, args.out, args.arm,
+        run_arm(args.gateway, args.sensitive_gateway, args.data, args.out, config,
                 args.docs, args.concurrency, args.sample_metrics, args.timeout,
-                args.token)
+                args.token, args.model, environment=args.environment,
+                cluster=args.cluster, pools=parse_pools(args.pools),
+                doc_ids=doc_ids, judgment_base=args.judgment_gateway,
+                sensitive_judgment_base=args.sensitive_judgment_gateway)
     )
     print(json.dumps(summary, indent=1))
 

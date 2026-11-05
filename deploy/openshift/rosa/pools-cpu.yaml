@@ -1,0 +1,308 @@
+# CPU-served pools for ROSA: the MoE (vllm-cpu), the 1.5B small pool, and
+# the two parked 7B pools. Derived from deploy/openshift/cpu-real/pools.yaml
+# + the cpu-real-moe MoE variant; diverges for ROSA as documented in the
+# kustomization header. Read that header before changing anything here.
+#
+# THE BIND LISTS ARE THE MEASUREMENT. The values below were generated from
+# the real node on 2026-11-04 with:
+#   scripts/cluster/cpu-topology.sh ip-10-0-1-214.eu-west-1.compute.internal
+# Measured topology (x8i.24xlarge, Granite Rapids): 48 physical cores, 96
+# logical, 2 NUMA nodes x 24, thread siblings (i, i+48), AMX bf16/int8/tile
+# present. Registered layout:
+#   MoE (cpureal-vllm-cpu)        0-15   NUMA 0  16 cores (SNO-comparable)
+#   specialist                    16-17  NUMA 0   2 cores (taskset-pinned)
+#   1.5B (cpureal-vllm-gpu-small) 24-35  NUMA 1  12 cores
+#   free for housekeeping         18-23, 36-47    6 + 12 cores
+# Re-run the script and update these lists if the node type or count changes;
+# never record latency numbers from a run whose lists were not generated
+# from the node it ran on.
+#
+# Core budget notes:
+#   - One OMP thread per physical core, thread-0 only: the siblings stay
+#     online but no pool is allowed to use them, so a pinned thread never
+#     shares a core with another thread. vLLM's "auto" mode would instead
+#     bind every rank-0 worker to NUMA node 0.
+#   - The 7B pools are parked at 0 replicas (gpu-moe design: the GPU MoE
+#     supersedes them on this stack). Their 12-core NUMA-1 placeholder is
+#     the same slot as the 1.5B pool: only one of the three can be live at
+#     a time without a re-layout - scale up only with 7B weights seeded
+#     into model-cache-cpu and fresh lists from cpu-topology.sh.
+#   - vLLM's unpinned scheduler/async threads and the kubelet/DS pods live
+#     in the free cores; the pinned OMP threads never do.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cpureal-vllm-cpu
+  labels: {app: cpureal-vllm-cpu, demo.openshell.ai/pool: vllm-cpu, demo.openshell.ai/accelerator: cpu}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: cpureal-vllm-cpu}}
+  template:
+    metadata:
+      labels: {app: cpureal-vllm-cpu, demo.openshell.ai/pool: vllm-cpu, demo.openshell.ai/accelerator: cpu}
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        demo.openshell.ai/node: cpu-infer
+      tolerations:
+        - {key: demo.openshell.ai/cpu-infer, operator: Exists, effect: NoSchedule}
+      containers:
+        - name: vllm
+          # Pinned by digest: the OMP binding path (KMP_AFFINITY via
+          # LD_PRELOAD libiomp5.so, explicit VLLM_CPU_OMP_THREADS_BIND) was
+          # verified against this exact build (vllm 0.33.0). Do not bump
+          # without re-verifying vllm/utils/ompmultiprocessing.py semantics.
+          image: docker.io/vllm/vllm-openai-cpu@sha256:87167cf0ec6e1e9607bb1cf9bf618a67d04963236a34bd955ac75b7d31a6edf5
+          # taskset pins every vLLM thread (API server, engine core, OMP pool,
+          # children) to the measured thread-0 cores. The env var below is
+          # kept for intent, but this image forks the engine after libiomp5
+          # is preloaded, so the env-only path logs the right core list and
+          # applies nothing (observed 2026-11-04: 234/234 engine threads on
+          # 0-95). taskset is inherited by every child and is verifiable in
+          # /proc/<tid>/status.
+          command: ["taskset", "-c", "0-15", "vllm", "serve"]
+          args: ["--model", "Qwen/Qwen3.5-35B-A3B", "--served-model-name", "Semantic-Qwen",
+                 "--port", "8000", "--max-model-len", "16384", "--max-num-seqs", "32",
+                 "--gpu-memory-utilization", "0.80",
+                 "--trust-remote-code", "--tensor-parallel-size", "1",
+                 "--enable-auto-tool-choice", "--tool-call-parser", "qwen3_coder",
+                 "--reasoning-parser", "qwen3", "--mm-encoder-tp-mode", "data"]
+          env:
+            - {name: HF_HOME, value: /cache/hf}
+            # Warm cache only: seeders.yaml fills model-cache-cpu first.
+            - {name: HF_HUB_OFFLINE, value: "1"}
+            - {name: HOME, value: /cache}
+            - {name: XDG_CACHE_HOME, value: /cache/xdg}
+            - {name: VLLM_ENGINE_READY_TIMEOUT_S, value: "3600"}
+            - {name: HF_HUB_DISABLE_XET, value: "1"}
+            # vLLM's CPU backend reserves gpu-memory-utilization (80%) of the
+            # cgroup limit for KV and refuses to start when that exceeds
+            # available memory. Reading the 67 GiB checkpoint fills the
+            # cgroup's page cache, so the auto calculation fails on a cold
+            # boot (observed 2026-11-04: 0.58 GiB available vs 30.6 GiB
+            # requested). Pin the KV cache instead: 16 GiB is ample for
+            # 16k context x 32 sequences, and keeps the limit predictable.
+            - {name: VLLM_CPU_KVCACHE_SPACE, value: "16"}
+            # Intent only: the effective pin is the taskset command above.
+            # vLLM parses this list and logs it, but the engine forks after
+            # the preloaded libiomp5 initialises, so no affinity is applied.
+            - {name: VLLM_CPU_OMP_THREADS_BIND, value: "0-15"}
+            - {name: LD_PRELOAD, value: /opt/venv/lib/libiomp5.so}
+          ports: [{containerPort: 8000}]
+          startupProbe:
+            # 120 x 10s = 20 min: warm-cache boot is minutes, but a first
+            # compile or a slow PVC read can exceed a fixed delay.
+            httpGet: {path: /health, port: 8000}
+            periodSeconds: 10
+            failureThreshold: 120
+          readinessProbe: {httpGet: {path: /health, port: 8000}, periodSeconds: 10}
+          resources:
+            # CPU request, NO CPU limit: a CFS quota throttles exactly the
+            # pinned OMP threads (Intel llm-d article; measured behavior).
+            # Memory keeps requests == limits so the KV ceiling is explicit.
+            # 192 GiB = 67 GiB weights + 16 GiB KV + ~10 GiB runtime + room
+            # for the checkpoint's page cache (charged to the cgroup on this
+            # kernel); 128 GiB was too tight once that cache filled and vLLM
+            # refused to allocate the KV cache.
+            requests: {cpu: "16", memory: 192Gi}
+            limits: {memory: 192Gi}
+          volumeMounts:
+            - {name: shm, mountPath: /dev/shm}
+            - {name: hf-cache, mountPath: /cache}
+      volumes:
+        - {name: shm, emptyDir: {medium: Memory, sizeLimit: 2Gi}}
+        # PVC, not emptyDir: gp3 (local EBS) does not have the NFS
+        # dirty-page problem from FINDINGS §7, and the seeder pre-warms it,
+        # so the 67 GiB MoE survives pod recreation.
+        - {name: hf-cache, persistentVolumeClaim: {claimName: model-cache-cpu}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cpureal-vllm-cpu
+spec:
+  selector: {app: cpureal-vllm-cpu}
+  ports: [{name: http, port: 8000, targetPort: 8000}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cpureal-vllm-gpu-small
+  labels: {app: cpureal-vllm-gpu-small, demo.openshell.ai/pool: vllm-gpu-small, demo.openshell.ai/accelerator: cpu}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: cpureal-vllm-gpu-small}}
+  template:
+    metadata:
+      labels: {app: cpureal-vllm-gpu-small, demo.openshell.ai/pool: vllm-gpu-small, demo.openshell.ai/accelerator: cpu}
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        demo.openshell.ai/node: cpu-infer
+      tolerations:
+        - {key: demo.openshell.ai/cpu-infer, operator: Exists, effect: NoSchedule}
+      containers:
+        - name: vllm
+          image: docker.io/vllm/vllm-openai-cpu@sha256:87167cf0ec6e1e9607bb1cf9bf618a67d04963236a34bd955ac75b7d31a6edf5
+          # Same cpuset pinning as the MoE pool (see comment there).
+          command: ["taskset", "-c", "24-35", "vllm", "serve"]
+          args: ["--model", "Qwen/Qwen2.5-1.5B-Instruct", "--served-model-name", "Semantic-Qwen",
+                 "--port", "8000", "--max-model-len", "16384",
+                 "--gpu-memory-utilization", "0.80"]
+          env:
+            - {name: HF_HOME, value: /cache/hf}
+            - {name: HF_HUB_OFFLINE, value: "1"}
+            - {name: HOME, value: /cache}
+            - {name: XDG_CACHE_HOME, value: /cache/xdg}
+            # NUMA 1, 12 physical cores (thread-0 CPUs). Measured layout.
+            - {name: VLLM_CPU_OMP_THREADS_BIND, value: "24-35"}
+            - {name: LD_PRELOAD, value: /opt/venv/lib/libiomp5.so}
+          ports: [{containerPort: 8000}]
+          startupProbe:
+            httpGet: {path: /health, port: 8000}
+            periodSeconds: 10
+            failureThreshold: 120
+          readinessProbe: {httpGet: {path: /health, port: 8000}, periodSeconds: 10}
+          resources:
+            requests: {cpu: "12", memory: 20Gi}
+            limits: {memory: 20Gi}
+          volumeMounts:
+            - {name: shm, mountPath: /dev/shm}
+            - {name: hf-cache, mountPath: /cache}
+      volumes:
+        - {name: shm, emptyDir: {medium: Memory, sizeLimit: 2Gi}}
+        - {name: hf-cache, persistentVolumeClaim: {claimName: model-cache-cpu}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cpureal-vllm-gpu-small
+spec:
+  selector: {app: cpureal-vllm-gpu-small}
+  ports: [{name: http, port: 8000, targetPort: 8000}]
+---
+# The two 7B pools from cpu-real, parked at zero by the gpu-moe design: on
+# this stack the COMPLEX/REASONING labels land on gpumoe-vllm (same-quality
+# checkpoint, seconds instead of minutes), so nothing routes here. Their
+# Services stay live so praxis configs that name them still resolve; scaling
+# either up requires seeding the 7B weights into model-cache-cpu and giving
+# it a real bind list first.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cpureal-vllm-gpu
+  labels: {app: cpureal-vllm-gpu, demo.openshell.ai/pool: vllm-gpu, demo.openshell.ai/accelerator: cpu}
+spec:
+  replicas: 0
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: cpureal-vllm-gpu}}
+  template:
+    metadata:
+      labels: {app: cpureal-vllm-gpu, demo.openshell.ai/pool: vllm-gpu, demo.openshell.ai/accelerator: cpu}
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        demo.openshell.ai/node: cpu-infer
+      tolerations:
+        - {key: demo.openshell.ai/cpu-infer, operator: Exists, effect: NoSchedule}
+      containers:
+        - name: vllm
+          image: docker.io/vllm/vllm-openai-cpu@sha256:87167cf0ec6e1e9607bb1cf9bf618a67d04963236a34bd955ac75b7d31a6edf5
+          # Parked pools keep the same explicit cpuset (no overlap).
+          command: ["taskset", "-c", "36-47", "vllm", "serve"]
+          args: ["--model", "Qwen/Qwen2.5-7B-Instruct", "--served-model-name", "Semantic-Qwen",
+                 "--port", "8000", "--max-model-len", "16384",
+                 "--gpu-memory-utilization", "0.80"]
+          env:
+            - {name: HF_HOME, value: /cache/hf}
+            - {name: HF_HUB_OFFLINE, value: "1"}
+            - {name: HOME, value: /cache}
+            - {name: XDG_CACHE_HOME, value: /cache/xdg}
+            # Parked: 12-core NUMA-1 slot shared with the 1.5B pool (only
+            # one can be live). Re-run cpu-topology.sh before scaling up.
+            - {name: VLLM_CPU_OMP_THREADS_BIND, value: "36-47"}
+            - {name: LD_PRELOAD, value: /opt/venv/lib/libiomp5.so}
+          ports: [{containerPort: 8000}]
+          startupProbe:
+            httpGet: {path: /health, port: 8000}
+            periodSeconds: 10
+            failureThreshold: 120
+          readinessProbe: {httpGet: {path: /health, port: 8000}, periodSeconds: 10}
+          resources:
+            requests: {cpu: "12", memory: 64Gi}
+            limits: {memory: 64Gi}
+          volumeMounts:
+            - {name: shm, mountPath: /dev/shm}
+            - {name: hf-cache, mountPath: /cache}
+      volumes:
+        - {name: shm, emptyDir: {medium: Memory, sizeLimit: 2Gi}}
+        - {name: hf-cache, persistentVolumeClaim: {claimName: model-cache-cpu}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cpureal-vllm-gpu
+spec:
+  selector: {app: cpureal-vllm-gpu}
+  ports: [{name: http, port: 8000, targetPort: 8000}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cpureal-vllm-gpu-approved
+  labels: {app: cpureal-vllm-gpu-approved, demo.openshell.ai/pool: vllm-gpu-approved, demo.openshell.ai/accelerator: cpu}
+spec:
+  replicas: 0
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: cpureal-vllm-gpu-approved}}
+  template:
+    metadata:
+      labels: {app: cpureal-vllm-gpu-approved, demo.openshell.ai/pool: vllm-gpu-approved, demo.openshell.ai/accelerator: cpu}
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        demo.openshell.ai/node: cpu-infer
+      tolerations:
+        - {key: demo.openshell.ai/cpu-infer, operator: Exists, effect: NoSchedule}
+      containers:
+        - name: vllm
+          image: docker.io/vllm/vllm-openai-cpu@sha256:87167cf0ec6e1e9607bb1cf9bf618a67d04963236a34bd955ac75b7d31a6edf5
+          # Parked pools keep the same explicit cpuset (no overlap).
+          command: ["taskset", "-c", "36-47", "vllm", "serve"]
+          args: ["--model", "Qwen/Qwen2.5-7B-Instruct", "--served-model-name", "Semantic-Qwen",
+                 "--port", "8000", "--max-model-len", "16384",
+                 "--gpu-memory-utilization", "0.80"]
+          env:
+            - {name: HF_HOME, value: /cache/hf}
+            - {name: HF_HUB_OFFLINE, value: "1"}
+            - {name: HOME, value: /cache}
+            - {name: XDG_CACHE_HOME, value: /cache/xdg}
+            # Parked: same 12-core NUMA-1 slot as cpureal-vllm-gpu; only one
+            # of the three NUMA-1 pools can be live at a time.
+            - {name: VLLM_CPU_OMP_THREADS_BIND, value: "36-47"}
+            - {name: LD_PRELOAD, value: /opt/venv/lib/libiomp5.so}
+          ports: [{containerPort: 8000}]
+          startupProbe:
+            httpGet: {path: /health, port: 8000}
+            periodSeconds: 10
+            failureThreshold: 120
+          readinessProbe: {httpGet: {path: /health, port: 8000}, periodSeconds: 10}
+          resources:
+            requests: {cpu: "12", memory: 64Gi}
+            limits: {memory: 64Gi}
+          volumeMounts:
+            - {name: shm, mountPath: /dev/shm}
+            - {name: hf-cache, mountPath: /cache}
+      volumes:
+        - {name: shm, emptyDir: {medium: Memory, sizeLimit: 2Gi}}
+        - {name: hf-cache, persistentVolumeClaim: {claimName: model-cache-cpu}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cpureal-vllm-gpu-approved
+spec:
+  selector: {app: cpureal-vllm-gpu-approved}
+  ports: [{name: http, port: 8000, targetPort: 8000}]

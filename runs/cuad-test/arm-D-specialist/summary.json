@@ -3,30 +3,54 @@
  "mode": "matrix",
  "governance": true,
  "docs": 20,
- "wall_s": 3144.54,
+ "model": null,
+ "concurrency": 4,
+ "wall_s": 2542.72,
  "steps": 121,
  "routes": {
-  "vllm-cpu": 49
+  "vllm-gpu-approved": 14,
+  "vllm-cpu": 75,
+  "vllm-gpu": 11
  },
- "labels": {},
+ "labels": {
+  "COMPLEX": 4,
+  "MEDIUM": 33,
+  "SIMPLE": 31
+ },
  "entries": {
   "sensitive": 31,
   "general": 90
  },
+ "models": {
+  "Semantic-Qwen": 64,
+  "cuad-specialist": 36
+ },
+ "stage_models": {
+  "classify": {
+   "Semantic-Qwen": 20
+  },
+  "extract": {
+   "Semantic-Qwen": 24,
+   "cuad-specialist": 36
+  },
+  "risk": {
+   "Semantic-Qwen": 20
+  }
+ },
  "fallback": 0,
- "errors": 72,
+ "errors": 21,
  "screen": {
-  "tp": 5,
+  "tp": 0,
   "fp": 0,
-  "tn": 15,
+  "tn": 0,
   "fn": 0
  },
  "sensitive_steps": 31,
- "sensitive_on_approved": 24,
+ "sensitive_on_approved": 29,
  "sensitive_violations": 0,
  "classifier_latency_us_avg": null,
  "gpu_busy_ms": 0,
  "cpu_busy_ms": 0,
- "latency_ms_avg": 25987,
- "latency_ms_p95": 95998
+ "latency_ms_avg": 337115,
+ "latency_ms_p95": 471094
 }

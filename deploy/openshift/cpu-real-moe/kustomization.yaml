@@ -38,6 +38,15 @@ patches:
           - {name: XDG_CACHE_HOME, value: /cache/xdg}
           - {name: VLLM_ENGINE_READY_TIMEOUT_S, value: "3600"}
           - {name: VLLM_CPU_OMP_THREADS_BIND, value: auto}
+          # plain HTTPS downloads, not the xet transfer protocol: measured
+          # 2026-11-03, fresh connections to us.aws.cdn.hf.co flow at 8MB/s
+          # from this cluster while the pooled-session weight download in
+          # vLLM's own process hangs silently after the engine-init idle
+          # gap. If the emptyDir cache is empty, seed it with a fresh
+          # snapshot_download via oc exec (a separate process gets fresh
+          # connections), then kill pid 1 - the emptyDir survives container
+          # restarts, only pod recreation wipes it.
+          - {name: HF_HUB_DISABLE_XET, value: "1"}
       - op: replace
         path: /spec/template/spec/containers/0/resources
         value:
@@ -49,11 +58,18 @@ patches:
       - op: replace
         path: /spec/template/spec/containers/0/readinessProbe
         value: {httpGet: {path: /health, port: 8000}, initialDelaySeconds: 600, periodSeconds: 15}
-      # emptyDir, not the PVC: writing the 72GB model through NFS
-      # accumulates dirty pages in the container's memory cgroup (the NFS
-      # server cannot flush fast enough) and the kernel OOM-kills the
-      # downloader at any memory limit. Small models are fine on the PVC;
-      # this one pays a ~25 min re-download per pod recreation instead.
+      # emptyDir, not the PVC: writing the 72GB model through NFS while
+      # the small pools read their weights from the same NFS server
+      # starves them (measured 2026-11-03: three pools stuck 34+ min in
+      # weight load, execs into PVC-mounting pods hanging). The §7
+      # dirty-page OOM only kills downloaders inside a memory limit -
+      # see deploy/openshift/moe-cache-seeder.yaml for the durable
+      # alternative: a no-limit Job that seeds the PVC off-hours, after
+      # which this volume can switch to
+      #   - name: hf-cache
+      #     persistentVolumeClaim: {claimName: model-cache}
+      # plus HF_HUB_OFFLINE=1 and a private XDG_CACHE_HOME. Not switched
+      # while a measurement series is running.
       - op: replace
         path: /spec/template/spec/volumes
         value:

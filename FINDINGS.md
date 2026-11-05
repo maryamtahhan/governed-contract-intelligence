@@ -9,10 +9,15 @@ reports referenced live under `runs*/` per stack. Claims are labelled
 **[measured]** (our numbers, our replay), **[observed]** (single-run or
 qualitative), or **[external]** (cited, not ours).
 
+**Naming:** the configs now have policy names: **all-gpu** (old A),
+**gpu-small** (old B), **round-robin** (old C), **hybrid** (old D). The
+letters remain internal keys in `summary.json` and in historical run ids;
+the CLI and new run directories use the policy names.
+
 ## 1. What was built
 
 Three runnable instances of the same demo, byte-identical praxis routing
-configs across all of them (`manifests/praxis/`):
+configs across all of them (`manifests/base/praxis/`):
 
 | stack | where | pools | purpose |
 |---|---|---|---|
@@ -26,10 +31,10 @@ deployed as a *composite* CPU pool — extraction prompts answered by the QA
 model in one encoder pass, everything else forwarded to the general model
 behind the same relay.
 
-Architectural invariants kept throughout: every request goes
-client → trace-ui → **praxis** (llm-d-sc label → pool) → pool; the trace UI's
-SQLite is the audit trail; governance is verified from the gateway's own
-records, not the pipeline's.
+Architectural invariants kept throughout: every through-stack request goes
+batch runner → trace-ui → **praxis** (llm-d-sc label → pool) → pool; the trace
+UI's SQLite is the audit trail; governance is verified from the gateway's own
+records, not the batch runner's.
 
 ## 2. Governance and routing — the headline, replicated on every stack **[measured]**
 
@@ -371,7 +376,10 @@ flightpath k8s (6 huge CPU nodes, no accelerators); g5.12xlarge AMI kept
 ## 9. In flight / open
 
 - **Test-split series on OCP — all four variants run, the two specialist
-  arms need a rerun (2026-11-02)**: 1.5B F1 0.242 (wall 1100 s); 35B-A3B
+  arms need a rerun (2026-11-02)**: the synthetic through-stack gap is now
+  closed (2026-11-04 ROSA run: 600/800 extraction calls answered by
+  `cuad-specialist`, §15.4); what remains open is the rerun on the CUAD
+  test split. 1.5B F1 0.242 (wall 1100 s); 35B-A3B
   F1 0.712, risk 0.65, 6/20 docs fully correct, 0 violations (wall
   2292 s, ~1760 s device-active). The specialist and specialist-moe arms
   completed mechanically but are **contaminated and not quotable**: both
@@ -389,16 +397,17 @@ flightpath k8s (6 huge CPU nodes, no accelerators); g5.12xlarge AMI kept
   (MoE 0.80 → 0.712): quote test-split numbers only.
 - Open items: **the embedding-tier call — all inputs measured** (§11:
   corrected numbers + dinghy-8B; everything ties at the top; decide on
-  cost/provenance/simplicity); **specialist + specialist-moe arm rerun**
-  (contaminated by the tunnel death, §9 above); end-to-end
+  cost/provenance/simplicity); **specialist + specialist-moe CUAD
+  test-split rerun** (the synthetic through-stack run is done, §15.4; the
+  earlier split arms were contaminated by the tunnel death); end-to-end
   retrieve-then-extract **through the stack** (the 0.800 is a local
   direct measurement); the sandbox-triggered batch / secure-agent wiring
   (openshell CLI to be run in-container per IT policy; gateway installed
   and healthy); thinking-mode A/B for the judgment tier (Qwen3.5
   thinking is the untested quality lever); ContractNLI as the risk-tier
   evaluation; hybrid-bench (concurrency 1/4/16 sweep, TTFT — the V1
-  concern); 200-document scale run; V2 tool-calling through the full
-  stack; the agent-blocked on-stage moment on OCP.
+  concern); V2 tool-calling through the full stack; the agent-blocked
+  on-stage moment on OCP.
 
 ## 10. Strategic synthesis — what the demo claims, in priority order
 
@@ -717,7 +726,7 @@ header values from `--dump` and the admin pipelines view; v0.7.5 updates
 rustls-webpki for RUSTSEC-2026-0382 and rustls for ECH/Brotli issues) —
 they matter if TLS upstreams or the admin surface are ever enabled. The
 org also hosts an **operator** (Kubernetes CRD-based deployment — a future
-alternative to our plain Deployments + config-watcher arm swaps), a
+alternative to our plain Deployments + config-watcher hot-swaps), a
 **policy engine (PPE)** (a candidate home for the
 sensitivity-is-a-constraint matrix), and a **demos archive** (a natural
 contribution target for this demo once restructured).
@@ -738,6 +747,19 @@ the recorded values carry these flags:
   a `missing_data_protection` count the prompt never asked for (CUAD has
   no DP category). Report-accuracy numbers from new runs will read
   higher for the right reason.
+- **Two further report checks could never pass** (found 2026-11-03 while
+  building the stage UI). `governing_law_counts` compared the model's law
+  names ("New York") against truth keys holding the whole annotated
+  clause ("the laws of the State of New York"); and `highest_risk_ref`
+  accepted only the alphabetically first high-risk document id, although
+  13 of 19 CUAD test documents are truth-high. The scorer now normalises
+  both sides to a jurisdiction name (`jurisdiction()`) and accepts any
+  truth-high id. CUAD report scores under the fixed scorer: **0.645**
+  (GPU MoE v2), **0.658** (GPU MoE, CPU MoE v2), **0.684** (CPU 9B v2).
+  Report numbers recorded before this fix measured an unwinnable check and
+  are not comparable. Separately, the thinking arm's report record parses
+  to `{}` (the response is truncated or wrapped), so its report score of
+  0.0 is a parser failure, not a quality measurement.
 - **The pipeline's concurrency was cosmetic**: documents were awaited one
   at a time, so `--concurrency` never parallelised and **every recorded
   wall-clock time was a serial time**. Device-time per document — the
@@ -762,3 +784,429 @@ the recorded values carry these flags:
   default** (routing metadata only) and supports an optional bearer token
   for the trace API — required hygiene now that trace-ui is exposed via
   Routes.
+- **The direct arm asked the wrong clause** (found 2026-11-03): it used
+  `generate.CLAUSE_KEYS`, which still included `data_protection`, while
+  the CUAD manifest names `audit_rights`. Every run therefore asked for a
+  category CUAD does not annotate (19 truth-less fields that scored free
+  when the model said "not found") and **never asked for audit rights at
+  all** (19 annotated fields scored wrong because they were unanswered).
+  The arm now reads `clause_keys` from the manifest and falls back to the
+  default only for manifests that predate the field. Corrected CUAD
+  test-split numbers on the GPU 35B-A3B arm: F1 0.690 (P 0.625 / R
+  0.769), risk 0.632, report 0.645, 5/19 documents fully correct. **CUAD
+  quality numbers recorded before this fix are not comparable** — the
+  earlier 0.712 came from a different field set, not a better model.
+- **Two CUAD titles can collide on the 48-character doc_id prefix**: the
+  second contract's text file overwrote the first, so the manifest
+  carried 20 entries while only 19 documents existed on disk and the
+  scored set silently shrank. `pipeline/cuad.convert` now suffixes
+  collisions (`-2`, `-3`, …) and a test covers it. The existing
+  `data/cuad-test` set was deliberately **not** regenerated: keeping the
+  document set fixed preserves comparability with every run already
+  recorded. That set's effective size is 19 documents.
+
+## 14. Benchmark methodology and the GPU sweep (2026-11-03)
+
+Two instruments, one prompt source. No load generator scores answers, so
+CUAD quality stays with `hybrid-direct-arm` (manifest clause keys, our
+own scorer, §13). Performance comes from `vllm bench serve`, bundled in
+the serving image, fed by `tools/bench_prompts.py` with the prompts the
+pipeline actually sends.
+
+Options considered and rejected: GuideLLM measures the same single-turn
+HTTP surface, adds an install inside the serving container, and its
+arrival-rate sweep is already covered by `vllm bench serve --request-rate`
+/ `--burstiness`; llm-d-benchmark orchestrates a cluster and would measure
+its own scheduler; ShareGPT and `random` prompts do not reproduce
+contract-prefill lengths. The custom JSONL flattens system+user into one
+message, so token counts differ from a two-message request by template
+tokens only (measure before quoting absolute prompt lengths).
+
+**Multi-turn is not part of this workload**, and no `vllm bench serve`
+dataset mode supports it anyway (vLLM 0.33.0 `benchmarks/datasets/`):
+`custom` wraps one `{"role": "user"}` message and ShareGPT replays
+`conversations[0]` as prompt and `[1]` as completion — no assistant turn
+is ever fed back. The pipeline sends 115 independent requests per run
+(19 classify + 76 extract + 19 risk + 1 report), each carrying its own
+document text. A multi-turn transcript loop would be a different
+workload and would need a client, not a dataset flag.
+
+Workload shapes (CUAD test split, 19 unique documents):
+
+- **extract-only** — 76 prompts, ~3.0k input tokens each (229,997 total),
+  200 output tokens per request.
+- **full mix** — 115 prompts, 302,252 input tokens, 23,900 output tokens:
+  per-step budgets enforced with `--custom-output-len -1`, and the
+  report prompt replayed from the scored run so it keeps its real
+  ~8.4k-token length instead of a synthetic one.
+
+Server: Qwen3.5-35B-A3B, 4× A10G, TP=4, `--max-model-len 16384`,
+`--max-num-seqs 32`, `--gpu-memory-utilization 0.92`, thinking disabled.
+`--num-warmups 2`, `--max-concurrency` 1/4/16, single sweep at a time.
+
+| workload | conc | req/s | TTFT p50/p95 ms | TPOT p50 ms | E2EL p50/p95 ms |
+|---|---|---|---|---|---|
+| extract | 1 | 0.46 | 686 / 1038 | 7.6 | 2206 / 2565 |
+| extract | 4 | 0.80 | 1266 / 2376 | 18.4 | 4976 / 6331 |
+| extract | 16 | 1.13 | 1977 / 7436 | 60.9 | 14364 / 19185 |
+| mix | 1 | 0.46 | 644 / 1040 | 7.6 | 2119 / 2566 |
+| mix | 4 | 0.83 | 808 / 1874 | 18.5 | 4337 / 6133 |
+| mix | 16 | 1.05 | 1143 / 6049 | 62.2 | 13635 / 16498 |
+
+Readings:
+
+- **The knee is at concurrency 4.** c=1→4 gains 1.75× throughput at both
+  shapes; c=4→16 gains only 1.41× (extract) and 1.27× (mix) while p50
+  E2EL grows ~2.8×. Peak concurrent requests reached 19–23 against a
+  32-sequence cap: past c≈4 the queue, not the client, sets latency.
+- **A full 115-request pipeline run takes 138 s at c=4 and 109 s at
+  c=16.** That is the whole per-document portfolio pass, including the
+  cross-document report; the batch posture in §10.1 holds comfortably.
+- **The report request is not the p95 driver.** Mix TTFT p95 at c=16
+  (6.0 s) is *lower* than extract-only (7.4 s) although the report
+  prompt is ~3× longer than an extract prompt, because the report is
+  last in the file and starts when slots have freed.
+- TPOT p50 rises 7.6 → 18.5 → 62 ms and ITL p95 reaches ~330 ms at
+  c=16 — decode is bandwidth-bound at this batch size on four A10Gs.
+  Any service-level objective should quote c=4, not c=16.
+
+Raw result JSONs: `runs/cuad-test/perf/`.
+
+**Cross-hardware parity (same weights, CPU vs GPU).** The same
+Qwen3.5-35B-A3B was run through the direct arm on CPU (port 8002) and on
+4× A10G. At the metric level the two runs agree: F1 0.690 (P 0.625 /
+R 0.769), risk 0.632, 5/19 documents fully correct on both; report 0.658
+on CPU vs 0.645 on GPU, the difference coming only from governing-law
+counts. At the record level they are not identical: 93 of 115 record
+contents match exactly, and the 22 that differ are token-level
+divergences under `temperature: 0` (different section reference,
+different but valid termination excerpt, reworded risk reasons) — CPU
+and GPU kernels are not bit-identical. Per-request latency is the real
+difference: CPU classify took 3.4–21.3 s against ~0.6–1 s on four A10Gs,
+so CPU is for isolation and governance posture, not interactive latency.
+
+## 15. ROSA re-baseline: 200-document matrix, sensitivity, cost (2026-11-04)
+
+Environment: ROSA HCP `models-arch-ocp` (us-east-1a; cluster
+`2r5i983kiiovrmkal3f7h5pd6n8tgto5`), namespace `openshell-demo`. CPU node
+`x8i.24xlarge` (48 cores, 1.5 TiB) and GPU node `g5.12xlarge` (4x A10G,
+TP=4) in the same AZ; pools `mtahhan-g5-12xl` and `mtahhan-x8i24xl`. Raw
+records and reports: `runs/rosa-200/`.
+
+This section replaces the SNO numbers for every demo-facing claim. The SNO
+runs remain the validation record; they are not the demo environment.
+
+### 15.1 Stacked matrix (arms A-D, 200 synthetic documents, 41 sensitive, c=12)
+
+| arm | wall | extract F1 | risk acc | report acc | fully correct | CPU-served | sensitive approved | violations | GPU-s/doc |
+|---|---|---|---|---|---|---|---|---|---|
+| A all-GPU | 202.2 s | 1.000 | 1.000 | 0.756 | 200/200 | 0.0% | 0/247 | 247 | 1.974 |
+| B GPU-small 1.5B | 438.9 s | 1.000 | 0.395 | 0.596 | 77/200 | 0.0% | 0/247 | 247 | 2.218 |
+| C round-robin | 612.9 s | 0.992 | 1.000 | 0.750 | 188/200 | 50.0% | 125/247 | 122 | 2.855 |
+| **D matrix** | **1111.8 s** | **0.982** | **0.995** | **0.764** | **173/200** | **99.9%** | **247/247** | **0** | **0.036** |
+
+Zero errors in all four arms. The screen was perfect on this dataset in every
+arm: 41 true positives, 0 false positives, 159 true negatives, 0 false
+negatives.
+
+What the matrix says:
+
+- **Governance is the result, not the routing elegance.** C (round-robin, no
+  classifier) leaks 122 of 247 sensitive steps; A and B leak all 247 by
+  construction; D leaks none. That separation is the demo.
+- **The 35B-A3B on CPU carries judgment.** D loses 1.8 F1 points and 0.5
+  risk points against all-GPU, and its report accuracy is slightly higher
+  (0.764 vs 0.756). The 1.5B on GPU collapses on risk (0.395, below the
+  0.485 majority-class baseline, 77/200 fully correct): "small" is not the
+  same as "CPU".
+- **GPU time is the decisive number.** D spends 0.036 GPU-seconds per
+  document against 1.974 for A: 7.3 vs 394.8 GPU-seconds for the batch,
+  54x less. The GPU is used for one step (the cross-document report) and
+  nothing else. This is a **CPU-first policy with the GPU reserved for
+  cross-document synthesis**, not complexity routing: the classifier sent
+  every single-document step to MEDIUM/CPU (§15.5).
+
+### 15.2 Sensitive vs non-sensitive split (arm D, labels from the dataset)
+
+| class | docs | steps | extract F1 | risk acc | fully correct | routes |
+|---|---|---|---|---|---|---|
+| non-sensitive | 159 | 954 | 0.979 | 0.994 | 135/159 | `vllm-cpu`:954 |
+| sensitive | 41 | 246 | 0.990 | 1.000 | 38/41 | `vllm-cpu`:246 |
+
+The split uses the dataset's `sensitive` label, never the pipeline screen
+(that would be circular). The governance counter totals 247 sensitive
+steps, one more than the 246 per-class steps: it includes one
+document-level step beyond the per-document sequence. That extra step is
+also the one step the classifier labelled REASONING and routed to the
+approved GPU pool. Quality is not bought by leaking: the sensitive class
+scores at least as well as the non-sensitive class on both extraction and
+risk.
+
+### 15.3 Cost accounting, and what is deliberately n/a
+
+The report separates **device time that was measured** from **device time
+that was not**. GPU time is measured per pool and is the number the
+economics rest on: 0.036 GPU-s/doc for D, 1.974 for A. At an illustrative
+$1.10/GPU-hour that is about $0.002 of GPU time for the D batch against
+about $0.12 for A (GPU time only).
+
+CPU core-seconds per document are **not reported**: the relay-fronted CPU
+pool did not expose parseable device gauges, and `metrics.json` kept only
+summaries. The report prints `n/a` — never `$0.0` — for an unmeasured
+pool and withholds the dollar sweep rather than inventing a price. A fresh
+20-document arm-D probe with a working sampler is the way to close this;
+it does not change the GPU-time argument.
+
+### 15.4 The specialist was actually in the path
+
+Arm D's extraction is not the 35B doing clause extraction directly. Every
+extraction record names its responder, and **600 of the 800 extraction
+calls were answered by `cuad-specialist`** (governing law, liability cap,
+termination — 200 each); the remaining 200 (data protection) stayed on the
+CPU MoE (`Semantic-Qwen`). All 800 were served and all routed
+`x-demo-route=vllm-cpu`, the composite. Derivation and counts:
+`runs/rosa-200/specialist-metrics-2026-11-04.txt`. That is the
+through-stack evidence the earlier "0.800 specialist" local run lacked.
+
+### 15.5 The classifier is prompt-difficulty, not per-step complexity
+
+Against the generator's per-step labels the classifier agrees 0.1% of the
+time (1/1201): `SIMPLE->MEDIUM` 1000, `COMPLEX->MEDIUM` 200,
+`REASONING->REASONING` 1. That number is a **taxonomy mismatch**, not a
+degraded model. Replaying the exact arm-D prompts through the image's own
+`llm-d-sc-classify` (offline, in the pod; `runs/rosa-200/classifier-replay-2026-11-04.txt`):
+
+| step prompt | MEDIUM | SIMPLE | COMPLEX | REASONING | routed |
+|---|---|---|---|---|---|
+| classify contract (808 ch) | 0.992 | 0.024 | -0.101 | -0.384 | CPU |
+| extract termination (842 ch) | 0.993 | 0.002 | -0.092 | -0.377 | CPU |
+| assess risk (844 ch) | 0.991 | -0.000 | -0.112 | -0.351 | CPU |
+| portfolio report (37,302 ch) | 0.398 | -0.496 | -0.392 | **0.707** | approved GPU |
+
+The working boundary is **single-document analysis -> CPU** vs
+**cross-document synthesis -> GPU**. SIMPLE and COMPLEX are never emitted
+for this workload, and no exposed setting changes that: llm-d-sc exposes
+only the taxonomy name (`complexity`/`cost`/`sensitivity`), model
+directory, workers and cache; praxis's `min_score` cannot separate
+margins of 0.3-0.99. The demo claim is therefore containment plus
+GPU-first economics, not "the AI decides what is hard".
+
+### 15.6 Gaps this round leaves open
+
+- CPU core-seconds per document (above). GPU time and wall time are
+  measured; core-time is not.
+- The OpenShift sandbox blocked-action moment is still unverified: no
+  sandbox workload or manifests live in this repository (OpenShell /
+  OpenClaw are external).
+- The 200-document direct arm exposed a report-input bug: the report
+  prompt used one line per extraction record (about 229k chars, 57k
+  tokens) against a 16k max-model-len, so it failed with HTTP 400 after
+  all per-document work had run. The fix is one compact line per document
+  (37.5k chars, the size the stacked run already proved), with a
+  regression test.
+
+### 15.7 Direct baselines (no router, same 200 documents)
+
+Each direct arm sends all 1,201 requests to one bare pool; there is no
+classifier, no screen and no approved-pool check. Raw records:
+`runs/direct/{cpu-moe,gpu-moe,cpu-small}`; combined report:
+`runs/rosa-direct-vs-stacked/report.md`.
+
+| arm | pool | wall | extract F1 | risk acc | report acc | fully correct |
+|---|---|---|---|---|---|---|
+| cpu-moe | 35B-A3B, 16 CPU cores | 2095.2 s | 1.000 | 1.000 | 0.746 | 200/200 |
+| gpu-moe | 35B-A3B, 4x A10G TP=4 | 228.3 s | 1.000 | 1.000 | 0.768 | 200/200 |
+| cpu-small | 1.5B, 12 CPU cores | 594.3 s | 1.000 | 0.395 | 0.212 | 77/200 |
+| D stacked | mixed, governed | 1111.8 s | 0.982 | 0.995 | 0.764 | 173/200 |
+
+- **Routing overhead is negligible.** Direct GPU and stacked arm A run the
+  same workload in 228 s vs 202 s; the governed path does not add wall time.
+- **All-CPU is 9.2x slower than all-GPU** (2095 vs 228 s) and 1.9x slower than
+  D (1112 s). The specialist explains the gap: stacked D moves 600 of 800
+  extraction calls off the MoE, while direct CPU keeps all of them there.
+- **The 1.8 F1-point cost in D is the specialist, not the device.** Both
+  direct arms score extraction F1 1.000; D scores 0.982 with
+  `cuad-specialist` answering 600 extractions.
+- **Report accuracy tracks the GPU**: D 0.764, direct GPU 0.768, direct CPU
+  0.746 - consistent with the report step being GPU-served in D.
+- **Small is the failure mode, not CPU.** Direct `cpu-small` (1.5B) collapses
+  on risk (0.395) and report (0.212), matching stacked arm B, which runs the
+  same weights on GPU. Judgment quality follows the model.
+- **Direct arms are ungoverned by construction**: all 247 sensitive steps hit
+  the single pool. The report prints `n/a`, not 0, for their routing cells;
+  D is the only arm that is both fast (1112 s) and compliant (0 violations,
+  247/247 approved, 0.036 GPU-s/doc).
+- Direct device time was not sampled, so their GPU/CPU seconds and dollar
+  figures are `n/a`; wall-clock is the comparison. The direct arm ran at
+  concurrency 8 vs 12 for the stacked matrix, so the ratios are indicative,
+  not a controlled throughput benchmark.
+
+## 16. Open-source reuse audit and adapters (2026-11-05)
+
+This section records the component audit and what was actually implemented.
+It is **not** a new quality result: the measured default path is unchanged,
+and none of the optional backends has been run on the corpus yet. The point
+is to make the next A/B cheap and explicit instead of a silent swap.
+
+### 16.1 Method
+
+The audit used one rule: reuse an upstream where it owns a *mechanic*
+(recognition, ranking, offset bookkeeping, storage, export, load generation),
+keep our code where the *decision* lives (governance, routing, scoring
+definitions, the composite specialist, the audit trail). A candidate was
+implemented only behind a flag/extra with a dependency-free or existing
+default, because every swap below can move a reported number.
+
+Baseline before the work: 134 tests green (135 observed in the working tree
+before the new tests). After: **179 tests green**, of which 33 are new
+adapter tests. All optional backends fail with an explicit install/URL error
+when absent; none silently changes behaviour.
+
+### 16.2 Adopted adapters
+
+| component | where | default | activation |
+|---|---|---|---|
+| Presidio | `hybrid_demo/pii.py` | regex | `HYBRID_PII_DETECTOR=presidio` or `composite` |
+| llm-d-sc taxonomy (HTTP bridge) | `hybrid_demo/pii.py` | off | `HYBRID_PII_DETECTOR=taxonomy`, `HYBRID_PII_TAXONOMY_URL` |
+| nervaluate | `hybrid_demo/evalkit/spans.py` | containment only | install `spans` extra; offsets appear when doc text is available |
+| statsmodels | `hybrid_demo/evalkit/stats.py` | exact binomial | install `stats` extra; `--backend auto` |
+| ranx | `hybrid_demo/retrieval/metrics.py` | internal | `--metrics-backend ranx` |
+| docling `HybridChunker` | `hybrid_demo/retrieval/docling_chunking.py` | builtin chunker | `--chunk-backend docling`, `ingest` extra |
+| LanceDB + BM25 | `hybrid_demo/retrieval/index.py` | memory | `hybrid-index --backend lancedb` |
+| RedisVL + Redis | `hybrid_demo/specialist/cache.py` | in-memory | `--cache-backend redis`, `cache` extra |
+| OpenTelemetry | `hybrid_demo/traceui/otel.py` | off | `TRACE_OTEL=jsonl` or `otlp` |
+| RAGAS | `hybrid_demo/evalkit/rag.py` | lexical screen | `rag` extra + `ragas_scores(...)` |
+| llm-d-inference-sim | `hybrid_demo/fakepool/llmd_sim.py` | `hybrid-pool` | `hybrid-pool-sim`, then point the pool env at it |
+| llm-d-batch-gateway | `hybrid_demo/pipeline/batch.py` | Python runner | `hybrid-batch --gateway <praxis ingress>` |
+| vLLM bench / GuideLLM | `hybrid_demo/bench.py` | `tools/gpu_bench.py` | `hybrid-bench --backend vllm|guidellm` |
+
+Also changed additively: `extraction_scores` now carries `by_mode`
+(exact/containment/partial), `absence`, and nervaluate's offset strategies;
+the report table still prints containment as the primary number. `score.py`
+loads `data/<set>/documents/*.txt` to supply offsets. `review.py` can attach
+JSON schemas to request bodies (`HYBRID_STRUCTURED_OUTPUTS`), off by default.
+`traceui` writes the OTel span after the SQLite row, in a try/except that
+cannot break the relay.
+
+### 16.3 Findings
+
+1. **The PII screen is a routing input, not a text filter.** On the 200
+   synthetic documents, the regex default flags 41 (20.5%) with 164 findings;
+   that is the measured sensitive share. Presidio adds NER (persons,
+   locations, organisations, checksum-backed identifiers) but there is no
+   CUAD PII label, so its precision/recall cannot be quoted from this corpus.
+   Presidio will likely flag company names and addresses in contracts; that
+   is a routing change, not a bug. The comparison tool therefore reports
+   document flags/findings always, and TP/FP/TN/FN only where a manifest
+   supplies a label.
+2. **Containment was hiding boundary behaviour.** Exact equality and token-
+   Jaccard views are cheap to add and show the difference; nervaluate adds
+   the four SemEval strategies once document text is available. But offset
+   scoring requires the predicted quote to be locatable in the document. A
+   paraphrase that containment accepts will be counted as missed by
+   nervaluate. That is the honest reading, not a reason to switch the primary
+   metric.
+3. **MRR and NDCG answer different questions.** MRR stops at the first
+   relevant chunk; NDCG@10 credits all relevant chunks by position. The
+   evaluator now reports both (plus MAP) with the backend that produced them,
+   so a change in ranking quality cannot hide behind recall@1.
+4. **docling provenance needs corroboration.** A merged chunk can carry the
+   charspan of its first item, and the converter's exported text may not be
+   the text the charspan indexes. The adapter checks that the slice supports
+   the chunk text and relocates by search when it does not; the fallback
+   increments a visible `relocated` count. This is the D11 bug class, so the
+   check is deliberately in the path rather than in a test-only helper.
+5. **`llm-d-inference-sim` is the right transport simulator, not a replacement
+   for the cost/corruption fake.** It supports OpenAI chat/completions,
+   streaming, latency and load, KV/prefix-cache metrics and HTTP failure
+   injection. Its failure types are transport/API errors
+   (`rate_limit`, `server_error`, ...), not the demo's deterministic
+   complexity-tier answer corruption, and it does not emit our
+   `X-Busy-Ms` device time. The proxy therefore exports
+   `X-Proxy-Busy-Ms`/`X-Proxy-Ttft-Ms` and leaves `X-Busy-Ms` absent by
+   default. Using proxy wall time as device time would silently move the
+   cost report; `LLMD_SIM_DEVICE_TIME_HEADERS=1` exists only for a run that
+   is labelled accordingly.
+6. **Batch is a transport, not the measurement runner.** The
+   `/v1/files` + `/v1/batches` client is useful for portfolio-scale
+   submission, but the Python runner still owns per-document records, route
+   headers and arm comparison. Point the client at the praxis ingress; the
+   gateway's native path routes to the llm-d router, so using it directly
+   would bypass the governance path the demo measures.
+7. **Observability must stay additive.** SQLite remains the audit trail; OTel
+   spans use GenAI semantic-convention names plus `app.*` routing fields, and
+   never export sensitive document text. Prompt tokens are estimated from
+   the question unless the upstream sends `x-prompt-tokens`; the span carries
+   `gen_ai.usage.input_tokens_estimated` so a reader can tell.
+8. **Do not delegate the cache policy.** RedisVL supplies the vector index and
+   eviction; the wrapper still enforces exact-before-similarity, sensitive
+   skip/store refusal, and one clause filter. Redis is also a licensing
+   decision: Redis 7.4 is RSALv2/SSPL and Redis 8 adds an AGPLv3 option;
+   RedisVL itself is Apache-2.0. Valkey is a drop-in alternative if those
+   terms are unacceptable.
+9. **Judge metrics need a deterministic screen too.** RAGAS faithfulness and
+   context precision depend on the judge model, so their numbers are only
+   comparable across runs with the same judge. The lexical groundedness /
+   context-precision screen is crude but deterministic and free; it catches
+   unsupported report reasons before a judge is involved.
+10. **Benchmark CLIs churn.** `vllm bench serve` no longer accepts
+    `--output-json`; current releases use `--save-result` with
+    `--result-dir`/`--result-filename`. GuideLLM v0.7+ replaced
+    `benchmark run --target` with `run --backend kind=openai_http,target=...`
+    and `kind=` specs for profile/data/constraint. The wrappers build the
+    current forms and expose `--extra`; pin versions in a measured run.
+11. **Structured outputs are a quality experiment, not a cleanup.** The wire
+    format changed (`structured_outputs.json` current, `guided_json` older,
+    `response_format` OpenAI-compatible), and constraining decoding can
+    change answer length and quality. Default is off; schemas are permissive
+    about extra keys.
+
+### 16.4 Verification
+
+- `cd demo && .venv/bin/python -m pytest -q` → **179 passed**.
+- `python -m hybrid_demo.pii` → `{regex: true, presidio: false, taxonomy: false}`
+  in the base environment.
+- `python tools/compare_pii.py --data data/synthetic --detectors regex` →
+  41/200 flagged, 164 findings.
+- `python -m hybrid_demo.bench ... --dry-run` → current vLLM and GuideLLM
+  command lines (asserted in tests).
+- `python -m hybrid_demo.fakepool.llmd_sim ... --print-simulator-cmd` →
+  `llm-d-inference-sim --model ... --port ... --mode random`.
+- OTel JSONL round-trip tested, including the sensitive/no-content path.
+
+Not measured yet: Presidio on a labelled sample, docling chunk/offset parity on
+the D11 regression set, ranx vs internal NDCG/MAP on CUAD, Redis hit-rate
+under multi-replica load, RAGAS against the demo's judge, OTLP to a live
+collector, and any GPU throughput from the new bench wrappers.
+
+### 16.5 Next measured actions
+
+1. Label ~100 synthetic/sensitive documents (or use the PII drills) and run
+   `tools/compare_pii.py --detectors regex,presidio`; adopt only if the
+   containment/routing trade is understood.
+2. Run `hybrid-retrieval-eval --chunk-backend docling --metrics-backend
+   ranx` against the D11 set; compare offsets and NDCG/MAP to the builtin
+   baseline, not just recall.
+3. Run the four arms with Presidio and, separately, with structured outputs
+   on; report the sensitive share, CPU/GPU split, F1 and cost side by side.
+4. If a shared cache is needed, run two specialist replicas against Redis and
+   record exact/similarity hit rates and false positives; keep the
+   in-memory backend as the single-replica default.
+5. Point `hybrid-bench` at the real pools and compare against
+   `tools/gpu_bench.py`; record the CLI version in the result metadata.
+
+### 16.6 Rejected as replacements
+
+- Replacing the trace relay/dashboard with Langfuse/Phoenix: the relay is also
+  the ingress, recorder and audit export, and its SQLite rows are read by the
+  governance check. OTel export is additive; Langfuse (MIT) is the preferred
+  dashboard if one is published, Phoenix's ELv2 is a licensing caveat.
+- Replacing `pipeline/review.py` / `evalkit/score.py` logic with a framework:
+  the step prompts, rubric and scoring definitions are the domain, and they
+  are what the numbers mean.
+- Replacing the composite specialist or its cache policy with an agent
+  framework: the composition is a config-level routing decision we measure.
+- Running batches directly through `llm-d-batch-gateway` without the praxis
+  ingress: it would bypass the governance path.
+- Treating `common.embed` as a production embedder: the 256-dim char-trigram
+  hash is a stand-in; `litil-embed-0.6b` remains the measured candidate.

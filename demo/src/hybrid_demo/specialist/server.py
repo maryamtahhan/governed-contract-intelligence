@@ -21,11 +21,11 @@ import time
 import httpx
 import uvicorn
 from fastapi import Body, FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from prometheus_client import CollectorRegistry, Counter, Gauge, generate_latest
 
 from ..common import new_id
-from .cache import SemanticCache
+from .cache import create_cache
 from .qa import best_spans, clause_from_prompt, question_for
 
 POOL = "vllm-cpu-specialist"
@@ -52,8 +52,10 @@ def create_app(args: argparse.Namespace) -> FastAPI:
     model.eval()
     semaphore = asyncio.Semaphore(args.concurrency)
     client = httpx.AsyncClient(timeout=600.0)
-    cache = SemanticCache(threshold=args.cache_threshold,
-                          max_entries=args.cache_entries) if args.semantic_cache else None
+    cache = (create_cache(args.cache_backend, threshold=args.cache_threshold,
+                          max_entries=args.cache_entries,
+                          redis_url=args.cache_redis_url)
+             if args.semantic_cache else None)
     app = FastAPI(docs_url=None, redoc_url=None)
     app.title = f"cuad-specialist ({POOL})"
 
@@ -66,8 +68,11 @@ def create_app(args: argparse.Namespace) -> FastAPI:
 
     @app.get("/metrics")
     async def metrics():
-        return JSONResponse(content=generate_latest(registry).decode(),
-                            media_type="text/plain")
+        # Prometheus text format. JSONResponse would quote the payload and
+        # escape newlines even with a text/plain media type, which no scraper
+        # can parse - this silently left CPU device-time unmeasured.
+        return PlainTextResponse(generate_latest(registry).decode(),
+                                 media_type="text/plain; version=0.0.4")
 
     @app.post("/v1/chat/completions")
     async def completions(request: Request, body: dict = Body(...)):
@@ -166,6 +171,11 @@ def main() -> None:
                              "prompts; never stores or serves sensitive content")
     parser.add_argument("--cache-threshold", type=float, default=0.98)
     parser.add_argument("--cache-entries", type=int, default=2048)
+    parser.add_argument("--cache-backend", default="memory",
+                        choices=("memory", "redis"),
+                        help="memory (default) or redis for a shared cache "
+                             "(requires the 'cache' extra and --cache-redis-url)")
+    parser.add_argument("--cache-redis-url", default="redis://localhost:6379")
     args = parser.parse_args()
     app = create_app(args)
     uvicorn.run(app, host=args.host, port=args.port, log_level="warning")

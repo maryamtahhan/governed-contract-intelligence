@@ -91,8 +91,9 @@ class MetricsSampler(threading.Thread):
                 return round(max(0.0, last[metric] - first[metric]), 1)
             return None
 
-        if (_gauge(last, "vllm:num_requests_running") or _gauge(last, "vllm:num_requests_waiting")
-                or "vllm:num_requests_running" in last or "vllm:num_requests_waiting" in last):
+        gauge_names = ("vllm:num_requests_running", "vllm_num_requests_running",
+                       "vllm:num_requests_waiting", "vllm_num_requests_waiting")
+        if any(name in last for name in gauge_names):
             summary["method"] = ("integrated (in-flight gauges; batching means the "
                                  "device serves several requests while occupied)")
             device_active = 0.0

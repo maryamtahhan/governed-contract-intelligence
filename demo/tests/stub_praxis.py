@@ -126,9 +126,14 @@ def create_stub_app(state: StubState, chain: dict) -> FastAPI:
             m.get("content", "") for m in body.get("messages", [])
             if isinstance(m, dict) and isinstance(m.get("content"), str)
         )
-        t0 = time.perf_counter_ns()
-        label = classify_complexity(prompt)
-        classifier_us = (time.perf_counter_ns() - t0) // 1000 + 150
+        # Pin chains have no llm_d_sc filter in the real config (arms A/C and
+        # the judgment entries), so the stub must not invent a label for them.
+        label = None
+        classifier_us = None
+        if chain["kind"] == "iterative":
+            t0 = time.perf_counter_ns()
+            label = classify_complexity(prompt)
+            classifier_us = (time.perf_counter_ns() - t0) // 1000 + 150
 
         if chain["kind"] == "pin":
             attempts = [chain["pin"], chain["failover"]]
@@ -142,8 +147,9 @@ def create_stub_app(state: StubState, chain: dict) -> FastAPI:
             k: v for k, v in request.headers.items()
             if k.lower() not in {"host", "content-length", "connection", "accept-encoding"}
         }
-        forward_headers["X-Llm-D-Sc-Label"] = label
-        forward_headers["X-Llm-D-Sc-Latency-Us"] = str(classifier_us)
+        if label is not None:
+            forward_headers["X-Llm-D-Sc-Label"] = label
+            forward_headers["X-Llm-D-Sc-Latency-Us"] = str(classifier_us)
         path = request.url.path
         if request.url.query:
             path += "?" + request.url.query

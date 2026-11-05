@@ -40,7 +40,9 @@ import re
 import zipfile
 from pathlib import Path
 
-from .chunking import chunk_document
+from . import metrics as ranking_metrics
+from .docling_chunking import available as docling_available
+from .docling_chunking import chunk_document_auto
 
 QUESTION_RE = re.compile(r'related to "(.+?)" that should be reviewed')
 
@@ -121,7 +123,9 @@ def _load_docs(cuad_zip: Path, docs_limit: int | None, max_chars: int) -> list[d
 
 
 def evaluate(model_name: str, cuad_zip: Path, docs_limit: int, max_chars: int,
-             top_k: int = 10, query_prompt: str = "default") -> dict:
+             top_k: int = 10, query_prompt: str = "default",
+             chunk_backend: str = "builtin", tokenizer_model: str | None = None,
+             metrics_backend: str = "auto") -> dict:
     from sentence_transformers import SentenceTransformer
 
     model = SentenceTransformer(model_name)
@@ -137,10 +141,13 @@ def evaluate(model_name: str, cuad_zip: Path, docs_limit: int, max_chars: int,
     total = 0
     per_category: dict[str, dict] = {}
     per_pair_first_hit: dict[str, int | None] = {}
+    qrels: dict[str, set[str]] = {}
+    runs: dict[str, list[str]] = {}
 
     for doc in docs:
         context = doc["paragraphs"][0]["context"]
-        chunks = chunk_document(doc["title"], context)
+        chunks = chunk_document_auto(doc["title"], context, backend=chunk_backend,
+                                     tokenizer_model=tokenizer_model)
         if not chunks:
             continue
         chunk_vecs = encode([c.text for c in chunks], "passage")
@@ -153,6 +160,10 @@ def evaluate(model_name: str, cuad_zip: Path, docs_limit: int, max_chars: int,
             sims = (chunk_vecs @ query_vec).tolist()
             order = sorted(range(len(chunks)), key=lambda i: -sims[i])
 
+            query_id = f"{doc['title']}::{category}"
+            qrels[query_id] = {str(i) for i, chunk in enumerate(chunks)
+                               if any(chunk.overlaps(s, e) for s, e in spans)}
+            runs[query_id] = [str(i) for i in order]
             total += 1
             rank_of_first_hit = None
             for k in range(1, max_k + 1):
@@ -170,15 +181,27 @@ def evaluate(model_name: str, cuad_zip: Path, docs_limit: int, max_chars: int,
             if rank_of_first_hit and rank_of_first_hit <= 5:
                 stats["hit5"] += 1
 
+    ranking = ranking_metrics.evaluate(
+        qrels, runs, metrics=("recall@1", "recall@5", "recall@10", "mrr",
+                              "ndcg@10", "map@10"),
+        backend=metrics_backend)
+    used_chunk_backend = ("docling"
+                          if chunk_backend == "docling"
+                          or (chunk_backend == "auto" and docling_available())
+                          else "builtin")
     result = {
         "mode": "within-doc",
         "model": model_name,
         "query_prompt": q_desc,
         "docs": len(docs),
         "pairs": total,
+        "chunk_backend": used_chunk_backend,
         "recall_at_k": {f"@{k}": round(chunk_hits[k] / max(total, 1), 3)
                         for k in (1, 5, 10)},
         "mrr": round(mrr_sum / max(total, 1), 3),
+        "ndcg_at_10": ranking["metrics"].get("ndcg@10"),
+        "map_at_10": ranking["metrics"].get("map@10"),
+        "ranking_backend": ranking["backend"],
         "per_pair_first_hit": per_pair_first_hit,
     }
     result["per_category_hit5"] = {
@@ -189,7 +212,10 @@ def evaluate(model_name: str, cuad_zip: Path, docs_limit: int, max_chars: int,
 
 
 def evaluate_crossdoc(model_name: str, cuad_zip: Path, docs_limit: int,
-                      max_chars: int, query_prompt: str = "default") -> dict:
+                      max_chars: int, query_prompt: str = "default",
+                      chunk_backend: str = "builtin",
+                      tokenizer_model: str | None = None,
+                      metrics_backend: str = "auto") -> dict:
     from sentence_transformers import SentenceTransformer
 
     model = SentenceTransformer(model_name)
@@ -204,7 +230,9 @@ def evaluate_crossdoc(model_name: str, cuad_zip: Path, docs_limit: int,
     chunk_doc: list[int] = []
     gold: dict[str, set[int]] = {}
     for i, doc in enumerate(docs):
-        doc_chunks = chunk_document(doc["title"], doc["paragraphs"][0]["context"])
+        doc_chunks = chunk_document_auto(doc["title"], doc["paragraphs"][0]["context"],
+                                         backend=chunk_backend,
+                                         tokenizer_model=tokenizer_model)
         if not doc_chunks:
             continue
         for c in doc_chunks:
@@ -220,6 +248,8 @@ def evaluate_crossdoc(model_name: str, cuad_zip: Path, docs_limit: int,
     success = {1: 0, 10: 0}
     recall10_sum = 0.0
     per_category: dict[str, dict] = {}
+    qrels: dict[str, set[str]] = {}
+    runs: dict[str, list[str]] = {}
 
     for category in categories:
         query_vec = encode([queries[category]], "query")[0]
@@ -238,6 +268,8 @@ def evaluate_crossdoc(model_name: str, cuad_zip: Path, docs_limit: int,
                                      key=lambda d: best_chunk_rank[d]), 1)}
         gold_ranks = sorted(doc_rank[d] for d in gold[category])
         first = gold_ranks[0]
+        qrels[category] = {str(d) for d in gold[category]}
+        runs[category] = [str(d) for d in sorted(doc_rank, key=lambda d: doc_rank[d])]
 
         mrr_sum += 1.0 / first
         for k in success:
@@ -250,6 +282,13 @@ def evaluate_crossdoc(model_name: str, cuad_zip: Path, docs_limit: int,
         }
 
     n = max(len(categories), 1)
+    ranking = ranking_metrics.evaluate(
+        qrels, runs, metrics=("recall@10", "mrr", "ndcg@10", "map@10"),
+        backend=metrics_backend)
+    used_chunk_backend = ("docling"
+                          if chunk_backend == "docling"
+                          or (chunk_backend == "auto" and docling_available())
+                          else "builtin")
     return {
         "mode": "cross-doc",
         "model": model_name,
@@ -257,9 +296,13 @@ def evaluate_crossdoc(model_name: str, cuad_zip: Path, docs_limit: int,
         "docs": n_docs,
         "chunks": len(chunks),
         "categories": len(categories),
+        "chunk_backend": used_chunk_backend,
         "mrr": round(mrr_sum / n, 3),
         "success_at_k": {f"@{k}": round(v / n, 3) for k, v in success.items()},
         "doc_recall_at_10": round(recall10_sum / n, 3),
+        "ndcg_at_10": ranking["metrics"].get("ndcg@10"),
+        "map_at_10": ranking["metrics"].get("map@10"),
+        "ranking_backend": ranking["backend"],
         "per_category": per_category,
     }
 
@@ -277,17 +320,34 @@ def main() -> None:
                         help="'default' (the model's own query prompt), "
                              "'clause' (clause-finding instruction), or a "
                              "named model prompt (e.g. LegalQuAD-query)")
+    parser.add_argument("--chunk-backend", default="builtin",
+                        choices=("builtin", "docling", "auto"),
+                        help="builtin keeps historical numbers; docling uses "
+                             "HybridChunker (requires the 'ingest' extra)")
+    parser.add_argument("--tokenizer-model", default=None,
+                        help="tokenizer for docling HybridChunker (usually the "
+                             "embedding model, e.g. litil-embed-0.6b)")
+    parser.add_argument("--metrics-backend", default="auto",
+                        choices=("auto", "ranx", "internal"))
     args = parser.parse_args()
+    if args.chunk_backend == "docling" and not docling_available():
+        raise SystemExit("docling is not installed; install the 'ingest' extra")
 
     if args.mode == "within":
         limit = args.docs if args.docs is not None else 20
         result = evaluate(args.model, Path(args.cuad), limit, args.max_chars,
-                          query_prompt=args.query_prompt)
+                          query_prompt=args.query_prompt,
+                          chunk_backend=args.chunk_backend,
+                          tokenizer_model=args.tokenizer_model,
+                          metrics_backend=args.metrics_backend)
     else:
         limit = args.docs if args.docs is not None else 0
         result = evaluate_crossdoc(args.model, Path(args.cuad), limit,
                                    args.max_chars,
-                                   query_prompt=args.query_prompt)
+                                   query_prompt=args.query_prompt,
+                                   chunk_backend=args.chunk_backend,
+                                   tokenizer_model=args.tokenizer_model,
+                                   metrics_backend=args.metrics_backend)
     print(json.dumps(result, indent=1))
 
 

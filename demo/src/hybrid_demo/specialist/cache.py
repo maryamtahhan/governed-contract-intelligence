@@ -12,6 +12,7 @@ cached answers against freshly computed ones.
 """
 from __future__ import annotations
 
+import json
 import threading
 from dataclasses import dataclass
 
@@ -126,6 +127,7 @@ class SemanticCache:
         s = self.stats
         served = s.hits_exact + s.hits_similarity
         return {
+            "backend": "memory",
             "entries": len(self._entries),
             "hits_exact": s.hits_exact,
             "hits_similarity": s.hits_similarity,
@@ -137,3 +139,113 @@ class SemanticCache:
             "fp_mismatches": s.fp_mismatches,
             "fp_rate": round(s.fp_mismatches / max(s.fp_checks, 1), 3),
         }
+
+
+class RedisSemanticCache:
+    """Shared-backend cache: RedisVL for similarity, Redis for exact hits.
+
+    The policy that matters is kept in this class, not delegated: exact lookup
+    before similarity, sensitive content never stored or served, and at most
+    one similarity candidate per clause.  RedisVL supplies the maintained
+    vector-index/eviction machinery; Redis supplies the exact-match key.
+
+    Install with ``uv sync --extra cache`` and point ``--cache-redis-url`` at a
+    Redis 7+/Redis Stack instance.  This path is optional because the demo's
+    default deployment has no Redis and the in-memory cache is sufficient for
+    a single replica.
+    """
+
+    def __init__(self, redis_url: str = "redis://localhost:6379", *,
+                 threshold: float = 0.98, ttl: int | None = 3600,
+                 name: str = "hybrid-specialist-cache") -> None:
+        try:
+            import redis
+            from redisvl.extensions.llmcache import SemanticCache as RedisVLCache
+            from redisvl.utils.vectorize import CustomVectorizer
+        except ImportError as error:  # pragma: no cover - requires the extra
+            raise RuntimeError(
+                "redis cache backend requires the 'cache' extra "
+                "(uv sync --extra cache) and a running Redis"
+            ) from error
+        self.threshold = threshold
+        self.ttl = ttl
+        self.stats = CacheStats()
+        self._redis = redis.Redis.from_url(redis_url, decode_responses=True)
+        vectorizer = CustomVectorizer(embed=lambda text: embed(text), dtype="float32")
+        self._cache = RedisVLCache(name=name, redis_url=redis_url,
+                                   vectorizer=vectorizer,
+                                   similarity_threshold=threshold, ttl=ttl)
+
+    def _exact_key(self, clause: str, context: str) -> str:
+        return "hybrid:exact:" + sha256_hex(clause.strip().lower() + "\n" + context)
+
+    def get(self, clause: str, context: str) -> tuple[dict | None, str | None]:
+        exact = self._redis.get(self._exact_key(clause, context))
+        if exact:
+            self.stats.hits_exact += 1
+            answer = json.loads(exact)
+            answer["cache"] = "exact"
+            return answer, "exact"
+        if detect_sensitivity(context):
+            self.stats.sensitive_skips += 1
+            return None, None
+        hits = self._cache.check(prompt=clause + "\n" + context, num_results=5)
+        for hit in hits or []:
+            metadata = hit.get("metadata") or {}
+            if metadata.get("clause") != clause.strip().lower():
+                continue
+            self.stats.hits_similarity += 1
+            answer = json.loads(hit.get("response") or "{}")
+            answer["cache"] = "similarity"
+            answer["cache_score"] = hit.get("score")
+            return answer, "similarity"
+        self.stats.misses += 1
+        return None, None
+
+    def put(self, clause: str, context: str, answer: dict) -> None:
+        if detect_sensitivity(context):
+            self.stats.sensitive_skips += 1
+            return
+        payload = json.dumps(answer, ensure_ascii=False)
+        self._redis.set(self._exact_key(clause, context), payload, ex=self.ttl)
+        self._cache.store(prompt=clause + "\n" + context, response=payload,
+                          metadata={"clause": clause.strip().lower()})
+        self.stats.stores += 1
+
+    def check_fp(self, clause: str, context: str, fresh_answer: dict) -> bool:
+        cached, served_as = self.get(clause, context)
+        if cached is None or served_as != "similarity":
+            return True
+        self.stats.fp_checks += 1
+        same = (cached.get("found") == fresh_answer.get("found")
+                and cached.get("text") == fresh_answer.get("text"))
+        if not same:
+            self.stats.fp_mismatches += 1
+        return same
+
+    def snapshot(self) -> dict:
+        s = self.stats
+        served = s.hits_exact + s.hits_similarity
+        return {
+            "backend": "redis",
+            "hits_exact": s.hits_exact,
+            "hits_similarity": s.hits_similarity,
+            "misses": s.misses,
+            "stores": s.stores,
+            "sensitive_skips": s.sensitive_skips,
+            "hit_rate": round(served / max(served + s.misses, 1), 3),
+            "fp_checks": s.fp_checks,
+            "fp_mismatches": s.fp_mismatches,
+            "fp_rate": round(s.fp_mismatches / max(s.fp_checks, 1), 3),
+        }
+
+
+def create_cache(backend: str = "memory", *, threshold: float = 0.98,
+                 max_entries: int = 2048,
+                 redis_url: str = "redis://localhost:6379") -> SemanticCache | RedisSemanticCache:
+    """Factory used by the specialist server's ``--cache-backend`` flag."""
+    if backend in ("memory", "", "in-process"):
+        return SemanticCache(threshold=threshold, max_entries=max_entries)
+    if backend == "redis":
+        return RedisSemanticCache(redis_url=redis_url, threshold=threshold)
+    raise ValueError(f"unknown cache backend {backend!r}")

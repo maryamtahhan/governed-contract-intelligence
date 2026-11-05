@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="560" viewBox="0 0 1280 560" font-family="Inter, ui-sans-serif, system-ui, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">Direct run — where the work runs</title>
+  <desc id="d">The batch runner runs on CPU and only builds prompts, sends HTTP requests, parses JSON and scores records. Classify, the four extractions, risk and the one report call all go to the same vLLM endpoint. That endpoint is either CPU or GPU for the whole run. There is no relay, gateway, label routing, pool choice or trace.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#9db1c8"/>
+    </marker>
+  </defs>
+
+  <rect width="1280" height="560" fill="#07111f"/>
+
+  <text x="40" y="44" font-size="20" font-weight="700" fill="#e9f2ff">Direct run — where the work runs</text>
+  <text x="40" y="68" font-size="12" fill="#9db1c8">one endpoint for the whole run · the runner builds prompts; that endpoint runs the model</text>
+
+  <!-- CPU side: orchestration only -->
+  <rect x="40" y="96" width="430" height="310" rx="10" fill="#0a1626" stroke="#2b4865" stroke-width="1.2" stroke-dasharray="5 4"/>
+  <text x="60" y="122" font-size="10" font-weight="700" letter-spacing="1.2" fill="#55e6a0">CPU · THE BATCH RUNNER (YOUR CODE)</text>
+
+  <rect x="64" y="136" width="382" height="100" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
+  <text x="255" y="162" font-size="14" font-weight="600" fill="#e9f2ff" text-anchor="middle">BATCH RUNNER · hybrid-run --target direct</text>
+  <text x="255" y="184" font-size="11" fill="#9db1c8" text-anchor="middle">Python CLI · builds prompts, sends HTTP</text>
+  <text x="255" y="204" font-size="11" fill="#9db1c8" text-anchor="middle">parses JSON and scores · never runs the model</text>
+
+  <line x1="255" y1="236" x2="255" y2="262" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="64" y="268" width="382" height="114" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
+  <text x="255" y="292" font-size="11" font-weight="600" fill="#c9d8ea" text-anchor="middle">STAGE CALLS · one POST each</text>
+
+  <rect x="78" y="306" width="94" height="28" rx="14" fill="#10253a" stroke="#3d648a" stroke-width="1"/>
+  <text x="125" y="324" font-size="11" fill="#dce9f7" text-anchor="middle">classify</text>
+  <rect x="182" y="306" width="116" height="28" rx="14" fill="#10253a" stroke="#3d648a" stroke-width="1"/>
+  <text x="240" y="324" font-size="11" fill="#dce9f7" text-anchor="middle">extract ×4</text>
+  <rect x="308" y="306" width="70" height="28" rx="14" fill="#10253a" stroke="#3d648a" stroke-width="1"/>
+  <text x="343" y="324" font-size="11" fill="#dce9f7" text-anchor="middle">risk</text>
+
+  <text x="255" y="352" font-size="10.5" fill="#9db1c8" text-anchor="middle">classify and the four extracts fan out together</text>
+  <text x="255" y="370" font-size="10.5" fill="#9db1c8" text-anchor="middle">risk waits for all four extracts</text>
+
+  <!-- handoff: every stage is an HTTP POST to the one endpoint -->
+  <line x1="474" y1="250" x2="516" y2="250" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="495" y="234" font-size="10" fill="#9db1c8" text-anchor="middle">6 per doc</text>
+  <text x="495" y="272" font-size="10" fill="#6f8298" text-anchor="middle">+ 1 report</text>
+
+  <!-- Model side: one endpoint, one hardware target per run -->
+  <rect x="520" y="96" width="720" height="310" rx="10" fill="#0a1626" stroke="#2b4865" stroke-width="1.2" stroke-dasharray="5 4"/>
+  <text x="540" y="122" font-size="10" font-weight="700" letter-spacing="1.2" fill="#55e6a0">MODEL WORK · ONE ENDPOINT PER RUN · CPU OR GPU</text>
+
+  <rect x="546" y="136" width="300" height="124" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
+  <text x="696" y="162" font-size="14" font-weight="600" fill="#e9f2ff" text-anchor="middle">VLLM ENDPOINT</text>
+  <text x="696" y="184" font-size="11" fill="#9db1c8" text-anchor="middle">/v1/chat/completions</text>
+  <text x="696" y="204" font-size="11" fill="#9db1c8" text-anchor="middle">OpenAI-compatible</text>
+  <text x="696" y="224" font-size="11" fill="#9db1c8" text-anchor="middle">no relay · no gateway</text>
+
+  <line x1="846" y1="198" x2="888" y2="198" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="898" y="136" width="316" height="124" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
+  <text x="1056" y="162" font-size="14" font-weight="600" fill="#e9f2ff" text-anchor="middle">SERVED MODEL</text>
+  <text x="1056" y="184" font-size="11" fill="#9db1c8" text-anchor="middle">Qwen3.5-35B-A3B</text>
+  <text x="1056" y="204" font-size="11" fill="#9db1c8" text-anchor="middle">alias Semantic-Qwen</text>
+  <text x="1056" y="224" font-size="11" fill="#9db1c8" text-anchor="middle">4× A10G, TP=4 · or CPU x8i</text>
+
+  <rect x="546" y="286" width="670" height="86" rx="8" fill="#10253a" stroke="#2b4865" stroke-width="1"/>
+  <text x="566" y="310" font-size="12" font-weight="600" fill="#e9f2ff">All document-stage calls execute here</text>
+  <text x="566" y="332" font-size="11" fill="#9db1c8">classify · extract ×4 · risk — same endpoint, same served model, no per-stage choice</text>
+  <text x="566" y="354" font-size="11" fill="#9db1c8">The one report call at the end of the run goes to the same endpoint; CPU or GPU, not a mix.</text>
+
+  <!-- bottom notes -->
+  <text x="40" y="440" font-size="12" fill="#9db1c8">The batch runner is CPU-side orchestration: prompt construction, HTTP fan-out, JSON parsing and scoring. It never runs the model.</text>
+  <text x="40" y="462" font-size="12" fill="#9db1c8">Stage ownership is flat: every model call goes to the one endpoint. Nothing routes, labels, spills or records a trace.</text>
+
+  <rect x="40" y="486" width="262" height="34" rx="8" fill="#0b2a1e" stroke="#1f7a52" stroke-width="1"/>
+  <text x="58" y="508" font-size="12" font-weight="600" fill="#55e6a0">Proves: model quality</text>
+
+  <rect x="318" y="486" width="430" height="34" rx="8" fill="#2a1518" stroke="#7a2c31" stroke-width="1"/>
+  <text x="336" y="508" font-size="12" font-weight="600" fill="#ff8f8f">Does not prove: routing · containment · audit</text>
+
+  <text x="40" y="542" font-size="11" fill="#6f8298">direct.py imports review.py's body builders and parser · same request bodies, ground truth and scorer · only the transport differs</text>
+</svg>

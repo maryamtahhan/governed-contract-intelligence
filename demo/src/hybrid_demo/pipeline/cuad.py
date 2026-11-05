@@ -89,6 +89,24 @@ def answer_text(answers: list) -> str | None:
     return None
 
 
+def doc_id_for(title: str, used: set[str]) -> str:
+    """A stable, unique doc_id for one CUAD title.
+
+    Titles are truncated to keep filenames short, and two contracts can share
+    the first 48 characters. Without the suffix guard the second one rewrote
+    the first one's text file, so a conversion could silently drop a document
+    while its manifest entry survived.
+    """
+    base = re.sub(r"[^A-Za-z0-9_-]+", "-", title)[:48]
+    doc_id, n = base, 2
+    while doc_id in used:
+        suffix = f"-{n}"
+        doc_id = base[:48 - len(suffix)] + suffix
+        n += 1
+    used.add(doc_id)
+    return doc_id
+
+
 def risk_of(clauses: dict, uncapped: bool) -> str:
     """CUAD truth under the shared rubric; CUAD annotates no DP category."""
     return assess_risk(clauses, has_data_protection=False, uncapped=uncapped)
@@ -105,6 +123,7 @@ def convert(cuad_dir: str | Path, out_dir: str | Path, count: int, seed: int,
 
     wanted = {category: key for key, category in CATEGORY_MAP.items()}
     truths = []
+    used_ids: set[str] = set()
     skipped_long = 0
     for doc in data:
         if len(truths) >= count:
@@ -128,7 +147,7 @@ def convert(cuad_dir: str | Path, out_dir: str | Path, count: int, seed: int,
             key = wanted.get(category)
             if key and clauses[key] is None:
                 clauses[key] = answer_text(qa.get("answers"))
-        doc_id = re.sub(r"[^A-Za-z0-9_-]+", "-", doc["title"])[:48]
+        doc_id = doc_id_for(doc["title"], used_ids)
         truths.append({
             "doc_id": doc_id,
             "type": None,

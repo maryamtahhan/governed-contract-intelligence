@@ -29,8 +29,8 @@ spec:
             # Guaranteed QoS (requests == limits) like the pools it fronts.
             # 2 physical cores: the isolation profile offlines the sibling
             # hyperthreads, so this is one whole core per request.
-            requests: {cpu: "2", memory: 4Gi}
-            limits: {cpu: "2", memory: 4Gi}
+            requests: {cpu: "2", memory: 8Gi}
+            limits: {cpu: "2", memory: 8Gi}
           securityContext:
             allowPrivilegeEscalation: false
             capabilities: {drop: [ALL]}
