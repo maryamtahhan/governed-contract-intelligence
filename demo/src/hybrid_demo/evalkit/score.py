@@ -12,19 +12,15 @@ from ..configs import name_for_key
 from ..routes import APPROVED_ROUTES, CPU_ROUTES, GPU_ROUTES
 from . import cost as cost_model
 from . import spans as span_scoring
+from .spans import text_matches
 
 # Extraction is scored by containment, not span-equality: a prediction is
 # correct when either normalised string contains the other. This rewards a
 # wider quote that includes the annotated clause and penalises a correct
 # paraphrase. Every report must name the metric; do not call it "exact".
+# ``text_matches`` above is spans.py's containment default, re-exported
+# here because retrieval/endtoend.py and the report import it from score.
 MATCH_METRIC = "containment"
-
-
-def text_matches(predicted: str | None, truth: str | None) -> bool:
-    if not predicted or not truth:
-        return False
-    p, t = normalize_text(predicted), normalize_text(truth)
-    return p == t or p in t or t in p
 
 
 # The report's governing-law counts name jurisdictions, but ground truth stores
