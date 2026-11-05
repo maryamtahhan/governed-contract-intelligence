@@ -7,6 +7,7 @@ cap as the route applies it, and the live document store's bounds.
 """
 from __future__ import annotations
 
+import base64
 import json
 from pathlib import Path
 
@@ -106,6 +107,21 @@ def test_an_invalid_base64_archive_is_a_400_not_a_413(tmp_path):
                     json={"archive": {"name": "bad.zip", "data": "not base64!!!"}})
     assert r.status_code == 400
     assert "not valid base64" in r.json()["detail"]
+
+
+def test_an_archive_over_the_decoded_cap_is_a_413(tmp_path, monkeypatch):
+    # The decoded-size refusal says "bytes", which the old message-sniffing
+    # only mapped to 413 because "limit" happened to share the sentence.
+    # The status now travels on the error, so the wording cannot change it.
+    from hybrid_demo.ui import corpus as corpus_module
+
+    monkeypatch.setattr(corpus_module, "MAX_ARCHIVE_BYTES", 8)
+    client = _client(tmp_path, endpoint="http://127.0.0.1:1/v1")
+    r = client.post("/api/corpus/stream", json={"archive": {
+        "name": "big.zip",
+        "data": base64.b64encode(b"123456789").decode()}})
+    assert r.status_code == 413
+    assert "bytes" in r.json()["detail"]
 
 
 # --- live document store ---------------------------------------------------

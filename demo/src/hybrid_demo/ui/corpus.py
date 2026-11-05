@@ -30,7 +30,17 @@ TEXT_SUFFIXES = {".txt", ".md", ".markdown", ".text"}
 
 
 class CorpusError(ValueError):
-    """The upload cannot be turned into documents; the message is user-facing."""
+    """The upload cannot be turned into documents; the message is user-facing.
+
+    ``status_code`` is how the HTTP layer should answer: 413 when the upload
+    is merely too big, 400 for everything else (unreadable, binary, empty).
+    It travels on the error instead of being inferred from the message text,
+    so rewording a message cannot silently turn a size refusal into a 400.
+    """
+
+    def __init__(self, message: str, status_code: int = 400) -> None:
+        super().__init__(message)
+        self.status_code = status_code
 
 
 def _text_name(name: str) -> bool:
@@ -62,19 +72,19 @@ def decode_archive(data: str) -> bytes:
 
     Base64 grows 4/3, so the encoded text is refused before the raw bytes are
     allocated, and the decoded size is checked again so the cap holds whatever
-    the encoding claims. Messages carry "limit" so the server maps them to 413.
+    the encoding claims. Both refusals carry ``status_code=413``.
     """
     max_chars = (MAX_ARCHIVE_BYTES // 3 + 1) * 4
     if len(data) > max_chars:
         raise CorpusError(f"the archive is {len(data):,} base64 characters; "
-                          f"the limit is {max_chars:,}")
+                          f"the limit is {max_chars:,}", status_code=413)
     try:
         raw = base64.b64decode(data, validate=True)
     except (ValueError, TypeError) as e:
         raise CorpusError("the archive payload is not valid base64") from e
     if len(raw) > MAX_ARCHIVE_BYTES:
         raise CorpusError(f"the archive is {len(raw):,} bytes; the limit is "
-                          f"{MAX_ARCHIVE_BYTES:,} bytes")
+                          f"{MAX_ARCHIVE_BYTES:,} bytes", status_code=413)
     return raw
 
 
@@ -96,7 +106,7 @@ def documents_from_files(files: list[dict]) -> tuple[list[dict], list[str]]:
             continue
         if len(text) > MAX_DOC_CHARS:
             raise CorpusError(f"{name} is {len(text):,} characters; the limit per "
-                              f"document is {MAX_DOC_CHARS:,}")
+                              f"document is {MAX_DOC_CHARS:,}", status_code=413)
         total += len(text)
         docs.append({"name": name, "text": text})
     _check_caps(docs, total)
@@ -145,7 +155,7 @@ def _from_zip(name: str, data: bytes) -> tuple[list[dict], list[str]]:
             docs.append({"name": safe, "text": text})
             if len(docs) > MAX_DOCS:
                 raise CorpusError(f"{name} holds more than {MAX_DOCS} documents; "
-                                  "split it into smaller batches")
+                                  "split it into smaller batches", status_code=413)
     _check_caps(docs, total)
     return docs, skipped
 
@@ -185,7 +195,7 @@ def _from_tar(name: str, data: bytes) -> tuple[list[dict], list[str]]:
             docs.append({"name": safe, "text": text})
             if len(docs) > MAX_DOCS:
                 raise CorpusError(f"{name} holds more than {MAX_DOCS} documents; "
-                                  "split it into smaller batches")
+                                  "split it into smaller batches", status_code=413)
     _check_caps(docs, total)
     return docs, skipped
 
@@ -195,7 +205,8 @@ def _check_caps(docs: list[dict], total: int) -> None:
         raise CorpusError("no plain-text documents found — accepted: "
                           + ", ".join(sorted(TEXT_SUFFIXES)))
     if len(docs) > MAX_DOCS:
-        raise CorpusError(f"{len(docs)} documents found; the limit is {MAX_DOCS}")
+        raise CorpusError(f"{len(docs)} documents found; the limit is {MAX_DOCS}",
+                          status_code=413)
     if total > MAX_TOTAL_CHARS:
         raise CorpusError(f"the upload is {total:,} characters; the limit is "
-                          f"{MAX_TOTAL_CHARS:,}")
+                          f"{MAX_TOTAL_CHARS:,}", status_code=413)
