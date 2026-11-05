@@ -8,7 +8,6 @@ dependencies = [
     "uvicorn>=0.30,<1",
     "httpx>=0.27,<1",
     "prometheus-client>=0.20,<1",
-    "pyyaml>=6.0,<7",
 ]
 
 [project.optional-dependencies]
@@ -87,6 +86,8 @@ dev = [
     "ruff>=0.5,<1",
     # Tiny, pure-Python; keeps the offset-scoring adapter exercised in CI.
     "nervaluate>=0.2,<2",
+    # Test-only: the praxis stub and conftest parse the real routing configs.
+    "pyyaml>=6.0,<7",
 ]
 
 [build-system]
