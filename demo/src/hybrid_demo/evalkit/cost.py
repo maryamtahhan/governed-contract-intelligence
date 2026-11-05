@@ -6,14 +6,6 @@ ILLUSTRATIVE_RATES = {
 }
 
 
-def per_document(gpu_seconds: float, cpu_core_seconds: float, docs: int) -> dict:
-    docs = max(docs, 1)
-    return {
-        "gpu_seconds_per_doc": round(gpu_seconds / docs, 3),
-        "cpu_core_seconds_per_doc": round(cpu_core_seconds / docs, 3),
-    }
-
-
 def price(gpu_seconds: float, cpu_core_seconds: float, gpu_hour: float, core_hour: float) -> float:
     return gpu_seconds / 3600.0 * gpu_hour + cpu_core_seconds / 3600.0 * core_hour
 
