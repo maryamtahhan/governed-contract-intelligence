@@ -36,7 +36,7 @@ FILTER_REPO="${FILTER_REPO:-https://github.com/cnuland/llm-d-sc-praxis-filter}"
 
 AI_GATEWAY_REF="${AI_GATEWAY_REF:-a716baaef1a027ff02a00bf4fc692de54c366cee}"
 FILTER_REF="${FILTER_REF:-b84acfb840c7232fcba2680e46fd023ac8c7e02c}"
-IMAGE="${IMAGE:-quay.io/rmalone/praxis-ai-llm-d-sc:v0.9.0}"
+IMAGE="${IMAGE:-quay.io/mtahhan/gci-praxis:v0.9.0}"
 PLATFORM="${PLATFORM:-linux/amd64}"
 PUSH=0
 KEEP=0

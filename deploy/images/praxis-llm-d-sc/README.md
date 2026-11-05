@@ -1,6 +1,6 @@
 # praxis-ai with the llm_d_sc filter
 
-**Image name:** `quay.io/rmalone/praxis-ai-llm-d-sc:v0.9.0` (not pushed yet)
+**Image name:** `quay.io/mtahhan/gci-praxis:v0.9.0` (not pushed yet)
 
 The deployed gateway is currently
 `quay.io/rmalone/praxis-ai-llm-d-sc:v0.7.0`. It is a custom Praxis build that
@@ -79,7 +79,27 @@ cargo build -p praxis-ai-proxy --no-default-features --features full
 
 All three passed. The release image still needs to be built on an amd64 builder
 and pushed; the local machine is arm64, so a local default build is not a
-drop-in replacement for the cluster's amd64 nodes.
+drop-in replacement for the cluster's amd64 nodes. The publish workflow below
+is that builder.
+
+## Publishing
+
+The amd64 images are published from a GitHub Actions runner (native amd64,
+unlike this repo's arm64 dev machines, where the default `--platform
+linux/amd64` build runs emulated and slow).
+[`publish-images.yml`](../../.github/workflows/publish-images.yml) runs on
+manual dispatch only and publishes the whole namespace:
+
+| Job | Image |
+| --- | --- |
+| gateway | `quay.io/mtahhan/gci-praxis:v0.9.0` — this directory's `build.sh --push` |
+| classifier | `quay.io/mtahhan/gci-llm-d-sc:main-e660fff` — upstream `llm-d-semantic-classifier` at `e660fff` |
+| modelcar | mirror of `quay.io/rmalone/llm-d-sc-modelcar:complexity` → `quay.io/mtahhan/gci-llm-d-sc-modelcar:complexity` |
+
+The workflow needs the `QUAY_USERNAME` / `QUAY_PASSWORD` repository secrets: a
+quay robot account with push access to the three `quay.io/mtahhan/gci-*`
+repositories. Each job writes the pushed digest into the run summary; record
+that digest, not the tag, for measured runs.
 
 ## Switching the manifests
 
@@ -88,7 +108,7 @@ registry. Once it does:
 
 ```bash
 oc -n openshell-demo set image deploy/praxis \
-  praxis=quay.io/rmalone/praxis-ai-llm-d-sc:v0.9.0
+  praxis=quay.io/mtahhan/gci-praxis:v0.9.0
 oc -n openshell-demo rollout status deploy/praxis
 ```
 
