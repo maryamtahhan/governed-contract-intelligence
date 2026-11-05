@@ -31,12 +31,12 @@ endpoint. There is no relay, praxis, label, pool choice or trace.
 
 ## Historical groups — keep the recorded names
 
-`runs/simulated/`, `runs/gpu-measured/`, `runs/cuad-mixed/`,
-`runs/cuad-test/` and the root `runs/arm-D/` are earlier evidence. Their
-directory names are preserved as recorded run ids. `arm-D-*` means the old
-internal key D, now called **`hybrid`**; `arm-direct-*` means a direct run.
-`runs/arm-D/` itself is a 2-document smoke run, not the 200-document measured
-run. The current CLI and new directories use policy names.
+`runs/simulated/`, `runs/gpu-measured/`, `runs/cuad-mixed/` and
+`runs/cuad-test/` are earlier evidence. Their directory names are preserved
+as recorded run ids. `arm-D-*` means the old internal key D, now called
+**`hybrid`**; `arm-direct-*` means a direct run. The old root `runs/arm-D/`
+2-document smoke run and its `runs/report.*` were removed — superseded by
+`rosa-200/`. The current CLI and new directories use policy names.
 
 If you remember one thing: **`rosa-200/hybrid` is through-stack; `direct/gpu-moe`
 is direct GPU.**

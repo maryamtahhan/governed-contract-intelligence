@@ -154,7 +154,6 @@ abstract: GPU runs are all-GPU, CPU runs are all-CPU. There is no mixing.
 | `runs/direct/cpu-small` | direct, one CPU endpoint, 1.5B |
 | `runs/cuad-test/arm-*` | historical CUAD evidence; ids preserved |
 | `runs/simulated/arm-*`, `runs/gpu-measured/arm-*`, `runs/cuad-mixed/arm-*` | historical evidence; ids preserved |
-| `runs/arm-D` | old 2-document through-stack smoke run, not the 200-doc run |
 
 See `runs/README.md` for the short version.
 

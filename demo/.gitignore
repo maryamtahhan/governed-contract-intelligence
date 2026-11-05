@@ -3,7 +3,6 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 .ruff_cache/
-data/synthetic/
-data/cuad/
+# demo/data/ is ignored wholesale by the root .gitignore.
 .dashboard.pid
 .dashboard.log
