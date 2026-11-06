@@ -20,16 +20,23 @@ spec:
         - name: gen
           image: quay.io/rmalone/praxis-trace-ui:v0.2.0
           env:
-            - name: TARGET
-              value: http://trace-ui:8080/v1/chat/completions
+            # One API key per pipeline step: the PPE gate attributes each
+            # request to its caller (digests in
+            # manifests/base/praxis/api-keys.yaml; plaintext values match
+            # demo/src/hybrid_demo/common.py). A keyless request 401s at the
+            # gate, so "Simulate Traffic" looked dead before these were set.
+            - name: TRACE_HOST
+              value: trace-ui
             - name: INTERVAL
               value: "5"
-            # The gateway's PPE policy layer fails closed on keyless
-            # requests, so the generator presents the eval key (digest in
-            # manifests/base/praxis/api-keys.yaml). Without it every request
-            # 401s at the gate and "Simulate Traffic" looks dead.
-            - name: X_API_KEY
-              value: gci-demo-key-eval
+            - name: KEY_CLASSIFY
+              value: gci-demo-key-classify
+            - name: KEY_EXTRACT
+              value: gci-demo-key-extract
+            - name: KEY_RISK
+              value: gci-demo-key-risk
+            - name: KEY_REPORT
+              value: gci-demo-key-report
           command:
             - python3
             - -u
@@ -37,13 +44,21 @@ spec:
             - |
                 import json, os, random, signal, time, urllib.request, urllib.error
                 signal.signal(signal.SIGTERM, lambda *_: os._exit(0))
-                URL = os.environ["TARGET"]
-                INTERVAL = float(os.environ["INTERVAL"])
-                # Contract-domain background traffic. Routing no longer
-                # depends on prompt content (the pins landed; the classifier
-                # era's generic SIMPLE/REASONING prompts are gone), so the
-                # two lists are just short-extraction vs judgment-flavored
-                # filler that matches the pipeline's step vocabulary.
+                HOST = os.environ.get("TRACE_HOST", "trace-ui")
+                INTERVAL = float(os.environ.get("INTERVAL", "5"))
+                KEYS = {
+                    "classify": os.environ.get("KEY_CLASSIFY", "gci-demo-key-classify"),
+                    "extract": os.environ.get("KEY_EXTRACT", "gci-demo-key-extract"),
+                    "risk": os.environ.get("KEY_RISK", "gci-demo-key-risk"),
+                    "report": os.environ.get("KEY_REPORT", "gci-demo-key-report"),
+                }
+                # Background traffic mirrors how the pipeline picks entries:
+                # classify/extract are batch work (general entry, CPU pin),
+                # risk/report are judgment work (judgment entry, GPU pin),
+                # and a synthetic sensitive document shows the
+                # approved-only entries. Prompt content does not steer the
+                # routing — the entry pins do; these lists just match the
+                # vocabulary of each step.
                 SIMPLE = [
                     "Classify the following contract by type and state its initial term.",
                     "Extract the termination clause from the following contract. If the clause is absent, say not found.",
@@ -59,21 +74,43 @@ spec:
                     "Compare the liability caps across the portfolio and identify the outliers with reasons.",
                     "Derive the portfolio-level compliance posture from the extracted clauses and defend each conclusion.",
                 ]
+                SENSITIVE = [
+                    "Extract the termination clause from the contract listing Jane Doe as signatory.",
+                    "Classify the agreement naming Acme Ltd. and state its initial term.",
+                ]
+                # (entry label, trace-ui ingest port, step, prompts)
+                ROUTES = [
+                    ("general", 8080, "classify", SIMPLE),
+                    ("general", 8080, "extract", SIMPLE),
+                    ("judgment", 8086, "risk", REASONING),
+                    ("judgment", 8086, "report", REASONING),
+                    ("sensitive", 8083, "extract", SENSITIVE),
+                    ("sensitive-judgment", 8087, "risk", SENSITIVE),
+                ]
                 n = 0
                 while True:
                     started = time.time()
                     n += 1
-                    kind = random.choice(["simple", "reasoning"])
-                    prompt = random.choice(SIMPLE if kind == "simple" else REASONING)
+                    entry, port, step, prompts = random.choice(ROUTES)
+                    prompt = random.choice(prompts)
+                    doc = "demo-doc-%d" % (n % 6)
                     body = json.dumps({
                         "model": "Semantic-Qwen",
                         "messages": [{"role": "user", "content": prompt}],
                         "max_tokens": 24,
                     }).encode()
-                    req = urllib.request.Request(URL, data=body, headers={
-                        "Content-Type": "application/json",
-                        "X-API-Key": os.environ["X_API_KEY"],
-                    })
+                    req = urllib.request.Request(
+                        "http://%s:%d/v1/chat/completions" % (HOST, port),
+                        data=body,
+                        headers={
+                            "Content-Type": "application/json",
+                            "X-API-Key": KEYS[step],
+                            "X-Demo-Step": step,
+                            "X-Demo-Entry": entry,
+                            "X-Session-Id": doc,
+                            "X-Demo-Doc": doc,
+                        },
+                    )
                     hdrs = {}
                     try:
                         with urllib.request.urlopen(req, timeout=120) as r:
@@ -86,7 +123,7 @@ spec:
                     route = hdrs.get("X-Demo-Route", "-") if hdrs else "-"
                     label = hdrs.get("X-Demo-Classification", "-") if hdrs else "-"
                     ms = int((time.time() - started) * 1000)
-                    print(f"#{n} sent={kind:9} got={route} label={label} status={status} {ms}ms | {prompt[:55]}", flush=True)
+                    print(f"#{n} entry={entry:18} step={step:8} got={route:18} label={label} status={status} {ms}ms | {prompt[:48]}", flush=True)
                     time.sleep(max(0.0, INTERVAL - (time.time() - started)))
           resources:
             requests:
