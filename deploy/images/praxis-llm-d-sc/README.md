@@ -131,9 +131,17 @@ Published 2026-11-05 (run 42043729532):
 
 | Image | Digest | Consumed by the default stack |
 | --- | --- | --- |
-| `quay.io/mtahhan/gci-praxis:v0.9.0` | `sha256:2187ab818efab9a8f3d1f911190d47fad960888bada7d3db8a973d3ad70ac992` | yes |
+| `quay.io/mtahhan/gci-praxis:v0.9.0` | `sha256:2187ab818efab9a8f3d1f911190d47fad960888bada7d3db8a973d3ad70ac992` | superseded by v0.9.1 |
 | `quay.io/mtahhan/gci-llm-d-sc:main-e660fff` | `sha256:d94c1f7226bfbaeb5a300f0efdbab0e8a8988fc16af7fd80cff0e008a11fa3e1` | no — experiment only |
 | `quay.io/mtahhan/gci-llm-d-sc-modelcar:complexity` | `sha256:299874af83c565d8435c8e061b87da1754cdd918ca15e977a7fecbf3aa17f491` (mirror, byte-identical to the source) | no — experiment only |
+
+Published 2026-11-06 (run 42202721911, three attempts: the first two caught the
+praxis-policy-core version seam — published praxis-filter 0.7.5 pins 0.4.1,
+not main's 0.5.0 — and the RPITIT trait shape; see the build-commit messages):
+
+| Image | Digest | Consumed by the default stack |
+| --- | --- | --- |
+| `quay.io/mtahhan/gci-praxis:v0.9.1` | `sha256:9def8e14befedeef75a088266630386dc4506004dd43fd6962212dcb122f375a` | yes — adds the PPE policy host (audit observer + shadow PII scanner) |
 
 ## Switching the manifests
 
