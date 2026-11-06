@@ -27,6 +27,10 @@ configMapGenerator:
     files:
       - config.yaml=praxis/config.yaml
       - arm-a.yaml=praxis/arm-a.yaml
+      # arm-b is deployed on OpenShift since the cluster arms script runs
+      # all four configs by name; before it was Linux-only, and
+      # scripts/cluster/arms.sh failed its gpu-small arm on a missing file.
+      - arm-b.yaml=praxis/arm-b.yaml
       - arm-c.yaml=praxis/arm-c.yaml
       # PPE policy layer (Phase 1): the policy documents and the API-key
       # directory the policy filter loads. api-keys.yaml holds SHA-256

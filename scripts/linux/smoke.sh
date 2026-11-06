@@ -117,8 +117,8 @@ hdr() { tr -d '\r' < /tmp/h | grep -i "^$1:" | head -1 | cut -d' ' -f2- || true;
 status_of() { head -1 /tmp/h | tr -d '\r' | awk '{print $2}'; }
 
 echo "== 1. gateway up"
-curl -sf "$GW/v1/models" | grep -q Semantic-Qwen || fail "/v1/models"
-ok "gateway serves /v1/models"
+curl -sf -H "X-API-Key: $API_KEY" "$GW/v1/models" | grep -q Semantic-Qwen || fail "/v1/models"
+ok "gateway serves /v1/models (keyed probe; keyless fails closed)"
 
 echo "== 2. SIMPLE routes to the CPU pool"
 simple_prompt

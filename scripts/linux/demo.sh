@@ -48,7 +48,7 @@ sens = sum(g['count'] for g in s.get('groups', []) if (g.get('entry') or '').sta
 print(f'traces={total} fallback={fb} sensitive-entry={sens}')"; }
 
 [ -f demo/data/synthetic/ground_truth.json ] || (cd demo && uv run hybrid-gendata --out data/synthetic --count 200 --seed 42 --golden 20)
-curl -sf "$GW/v1/models" >/dev/null || { echo "stack not up: scripts/linux/up.sh" >&2; exit 1; }
+curl -sf -H "X-API-Key: ${HYBRID_API_KEY_EVAL:-gci-demo-key-eval}" "$GW/v1/models" >/dev/null || { echo "stack not up: scripts/linux/up.sh" >&2; exit 1; }
 
 echo "On screen: $GW  (architecture diagram + live request traces)"
 echo "The story: a legal-ops batch of $DOCS contracts; classify and extraction stay"

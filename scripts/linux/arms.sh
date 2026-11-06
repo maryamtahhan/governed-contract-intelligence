@@ -21,7 +21,7 @@ CONFIGS="${CONFIGS:-${ARMS:-all-gpu gpu-small round-robin hybrid}}"
 
 for c in curl uv; do command -v "$c" >/dev/null || { echo "missing: $c" >&2; exit 1; }; done
 $COMPOSE version >/dev/null 2>&1 || { echo "compose not usable: $COMPOSE" >&2; exit 1; }
-curl -sf "$GATEWAY/v1/models" >/dev/null || { echo "stack not up: scripts/linux/up.sh" >&2; exit 1; }
+curl -sf -H "X-API-Key: ${HYBRID_API_KEY_EVAL:-gci-demo-key-eval}" "$GATEWAY/v1/models" >/dev/null || { echo "stack not up: scripts/linux/up.sh" >&2; exit 1; }
 
 if [ "$DATA" = "data/synthetic" ] && [ ! -f demo/data/synthetic/ground_truth.json ]; then
   echo "generating synthetic documents"

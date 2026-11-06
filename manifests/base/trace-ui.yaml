@@ -96,7 +96,7 @@ spec:
               containerPort: 8083
             - name: judgment
               containerPort: 8086
-            - name: sensitive-judgment
+            - name: sens-judgment
               containerPort: 8087
             - name: cpu-backend
               containerPort: 8081
@@ -142,9 +142,9 @@ spec:
     - name: judgment
       port: 8086
       targetPort: judgment
-    - name: sensitive-judgment
+    - name: sens-judgment
       port: 8087
-      targetPort: sensitive-judgment
+      targetPort: sens-judgment
     - name: cpu-backend
       port: 8081
       targetPort: cpu-backend
