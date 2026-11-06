@@ -1,0 +1,3176 @@
+{
+ "summary": {
+  "arm": "A",
+  "config": "all-gpu",
+  "mode": "all-gpu",
+  "governance": false,
+  "docs": 12,
+  "model": null,
+  "concurrency": 4,
+  "timeout_s": 600.0,
+  "started_at": "2026-11-06T14:16:25Z",
+  "wall_s": 19.91,
+  "judgment_split": false,
+  "sensitive_judgment_split": false,
+  "steps": 73,
+  "routes": {
+   "vllm-gpu": 73
+  },
+  "labels": {},
+  "entries": {
+   "general": 73
+  },
+  "models": {
+   "Semantic-Qwen": 73
+  },
+  "stage_models": {
+   "classify": {
+    "Semantic-Qwen": 12
+   },
+   "extract": {
+    "Semantic-Qwen": 48
+   },
+   "risk": {
+    "Semantic-Qwen": 12
+   },
+   "report": {
+    "Semantic-Qwen": 1
+   }
+  },
+  "stage_routes": {
+   "classify": {
+    "vllm-gpu": 12
+   },
+   "extract": {
+    "vllm-gpu": 48
+   },
+   "risk": {
+    "vllm-gpu": 12
+   },
+   "report": {
+    "vllm-gpu": 1
+   }
+  },
+  "judgment_steps": 0,
+  "judgment_on_gpu": 0,
+  "fallback": 0,
+  "errors": 0,
+  "screen": {
+   "tp": 2,
+   "fp": 0,
+   "tn": 10,
+   "fn": 0
+  },
+  "sensitive_steps": 13,
+  "sensitive_on_approved": 0,
+  "sensitive_violations": 13,
+  "classifier_latency_us_avg": null,
+  "gpu_busy_ms": 31199,
+  "cpu_busy_ms": 0,
+  "latency_ms_avg": 2831,
+  "latency_ms_p95": 3564,
+  "environment": "flightpath-fake",
+  "cluster": "flightpath",
+  "git_sha": "c245aabb036a915f87108004aee428a1e8217f1b",
+  "git_dirty": true,
+  "pools": {
+   "vllm-cpu": {
+    "model": "Semantic-Qwen (hybrid-pool simulation)",
+    "hardware": "simulated \u2014 flightpath CPU-only cluster, fake-all overlay; no measured number belongs in a real row",
+    "deployment": "fake-vllm-cpu"
+   },
+   "vllm-gpu": {
+    "model": "Semantic-Qwen (hybrid-pool simulation)",
+    "hardware": "simulated \u2014 flightpath CPU-only cluster, fake-all overlay",
+    "deployment": "fake-vllm-gpu"
+   },
+   "vllm-gpu-approved": {
+    "model": "Semantic-Qwen (hybrid-pool simulation)",
+    "hardware": "simulated \u2014 flightpath CPU-only cluster, fake-all overlay",
+    "deployment": "fake-vllm-gpu-approved"
+   },
+   "vllm-gpu-small": {
+    "model": "Semantic-Qwen (hybrid-pool simulation)",
+    "hardware": "simulated \u2014 flightpath CPU-only cluster, fake-all overlay",
+    "deployment": "fake-vllm-gpu-small"
+   }
+  }
+ },
+ "records": [
+  {
+   "step": "classify",
+   "doc_id": "C-2026-0004",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": true,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 200,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Classify the following contract by type and state its initial term.\n\nSTATEMENT OF WORK\nContract Reference: C-2026-0004\nEffective Date: 2026-07-01   Initial Term: 12 months\nBetween: Silverthorn Cloud BV (\"Supplier\") and Thornbury Health Systems (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\nSCHEDULE 3 - PERSONAL DATA\nData Controller contact: Hannah Hurley, hannah.hurley@thornbury.example, +353 1 555 3664\nData Controller address: 54 Galway Main Street, Dublin\nEmployee IDs: EMP-488162, EMP-472528\n\n\nReturn JSON: {\"type\": \"MSA|NDA|SOW|DPA\", \"initial_term_months\": N, \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 917,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "203.3",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "659f3ef7-590a-4b80-96e5-2ee04afb8b01",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "type": "SOW",
+    "initial_term_months": 12,
+    "ref": "C-2026-0004"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "C-2026-0003",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": true,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 200,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Classify the following contract by type and state its initial term.\n\nDATA PROCESSING AGREEMENT\nContract Reference: C-2026-0003\nEffective Date: 2026-06-01   Initial Term: 24 months\nBetween: Harbourline Software DAC (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of the State of New York.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\n(No data-protection clause is present in this Agreement.)\n\nSCHEDULE 3 - PERSONAL DATA\nData Controller contact: Aoife Lombard, aoife.lombard@lakeshore.example, +353 1 555 9785\nData Controller address: 21 Waterford Main Street, Galway\nEmployee IDs: EMP-230889, EMP-496922\n\n\nReturn JSON: {\"type\": \"MSA|NDA|SOW|DPA\", \"initial_term_months\": N, \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 998,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "202.9",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "40274d26-e23b-4637-84a7-94d0693afd3d",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "type": "DPA",
+    "initial_term_months": 24,
+    "ref": "C-2026-0003"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "C-2026-0001",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 200,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Classify the following contract by type and state its initial term.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0001\nEffective Date: 2025-01-01   Initial Term: 24 months\nBetween: Northwind Analytics Ltd (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"type\": \"MSA|NDA|SOW|DPA\", \"initial_term_months\": N, \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 1018,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "201.8",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "40b7c1a8-b159-46cd-a247-a336b32dfbd3",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 24,
+    "ref": "C-2026-0001"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "C-2026-0002",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 200,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Classify the following contract by type and state its initial term.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0002\nEffective Date: 2025-01-01   Initial Term: 12 months\nBetween: Vistaview Systems GmbH (\"Supplier\") and Thornbury Health Systems (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of Germany.\nLiability Cap: The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.\nData Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.\n\n\nReturn JSON: {\"type\": \"MSA|NDA|SOW|DPA\", \"initial_term_months\": N, \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 1003,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "201.3",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "38661f1b-b416-4ff4-a4ec-aa06323641e9",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 12,
+    "ref": "C-2026-0002"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "C-2026-0005",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 200,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Classify the following contract by type and state its initial term.\n\nNON-DISCLOSURE AGREEMENT\nContract Reference: C-2026-0005\nEffective Date: 2025-01-01   Initial Term: 24 months\nBetween: Silverthorn Cloud BV (\"Supplier\") and Thornbury Health Systems (\"Client\")\n\nCLAUSES\nTermination: This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.\nGoverning Law: This Agreement shall be governed by the laws of Germany.\nLiability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"type\": \"MSA|NDA|SOW|DPA\", \"initial_term_months\": N, \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 1726,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "200.2",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "6b3a2f5b-d61b-44f0-a850-c509fb77c95a",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "type": "NDA",
+    "initial_term_months": 24,
+    "ref": "C-2026-0005"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "C-2026-0006",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 200,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Classify the following contract by type and state its initial term.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0006\nEffective Date: 2026-11-01   Initial Term: 36 months\nBetween: Harbourline Software DAC (\"Supplier\") and Greystone Energy Partners (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.\n(No data-protection clause is present in this Agreement.)\n\n\nReturn JSON: {\"type\": \"MSA|NDA|SOW|DPA\", \"initial_term_months\": N, \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 1729,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "199.0",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "d99b8cc3-2e76-409b-82bb-ee9ecc591f30",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 36,
+    "ref": "C-2026-0006"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "C-2026-0007",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 200,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Classify the following contract by type and state its initial term.\n\nNON-DISCLOSURE AGREEMENT\nContract Reference: C-2026-0007\nEffective Date: 2025-02-01   Initial Term: 24 months\nBetween: Harbourline Software DAC (\"Supplier\") and Ardmore Financial Services (\"Client\")\n\nCLAUSES\nTermination: This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.\nGoverning Law: This Agreement shall be governed by the laws of Germany.\nLiability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"type\": \"MSA|NDA|SOW|DPA\", \"initial_term_months\": N, \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 1730,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "199.9",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "0691bd98-cfeb-4eb3-892d-2a6580312836",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "type": "NDA",
+    "initial_term_months": 24,
+    "ref": "C-2026-0007"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "C-2026-0008",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 200,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Classify the following contract by type and state its initial term.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0008\nEffective Date: 2025-09-01   Initial Term: 48 months\nBetween: Vistaview Systems GmbH (\"Supplier\") and Ardmore Financial Services (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of Germany.\nLiability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.\nData Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.\n\n\nReturn JSON: {\"type\": \"MSA|NDA|SOW|DPA\", \"initial_term_months\": N, \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 1784,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "199.9",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "a8dfcf51-4403-452d-af8a-39b1b97c9b52",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 48,
+    "ref": "C-2026-0008"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "C-2026-0009",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 200,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Classify the following contract by type and state its initial term.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0009\nEffective Date: 2026-12-01   Initial Term: 36 months\nBetween: Silverthorn Cloud BV (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of the State of New York.\nLiability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"type\": \"MSA|NDA|SOW|DPA\", \"initial_term_months\": N, \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2477,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "199.8",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "809b74e2-e056-459b-ae49-b11e64f83454",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 36,
+    "ref": "C-2026-0009"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "C-2026-0010",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 200,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Classify the following contract by type and state its initial term.\n\nNON-DISCLOSURE AGREEMENT\nContract Reference: C-2026-0010\nEffective Date: 2025-08-01   Initial Term: 36 months\nBetween: Silverthorn Cloud BV (\"Supplier\") and Kestrel Logistics Group (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"type\": \"MSA|NDA|SOW|DPA\", \"initial_term_months\": N, \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2477,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "200.2",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "bb357099-ede3-4257-90df-6c886786e988",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "type": "NDA",
+    "initial_term_months": 36,
+    "ref": "C-2026-0010"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "C-2026-0011",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 200,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Classify the following contract by type and state its initial term.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0011\nEffective Date: 2025-02-01   Initial Term: 24 months\nBetween: Harbourline Software DAC (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\n(No data-protection clause is present in this Agreement.)\n\n\nReturn JSON: {\"type\": \"MSA|NDA|SOW|DPA\", \"initial_term_months\": N, \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2481,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "199.2",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "4a103698-987a-44fd-b20e-4ce2106eda36",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 24,
+    "ref": "C-2026-0011"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "C-2026-0012",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 200,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Classify the following contract by type and state its initial term.\n\nNON-DISCLOSURE AGREEMENT\nContract Reference: C-2026-0012\nEffective Date: 2026-11-01   Initial Term: 36 months\nBetween: Copperfield Data Services Inc (\"Supplier\") and Ardmore Financial Services (\"Client\")\n\nCLAUSES\nTermination: This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.\nData Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.\n\n\nReturn JSON: {\"type\": \"MSA|NDA|SOW|DPA\", \"initial_term_months\": N, \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2643,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "200.3",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "8c544bfd-2c22-4191-8689-be81611c888f",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "type": "NDA",
+    "initial_term_months": 36,
+    "ref": "C-2026-0012"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "C-2026-0004",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": true,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the termination clause from the following contract. If the clause is absent, say not found.\n\nSTATEMENT OF WORK\nContract Reference: C-2026-0004\nEffective Date: 2026-07-01   Initial Term: 12 months\nBetween: Silverthorn Cloud BV (\"Supplier\") and Thornbury Health Systems (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\nSCHEDULE 3 - PERSONAL DATA\nData Controller contact: Hannah Hurley, hannah.hurley@thornbury.example, +353 1 555 3664\nData Controller address: 54 Galway Main Street, Dublin\nEmployee IDs: EMP-488162, EMP-472528\n\n\nReturn JSON: {\"clause\": \"termination\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2632,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "491.6",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "04f74466-7be2-4a4b-9381-d1e46b5fbc76",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "ref": "C-2026-0004"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "C-2026-0003",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": true,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the termination clause from the following contract. If the clause is absent, say not found.\n\nDATA PROCESSING AGREEMENT\nContract Reference: C-2026-0003\nEffective Date: 2026-06-01   Initial Term: 24 months\nBetween: Harbourline Software DAC (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of the State of New York.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\n(No data-protection clause is present in this Agreement.)\n\nSCHEDULE 3 - PERSONAL DATA\nData Controller contact: Aoife Lombard, aoife.lombard@lakeshore.example, +353 1 555 9785\nData Controller address: 21 Waterford Main Street, Galway\nEmployee IDs: EMP-230889, EMP-496922\n\n\nReturn JSON: {\"clause\": \"termination\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2640,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "551.2",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "5874c664-80b2-4a47-8355-d3347b734f51",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "ref": "C-2026-0003"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "C-2026-0001",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the termination clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0001\nEffective Date: 2025-01-01   Initial Term: 24 months\nBetween: Northwind Analytics Ltd (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"clause\": \"termination\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2638,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "550.1",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "f9018904-d453-4926-a7ff-921bd38be603",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "ref": "C-2026-0001"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "C-2026-0002",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the termination clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0002\nEffective Date: 2025-01-01   Initial Term: 12 months\nBetween: Vistaview Systems GmbH (\"Supplier\") and Thornbury Health Systems (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of Germany.\nLiability Cap: The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.\nData Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.\n\n\nReturn JSON: {\"clause\": \"termination\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2705,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "549.6",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "d7487cf1-847e-4fca-8fc6-99080c0539a3",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "ref": "C-2026-0002"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "C-2026-0006",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the termination clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0006\nEffective Date: 2026-11-01   Initial Term: 36 months\nBetween: Harbourline Software DAC (\"Supplier\") and Greystone Energy Partners (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.\n(No data-protection clause is present in this Agreement.)\n\n\nReturn JSON: {\"clause\": \"termination\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2883,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "486.1",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "5689cdc0-a93e-4821-bb2e-074a3f1d3306",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "ref": "C-2026-0006"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "C-2026-0005",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the termination clause from the following contract. If the clause is absent, say not found.\n\nNON-DISCLOSURE AGREEMENT\nContract Reference: C-2026-0005\nEffective Date: 2025-01-01   Initial Term: 24 months\nBetween: Silverthorn Cloud BV (\"Supplier\") and Thornbury Health Systems (\"Client\")\n\nCLAUSES\nTermination: This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.\nGoverning Law: This Agreement shall be governed by the laws of Germany.\nLiability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"clause\": \"termination\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2935,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "596.6",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "c4e1b2b9-d78f-44cf-9d87-8117e7fae31b",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "ref": "C-2026-0005"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "C-2026-0008",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the termination clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0008\nEffective Date: 2025-09-01   Initial Term: 48 months\nBetween: Vistaview Systems GmbH (\"Supplier\") and Ardmore Financial Services (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of Germany.\nLiability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.\nData Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.\n\n\nReturn JSON: {\"clause\": \"termination\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2915,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "486.9",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "405dec0b-c67b-46b0-99c1-b6533ac0b67e",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "ref": "C-2026-0008"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "C-2026-0007",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the termination clause from the following contract. If the clause is absent, say not found.\n\nNON-DISCLOSURE AGREEMENT\nContract Reference: C-2026-0007\nEffective Date: 2025-02-01   Initial Term: 24 months\nBetween: Harbourline Software DAC (\"Supplier\") and Ardmore Financial Services (\"Client\")\n\nCLAUSES\nTermination: This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.\nGoverning Law: This Agreement shall be governed by the laws of Germany.\nLiability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"clause\": \"termination\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2971,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "536.2",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "d31284db-59b6-4154-b350-0793cda085a1",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.",
+    "ref": "C-2026-0007"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "C-2026-0009",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the termination clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0009\nEffective Date: 2026-12-01   Initial Term: 36 months\nBetween: Silverthorn Cloud BV (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of the State of New York.\nLiability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"clause\": \"termination\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3135,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "486.9",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "2c862bdf-d4ad-4202-ad11-4cfa99a828e7",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "ref": "C-2026-0009"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "C-2026-0011",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the termination clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0011\nEffective Date: 2025-02-01   Initial Term: 24 months\nBetween: Harbourline Software DAC (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\n(No data-protection clause is present in this Agreement.)\n\n\nReturn JSON: {\"clause\": \"termination\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3167,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "486.3",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "6a16bb7b-26fa-4731-87c4-767dbf969d02",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "Either party may terminate this Agreement upon ninety (90) days' prior written notice.",
+    "ref": "C-2026-0011"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "C-2026-0010",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the termination clause from the following contract. If the clause is absent, say not found.\n\nNON-DISCLOSURE AGREEMENT\nContract Reference: C-2026-0010\nEffective Date: 2025-08-01   Initial Term: 36 months\nBetween: Silverthorn Cloud BV (\"Supplier\") and Kestrel Logistics Group (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"clause\": \"termination\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3226,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "547.2",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "227db16e-df2a-454c-85f8-d84b5a903ce6",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "ref": "C-2026-0010"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "C-2026-0012",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the termination clause from the following contract. If the clause is absent, say not found.\n\nNON-DISCLOSURE AGREEMENT\nContract Reference: C-2026-0012\nEffective Date: 2026-11-01   Initial Term: 36 months\nBetween: Copperfield Data Services Inc (\"Supplier\") and Ardmore Financial Services (\"Client\")\n\nCLAUSES\nTermination: This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.\nData Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.\n\n\nReturn JSON: {\"clause\": \"termination\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3221,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "595.4",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "94f70964-094d-400f-ac25-32b3869df625",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.",
+    "ref": "C-2026-0012"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "C-2026-0004",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": true,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the governing law clause from the following contract. If the clause is absent, say not found.\n\nSTATEMENT OF WORK\nContract Reference: C-2026-0004\nEffective Date: 2026-07-01   Initial Term: 12 months\nBetween: Silverthorn Cloud BV (\"Supplier\") and Thornbury Health Systems (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\nSCHEDULE 3 - PERSONAL DATA\nData Controller contact: Hannah Hurley, hannah.hurley@thornbury.example, +353 1 555 3664\nData Controller address: 54 Galway Main Street, Dublin\nEmployee IDs: EMP-488162, EMP-472528\n\n\nReturn JSON: {\"clause\": \"governing law\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3020,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "443.7",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "28cee089-e480-4e88-a8dd-52ee36c8871a",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "This Agreement shall be governed by the laws of England and Wales.",
+    "ref": "C-2026-0004"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "C-2026-0003",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": true,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the governing law clause from the following contract. If the clause is absent, say not found.\n\nDATA PROCESSING AGREEMENT\nContract Reference: C-2026-0003\nEffective Date: 2026-06-01   Initial Term: 24 months\nBetween: Harbourline Software DAC (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of the State of New York.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\n(No data-protection clause is present in this Agreement.)\n\nSCHEDULE 3 - PERSONAL DATA\nData Controller contact: Aoife Lombard, aoife.lombard@lakeshore.example, +353 1 555 9785\nData Controller address: 21 Waterford Main Street, Galway\nEmployee IDs: EMP-230889, EMP-496922\n\n\nReturn JSON: {\"clause\": \"governing law\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3023,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "455.3",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "e3b758d8-66f6-40f9-be48-b9fc2c5dde3d",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "This Agreement shall be governed by the laws of the State of New York.",
+    "ref": "C-2026-0003"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "C-2026-0001",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the governing law clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0001\nEffective Date: 2025-01-01   Initial Term: 24 months\nBetween: Northwind Analytics Ltd (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"clause\": \"governing law\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3025,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "442.1",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "97c719f6-c681-45de-ad07-b345554d0578",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "This Agreement shall be governed by the laws of England and Wales.",
+    "ref": "C-2026-0001"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "C-2026-0002",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the governing law clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0002\nEffective Date: 2025-01-01   Initial Term: 12 months\nBetween: Vistaview Systems GmbH (\"Supplier\") and Thornbury Health Systems (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of Germany.\nLiability Cap: The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.\nData Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.\n\n\nReturn JSON: {\"clause\": \"governing law\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3019,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "405.7",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "e25c0837-b982-4fc1-a8d1-b01238b9dcf3",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "This Agreement shall be governed by the laws of Germany.",
+    "ref": "C-2026-0002"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "C-2026-0006",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the governing law clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0006\nEffective Date: 2026-11-01   Initial Term: 36 months\nBetween: Harbourline Software DAC (\"Supplier\") and Greystone Energy Partners (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.\n(No data-protection clause is present in this Agreement.)\n\n\nReturn JSON: {\"clause\": \"governing law\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2865,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "438.1",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "5d3017b2-bf93-43b9-a39e-95426b296bba",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "This Agreement shall be governed by the laws of England and Wales.",
+    "ref": "C-2026-0006"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "C-2026-0005",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the governing law clause from the following contract. If the clause is absent, say not found.\n\nNON-DISCLOSURE AGREEMENT\nContract Reference: C-2026-0005\nEffective Date: 2025-01-01   Initial Term: 24 months\nBetween: Silverthorn Cloud BV (\"Supplier\") and Thornbury Health Systems (\"Client\")\n\nCLAUSES\nTermination: This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.\nGoverning Law: This Agreement shall be governed by the laws of Germany.\nLiability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"clause\": \"governing law\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2884,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "404.6",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "385c7f9c-b104-4b77-ac34-6c0df7032bca",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "This Agreement shall be governed by the laws of Germany.",
+    "ref": "C-2026-0005"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "C-2026-0008",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the governing law clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0008\nEffective Date: 2025-09-01   Initial Term: 48 months\nBetween: Vistaview Systems GmbH (\"Supplier\") and Ardmore Financial Services (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of Germany.\nLiability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.\nData Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.\n\n\nReturn JSON: {\"clause\": \"governing law\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2934,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "403.0",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "dc2c243d-5f3f-4630-bc05-4c880e6c8537",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "This Agreement shall be governed by the laws of Germany.",
+    "ref": "C-2026-0008"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "C-2026-0007",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the governing law clause from the following contract. If the clause is absent, say not found.\n\nNON-DISCLOSURE AGREEMENT\nContract Reference: C-2026-0007\nEffective Date: 2025-02-01   Initial Term: 24 months\nBetween: Harbourline Software DAC (\"Supplier\") and Ardmore Financial Services (\"Client\")\n\nCLAUSES\nTermination: This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.\nGoverning Law: This Agreement shall be governed by the laws of Germany.\nLiability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"clause\": \"governing law\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2932,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "404.3",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "58040f6f-849e-400b-bd47-1c79d8248d00",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "This Agreement shall be governed by the laws of Germany.",
+    "ref": "C-2026-0007"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "C-2026-0009",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the governing law clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0009\nEffective Date: 2026-12-01   Initial Term: 36 months\nBetween: Silverthorn Cloud BV (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of the State of New York.\nLiability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"clause\": \"governing law\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2818,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "451.0",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "ecfb7dac-10f3-440d-bddf-a1ce776bab7e",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "This Agreement shall be governed by the laws of the State of New York.",
+    "ref": "C-2026-0009"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "C-2026-0011",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the governing law clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0011\nEffective Date: 2025-02-01   Initial Term: 24 months\nBetween: Harbourline Software DAC (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\n(No data-protection clause is present in this Agreement.)\n\n\nReturn JSON: {\"clause\": \"governing law\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2879,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "438.4",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "dfeafe51-72ec-4736-8d5d-9e747b39b43d",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "This Agreement shall be governed by the laws of England and Wales.",
+    "ref": "C-2026-0011"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "C-2026-0010",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the governing law clause from the following contract. If the clause is absent, say not found.\n\nNON-DISCLOSURE AGREEMENT\nContract Reference: C-2026-0010\nEffective Date: 2025-08-01   Initial Term: 36 months\nBetween: Silverthorn Cloud BV (\"Supplier\") and Kestrel Logistics Group (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"clause\": \"governing law\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2881,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "439.2",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "02006596-56ae-4857-aa15-281a560850ff",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "This Agreement shall be governed by the laws of England and Wales.",
+    "ref": "C-2026-0010"
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "C-2026-0012",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the governing law clause from the following contract. If the clause is absent, say not found.\n\nNON-DISCLOSURE AGREEMENT\nContract Reference: C-2026-0012\nEffective Date: 2026-11-01   Initial Term: 36 months\nBetween: Copperfield Data Services Inc (\"Supplier\") and Ardmore Financial Services (\"Client\")\n\nCLAUSES\nTermination: This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.\nData Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.\n\n\nReturn JSON: {\"clause\": \"governing law\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2822,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "439.4",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "ebd58a92-1616-44f9-8c1e-8649ae656428",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "This Agreement shall be governed by the laws of England and Wales.",
+    "ref": "C-2026-0012"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "C-2026-0004",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": true,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the liability cap clause from the following contract. If the clause is absent, say not found.\n\nSTATEMENT OF WORK\nContract Reference: C-2026-0004\nEffective Date: 2026-07-01   Initial Term: 12 months\nBetween: Silverthorn Cloud BV (\"Supplier\") and Thornbury Health Systems (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\nSCHEDULE 3 - PERSONAL DATA\nData Controller contact: Hannah Hurley, hannah.hurley@thornbury.example, +353 1 555 3664\nData Controller address: 54 Galway Main Street, Dublin\nEmployee IDs: EMP-488162, EMP-472528\n\n\nReturn JSON: {\"clause\": \"liability cap\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2992,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "563.7",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "2679831b-84b2-4506-ba3b-b48b2bd03cf7",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "liability cap",
+    "found": true,
+    "text": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "ref": "C-2026-0004"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "C-2026-0003",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": true,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the liability cap clause from the following contract. If the clause is absent, say not found.\n\nDATA PROCESSING AGREEMENT\nContract Reference: C-2026-0003\nEffective Date: 2026-06-01   Initial Term: 24 months\nBetween: Harbourline Software DAC (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of the State of New York.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\n(No data-protection clause is present in this Agreement.)\n\nSCHEDULE 3 - PERSONAL DATA\nData Controller contact: Aoife Lombard, aoife.lombard@lakeshore.example, +353 1 555 9785\nData Controller address: 21 Waterford Main Street, Galway\nEmployee IDs: EMP-230889, EMP-496922\n\n\nReturn JSON: {\"clause\": \"liability cap\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3015,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "635.3",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "176ae246-8b6e-4bed-8294-407e1fc58d82",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "liability cap",
+    "found": true,
+    "text": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "ref": "C-2026-0003"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "C-2026-0002",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the liability cap clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0002\nEffective Date: 2025-01-01   Initial Term: 12 months\nBetween: Vistaview Systems GmbH (\"Supplier\") and Thornbury Health Systems (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of Germany.\nLiability Cap: The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.\nData Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.\n\n\nReturn JSON: {\"clause\": \"liability cap\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2952,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "489.7",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "b3876e36-56da-4c6e-977c-aa59e837f5c3",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "liability cap",
+    "found": true,
+    "text": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "ref": "C-2026-0002"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "C-2026-0001",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the liability cap clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0001\nEffective Date: 2025-01-01   Initial Term: 24 months\nBetween: Northwind Analytics Ltd (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"clause\": \"liability cap\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3092,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "634.1",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "d1982a72-fe3d-4dd8-8ca7-73a56c165a63",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "liability cap",
+    "found": true,
+    "text": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "ref": "C-2026-0001"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "C-2026-0006",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the liability cap clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0006\nEffective Date: 2026-11-01   Initial Term: 36 months\nBetween: Harbourline Software DAC (\"Supplier\") and Greystone Energy Partners (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.\n(No data-protection clause is present in this Agreement.)\n\n\nReturn JSON: {\"clause\": \"liability cap\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3137,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "553.0",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "0d39f0fb-4bf4-41f7-87c1-0af22d326739",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "liability cap",
+    "found": true,
+    "text": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "ref": "C-2026-0006"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "C-2026-0008",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the liability cap clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0008\nEffective Date: 2025-09-01   Initial Term: 48 months\nBetween: Vistaview Systems GmbH (\"Supplier\") and Ardmore Financial Services (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of Germany.\nLiability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.\nData Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.\n\n\nReturn JSON: {\"clause\": \"liability cap\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3117,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "493.8",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "81f02c5b-9296-4be7-82d4-05b17641bdff",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "liability cap",
+    "found": true,
+    "text": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "ref": "C-2026-0008"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "C-2026-0005",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the liability cap clause from the following contract. If the clause is absent, say not found.\n\nNON-DISCLOSURE AGREEMENT\nContract Reference: C-2026-0005\nEffective Date: 2025-01-01   Initial Term: 24 months\nBetween: Silverthorn Cloud BV (\"Supplier\") and Thornbury Health Systems (\"Client\")\n\nCLAUSES\nTermination: This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.\nGoverning Law: This Agreement shall be governed by the laws of Germany.\nLiability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"clause\": \"liability cap\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3206,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "560.6",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "f566d367-dadc-4e8e-9bdf-4f7d24c9cc68",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "liability cap",
+    "found": true,
+    "text": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "ref": "C-2026-0005"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "C-2026-0007",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the liability cap clause from the following contract. If the clause is absent, say not found.\n\nNON-DISCLOSURE AGREEMENT\nContract Reference: C-2026-0007\nEffective Date: 2025-02-01   Initial Term: 24 months\nBetween: Harbourline Software DAC (\"Supplier\") and Ardmore Financial Services (\"Client\")\n\nCLAUSES\nTermination: This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.\nGoverning Law: This Agreement shall be governed by the laws of Germany.\nLiability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"clause\": \"liability cap\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3188,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "500.3",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "8ac0dba3-2eaf-4514-a692-325366e4ee8a",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "liability cap",
+    "found": true,
+    "text": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "ref": "C-2026-0007"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "C-2026-0009",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the liability cap clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0009\nEffective Date: 2026-12-01   Initial Term: 36 months\nBetween: Silverthorn Cloud BV (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of the State of New York.\nLiability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"clause\": \"liability cap\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3286,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "493.8",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "23b8e08f-c9fb-4319-8ada-7b05cf720953",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "liability cap",
+    "found": true,
+    "text": "The Supplier's liability for any claim arising under this Agreement shall be unlimited.",
+    "ref": "C-2026-0009"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "C-2026-0010",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the liability cap clause from the following contract. If the clause is absent, say not found.\n\nNON-DISCLOSURE AGREEMENT\nContract Reference: C-2026-0010\nEffective Date: 2025-08-01   Initial Term: 36 months\nBetween: Silverthorn Cloud BV (\"Supplier\") and Kestrel Logistics Group (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"clause\": \"liability cap\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3335,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "564.8",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "d48e4940-6100-4abf-928f-a7a12b276980",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "liability cap",
+    "found": true,
+    "text": "The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.",
+    "ref": "C-2026-97320"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "C-2026-0012",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the liability cap clause from the following contract. If the clause is absent, say not found.\n\nNON-DISCLOSURE AGREEMENT\nContract Reference: C-2026-0012\nEffective Date: 2026-11-01   Initial Term: 36 months\nBetween: Copperfield Data Services Inc (\"Supplier\") and Ardmore Financial Services (\"Client\")\n\nCLAUSES\nTermination: This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.\nData Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.\n\n\nReturn JSON: {\"clause\": \"liability cap\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3292,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "481.0",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "d1b33149-3044-41fe-9a26-5649f6d03b10",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "liability cap",
+    "found": true,
+    "text": "The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.",
+    "ref": "C-2026-0012"
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "C-2026-0011",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the liability cap clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0011\nEffective Date: 2025-02-01   Initial Term: 24 months\nBetween: Harbourline Software DAC (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\n(No data-protection clause is present in this Agreement.)\n\n\nReturn JSON: {\"clause\": \"liability cap\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3505,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "625.2",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "d44a474f-1cf4-454c-8f09-1ef6b6c07c5a",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "liability cap",
+    "found": true,
+    "text": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "ref": "C-2026-0011"
+   }
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "C-2026-0003",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": true,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the data protection clause from the following contract. If the clause is absent, say not found.\n\nDATA PROCESSING AGREEMENT\nContract Reference: C-2026-0003\nEffective Date: 2026-06-01   Initial Term: 24 months\nBetween: Harbourline Software DAC (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of the State of New York.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\n(No data-protection clause is present in this Agreement.)\n\nSCHEDULE 3 - PERSONAL DATA\nData Controller contact: Aoife Lombard, aoife.lombard@lakeshore.example, +353 1 555 9785\nData Controller address: 21 Waterford Main Street, Galway\nEmployee IDs: EMP-230889, EMP-496922\n\n\nReturn JSON: {\"clause\": \"data protection\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3129,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "263.3",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "e905758e-8779-443a-9df0-3517085e3bb8",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "data protection",
+    "found": false,
+    "text": null,
+    "ref": "C-2026-0003"
+   }
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "C-2026-0004",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": true,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the data protection clause from the following contract. If the clause is absent, say not found.\n\nSTATEMENT OF WORK\nContract Reference: C-2026-0004\nEffective Date: 2026-07-01   Initial Term: 12 months\nBetween: Silverthorn Cloud BV (\"Supplier\") and Thornbury Health Systems (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\nSCHEDULE 3 - PERSONAL DATA\nData Controller contact: Hannah Hurley, hannah.hurley@thornbury.example, +353 1 555 3664\nData Controller address: 54 Galway Main Street, Dublin\nEmployee IDs: EMP-488162, EMP-472528\n\n\nReturn JSON: {\"clause\": \"data protection\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3404,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "683.7",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "789a48d0-727e-40fd-86f9-1b4d18e41840",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "data protection",
+    "found": true,
+    "text": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.",
+    "ref": "C-2026-0004"
+   }
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "C-2026-0002",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the data protection clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0002\nEffective Date: 2025-01-01   Initial Term: 12 months\nBetween: Vistaview Systems GmbH (\"Supplier\") and Thornbury Health Systems (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of Germany.\nLiability Cap: The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.\nData Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.\n\n\nReturn JSON: {\"clause\": \"data protection\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3505,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "717.7",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "ef5d1e56-22f6-47ae-9dd5-876345245e60",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "data protection",
+    "found": true,
+    "text": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.",
+    "ref": "C-2026-0002"
+   }
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "C-2026-0001",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the data protection clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0001\nEffective Date: 2025-01-01   Initial Term: 24 months\nBetween: Northwind Analytics Ltd (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"clause\": \"data protection\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3523,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "682.2",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "c63d0aca-b112-4b37-8071-3717d732faba",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "data protection",
+    "found": true,
+    "text": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.",
+    "ref": "C-2026-0001"
+   }
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "C-2026-0006",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the data protection clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0006\nEffective Date: 2026-11-01   Initial Term: 36 months\nBetween: Harbourline Software DAC (\"Supplier\") and Greystone Energy Partners (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.\n(No data-protection clause is present in this Agreement.)\n\n\nReturn JSON: {\"clause\": \"data protection\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3138,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "258.2",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "32787b46-a490-4f1b-8b29-620cd55a72f2",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "data protection",
+    "found": false,
+    "text": null,
+    "ref": "C-2026-0006"
+   }
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "C-2026-0008",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the data protection clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0008\nEffective Date: 2025-09-01   Initial Term: 48 months\nBetween: Vistaview Systems GmbH (\"Supplier\") and Ardmore Financial Services (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of Germany.\nLiability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.\nData Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.\n\n\nReturn JSON: {\"clause\": \"data protection\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3464,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "715.0",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "6be3201a-84b6-41b3-abaa-146730e2d854",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "data protection",
+    "found": true,
+    "text": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.",
+    "ref": "C-2026-0008"
+   }
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "C-2026-0005",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the data protection clause from the following contract. If the clause is absent, say not found.\n\nNON-DISCLOSURE AGREEMENT\nContract Reference: C-2026-0005\nEffective Date: 2025-01-01   Initial Term: 24 months\nBetween: Silverthorn Cloud BV (\"Supplier\") and Thornbury Health Systems (\"Client\")\n\nCLAUSES\nTermination: This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.\nGoverning Law: This Agreement shall be governed by the laws of Germany.\nLiability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"clause\": \"data protection\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3749,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "680.6",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "f7d0a229-09bc-498a-ab2b-e6f69f967d71",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "data protection",
+    "found": true,
+    "text": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.",
+    "ref": "C-2026-0005"
+   }
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "C-2026-0007",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the data protection clause from the following contract. If the clause is absent, say not found.\n\nNON-DISCLOSURE AGREEMENT\nContract Reference: C-2026-0007\nEffective Date: 2025-02-01   Initial Term: 24 months\nBetween: Harbourline Software DAC (\"Supplier\") and Ardmore Financial Services (\"Client\")\n\nCLAUSES\nTermination: This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.\nGoverning Law: This Agreement shall be governed by the laws of Germany.\nLiability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"clause\": \"data protection\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3708,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "680.3",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "b16d41ab-19eb-4032-a15b-27a3b799d79a",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "data protection",
+    "found": true,
+    "text": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.",
+    "ref": "C-2026-0007"
+   }
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "C-2026-0009",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the data protection clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0009\nEffective Date: 2026-12-01   Initial Term: 36 months\nBetween: Silverthorn Cloud BV (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of the State of New York.\nLiability Cap: The Supplier's liability for any claim arising under this Agreement shall be unlimited.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"clause\": \"data protection\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3290,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "679.0",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "e117d1c0-9612-4720-b2b5-2ea2978de1af",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "data protection",
+    "found": true,
+    "text": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.",
+    "ref": "C-2026-0009"
+   }
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "C-2026-0011",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the data protection clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0011\nEffective Date: 2025-02-01   Initial Term: 24 months\nBetween: Harbourline Software DAC (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon ninety (90) days' prior written notice.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\n(No data-protection clause is present in this Agreement.)\n\n\nReturn JSON: {\"clause\": \"data protection\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3296,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "258.4",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "3a807add-a745-4229-baaf-71f013122070",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "data protection",
+    "found": false,
+    "text": null,
+    "ref": "C-2026-0011"
+   }
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "C-2026-0010",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the data protection clause from the following contract. If the clause is absent, say not found.\n\nNON-DISCLOSURE AGREEMENT\nContract Reference: C-2026-0010\nEffective Date: 2025-08-01   Initial Term: 36 months\nBetween: Silverthorn Cloud BV (\"Supplier\") and Kestrel Logistics Group (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"clause\": \"data protection\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3564,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "679.3",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "e6508a3c-bc22-4dfc-986e-0027358406e2",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "data protection",
+    "found": true,
+    "text": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.",
+    "ref": "C-2026-0010"
+   }
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "C-2026-0012",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the data protection clause from the following contract. If the clause is absent, say not found.\n\nNON-DISCLOSURE AGREEMENT\nContract Reference: C-2026-0012\nEffective Date: 2026-11-01   Initial Term: 36 months\nBetween: Copperfield Data Services Inc (\"Supplier\") and Ardmore Financial Services (\"Client\")\n\nCLAUSES\nTermination: This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.\nData Protection: Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.\n\n\nReturn JSON: {\"clause\": \"data protection\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3825,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "715.5",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "2bfa9edf-43f6-48d8-a38c-453e119d4350",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "data protection",
+    "found": true,
+    "text": "Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.",
+    "ref": "C-2026-0012"
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "C-2026-0003",
+   "entry": "general",
+   "true_complexity": "COMPLEX",
+   "true_sensitive": true,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Assess the overall risk of this contract given the extracted clauses below. Apply exactly this rubric: risk is high if there is no data-protection clause, or if liability is uncapped or absent; medium if termination is absent or only permitted for material breach that remains uncured; otherwise low.\nThis document contains personal data (see Schedule 3).\nExtracted clauses: {\"termination\": {\"found\": true, \"text\": \"Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\"}, \"governing_law\": {\"found\": true, \"text\": \"This Agreement shall be governed by the laws of the State of New York.\"}, \"liability_cap\": {\"found\": true, \"text\": \"The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\"}, \"data_protection\": {\"found\": false, \"text\": null}}\n\nReturn JSON: {\"risk\": \"low|medium|high\", \"reasons\": [\"...\"], \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3152,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "226.5",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "e944bd35-23f5-4232-9014-5e4333616cbf",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "no data-protection clause"
+    ],
+    "ref": null
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "C-2026-0004",
+   "entry": "general",
+   "true_complexity": "COMPLEX",
+   "true_sensitive": true,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Assess the overall risk of this contract given the extracted clauses below. Apply exactly this rubric: risk is high if there is no data-protection clause, or if liability is uncapped or absent; medium if termination is absent or only permitted for material breach that remains uncured; otherwise low.\nThis document contains personal data (see Schedule 3).\nExtracted clauses: {\"termination\": {\"found\": true, \"text\": \"Either party may terminate this Agreement upon ninety (90) days' prior written notice.\"}, \"governing_law\": {\"found\": true, \"text\": \"This Agreement shall be governed by the laws of England and Wales.\"}, \"liability_cap\": {\"found\": true, \"text\": \"The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.\"}, \"data_protection\": {\"found\": true, \"text\": \"The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\"}}\n\nReturn JSON: {\"risk\": \"low|medium|high\", \"reasons\": [\"...\"], \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3152,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "191.5",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "783386a6-20aa-40dc-b74e-3c36ab622dfb",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "standard terms"
+    ],
+    "ref": null
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "C-2026-0002",
+   "entry": "general",
+   "true_complexity": "COMPLEX",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Assess the overall risk of this contract given the extracted clauses below. Apply exactly this rubric: risk is high if there is no data-protection clause, or if liability is uncapped or absent; medium if termination is absent or only permitted for material breach that remains uncured; otherwise low.\n\nExtracted clauses: {\"termination\": {\"found\": true, \"text\": \"Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\"}, \"governing_law\": {\"found\": true, \"text\": \"This Agreement shall be governed by the laws of Germany.\"}, \"liability_cap\": {\"found\": true, \"text\": \"The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.\"}, \"data_protection\": {\"found\": true, \"text\": \"Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.\"}}\n\nReturn JSON: {\"risk\": \"low|medium|high\", \"reasons\": [\"...\"], \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3210,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "187.0",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "bdecc781-17b0-4e98-99d1-86732857c8e5",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "standard terms"
+    ],
+    "ref": null
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "C-2026-0001",
+   "entry": "general",
+   "true_complexity": "COMPLEX",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Assess the overall risk of this contract given the extracted clauses below. Apply exactly this rubric: risk is high if there is no data-protection clause, or if liability is uncapped or absent; medium if termination is absent or only permitted for material breach that remains uncured; otherwise low.\n\nExtracted clauses: {\"termination\": {\"found\": true, \"text\": \"Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\"}, \"governing_law\": {\"found\": true, \"text\": \"This Agreement shall be governed by the laws of England and Wales.\"}, \"liability_cap\": {\"found\": true, \"text\": \"The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\"}, \"data_protection\": {\"found\": true, \"text\": \"The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\"}}\n\nReturn JSON: {\"risk\": \"low|medium|high\", \"reasons\": [\"...\"], \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3275,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "184.9",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "f4203d29-403d-41f5-8759-afff2fb3be25",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "standard terms"
+    ],
+    "ref": null
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "C-2026-0006",
+   "entry": "general",
+   "true_complexity": "COMPLEX",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Assess the overall risk of this contract given the extracted clauses below. Apply exactly this rubric: risk is high if there is no data-protection clause, or if liability is uncapped or absent; medium if termination is absent or only permitted for material breach that remains uncured; otherwise low.\n\nExtracted clauses: {\"termination\": {\"found\": true, \"text\": \"Either party may terminate this Agreement upon ninety (90) days' prior written notice.\"}, \"governing_law\": {\"found\": true, \"text\": \"This Agreement shall be governed by the laws of England and Wales.\"}, \"liability_cap\": {\"found\": true, \"text\": \"The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.\"}, \"data_protection\": {\"found\": false, \"text\": null}}\n\nReturn JSON: {\"risk\": \"low|medium|high\", \"reasons\": [\"...\"], \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2969,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "220.4",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "224d7f8b-3742-4f49-8214-4fe40a66d7ce",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "no data-protection clause"
+    ],
+    "ref": null
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "C-2026-0008",
+   "entry": "general",
+   "true_complexity": "COMPLEX",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Assess the overall risk of this contract given the extracted clauses below. Apply exactly this rubric: risk is high if there is no data-protection clause, or if liability is uncapped or absent; medium if termination is absent or only permitted for material breach that remains uncured; otherwise low.\n\nExtracted clauses: {\"termination\": {\"found\": true, \"text\": \"Either party may terminate this Agreement upon ninety (90) days' prior written notice.\"}, \"governing_law\": {\"found\": true, \"text\": \"This Agreement shall be governed by the laws of Germany.\"}, \"liability_cap\": {\"found\": true, \"text\": \"The Supplier's liability for any claim arising under this Agreement shall be unlimited.\"}, \"data_protection\": {\"found\": true, \"text\": \"Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.\"}}\n\nReturn JSON: {\"risk\": \"low|medium|high\", \"reasons\": [\"...\"], \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2657,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "209.6",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "d8065c32-5985-41c4-aaa5-bd5ad795c168",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "unlimited liability"
+    ],
+    "ref": null
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "C-2026-0005",
+   "entry": "general",
+   "true_complexity": "COMPLEX",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Assess the overall risk of this contract given the extracted clauses below. Apply exactly this rubric: risk is high if there is no data-protection clause, or if liability is uncapped or absent; medium if termination is absent or only permitted for material breach that remains uncured; otherwise low.\n\nExtracted clauses: {\"termination\": {\"found\": true, \"text\": \"This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.\"}, \"governing_law\": {\"found\": true, \"text\": \"This Agreement shall be governed by the laws of Germany.\"}, \"liability_cap\": {\"found\": true, \"text\": \"The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.\"}, \"data_protection\": {\"found\": true, \"text\": \"The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\"}}\n\nReturn JSON: {\"risk\": \"low|medium|high\", \"reasons\": [\"...\"], \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2846,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "235.3",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "f1a75a86-4f04-46f3-8225-732d57df9d30",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "risk": "medium",
+    "reasons": [
+     "termination for cause only"
+    ],
+    "ref": null
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "C-2026-0007",
+   "entry": "general",
+   "true_complexity": "COMPLEX",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Assess the overall risk of this contract given the extracted clauses below. Apply exactly this rubric: risk is high if there is no data-protection clause, or if liability is uncapped or absent; medium if termination is absent or only permitted for material breach that remains uncured; otherwise low.\n\nExtracted clauses: {\"termination\": {\"found\": true, \"text\": \"This Agreement may be terminated by either party for any reason upon thirty (30) days' written notice.\"}, \"governing_law\": {\"found\": true, \"text\": \"This Agreement shall be governed by the laws of Germany.\"}, \"liability_cap\": {\"found\": true, \"text\": \"The Supplier's liability for any claim arising under this Agreement shall be unlimited.\"}, \"data_protection\": {\"found\": true, \"text\": \"The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\"}}\n\nReturn JSON: {\"risk\": \"low|medium|high\", \"reasons\": [\"...\"], \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2975,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "210.9",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "1c47dce3-929f-47fe-a4ab-2de4d61df5b3",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "unlimited liability"
+    ],
+    "ref": null
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "C-2026-0009",
+   "entry": "general",
+   "true_complexity": "COMPLEX",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Assess the overall risk of this contract given the extracted clauses below. Apply exactly this rubric: risk is high if there is no data-protection clause, or if liability is uncapped or absent; medium if termination is absent or only permitted for material breach that remains uncured; otherwise low.\n\nExtracted clauses: {\"termination\": {\"found\": true, \"text\": \"Either party may terminate this Agreement upon ninety (90) days' prior written notice.\"}, \"governing_law\": {\"found\": true, \"text\": \"This Agreement shall be governed by the laws of the State of New York.\"}, \"liability_cap\": {\"found\": true, \"text\": \"The Supplier's liability for any claim arising under this Agreement shall be unlimited.\"}, \"data_protection\": {\"found\": true, \"text\": \"The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\"}}\n\nReturn JSON: {\"risk\": \"low|medium|high\", \"reasons\": [\"...\"], \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2508,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "208.3",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "ef722b78-6cf4-4ee1-8ab0-0d046c74c55a",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "unlimited liability"
+    ],
+    "ref": null
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "C-2026-0011",
+   "entry": "general",
+   "true_complexity": "COMPLEX",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Assess the overall risk of this contract given the extracted clauses below. Apply exactly this rubric: risk is high if there is no data-protection clause, or if liability is uncapped or absent; medium if termination is absent or only permitted for material breach that remains uncured; otherwise low.\n\nExtracted clauses: {\"termination\": {\"found\": true, \"text\": \"Either party may terminate this Agreement upon ninety (90) days' prior written notice.\"}, \"governing_law\": {\"found\": true, \"text\": \"This Agreement shall be governed by the laws of England and Wales.\"}, \"liability_cap\": {\"found\": true, \"text\": \"The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\"}, \"data_protection\": {\"found\": false, \"text\": null}}\n\nReturn JSON: {\"risk\": \"low|medium|high\", \"reasons\": [\"...\"], \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2334,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "218.0",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "c9ea9bc5-407a-4f98-ae2e-3df3eb773c98",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "no data-protection clause"
+    ],
+    "ref": null
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "C-2026-0010",
+   "entry": "general",
+   "true_complexity": "COMPLEX",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Assess the overall risk of this contract given the extracted clauses below. Apply exactly this rubric: risk is high if there is no data-protection clause, or if liability is uncapped or absent; medium if termination is absent or only permitted for material breach that remains uncured; otherwise low.\n\nExtracted clauses: {\"termination\": {\"found\": true, \"text\": \"Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\"}, \"governing_law\": {\"found\": true, \"text\": \"This Agreement shall be governed by the laws of England and Wales.\"}, \"liability_cap\": {\"found\": true, \"text\": \"The Supplier's aggregate liability shall not exceed the fees paid in the six (6) months preceding the claim.\"}, \"data_protection\": {\"found\": true, \"text\": \"The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\"}}\n\nReturn JSON: {\"risk\": \"low|medium|high\", \"reasons\": [\"...\"], \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2671,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "183.4",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "29b95b4e-34a3-4782-a710-b5dea688391a",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "standard terms"
+    ],
+    "ref": null
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "C-2026-0012",
+   "entry": "general",
+   "true_complexity": "COMPLEX",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Assess the overall risk of this contract given the extracted clauses below. Apply exactly this rubric: risk is high if there is no data-protection clause, or if liability is uncapped or absent; medium if termination is absent or only permitted for material breach that remains uncured; otherwise low.\n\nExtracted clauses: {\"termination\": {\"found\": true, \"text\": \"This Agreement may be terminated only for material breach that remains uncured for thirty (30) days after written notice.\"}, \"governing_law\": {\"found\": true, \"text\": \"This Agreement shall be governed by the laws of England and Wales.\"}, \"liability_cap\": {\"found\": true, \"text\": \"The Supplier's aggregate liability shall not exceed EUR 1,000,000 in the aggregate.\"}, \"data_protection\": {\"found\": true, \"text\": \"Each party shall comply with its obligations under applicable data protection legislation in respect of any client information received under this Agreement.\"}}\n\nReturn JSON: {\"risk\": \"low|medium|high\", \"reasons\": [\"...\"], \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 2424,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "232.8",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "04bbe86e-8c57-46c7-b0bd-9f869eed9adf",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "risk": "medium",
+    "reasons": [
+     "termination for cause only"
+    ],
+    "ref": null
+   }
+  },
+  {
+   "step": "report",
+   "doc_id": null,
+   "entry": "general",
+   "true_complexity": "REASONING",
+   "true_sensitive": true,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 1200,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Produce the cross-document risk report across all 12 documents. Synthesise and compare the per-document extractions below, derive the aggregate counts, and prove the ranking: count contracts by risk level, count governing laws, count contracts missing a data-protection clause, and name the highest-risk contract reference. If several contracts tie for highest risk, name the lexicographically smallest reference.\n\n- {\"ref\": \"C-2026-0001\", \"type\": \"MSA\", \"risk\": \"low\", \"governing_law\": \"This Agreement shall be governed by the laws of England and Wales.\", \"data_protection\": true, \"sensitive\": false}\n- {\"ref\": \"C-2026-0002\", \"type\": \"MSA\", \"risk\": \"low\", \"governing_law\": \"This Agreement shall be governed by the laws of Germany.\", \"data_protection\": true, \"sensitive\": false}\n- {\"ref\": \"C-2026-0003\", \"type\": \"DPA\", \"risk\": \"high\", \"governing_law\": \"This Agreement shall be governed by the laws of the State of New York.\", \"data_protection\": false, \"sensitive\": true}\n- {\"ref\": \"C-2026-0004\", \"type\": \"SOW\", \"risk\": \"low\", \"governing_law\": \"This Agreement shall be governed by the laws of England and Wales.\", \"data_protection\": true, \"sensitive\": true}\n- {\"ref\": \"C-2026-0005\", \"type\": \"NDA\", \"risk\": \"medium\", \"governing_law\": \"This Agreement shall be governed by the laws of Germany.\", \"data_protection\": true, \"sensitive\": false}\n- {\"ref\": \"C-2026-0006\", \"type\": \"MSA\", \"risk\": \"high\", \"governing_law\": \"This Agreement shall be governed by the laws of England and Wales.\", \"data_protection\": false, \"sensitive\": false}\n- {\"ref\": \"C-2026-0007\", \"type\": \"NDA\", \"risk\": \"high\", \"governing_law\": \"This Agreement shall be governed by the laws of Germany.\", \"data_protection\": true, \"sensitive\": false}\n- {\"ref\": \"C-2026-0008\", \"type\": \"MSA\", \"risk\": \"high\", \"governing_law\": \"This Agreement shall be governed by the laws of Germany.\", \"data_protection\": true, \"sensitive\": false}\n- {\"ref\": \"C-2026-0009\", \"type\": \"MSA\", \"risk\": \"high\", \"governing_law\": \"This Agreement shall be governed by the laws of the State of New York.\", \"data_protection\": true, \"sensitive\": false}\n- {\"ref\": \"C-2026-0010\", \"type\": \"NDA\", \"risk\": \"low\", \"governing_law\": \"This Agreement shall be governed by the laws of England and Wales.\", \"data_protection\": true, \"sensitive\": false}\n- {\"ref\": \"C-2026-0011\", \"type\": \"MSA\", \"risk\": \"high\", \"governing_law\": \"This Agreement shall be governed by the laws of England and Wales.\", \"data_protection\": false, \"sensitive\": false}\n- {\"ref\": \"C-2026-0012\", \"type\": \"NDA\", \"risk\": \"medium\", \"governing_law\": \"This Agreement shall be governed by the laws of England and Wales.\", \"data_protection\": true, \"sensitive\": false}\n\nReturn JSON: {\"documents\": N, \"risk_counts\": {...}, \"governing_law_counts\": {...}, \"missing_data_protection\": N, \"highest_risk_ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 1664,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-busy-ms": "1144.9",
+    "x-queue-ms": "0.0",
+    "x-pool": "vllm-gpu",
+    "x-praxis-trace-id": "d8fc2049-16e1-4d78-970d-f8f5554668ee",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "documents": 11,
+    "risk_counts": {
+     "low": 4,
+     "medium": 2,
+     "high": 5
+    },
+    "governing_law_counts": {
+     "This Agreement shall be governed by the laws of England and Wales.": 6,
+     "This Agreement shall be governed by the laws of Germany.": 4,
+     "This Agreement shall be governed by the laws of the State of New York.": 1
+    },
+    "missing_data_protection": 2,
+    "highest_risk_ref": "C-2026-0006"
+   }
+  }
+ ]
+}

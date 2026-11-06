@@ -1,0 +1,22 @@
+{
+  "vllm-cpu": {
+    "model": "Semantic-Qwen (hybrid-pool simulation)",
+    "hardware": "simulated — flightpath CPU-only cluster, fake-all overlay; no measured number belongs in a real row",
+    "deployment": "fake-vllm-cpu"
+  },
+  "vllm-gpu": {
+    "model": "Semantic-Qwen (hybrid-pool simulation)",
+    "hardware": "simulated — flightpath CPU-only cluster, fake-all overlay",
+    "deployment": "fake-vllm-gpu"
+  },
+  "vllm-gpu-approved": {
+    "model": "Semantic-Qwen (hybrid-pool simulation)",
+    "hardware": "simulated — flightpath CPU-only cluster, fake-all overlay",
+    "deployment": "fake-vllm-gpu-approved"
+  },
+  "vllm-gpu-small": {
+    "model": "Semantic-Qwen (hybrid-pool simulation)",
+    "hardware": "simulated — flightpath CPU-only cluster, fake-all overlay",
+    "deployment": "fake-vllm-gpu-small"
+  }
+}

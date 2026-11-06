@@ -22,10 +22,13 @@ JUDGMENT_PORT="${LOCAL_JUDGMENT_PORT:-18086}"
 SENSITIVE_JUDGMENT_PORT="${LOCAL_SENSITIVE_JUDGMENT_PORT:-18087}"
 # Provenance travels with the run. Default to the ROSA cluster this script
 # targets; set ENVIRONMENT=sno (or example) for an older stack so it is not
-# presented as a measured ROSA result.
+# presented as a measured ROSA result. POOLS_JSON swaps the pool map for
+# stacks that are not the ROSA pools (e.g. deploy/openshift/fake-all/
+# pools.json for the simulated functional tier).
 ENVIRONMENT="${ENVIRONMENT:-rosa}"
 CLUSTER="${CLUSTER:-}"
-prov_args=(--environment "$ENVIRONMENT" --pools "@$REPO/deploy/openshift/rosa/pools.json")
+POOLS_JSON="${POOLS_JSON:-$REPO/deploy/openshift/rosa/pools.json}"
+prov_args=(--environment "$ENVIRONMENT" --pools "@$POOLS_JSON")
 [ -n "$CLUSTER" ] && prov_args+=(--cluster "$CLUSTER")
 
 for c in oc curl uv; do command -v "$c" >/dev/null || { echo "missing: $c" >&2; exit 1; }; done

@@ -1,0 +1,103 @@
+{
+ "arm": "D",
+ "config": "hybrid",
+ "mode": "matrix",
+ "governance": true,
+ "docs": 12,
+ "model": null,
+ "concurrency": 4,
+ "timeout_s": 600.0,
+ "started_at": "2026-11-06T14:18:23Z",
+ "wall_s": 28.16,
+ "judgment_split": true,
+ "sensitive_judgment_split": true,
+ "steps": 73,
+ "routes": {
+  "vllm-cpu": 60,
+  "vllm-gpu": 10,
+  "vllm-gpu-approved": 3
+ },
+ "labels": {},
+ "entries": {
+  "general": 50,
+  "sensitive": 10,
+  "judgment": 10,
+  "sensitive-judgment": 3
+ },
+ "models": {
+  "Semantic-Qwen": 73
+ },
+ "stage_models": {
+  "classify": {
+   "Semantic-Qwen": 12
+  },
+  "extract": {
+   "Semantic-Qwen": 48
+  },
+  "risk": {
+   "Semantic-Qwen": 12
+  },
+  "report": {
+   "Semantic-Qwen": 1
+  }
+ },
+ "stage_routes": {
+  "classify": {
+   "vllm-cpu": 12
+  },
+  "extract": {
+   "vllm-cpu": 48
+  },
+  "risk": {
+   "vllm-gpu": 10,
+   "vllm-gpu-approved": 2
+  },
+  "report": {
+   "vllm-gpu-approved": 1
+  }
+ },
+ "judgment_steps": 13,
+ "judgment_on_gpu": 13,
+ "fallback": 0,
+ "errors": 0,
+ "screen": {
+  "tp": 2,
+  "fp": 0,
+  "tn": 10,
+  "fn": 0
+ },
+ "sensitive_steps": 13,
+ "sensitive_on_approved": 13,
+ "sensitive_violations": 0,
+ "classifier_latency_us_avg": null,
+ "gpu_busy_ms": 3610,
+ "cpu_busy_ms": 54884,
+ "latency_ms_avg": 4147,
+ "latency_ms_p95": 5318,
+ "environment": "flightpath-fake",
+ "cluster": "flightpath",
+ "git_sha": "c245aabb036a915f87108004aee428a1e8217f1b",
+ "git_dirty": true,
+ "pools": {
+  "vllm-cpu": {
+   "model": "Semantic-Qwen (hybrid-pool simulation)",
+   "hardware": "simulated \u2014 flightpath CPU-only cluster, fake-all overlay; no measured number belongs in a real row",
+   "deployment": "fake-vllm-cpu"
+  },
+  "vllm-gpu": {
+   "model": "Semantic-Qwen (hybrid-pool simulation)",
+   "hardware": "simulated \u2014 flightpath CPU-only cluster, fake-all overlay",
+   "deployment": "fake-vllm-gpu"
+  },
+  "vllm-gpu-approved": {
+   "model": "Semantic-Qwen (hybrid-pool simulation)",
+   "hardware": "simulated \u2014 flightpath CPU-only cluster, fake-all overlay",
+   "deployment": "fake-vllm-gpu-approved"
+  },
+  "vllm-gpu-small": {
+   "model": "Semantic-Qwen (hybrid-pool simulation)",
+   "hardware": "simulated \u2014 flightpath CPU-only cluster, fake-all overlay",
+   "deployment": "fake-vllm-gpu-small"
+  }
+ }
+}
