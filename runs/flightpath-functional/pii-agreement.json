@@ -1,0 +1,47 @@
+{
+ "documents": 12,
+ "observe_lines": 75,
+ "classify_time": {
+  "compared": 12,
+  "pipeline_flagged": 2,
+  "gateway_flagged": 2,
+  "confusion": {
+   "tp": 2,
+   "fp": 0,
+   "tn": 10,
+   "fn": 0
+  },
+  "precision": 1.0,
+  "recall": 1.0
+ },
+ "per_subject": {
+  "gci-classify": {
+   "observations": 12,
+   "flagged": 2
+  },
+  "gci-eval": {
+   "observations": 0,
+   "flagged": 0
+  },
+  "gci-extract": {
+   "observations": 12,
+   "flagged": 2
+  },
+  "gci-report": {
+   "observations": 0,
+   "flagged": 0
+  },
+  "gci-risk": {
+   "observations": 12,
+   "flagged": 2
+  }
+ },
+ "entities": {
+  "EMAIL_ADDRESS": 10,
+  "EMPLOYEE_ID": 10,
+  "PHONE_NUMBER": 10,
+  "PERSONAL_DATA_MARKER": 2
+ },
+ "sessions_not_in_run": [],
+ "documents_without_classify_observation": []
+}
