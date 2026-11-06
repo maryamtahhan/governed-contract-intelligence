@@ -52,7 +52,12 @@ async def main(base_url: str, data_dir: str) -> None:
             has_data_protection,
         ),
     }
-    async with httpx.AsyncClient(base_url=base_url, timeout=120) as client:
+    # The gateway's policy filter denies keyless requests; present the eval
+    # key (digest in manifests/base/praxis/api-keys.yaml).
+    from hybrid_demo.common import DEMO_API_KEYS
+
+    async with httpx.AsyncClient(base_url=base_url, timeout=120,
+                                 headers={"X-API-Key": DEMO_API_KEYS["eval"]}) as client:
         for name, body in cases.items():
             r = await client.post("/v1/chat/completions", json=body)
             print(

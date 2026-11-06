@@ -134,6 +134,15 @@ filter_chains:
             value: application/json
         body: >-
           {"object":"list","data":[{"id":"Semantic-Qwen","object":"model","created":0,"owned_by":"praxis"}]}
+      # PPE policy layer (Phase 1 of the integration plan): per-step API-key
+      # identity and a fail-closed authentication gate. Attribution and audit
+      # only — which pool may serve a request stays pinned by the router
+      # below, because the praxis router does not consume PPE's `restrict`.
+      - filter: policy
+        config_path: /etc/praxis/policy.yaml
+        body_access: read_only
+        llm:
+          max_request_bytes: 4194304
       - filter: iterative_request_router
         initial_step: route
         max_iterations: 3
@@ -198,6 +207,16 @@ filter_chains:
             value: application/json
         body: >-
           {"object":"list","data":[{"id":"Semantic-Qwen","object":"model","created":0,"owned_by":"praxis"}]}
+      # Sensitive entries load the policy variant that also taints the
+      # session with the `sensitive` label: arrival here still means the
+      # pipeline's PII screen flagged the document (trust model unchanged),
+      # but the fact now lives in gateway-owned state. Containment itself
+      # remains this entry's approved-only failover set, not policy.
+      - filter: policy
+        config_path: /etc/praxis/policy-sensitive.yaml
+        body_access: read_only
+        llm:
+          max_request_bytes: 4194304
       - filter: iterative_request_router
         initial_step: route
         max_iterations: 3
@@ -268,6 +287,14 @@ filter_chains:
             value: application/json
         body: >-
           {"object":"list","data":[{"id":"Semantic-Qwen","object":"model","created":0,"owned_by":"praxis"}]}
+      # PPE policy layer (Phase 1): same gate as the general entry — a
+      # judgment request must carry a known step key. Attribution only;
+      # the GPU pin below is the routing policy.
+      - filter: policy
+        config_path: /etc/praxis/policy.yaml
+        body_access: read_only
+        llm:
+          max_request_bytes: 4194304
       - filter: router
         routes:
           - path_prefix: "/"
@@ -295,6 +322,15 @@ filter_chains:
             value: application/json
         body: >-
           {"object":"list","data":[{"id":"Semantic-Qwen","object":"model","created":0,"owned_by":"praxis"}]}
+      # PPE policy layer (Phase 1): the sensitive-judgment variant —
+      # authentication gate plus the session taint, same as the sensitive
+      # entry. The approved-only pin below is the containment; policy
+      # records and labels.
+      - filter: policy
+        config_path: /etc/praxis/policy-sensitive.yaml
+        body_access: read_only
+        llm:
+          max_request_bytes: 4194304
       - filter: router
         routes:
           - path_prefix: "/"

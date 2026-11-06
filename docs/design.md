@@ -204,6 +204,29 @@ always uses an approved entry. Praxis reaches the pools only through the
 trace-ui relays (per-pool recording hops), and SQLite behind them is the
 audit trail, exported as `audit.jsonl`.
 
+Every entry also runs the praxis `policy` filter — the Praxis Policy Engine
+(PPE) — ahead of its router. The pipeline authenticates each step with a
+per-step API key (`X-API-Key`; SHA-256 digests in `manifests/base/praxis/
+api-keys.yaml`, plaintext in `demo/src/hybrid_demo/common.py`), so a request
+without a known key fails closed at the gateway rather than reaching a pool.
+The sensitive entries additionally taint the session (`X-Session-Id`, one
+per document) with a `sensitive` label on arrival: the label still originates
+from the pipeline's screen — the trust model is unchanged — but the fact now
+lives in gateway-owned state the client cannot rewrite. Nothing denies on
+the label yet; it is groundwork for decision records and any future
+measured rule.
+
+The policy layer attributes and audits; it does not steer pools. PPE's
+`restrict` effect is exactly the pool-constraint primitive this design
+wants (narrow the router's candidate set, fail closed on empty), but the
+praxis router does not consume it and the clusters carry no backend labels,
+so containment remains the entry pinning and failover sets above. One
+consequence of failing closed on unknown keys: the external
+llm-d-batch-gateway's dispatch requests carry no `X-API-Key` and would be
+denied by these entries — a known gap until that component can present a
+key.
+
+
 ### 3.2 Why there is no classifier
 
 The stack originally routed on llm-d-sc complexity labels. The measured

@@ -1,0 +1,50 @@
+# PPE policy document for the sensitive gateway entries (listeners :8083
+# and :8087 in manifests/base/praxis/config.yaml).
+#
+# Same contract as policy.yaml, plus one effect: a request that arrives on a
+# sensitive entry taints its session with the `sensitive` label. Arrival here
+# still means the pipeline's PII screen flagged the document — the trust
+# model is unchanged from the pre-PPE stack; what is new is that the fact is
+# now recorded in gateway-owned state the client cannot rewrite, and it will
+# ride along on every later request for the same document session.
+#
+# The taint is keyed by (subject, X-Session-Id): each step key that touches
+# the document gets its own label, set the first time that step passes a
+# sensitive entry. It is groundwork — nothing denies on it yet; the Phase 2
+# audit records surface the taint diff, and any future deny rule is a
+# measured decision, not an assumption.
+#
+# Enforcing pool containment from this label would be the `restrict`
+# effect; the praxis router does not consume it, so containment remains the
+# entry's failover set (approved-only, fail closed) in the praxis config.
+plugins:
+  - name: api-keys
+    kind: identity/api-key
+    hooks: [identity.resolve]
+    on_error: fail
+    config:
+      credential:
+        kind: header
+        name: X-API-Key
+      provider:
+        kind: file
+        path: /etc/praxis/api-keys.yaml
+        refresh_secs: 30
+        max_staleness_secs: 300
+      record_map:
+        subject:
+          id: user
+          roles: groups
+
+global:
+  authentication: [api-keys]
+  authorization:
+    pre_invocation:
+      - "require(authenticated)"
+
+routes:
+  - llm: Semantic-Qwen
+    authorization:
+      pre_invocation:
+        - "require(authenticated)"
+        - "taint(sensitive, session)"

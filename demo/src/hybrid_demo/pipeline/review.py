@@ -11,7 +11,7 @@ from typing import Any
 import httpx
 
 from ..classifier import detect_sensitivity
-from ..common import parse_pools, run_provenance
+from ..common import api_key_for_step, parse_pools, run_provenance
 from ..configs import (
     CONFIG_ALIASES,
     CONFIG_MODES,
@@ -215,6 +215,23 @@ def parse_content(content: str | None) -> dict:
         return {"raw": content}
 
 
+def request_headers(step: str, entry: str, doc_id: str | None) -> dict[str, str]:
+    """Headers every pipeline request carries.
+
+    X-API-Key authenticates the step to the gateway's PPE policy filter
+    (manifests/base/praxis/policy.yaml — keyless requests fail closed);
+    X-Session-Id keys the per-document session that the sensitive entries
+    taint. The X-Demo-* labels are what the trace relays record.
+    """
+    headers = {"Content-Type": "application/json", "X-Demo-Step": step,
+               "X-Demo-Entry": entry,
+               "X-API-Key": api_key_for_step(step)}
+    if doc_id:
+        headers["X-Demo-Doc"] = doc_id
+        headers["X-Session-Id"] = doc_id
+    return headers
+
+
 class ReviewRun:
     def __init__(self, general_base: str, sensitive_base: str | None, concurrency: int,
                  governance: bool, clause_keys: list[str] | None = None,
@@ -295,10 +312,7 @@ class ReviewRun:
         true_complexity: str,
         true_sensitive: bool,
     ) -> dict:
-        headers = {"Content-Type": "application/json", "X-Demo-Step": step,
-                   "X-Demo-Entry": entry}
-        if doc_id:
-            headers["X-Demo-Doc"] = doc_id
+        headers = request_headers(step, entry, doc_id)
         record: dict[str, Any] = {
             "step": step,
             "doc_id": doc_id,

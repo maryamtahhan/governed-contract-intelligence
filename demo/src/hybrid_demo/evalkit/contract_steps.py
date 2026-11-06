@@ -46,6 +46,8 @@ from typing import Any
 
 import httpx
 
+from ..common import DEMO_API_KEYS
+
 LABELS = ("CLASSIFY", "EXTRACT", "RISK", "REPORT")
 # Expected value for an agent-shaped request with no final user message. The
 # filter cannot extract a stage task, so the correct outcome is the default
@@ -735,6 +737,10 @@ def main(argv: list[str] | None = None) -> None:
     extra_headers = dict(
         item.split("=", 1) for item in args.header if "=" in item
     )
+    # PPE identity (Phase 1): the gateway's policy filter denies keyless
+    # requests, so the harness presents the eval key. An explicit
+    # --header X-API-Key=... still wins.
+    extra_headers.setdefault("X-API-Key", DEMO_API_KEYS["eval"])
     cases = list(cases)
     predictions = asyncio.run(run_cases(
         args.base_url, cases, concurrency=args.concurrency,
