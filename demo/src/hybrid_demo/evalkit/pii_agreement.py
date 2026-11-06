@@ -33,14 +33,15 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 from collections import Counter
 from pathlib import Path
 
 # serde_json's compact form; the scanner emits exactly this as the tracing
-# message, but the host's log formatter may wrap it with timestamps and
-# fields, so the line is located by marker and decoded from there.
+# message. The host's log formatter decides how it reaches the file: plain
+# text keeps it verbatim, JSON mode (PRAXIS_LOG_FORMAT=json) escapes it
+# inside the message field — hence the second marker.
 OBSERVE_MARKER = '{"plugin":"gci_pii_observe"'
+ESCAPED_MARKER = '{\\"plugin\\":\\"gci_pii_observe\\"'
 CLASSIFY_SUBJECT = "gci-classify"
 SENSITIVE_ENTRIES = {"sensitive", "sensitive-judgment"}
 _DECODER = json.JSONDecoder()
@@ -49,21 +50,39 @@ _DECODER = json.JSONDecoder()
 def parse_observe_lines(text: str) -> list[dict]:
     """Extract every observe record from a captured log, in order.
 
-    Robust to the host's log formatting: the record is found by marker and
-    decoded with ``raw_decode`` so anything the subscriber wraps around it
-    (timestamps, levels, span fields) is ignored. Unparseable markers are
-    skipped and counted by the caller via the returned-vs-matched
-    difference — a truncated line must not kill the report.
+    Robust to the host's log formatting. In plain-text mode the record is
+    found by marker and decoded with ``raw_decode`` so anything the
+    subscriber wraps around it (timestamps, levels, span fields) is
+    ignored. In JSON mode the record is escaped inside the ``message``
+    field of a JSON log line, so the line is parsed and the message
+    decoded. Unparseable lines are skipped — a truncated line must not
+    kill the report.
     """
     records: list[dict] = []
-    for match in re.finditer(re.escape(OBSERVE_MARKER), text):
-        start = match.start()
-        try:
-            value, _ = _DECODER.raw_decode(text, start)
-        except json.JSONDecodeError:
-            continue
-        if isinstance(value, dict):
-            records.append(value)
+    for line in text.splitlines():
+        if OBSERVE_MARKER in line:
+            start = line.index(OBSERVE_MARKER)
+            try:
+                value, _ = _DECODER.raw_decode(line, start)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(value, dict):
+                records.append(value)
+        elif ESCAPED_MARKER in line:
+            try:
+                outer = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            message = outer.get("message") if isinstance(outer, dict) else None
+            if not (isinstance(message, str) and OBSERVE_MARKER in message):
+                continue
+            start = message.index(OBSERVE_MARKER)
+            try:
+                value, _ = _DECODER.raw_decode(message, start)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(value, dict):
+                records.append(value)
     return records
 
 

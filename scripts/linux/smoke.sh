@@ -243,12 +243,20 @@ praxis_logs > /tmp/praxis-logs.txt
 records=$(grep -c 'gci-gateway' /tmp/praxis-logs.txt || true)
 [ "${records:-0}" -gt 0 ] || fail "no audit decision records in praxis logs (source gci-gateway)"
 ok "$records audit decision records emitted"
-observe=$(grep -c '"plugin":"gci_pii_observe"' /tmp/praxis-logs.txt || true)
-[ "${observe:-0}" -gt 0 ] || fail "no pii-observe lines in praxis logs"
-ok "$observe shadow-PII observe lines emitted (scanner fires on cmf.llm_input)"
+# The observe line rides tracing, so its form depends on PRAXIS_LOG_FORMAT:
+# plain text keeps the JSON verbatim; json mode escapes it inside message.
+observe_markers=0
+grep -cF '"plugin":"gci_pii_observe"' /tmp/praxis-logs.txt >/dev/null 2>&1 \
+  && observe_markers=$(grep -cF '"plugin":"gci_pii_observe"' /tmp/praxis-logs.txt || true)
+grep -cF '\\"plugin\\":\\"gci_pii_observe\\"' /tmp/praxis-logs.txt >/dev/null 2>&1 \
+  && observe_markers=$((observe_markers + $(grep -cF '\\"plugin\\":\\"gci_pii_observe\\"' /tmp/praxis-logs.txt || true)))
+[ "${observe_markers:-0}" -gt 0 ] || fail "no pii-observe lines in praxis logs"
+ok "$observe_markers shadow-PII observe lines emitted (scanner fires on cmf.llm_input)"
 # The sensitive prompts contain screen markers ("personal data", EMP-...),
 # so at least one observe line must carry a match: the scanner sees content.
-grep -q '"matched":\["' /tmp/praxis-logs.txt || fail "no observe line recorded a match"
+{ grep -qF '"matched":["' /tmp/praxis-logs.txt \
+    || grep -qF '\\"matched\\":[\\"' /tmp/praxis-logs.txt; } \
+  || fail "no observe line recorded a match"
 ok "scanner observed PII content in the sensitive prompts"
 
 echo

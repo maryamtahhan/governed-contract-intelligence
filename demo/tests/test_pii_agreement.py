@@ -72,6 +72,20 @@ def test_observe_lines_parse_through_log_wrapping():
     assert lines[3]["matched"] == ["PERSONAL_DATA_MARKER"]
 
 
+def test_observe_lines_parse_json_log_mode():
+    # PRAXIS_LOG_FORMAT=json escapes the message inside a JSON log line;
+    # the parser must recover the record from the message field.
+    plain = parse_observe_lines(LOGS)
+    json_logs = "\n".join(
+        json.dumps({"timestamp": "2026-11-06T10:00:00Z", "level": "INFO",
+                    "target": "gci_pii_observe", "message": _line(
+                        "C-2026-0001", "gci-classify", ["EMAIL_ADDRESS"], 8123)
+                    .split(": ", 1)[1]})
+        for _ in range(1))
+    parsed = parse_observe_lines(json_logs)
+    assert parsed == [plain[0]]
+
+
 def test_pipeline_screen_reads_entries_not_truth():
     screened = pipeline_screen_by_doc(RECORDS)
     assert screened == {"C-2026-0001": True,
