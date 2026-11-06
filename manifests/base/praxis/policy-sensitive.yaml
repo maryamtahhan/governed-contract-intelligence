@@ -36,6 +36,33 @@ plugins:
           id: user
           roles: groups
 
+  # Decision records (image v0.9.1+): same sink as the general policy. The
+  # read_labels capability is what surfaces the taint diff below in every
+  # record — "this session is sensitive" becomes part of the audit trail,
+  # not just routing behavior.
+  - name: audit
+    kind: audit/logger
+    mode: audit
+    capabilities:
+      - read_subject
+      - read_client
+      - read_labels
+    config:
+      destination: stderr
+      source: gci-gateway
+
+  # Shadow PII screen (V19 groundwork): same observe-only scanner as the
+  # general policy. On the sensitive entries its lines will usually agree
+  # with the screen that routed the document here — disagreement is exactly
+  # what the agreement report exists to surface.
+  - name: pii-observe
+    kind: validator/gci-pii-observe
+    mode: audit
+    hooks: [cmf.llm_input]
+    capabilities:
+      - read_agent
+      - read_subject
+
 global:
   authentication: [api-keys]
   authorization:

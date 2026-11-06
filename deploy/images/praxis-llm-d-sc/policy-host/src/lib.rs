@@ -241,6 +241,7 @@ impl Plugin for GciPiiObserve {
     }
 }
 
+#[async_trait]
 impl HookHandler<CmfHook> for GciPiiObserve {
     async fn handle(
         &self,

@@ -162,7 +162,8 @@ export COMPOSE="$HOME/pv/bin/podman-compose"    # or "docker compose"
 export PATH="$HOME/.local/bin:$PATH"
 
 scripts/linux/up.sh        # build + start the stack (hybrid config), wait for readiness
-scripts/linux/smoke.sh     # 12 assertions: routing, fallback, fail-closed, governance, audit
+scripts/linux/smoke.sh     # 18 assertions: routing, fallback, fail-closed, governance, audit,
+                           # policy auth (keys fail closed) + shadow PII observe lines
 DOCS=40 scripts/linux/arms.sh   # all four routing configs on the same documents + report
 scripts/linux/demo.sh      # choreographed on-stage run (pauses between acts)
 scripts/linux/down.sh      # stop (-v also deletes the trace database)
@@ -416,10 +417,15 @@ scripts/linux/down.sh -v             # Linux stack, -v deletes traces too
   batch path through the gateway entries is denied by the policy layer
   until that component can present a key (docs/design.md §3.1).
 - The sensitive entry is chosen by the pipeline's PII screen (a DLP-style
-  gate). Moving that decision into the gateway — llm-d-sc's sensitivity
-  taxonomy over gRPC, two-label routing in one praxis chain — is unvalidated
-  (V19) and would mean re-adding the classifier (git history, commit
-  `aa080e9`). Network policies provide the enforcement layer either way
-  (V15).
+  gate). Since the PPE integration the gateway also runs an observe-only
+  PII scanner over every request (`validator/gci-pii-observe`, pattern
+  catalog mirroring the screen), measured against the pipeline's call by
+  `hybrid-pii-agreement` — but it only observes, and the entry choice is
+  still the client's. Moving that decision into the gateway — llm-d-sc's
+  sensitivity taxonomy over gRPC, two-label routing in one praxis chain,
+  or a promoted PPE rule — remains unvalidated (V19); the scanner's
+  agreement number is the prerequisite evidence either way. Re-adding the
+  classifier means git history, commit `aa080e9`. Network policies provide
+  the enforcement layer either way (V15).
 - rhgaudi3s2 was found emptied of our workloads on 2026-10-31 (FINDINGS
   §7); redeploy from the runbooks above before any cluster-dependent demo.

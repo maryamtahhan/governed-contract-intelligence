@@ -9,6 +9,11 @@ STACK=deploy/linux
 COMPOSE="${COMPOSE:-docker compose}"
 GW="${GATEWAY:-http://127.0.0.1:8080}"
 SGW="${SENSITIVE:-http://127.0.0.1:8083}"
+# The gateway's PPE policy layer fails closed on unknown or missing API
+# keys, so every prompt must present one. The eval identity is the smoke
+# script's; override with HYBRID_API_KEY_EVAL when a stack runs its own
+# keys (digests in manifests/base/praxis/api-keys.yaml).
+API_KEY="${HYBRID_API_KEY_EVAL:-gci-demo-key-eval}"
 
 PASS=0
 fail() { echo "FAIL: $*" >&2; exit 1; }
@@ -86,13 +91,28 @@ done
 echo " done"
 
 simple_prompt() { curl -sf -D /tmp/h -o /tmp/b "$GW/v1/chat/completions" -H 'Content-Type: application/json' \
+  -H "X-API-Key: $API_KEY" -H 'X-Session-Id: smoke-test' \
   -d '{"model":"Semantic-Qwen","messages":[{"role":"user","content":"What is the capital of France?"}],"max_tokens":24}'; }
 reasoning_prompt() { curl -s -D /tmp/h -o /tmp/b "$GW/v1/chat/completions" -H 'Content-Type: application/json' \
+  -H "X-API-Key: $API_KEY" -H 'X-Session-Id: smoke-test' \
   -d '{"model":"Semantic-Qwen","messages":[{"role":"user","content":"Prove that the halting problem is undecidable, then compare it with the halting problem across all 3 documents and synthesise the overall risk report."}],"max_tokens":48}'; }
 sensitive_reasoning() { curl -s -D /tmp/h -o /tmp/b "$SGW/v1/chat/completions" -H 'Content-Type: application/json' \
+  -H "X-API-Key: $API_KEY" -H 'X-Session-Id: smoke-test' \
   -d '{"model":"Semantic-Qwen","messages":[{"role":"user","content":"Produce the cross-document risk report across all 3 documents containing personal data for the data controller. Synthesise and compare the extractions, derive the aggregate counts, and prove the ranking. Return JSON."}],"max_tokens":48}'; }
 sensitive_simple() { curl -sf -D /tmp/h -o /tmp/b "$SGW/v1/chat/completions" -H 'Content-Type: application/json' \
+  -H "X-API-Key: $API_KEY" -H 'X-Session-Id: smoke-test' \
   -d '{"model":"Semantic-Qwen","messages":[{"role":"user","content":"What is the capital of France? The data controller contact is aoife@example.com, EMP-123456."}],"max_tokens":24}'; }
+keyless_prompt() { curl -s -D /tmp/h -o /tmp/b "$GW/v1/chat/completions" -H 'Content-Type: application/json' \
+  -d '{"model":"Semantic-Qwen","messages":[{"role":"user","content":"What is the capital of France?"}],"max_tokens":24}'; }
+badkey_prompt() { curl -s -D /tmp/h -o /tmp/b "$GW/v1/chat/completions" -H 'Content-Type: application/json' \
+  -H 'X-API-Key: not-a-known-key' -H 'X-Session-Id: smoke-test' \
+  -d '{"model":"Semantic-Qwen","messages":[{"role":"user","content":"What is the capital of France?"}],"max_tokens":24}'; }
+praxis_logs() {
+  case "$COMPOSE" in
+    *podman*) podman logs hybrid-demo_praxis_1 2>&1 || true ;;
+    *) $COMPOSE -f "$STACK/docker-compose.yml" logs --no-color praxis 2>&1 || true ;;
+  esac
+}
 hdr() { tr -d '\r' < /tmp/h | grep -i "^$1:" | head -1 | cut -d' ' -f2- || true; }
 status_of() { head -1 /tmp/h | tr -d '\r' | awk '{print $2}'; }
 
@@ -206,6 +226,30 @@ for line in lines:
 print(f'    {len(lines)} traces exported as JSONL')
 " || fail "audit.jsonl parse"
 ok "audit.jsonl exports one JSON object per trace"
+
+echo "== 11. policy layer: the gateway fails closed without a valid key"
+keyless_prompt
+[ "$(status_of)" != "200" ] || fail "keyless request was served (status 200)"
+ok "keyless request denied (status $(status_of))"
+badkey_prompt
+[ "$(status_of)" != "200" ] || fail "unknown key was served (status 200)"
+ok "unknown key denied (status $(status_of))"
+simple_prompt
+[ "$(status_of)" = "200" ] || fail "known key not served after the denials: $(status_of)"
+ok "known key still served"
+
+echo "== 12. policy layer: decision records and the shadow PII screen"
+praxis_logs > /tmp/praxis-logs.txt
+records=$(grep -c 'gci-gateway' /tmp/praxis-logs.txt || true)
+[ "${records:-0}" -gt 0 ] || fail "no audit decision records in praxis logs (source gci-gateway)"
+ok "$records audit decision records emitted"
+observe=$(grep -c '"plugin":"gci_pii_observe"' /tmp/praxis-logs.txt || true)
+[ "${observe:-0}" -gt 0 ] || fail "no pii-observe lines in praxis logs"
+ok "$observe shadow-PII observe lines emitted (scanner fires on cmf.llm_input)"
+# The sensitive prompts contain screen markers ("personal data", EMP-...),
+# so at least one observe line must carry a match: the scanner sees content.
+grep -q '"matched":\["' /tmp/praxis-logs.txt || fail "no observe line recorded a match"
+ok "scanner observed PII content in the sensitive prompts"
 
 echo
 echo "ALL $PASS CHECKS PASSED"

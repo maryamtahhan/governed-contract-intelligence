@@ -1,16 +1,16 @@
 # Adapted standalone manifest for praxis-proxy/policy's reference
-# audit-logger, vendored from the v0.5.0 tag (see PPE_REF in build.sh —
-# pinned to the tag, not main, because praxis-filter's published 0.7.5
-# depends on the *released* praxis-policy 0.5.0, and main's plugin sources
-# may use unreleased core APIs).
+# audit-logger, vendored from the v0.4.1 tag (see PPE_REF in build.sh —
+# the version the published praxis-filter 0.7.5 pins; see the comment on
+# the dependency below).
 #
 # The upstream Cargo.toml inherits every field from the PPE workspace; this
 # copy pins the same dependencies as published crates so the crate builds
-# inside the ai-gateway vendor tree. src/ is vendored unmodified.
+# inside the ai-gateway vendor tree. src/ is vendored unmodified (it is
+# byte-identical between the v0.4.1 and v0.5.0 tags).
 #
 # No [features] block: the crypto-backend feature split (crypto-rustcrypto
-# / fips) is unreleased on the 0.5.0 line, so released praxis-policy-core
-# 0.5.0 has no such features to forward to.
+# / fips) arrived after v0.5.0, so praxis-policy-core 0.4.1 has no such
+# features to forward to.
 [package]
 name = "praxis-policy-plugin-audit-logger"
 version = "0.5.0"
@@ -21,11 +21,11 @@ publish = false
 description = "PPE CMF plugin — structured per-request audit logging (reference implementation, vendored by deploy/images/praxis-llm-d-sc)"
 
 [dependencies]
-# Must resolve to the same praxis-policy-core the praxis-filter umbrella
-# (praxis-policy 0.5.0) pulls in; same package + version from crates.io
-# unifies to one instance, which is what makes the PluginFactory trait
-# here the same type register_policy_plugin_factory expects.
-praxis-policy-core = "0.5.0"
+# Must resolve to the same praxis-policy-core the published praxis-filter
+# 0.7.5 pins — 0.4.1 (its 0.5.0 bump is unreleased). The reference plugin
+# sources are identical across those two tags; only the version pin
+# matters. Bump together with PPE_REF in build.sh.
+praxis-policy-core = "0.4.1"
 
 async-trait = "0.1"
 chrono = { version = "0.4", features = ["serde"] }

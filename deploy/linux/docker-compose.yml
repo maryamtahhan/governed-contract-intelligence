@@ -18,12 +18,15 @@ name: hybrid-demo
 
 services:
   praxis:
-    # Custom build with the llm_d_sc filter (Praxis 0.7.5 / ai-gateway 0.9.0),
-    # published by the publish-images workflow; rebuild path is
-    # deploy/images/praxis-llm-d-sc/. The filter is unused by the shipped
-    # configs (no classifier in the request path) but stays in the image
-    # for the contract-step experiment.
-    image: quay.io/mtahhan/gci-praxis:v0.9.0
+    # Custom build with the llm_d_sc filter and the PPE policy host
+    # plugins (audit sink + observe-only PII scanner; Praxis 0.7.5 /
+    # ai-gateway 0.9.0), published by the publish-images workflow; rebuild
+    # path is deploy/images/praxis-llm-d-sc/. The llm_d_sc filter is unused
+    # by the shipped configs (no classifier in the request path) but stays
+    # in the image for the contract-step experiment. The policy filter and
+    # its documents (policy*.yaml, api-keys.yaml in this directory) are
+    # used by every config.
+    image: quay.io/mtahhan/gci-praxis:v0.9.1
     # In compose, `command` appends to the image ENTRYPOINT (unlike the k8s
     # `command` in the manifests, which replaces it), so set entrypoint here.
     entrypoint: ["praxis-ai"]

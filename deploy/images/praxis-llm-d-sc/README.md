@@ -28,7 +28,7 @@ This directory is the reproducible path to the current upstream stack:
 | ai-gateway | `a716baae` (`v0.9.0-20-ga716baae`, origin/main on 2026-11-05) |
 | llm-d-sc filter | `b84acfb` (cnuland/llm-d-sc-praxis-filter) |
 | filter patch | [`llm-d-sc-filter-0.7.5.patch`](llm-d-sc-filter-0.7.5.patch) |
-| PPE (policy engine) | `d29a6a7` (praxis-proxy/policy **tag v0.5.0**; the tag, not main — see below) |
+| PPE (policy engine) | `a178f14` (praxis-proxy/policy **tag v0.4.1** — the version the published praxis-filter 0.7.5 pins; see below) |
 | audit-logger | vendored from that tag, manifest adapted in [`audit-logger.Cargo.toml`](audit-logger.Cargo.toml) |
 | policy host + PII observe | [`policy-host/`](policy-host/) (ours) |
 
@@ -37,9 +37,12 @@ The filter was written against Praxis 0.5.2. The patch updates only its
 ai-gateway 0.9.0 already resolves. Resolving a different Praxis in the filter
 would put two incompatible `praxis_filter` crates in the graph; the filter and
 the server traits must be the same type. The same one-instance rule is why the
-PPE pin is the **v0.5.0 tag**: praxis-filter 0.7.5 depends on the *released*
-praxis-policy 0.5.0, and the vendored plugins must compile against that same
-core or the `PluginFactory` trait splits in two.
+PPE pin is **v0.4.1**: the published praxis-filter 0.7.5 depends on
+praxis-policy 0.4.1 from crates.io, and the vendored plugins must implement
+that core's `PluginFactory` trait. (The first v0.9.1 build failed exactly here
+by pinning v0.5.0: two `praxis-policy-core` copies, E0277. praxis main has
+bumped to PPE 0.5.0 but no release carries it; when one does, bump the pin,
+the two vendored manifests, and build.sh's check together.)
 
 ## Build
 

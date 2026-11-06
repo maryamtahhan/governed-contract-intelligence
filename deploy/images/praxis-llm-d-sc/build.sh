@@ -20,13 +20,16 @@
 #   AI_GATEWAY_REF  praxis-proxy/ai origin/main at 2026-11-05
 #                   (v0.9.0-20-ga716baae; pins praxis-proxy 0.7.5)
 #   FILTER_REF      cnuland/llm-d-sc-praxis-filter main at 2026-11-05
-#   PPE_REF         praxis-proxy/policy at tag v0.5.0 (d29a6a7, 2026-10-13).
-#                   The TAG, not main: praxis-filter 0.7.5 depends on the
-#                   released praxis-policy 0.5.0, and main's reference
-#                   plugins may use unreleased core APIs. The vendored
-#                   audit-logger must compile against the same core the
-#                   umbrella pulls in, or the PluginFactory trait splits in
-#                   two and the build fails.
+#   PPE_REF         praxis-proxy/policy at tag v0.4.1 (a178f14, 2026-10-05).
+#                   The version is not a choice: the PUBLISHED praxis-filter
+#                   0.7.5 depends on praxis-policy 0.4.1 from crates.io, so
+#                   the vendored plugins must implement the 0.4.1
+#                   PluginFactory trait or the graph holds two
+#                   praxis-policy-core copies and the build fails (E0277,
+#                   the exact failure the first v0.9.1 build caught). praxis
+#                   main has bumped to PPE 0.5.0 (#1464) but no release
+#                   carries it yet; when one does, bump this pin, the two
+#                   vendored manifests, and the check below together.
 #
 # Usage:
 #   ./build.sh                         # build for linux/amd64
@@ -55,7 +58,7 @@ PPE_REPO="${PPE_REPO:-https://github.com/praxis-proxy/policy}"
 
 AI_GATEWAY_REF="${AI_GATEWAY_REF:-a716baaef1a027ff02a00bf4fc692de54c366cee}"
 FILTER_REF="${FILTER_REF:-b84acfb840c7232fcba2680e46fd023ac8c7e02c}"
-PPE_REF="${PPE_REF:-d29a6a75f37a37fc9815d184ccf21564b2f4ac00}"
+PPE_REF="${PPE_REF:-a178f14cb156aecef59d3e16de3cf7fe65c691db}"
 IMAGE="${IMAGE:-quay.io/mtahhan/gci-praxis:v0.9.1}"
 PLATFORM="${PLATFORM:-linux/amd64}"
 PUSH=0
@@ -200,13 +203,14 @@ grep -q 'praxis-core = { version = "0.7.5"' "$CTX/ai-gateway/Cargo.toml" || {
   # ai-gateway may format the pin differently; make the operator check it.
   echo "WARNING: could not confirm praxis 0.7.5 in ai-gateway Cargo.toml" >&2
 }
-# The vendored plugins must resolve to the released praxis-policy-core 0.5.0
-# the praxis-filter umbrella pins, or the PluginFactory trait splits in two
-# and the server fails to compile. Both manifests say so explicitly.
+# The vendored plugins must resolve to the praxis-policy-core the published
+# praxis-filter 0.7.5 pins (0.4.1 — its 0.5.0 bump is unreleased), or the
+# PluginFactory trait splits in two and the server fails to compile. Both
+# manifests say so explicitly.
 for crate in praxis-policy-plugin-audit-logger gci-praxis-policy-host; do
-  grep -q '^praxis-policy-core = "0.5.0"' \
+  grep -q '^praxis-policy-core = "0.4.1"' \
     "$CTX/ai-gateway/vendor/$crate/Cargo.toml" || {
-      echo "FATAL: $crate is not pinned to praxis-policy-core 0.5.0" >&2
+      echo "FATAL: $crate is not pinned to praxis-policy-core 0.4.1" >&2
       exit 1
     }
 done

@@ -26,11 +26,13 @@ spec:
       containers:
         - name: praxis
           # Custom build: Praxis 0.7.5 / ai-gateway 0.9.0 + the out-of-tree
-          # llm_d_sc filter, published by the publish-images workflow. The
-          # filter is unused by the shipped configs (no classifier in the
-          # request path) but stays in the image for the contract-step
-          # experiment; the rebuild path is deploy/images/praxis-llm-d-sc/.
-          image: quay.io/mtahhan/gci-praxis:v0.9.0
+          # llm_d_sc filter and the PPE policy host plugins (audit sink,
+          # observe-only PII scanner), published by the publish-images
+          # workflow. The llm_d_sc filter is unused by the shipped configs
+          # (no classifier in the request path) but stays in the image for
+          # the contract-step experiment; the rebuild path is
+          # deploy/images/praxis-llm-d-sc/.
+          image: quay.io/mtahhan/gci-praxis:v0.9.1
           command: ["praxis-ai"]
           env:
             - name: PRAXIS_CONFIG
