@@ -1,10 +1,12 @@
 # Build-time validation config for the custom praxis-ai image.
 #
 # This is intentionally small: it exists so `praxis-ai --validate` constructs
-# the llm_d_sc filter, validates its config schema, and checks that the filter
-# and the load balancer agree on the selected cluster. It does not contact
-# llm-d-sc or any model pool. The gRPC channel is lazy and validation performs
-# no DNS or network I/O.
+# the llm_d_sc filter, validates its config schema, checks that the filter
+# and the load balancer agree on the selected cluster, and — since v0.9.1 —
+# loads the policy filter with a document naming both host-registered PPE
+# plugins (see validate-policy.yaml). It does not contact llm-d-sc or any
+# model pool. The gRPC channel is lazy and validation performs no DNS or
+# network I/O.
 
 admin:
   metrics_address: "127.0.0.1:9901"
@@ -17,6 +19,11 @@ listeners:
 filter_chains:
   - name: validate-routing
     filters:
+      - filter: policy
+        config_path: /tmp/validate-policy.yaml
+        body_access: read_only
+        llm:
+          max_request_bytes: 4194304
       - filter: llm_d_sc
         endpoint: "127.0.0.1:50051"
         signal: contract_step

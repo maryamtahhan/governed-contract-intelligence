@@ -1,0 +1,39 @@
+# Build-time validation policy for the custom praxis-ai image.
+#
+# Minimal on purpose: it exists so `praxis-ai --validate` loads the policy
+# filter with a document that names BOTH host-registered plugin kinds. PPE
+# fails a policy load naming an unregistered `kind:` at startup, so this is
+# the proof that gci-praxis-policy-host's registrations are live in the
+# binary — a missing registration fails the image build, not a demo run.
+#
+# It performs no I/O: no identity provider (nothing authenticates at
+# validation time), no session store, no callouts.
+
+plugins:
+  # The reference audit sink, vendored from praxis-proxy/policy v0.5.0.
+  # Lists no hooks, which is what makes it attach as a sink.
+  - name: audit
+    kind: audit/logger
+    mode: audit
+    capabilities:
+      - read_subject
+      - read_client
+      - read_labels
+    config:
+      destination: stderr
+      source: gci-validate
+
+  # Our observe-only PII scanner. One hook is enough to prove the factory
+  # builds and the handler registers.
+  - name: pii-observe
+    kind: validator/gci-pii-observe
+    hooks: [cmf.llm_input]
+    capabilities:
+      - read_agent
+      - read_subject
+
+routes:
+  - llm: Semantic-Qwen
+    authorization:
+      pre_invocation:
+        - "require(authenticated)"

@@ -42,16 +42,18 @@ WORKDIR /src
 # changes between ai-gateway releases.
 COPY ai-gateway/ /src/
 
-# Prove the external filter is wired exactly once. A silently unwired build
-# would produce a healthy gateway with no llm_d_sc filter, and the failure would
-# only surface at pod startup.
+# Prove both external crates are wired exactly once each. A silently unwired
+# build would produce a healthy gateway with no llm_d_sc filter or no PPE
+# host registrations, and the failure would only surface at pod startup.
 RUN set -e; \
-    n=$(grep -c '^llm-d-sc-praxis-filter[[:space:]]*=' /src/server/Cargo.toml || true); \
-    if [ "$n" -ne 1 ]; then \
-      echo "FATAL: expected exactly 1 filter dependency in server/Cargo.toml, found $n" >&2; \
-      exit 1; \
-    fi; \
-    echo "OK: llm_d_sc filter wired into server/Cargo.toml"
+    for dep in llm-d-sc-praxis-filter gci-praxis-policy-host; do \
+      n=$(grep -c "^${dep}[[:space:]]*=" /src/server/Cargo.toml || true); \
+      if [ "$n" -ne 1 ]; then \
+        echo "FATAL: expected exactly 1 ${dep} dependency in server/Cargo.toml, found $n" >&2; \
+        exit 1; \
+      fi; \
+      echo "OK: ${dep} wired into server/Cargo.toml"; \
+    done
 
 # Lower this if the builder pod is OOM-killed. Never switch to a debug build:
 # every latency figure depends on --release. Keep an integer: Cargo rejects a
@@ -64,9 +66,13 @@ RUN cargo build --release -p praxis-ai-proxy \
  && cp target/release/praxis-ai /usr/local/bin/praxis-ai
 
 # Validate the real startup path: filter factory construction, chain expansion,
-# cluster alignment, and the llm_d_sc config schema. This performs no DNS and
-# no network I/O (the gRPC channel is lazy).
+# cluster alignment, and the llm_d_sc config schema — and, since v0.9.1, the
+# policy filter loading a document that names both host-registered PPE plugins.
+# An unregistered `kind:` fails the policy load, so a missing host registration
+# breaks here, not at first request. This performs no DNS and no network I/O
+# (the gRPC channel is lazy; the api-key directory is a local file).
 COPY validate.yaml /tmp/validate.yaml
+COPY validate-policy.yaml /tmp/validate-policy.yaml
 RUN /usr/local/bin/praxis-ai --validate -c /tmp/validate.yaml \
  && echo "OK: llm_d_sc is registered and the validation config passes"
 
