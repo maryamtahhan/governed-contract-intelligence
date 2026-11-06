@@ -141,6 +141,7 @@ for i in $(seq 1 10); do
   curl -s -m 300 -D /tmp/mc-h -o /dev/null "$GATEWAY/v1/chat/completions" \
     -H 'Content-Type: application/json' \
     -H "Authorization: Bearer ${TRACE_API_TOKEN:-}" \
+    -H "X-API-Key: ${HYBRID_API_KEY_EVAL:-gci-demo-key-eval}" \
     -d '{"model":"Semantic-Qwen","messages":[{"role":"user","content":"Say ok."}],"max_tokens":8}'
   grep -qi "^x-demo-classification:" /tmp/mc-h && break
   sleep 2

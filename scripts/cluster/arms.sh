@@ -54,6 +54,7 @@ set_config() {
     curl -s -m 120 -D /tmp/config-h -o /dev/null "$GATEWAY/v1/chat/completions" \
       -H 'Content-Type: application/json' \
       -H "Authorization: Bearer ${TRACE_API_TOKEN:-}" \
+      -H "X-API-Key: ${HYBRID_API_KEY_EVAL:-gci-demo-key-eval}" \
       -d '{"model":"Semantic-Qwen","messages":[{"role":"user","content":"Say ok."}],"max_tokens":8}'
     grep -qi "^x-demo-route:" /tmp/config-h && break
     sleep 2
