@@ -24,7 +24,6 @@
 
 use std::sync::Arc;
 
-use async_trait::async_trait;
 use praxis_policy_core::{
     cmf::{CmfHook, ContentPart, Message, MessagePayload},
     context::PluginContext,
@@ -241,7 +240,12 @@ impl Plugin for GciPiiObserve {
     }
 }
 
-#[async_trait]
+// No #[async_trait] here: praxis-policy-core 0.4.1 declares HookHandler
+// with RPITIT (`-> impl Future<Output = H::Result> + Send`), and the
+// attribute's boxed-future desugaring does not match it (E0195, the
+// second v0.9.1 build failure). A bare `async fn` is the matching form —
+// same as the v0.4.1 reference scanner. If a praxis release moves the
+// trait to async-trait, this and the import come back.
 impl HookHandler<CmfHook> for GciPiiObserve {
     async fn handle(
         &self,
