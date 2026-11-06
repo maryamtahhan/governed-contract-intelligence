@@ -215,19 +215,24 @@ from the pipeline's screen — the trust model is unchanged — but the fact now
 lives in gateway-owned state the client cannot rewrite. Nothing denies on
 the label; any future rule on it is a measured decision.
 
-Since image v0.9.1 the same policy layer emits **decision records** (one
-JSON line per verdict, from PPE's reference `audit/logger` sink, which the
-image host-registers because the engine deliberately does not bundle it)
-and runs a **shadow PII screen**: `validator/gci-pii-observe`, an
-observe-only scanner over `cmf.llm_input` whose pattern catalog mirrors
-`pii.py` regex-for-regex. It never denies and never rewrites; it logs one
-structured line per request, and `hybrid-pii-agreement` joins those lines
-against a run's records to report whether the gateway would have made the
-pipeline's screen call — the V19 groundwork. The comparison point is the
-classify-time observation; later steps are context, because their prompts
-embed document text (a screened document's risk prompt literally says
-"contains personal data"). Both records land in the praxis container logs
-alongside the trace-ui SQLite audit trail.
+Since image v0.9.1 the same policy layer emits **request records** (from
+PPE's reference `audit/logger`, which the image host-registers because the
+engine deliberately does not bundle it) and runs a **shadow PII screen**:
+`validator/gci-pii-observe`, an observe-only scanner over `cmf.llm_input`
+whose pattern catalog mirrors `pii.py` regex-for-regex. It never denies and
+never rewrites; it logs one structured line per request, and
+`hybrid-pii-agreement` joins those lines against a run's records to report
+whether the gateway would have made the pipeline's screen call — the V19
+groundwork. The comparison point is the classify-time observation; later
+steps are context, because their prompts embed document text (a screened
+document's risk prompt literally says "contains personal data"). Both
+records land in the praxis container logs alongside the trace-ui SQLite
+audit trail. One 0.4.1 limitation, recorded rather than worked around: the
+published praxis-policy 0.4.1 cannot load a hookless audit *sink* beside
+APL routes (the visitor rejects plugins no step names; fixed upstream on
+the 0.5.0 line as policy#210), so the logger runs as a reached observer —
+records for allowed traffic, no verdict field. Full verdict-and-deny
+records arrive when a praxis release ships PPE 0.5.x.
 
 The policy layer attributes and audits; it does not steer pools. PPE's
 `restrict` effect is exactly the pool-constraint primitive this design
