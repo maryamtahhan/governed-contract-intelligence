@@ -1,12 +1,23 @@
-# praxis-ai with the llm_d_sc filter
+# praxis-ai with the llm_d_sc filter and the PPE policy host
 
-**Image name:** `quay.io/mtahhan/gci-praxis:v0.9.0` — published 2026-11-05,
-digest `sha256:2187ab818efab9a8f3d1f911190d47fad960888bada7d3db8a973d3ad70ac992`
+**Image name:** `quay.io/mtahhan/gci-praxis:v0.9.1` — see "Published builds"
+below for the digest. The previous published build was
+`quay.io/mtahhan/gci-praxis:v0.9.0` (2026-11-05, digest
+`sha256:2187ab818efab9a8f3d1f911190d47fad960888bada7d3db8a973d3ad70ac992`)
+and remains the image the v0.9.0-era configs ran.
 
-A custom Praxis build containing the out-of-tree [`llm_d_sc` filter][filter].
-Upstream `ghcr.io/praxis-proxy/ai` does not contain that filter, so updating
-the base image alone would silently remove semantic classification from the
-gateway. The previous published build was
+A custom Praxis build containing two out-of-tree additions the upstream
+image does not have:
+
+- the [`llm_d_sc` filter][filter] (semantic-classification routing), and
+- since v0.9.1, the **PPE policy host plugins**: the reference
+  `audit/logger` sink vendored from praxis-proxy/policy's v0.5.0 tag, and
+  `validator/gci-pii-observe`, an observe-only PII scanner whose pattern
+  catalog mirrors `demo/src/hybrid_demo/pii.py`. Both register through
+  [`policy-host/`](policy-host/) via the same build-time discovery as the
+  filter. Updating the base image alone would silently remove either one.
+
+The previous published build before this lineage was
 `quay.io/rmalone/praxis-ai-llm-d-sc:v0.7.0` (Praxis 0.7.0).
 
 This directory is the reproducible path to the current upstream stack:
@@ -17,12 +28,18 @@ This directory is the reproducible path to the current upstream stack:
 | ai-gateway | `a716baae` (`v0.9.0-20-ga716baae`, origin/main on 2026-11-05) |
 | llm-d-sc filter | `b84acfb` (cnuland/llm-d-sc-praxis-filter) |
 | filter patch | [`llm-d-sc-filter-0.7.5.patch`](llm-d-sc-filter-0.7.5.patch) |
+| PPE (policy engine) | `d29a6a7` (praxis-proxy/policy **tag v0.5.0**; the tag, not main — see below) |
+| audit-logger | vendored from that tag, manifest adapted in [`audit-logger.Cargo.toml`](audit-logger.Cargo.toml) |
+| policy host + PII observe | [`policy-host/`](policy-host/) (ours) |
 
 The filter was written against Praxis 0.5.2. The patch updates only its
 `praxis-core`, `praxis-filter`, and `yaml_serde` pins to the versions
 ai-gateway 0.9.0 already resolves. Resolving a different Praxis in the filter
 would put two incompatible `praxis_filter` crates in the graph; the filter and
-the server traits must be the same type.
+the server traits must be the same type. The same one-instance rule is why the
+PPE pin is the **v0.5.0 tag**: praxis-filter 0.7.5 depends on the *released*
+praxis-policy 0.5.0, and the vendored plugins must compile against that same
+core or the `PluginFactory` trait splits in two.
 
 ## Build
 

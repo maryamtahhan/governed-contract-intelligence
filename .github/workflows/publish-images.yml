@@ -27,7 +27,7 @@ concurrency:
 # stack consumes them. Restore them from git history (commit aa080e9) if the
 # experiment needs a rebuild.
 env:
-  PRAXIS_IMAGE: quay.io/mtahhan/gci-praxis:v0.9.0
+  PRAXIS_IMAGE: quay.io/mtahhan/gci-praxis:v0.9.1
 
 jobs:
   praxis:

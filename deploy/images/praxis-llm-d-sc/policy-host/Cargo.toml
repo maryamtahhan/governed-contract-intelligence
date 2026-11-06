@@ -1,0 +1,56 @@
+# gci-praxis-policy-host — host registrations for the PPE plugins the GCI
+# gateway runs.
+#
+# The Praxis Policy Engine deliberately does not bundle its reference
+# plugins (a test in praxis-proxy/policy enforces that `audit/logger` and
+# `validator/pii-scan` are NOT registered by the umbrella crate): a host
+# registers the kinds it wants before the server starts. This crate is that
+# host registration for our gateway image. It is discovered through the
+# same build-time mechanism as the llm_d_sc filter — the marker below makes
+# the ai-gateway server's build.rs generate a call to register_filters() —
+# and it exports no HTTP filters of its own; the generated registry
+# parameter is unused.
+#
+# What gets registered:
+#
+#   audit/logger              the reference audit sink (vendored from the
+#                             praxis-proxy/policy v0.5.0 tag alongside this
+#                             crate by build.sh). Emits one JSON decision
+#                             record per request when a policy names it.
+#   validator/gci-pii-observe an observe-only PII scanner written here,
+#                             modeled on the reference validator/pii-scan.
+#                             It NEVER denies and NEVER rewrites: it logs
+#                             one structured line per scanned request so
+#                             the gateway-side screen can be measured
+#                             against the pipeline's client-side screen
+#                             (demo/src/hybrid_demo/pii.py) before anyone
+#                             considers promoting it to a gate.
+[package]
+name = "gci-praxis-policy-host"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.96"
+license = "Apache-2.0"
+publish = false
+description = "GCI gateway host registrations: PPE reference audit sink and an observe-only PII scanner"
+
+# Marker consumed by the Praxis server's build-time filter discovery
+# (server/build.rs walks cargo metadata looking for this key).
+[package.metadata.praxis-filters]
+
+[dependencies]
+async-trait = "0.1"
+# Default features include `policy-engine`, which is what provides
+# register_policy_plugin_factory. The ai-gateway build enables it too, so
+# the features unify to one instance of praxis-filter in the graph.
+praxis-filter = { package = "praxis-proxy-filter", version = "0.7.5" }
+# Must resolve to the same praxis-policy-core 0.5.0 the praxis-filter
+# umbrella (praxis-policy 0.5.0) pulls in, or the PluginFactory trait here
+# would be a different type than the one register_policy_plugin_factory
+# expects. Same package + same version from crates.io unifies.
+praxis-policy-core = "0.5.0"
+praxis-policy-plugin-audit-logger = { path = "../praxis-policy-plugin-audit-logger" }
+regex = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tracing = "0.1"

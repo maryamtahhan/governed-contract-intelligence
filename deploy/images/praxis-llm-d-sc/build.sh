@@ -1,16 +1,32 @@
 #!/usr/bin/env bash
-# Build the praxis-ai image that contains the llm_d_sc filter.
+# Build the praxis-ai image that contains the llm_d_sc filter and the GCI
+# PPE policy host plugins.
 #
 # The upstream project publishes a correct praxis-ai image, but it has no
 # llm_d_sc filter: the filter is an out-of-tree Praxis extension. This script
 # exports pinned sources, applies the one dependency update the filter needs for
 # Praxis 0.7.5 / ai-gateway 0.9.0, wires the crate into the server, and builds.
 #
+# Since v0.9.1 it also vendors two PPE policy plugins the engine deliberately
+# does not bundle (praxis-proxy/policy enforces that by test): the reference
+# audit-logger sink, exported from the PPE v0.5.0 tag with an adapted
+# standalone manifest (audit-logger.Cargo.toml), and our own observe-only PII
+# scanner + host registration (policy-host/). Both register through
+# gci-praxis-policy-host, discovered by the same build-time mechanism as the
+# filter.
+#
 # Versions are pinned by commit, not by branch. Bump them deliberately:
 #
 #   AI_GATEWAY_REF  praxis-proxy/ai origin/main at 2026-11-05
 #                   (v0.9.0-20-ga716baae; pins praxis-proxy 0.7.5)
 #   FILTER_REF      cnuland/llm-d-sc-praxis-filter main at 2026-11-05
+#   PPE_REF         praxis-proxy/policy at tag v0.5.0 (d29a6a7, 2026-10-13).
+#                   The TAG, not main: praxis-filter 0.7.5 depends on the
+#                   released praxis-policy 0.5.0, and main's reference
+#                   plugins may use unreleased core APIs. The vendored
+#                   audit-logger must compile against the same core the
+#                   umbrella pulls in, or the PluginFactory trait splits in
+#                   two and the build fails.
 #
 # Usage:
 #   ./build.sh                         # build for linux/amd64
@@ -29,14 +45,18 @@ WORK="${WORK:-$(mktemp -d)}"
 CTX="${CTX:-$WORK/context}"
 AI_GATEWAY_DEFAULT="$HOME/git-workspace/ai-gateway"
 FILTER_DEFAULT="$HOME/git-workspace/llm-d-sc-praxis-filter"
+PPE_DEFAULT="$HOME/git-workspace/policy"
 AI_GATEWAY_SRC="${AI_GATEWAY_SRC:-$AI_GATEWAY_DEFAULT}"
 FILTER_SRC="${FILTER_SRC:-$FILTER_DEFAULT}"
+PPE_SRC="${PPE_SRC:-$PPE_DEFAULT}"
 AI_GATEWAY_REPO="${AI_GATEWAY_REPO:-https://github.com/praxis-proxy/ai}"
 FILTER_REPO="${FILTER_REPO:-https://github.com/cnuland/llm-d-sc-praxis-filter}"
+PPE_REPO="${PPE_REPO:-https://github.com/praxis-proxy/policy}"
 
 AI_GATEWAY_REF="${AI_GATEWAY_REF:-a716baaef1a027ff02a00bf4fc692de54c366cee}"
 FILTER_REF="${FILTER_REF:-b84acfb840c7232fcba2680e46fd023ac8c7e02c}"
-IMAGE="${IMAGE:-quay.io/mtahhan/gci-praxis:v0.9.0}"
+PPE_REF="${PPE_REF:-d29a6a75f37a37fc9815d184ccf21564b2f4ac00}"
+IMAGE="${IMAGE:-quay.io/mtahhan/gci-praxis:v0.9.1}"
 PLATFORM="${PLATFORM:-linux/amd64}"
 PUSH=0
 KEEP=0
@@ -100,13 +120,30 @@ fi
 if [[ "$FILTER_SRC" == "$FILTER_DEFAULT" && ! -d "$FILTER_DEFAULT/.git" ]]; then
   FILTER_SRC="$WORK/src/llm-d-sc-praxis-filter"
 fi
+if [[ "$PPE_SRC" == "$PPE_DEFAULT" && ! -d "$PPE_DEFAULT/.git" ]]; then
+  PPE_SRC="$WORK/src/policy"
+fi
 
 log "build workspace: $WORK"
 ensure_repo "$AI_GATEWAY_SRC" "$AI_GATEWAY_REPO"
 ensure_repo "$FILTER_SRC" "$FILTER_REPO"
+ensure_repo "$PPE_SRC" "$PPE_REPO"
 
 export_ref "$AI_GATEWAY_SRC" "$AI_GATEWAY_REF" "$CTX/ai-gateway"
 export_ref "$FILTER_SRC" "$FILTER_REF" "$CTX/ai-gateway/vendor/llm-d-sc-praxis-filter"
+export_ref "$PPE_SRC" "$PPE_REF" "$WORK/ppe-export"
+
+# Vendor the PPE reference audit-logger: src from the pinned tag, with our
+# adapted standalone manifest (the upstream one inherits workspace fields).
+# The observe-only scanner and the host registration are ours, checked in at
+# policy-host/.
+log "assembling PPE policy host vendor tree"
+mkdir -p "$CTX/ai-gateway/vendor/praxis-policy-plugin-audit-logger"
+cp -R "$WORK/ppe-export/reference/plugins/audit-logger/src" \
+  "$CTX/ai-gateway/vendor/praxis-policy-plugin-audit-logger/src"
+cp "$HERE/audit-logger.Cargo.toml" \
+  "$CTX/ai-gateway/vendor/praxis-policy-plugin-audit-logger/Cargo.toml"
+cp -R "$HERE/policy-host" "$CTX/ai-gateway/vendor/gci-praxis-policy-host"
 
 # The filter was written against Praxis 0.5.2. ai-gateway 0.9.0 pins Praxis
 # 0.7.5, so the filter must resolve the same packages or Cargo creates two
@@ -115,7 +152,7 @@ log "applying Praxis 0.7.5 dependency patch"
 patch -s -p1 -d "$CTX/ai-gateway/vendor/llm-d-sc-praxis-filter" \
   < "$HERE/llm-d-sc-filter-0.7.5.patch"
 
-log "wiring the filter into server/Cargo.toml"
+log "wiring the filter and policy host into server/Cargo.toml"
 python3 - "$CTX/ai-gateway/server/Cargo.toml" "$CTX/ai-gateway/Cargo.toml" <<'PY'
 from pathlib import Path
 import sys
@@ -124,33 +161,33 @@ server = Path(sys.argv[1])
 root = Path(sys.argv[2])
 
 text = server.read_text()
-needle = "llm-d-sc-praxis-filter"
-if needle not in text:
-    marker = "[dependencies]\n"
-    if marker not in text:
-        raise SystemExit(f"FATAL: no [dependencies] table in {server}")
-    text = text.replace(
-        marker,
-        marker + 'llm-d-sc-praxis-filter = { path = "../vendor/llm-d-sc-praxis-filter" }\n',
-        1,
-    )
-    server.write_text(text)
+marker = "[dependencies]\n"
+if marker not in text:
+    raise SystemExit(f"FATAL: no [dependencies] table in {server}")
+# Two external crates, both discovered through [package.metadata.
+# praxis-filters]: the llm_d_sc HTTP filter, and the policy host whose
+# register_filters() registers the PPE plugin factories.
+for dep in ("llm-d-sc-praxis-filter", "gci-praxis-policy-host"):
+    if dep not in text:
+        text = text.replace(
+            marker,
+            f"{marker}{dep} = {{ path = \"../vendor/{dep}\" }}\n",
+            1,
+        )
+server.write_text(text)
 
-# Keep the vendored crate out of the ai-gateway workspace. It carries a self
-# dev-dependency that turns on its `test-server` feature; as an auto-included
-# workspace member that is a cycle. As an excluded path dependency it remains
-# visible to `cargo metadata` (which is how Praxis discovers filters) and to
-# the server's dependency graph.
+# Keep the vendored crates out of the ai-gateway workspace. The filter
+# carries a self dev-dependency that turns on its `test-server` feature; as
+# auto-included workspace members that is a cycle. As excluded path
+# dependencies they remain visible to `cargo metadata` (which is how Praxis
+# discovers filters) and to the server's dependency graph.
 text = root.read_text()
-if 'exclude = ["vendor/llm-d-sc-praxis-filter"]' not in text:
+excludes = 'exclude = ["vendor/llm-d-sc-praxis-filter", "vendor/gci-praxis-policy-host", "vendor/praxis-policy-plugin-audit-logger"]'
+if excludes not in text:
     marker = "[workspace]\n"
     if marker not in text:
         raise SystemExit(f"FATAL: no [workspace] table in {root}")
-    text = text.replace(
-        marker,
-        marker + 'exclude = ["vendor/llm-d-sc-praxis-filter"]\n',
-        1,
-    )
+    text = text.replace(marker, marker + excludes + "\n", 1)
     root.write_text(text)
 PY
 
@@ -163,9 +200,20 @@ grep -q 'praxis-core = { version = "0.7.5"' "$CTX/ai-gateway/Cargo.toml" || {
   # ai-gateway may format the pin differently; make the operator check it.
   echo "WARNING: could not confirm praxis 0.7.5 in ai-gateway Cargo.toml" >&2
 }
+# The vendored plugins must resolve to the released praxis-policy-core 0.5.0
+# the praxis-filter umbrella pins, or the PluginFactory trait splits in two
+# and the server fails to compile. Both manifests say so explicitly.
+for crate in praxis-policy-plugin-audit-logger gci-praxis-policy-host; do
+  grep -q '^praxis-policy-core = "0.5.0"' \
+    "$CTX/ai-gateway/vendor/$crate/Cargo.toml" || {
+      echo "FATAL: $crate is not pinned to praxis-policy-core 0.5.0" >&2
+      exit 1
+    }
+done
 
 cp "$HERE/Containerfile" "$CTX/Containerfile"
 cp "$HERE/validate.yaml" "$CTX/validate.yaml"
+cp "$HERE/validate-policy.yaml" "$CTX/validate-policy.yaml"
 
 if ((STAGE_ONLY)); then
   log "staged build context: $CTX"
