@@ -39,23 +39,25 @@ spec:
                 signal.signal(signal.SIGTERM, lambda *_: os._exit(0))
                 URL = os.environ["TARGET"]
                 INTERVAL = float(os.environ["INTERVAL"])
+                # Contract-domain background traffic. Routing no longer
+                # depends on prompt content (the pins landed; the classifier
+                # era's generic SIMPLE/REASONING prompts are gone), so the
+                # two lists are just short-extraction vs judgment-flavored
+                # filler that matches the pipeline's step vocabulary.
                 SIMPLE = [
-                    "What is the capital of France?",
-                    "How many days are in a week?",
-                    "Name a primary color.",
-                    "What is 7 plus 5?",
-                    "Who wrote Romeo and Juliet?",
-                    "What is the opposite of hot?",
-                    "Spell the word 'banana'.",
-                    "What color is the sky on a clear day?",
+                    "Classify the following contract by type and state its initial term.",
+                    "Extract the termination clause from the following contract. If the clause is absent, say not found.",
+                    "Extract the governing law clause from the following contract.",
+                    "Extract the liability cap clause from the following contract.",
+                    "Classify this agreement: MSA, NDA, SOW or DPA, and state the initial term in months.",
+                    "Does this contract contain a data protection clause?",
                 ]
                 REASONING = [
-                    "Prove that the halting problem is undecidable, then explain how Rice's theorem generalizes the result step by step.",
-                    "Design a multi-region distributed rate limiter with exactly-once semantics and prove its correctness under network partitions.",
-                    "Architect a fault-tolerant event-sourcing system with CQRS and justify each tradeoff formally.",
-                    "Derive the time complexity of Dijkstra's algorithm with a Fibonacci heap and prove the amortized bounds rigorously.",
-                    "Design a consensus protocol tolerant of Byzantine faults for 100 nodes and prove safety and liveness.",
+                    "Assess the aggregate risk exposure across these contracts and rank them by severity.",
+                    "Judge this contract's exposure given its termination, liability and data-protection clauses, and justify the rating.",
                     "Produce the cross-document risk report across all 12 documents. Synthesise and compare the extractions, derive the aggregate counts, and prove the ranking.",
+                    "Compare the liability caps across the portfolio and identify the outliers with reasons.",
+                    "Derive the portfolio-level compliance posture from the extracted clauses and defend each conclusion.",
                 ]
                 n = 0
                 while True:
