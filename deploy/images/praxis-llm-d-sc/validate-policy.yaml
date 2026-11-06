@@ -10,11 +10,13 @@
 # validation time), no session store, no callouts.
 
 plugins:
-  # The reference audit sink, vendored from praxis-proxy/policy v0.5.0.
-  # Lists no hooks, which is what makes it attach as a sink.
+  # The reference audit sink, vendored from praxis-proxy/policy v0.4.1, in
+  # observer mode: hooks + a run() step, because 0.4.1's APL visitor
+  # rejects a hookless sink beside routes (policy#210, fixed on 0.5.0).
   - name: audit
     kind: audit/logger
     mode: audit
+    hooks: [cmf.llm_input]
     capabilities:
       - read_subject
       - read_client
@@ -23,10 +25,11 @@ plugins:
       destination: stderr
       source: gci-validate
 
-  # Our observe-only PII scanner. One hook is enough to prove the factory
-  # builds and the handler registers.
+  # Our observe-only PII scanner, reached from the route's run() step —
+  # under dispatch: policy a plugin runs only from a step that names it.
   - name: pii-observe
     kind: validator/gci-pii-observe
+    mode: audit
     hooks: [cmf.llm_input]
     capabilities:
       - read_agent
@@ -37,3 +40,5 @@ routes:
     authorization:
       pre_invocation:
         - "require(authenticated)"
+        - "run(pii-observe)"
+        - "run(audit)"

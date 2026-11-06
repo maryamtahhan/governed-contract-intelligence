@@ -38,15 +38,19 @@ plugins:
           id: user
           roles: groups
 
-  # Decision records (image v0.9.1+): one JSON line per verdict — allow,
-  # deny, modify — including which route ruled and the identity that asked.
-  # Lists no hooks, which is what attaches it as a sink. destination:
-  # stderr lands in the container logs (docker compose logs praxis / oc
-  # logs deploy/praxis); the run harness captures them for the audit trail
-  # alongside trace-ui's SQLite.
+  # Decision records (image v0.9.1+): one JSON line per recorded request
+  # from PPE's reference audit/logger. On praxis-policy-core 0.4.1 the
+  # hookless sink mode cannot load beside APL routes (the visitor rejects
+  # any plugin no step names — fixed upstream on the 0.5.0 line as
+  # policy#210), so this declaration runs it as a post-hook OBSERVER:
+  # hooks + a run() step, records for allowed traffic, no verdict field.
+  # When a praxis release ships PPE 0.5.x, drop the hooks and the run step
+  # to get the full sink (verdict + deny records). Records land in the
+  # praxis container logs alongside trace-ui's SQLite audit trail.
   - name: audit
     kind: audit/logger
     mode: audit
+    hooks: [cmf.llm_input]
     capabilities:
       - read_subject
       - read_client
@@ -61,7 +65,9 @@ plugins:
   # names), keyed for hybrid-pii-agreement to join against the pipeline's
   # client-side screen (demo/src/hybrid_demo/pii.py). The pattern catalog
   # mirrors that screen regex-for-regex. Promoting this to a gate is a
-  # measured decision for a later run, not a config flip.
+  # measured decision for a later run, not a config flip. Under
+  # dispatch: policy (ppe 0.4.1) a plugin runs only from a step that
+  # names it, hence the run() step in the route below.
   - name: pii-observe
     kind: validator/gci-pii-observe
     mode: audit
@@ -81,3 +87,5 @@ routes:
     authorization:
       pre_invocation:
         - "require(authenticated)"
+        - "run(pii-observe)"
+        - "run(audit)"
