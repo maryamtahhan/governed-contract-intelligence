@@ -884,6 +884,13 @@ PAGE = r'''<!doctype html>
 .small-link:hover{text-decoration:underline}
 .arm-row.bad{color:var(--active)}
 .entry-badge{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:.05em;background:#28234b;color:#c9b8ff;border:1px solid #4b3f86}
+.drawer-backdrop{position:fixed;inset:0;background:#02081099;opacity:0;pointer-events:none;transition:opacity .18s;z-index:40}
+.drawer-backdrop.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(480px,94vw);background:var(--panel);border-left:1px solid var(--line);box-shadow:-28px 0 90px #00000082;padding:22px 26px;overflow-y:auto;transform:translateX(102%);transition:transform .22s ease;z-index:50}
+.drawer.open{transform:none}
+.drawer-close{flex:none;line-height:1;padding:4px 12px;font-size:18px}
+.drawer-meta{color:var(--muted);font-size:12.5px;margin:2px 0 14px}
+.question-text{white-space:pre-wrap;word-break:break-word;font:13.5px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#0a1626;border:1px solid var(--line);border-radius:12px;padding:14px;max-height:65vh;overflow-y:auto}
 </style>
 </head>
 <body><main>
@@ -951,7 +958,8 @@ const sub=p.terminating?'terminating':!p.ready?'not ready':probe===false?'health
 pods.push({kind:up?'up':(p.terminating?'pending':'down'),title:cfg.name,sub:suffix+' · '+sub})}
 return{pods,count:ready+'/'+desired+' healthy'}}
 function ensureExtraPool(key){if($('pool-'+key+'-count'))return;const cfg=POOLS[key],row=$('pools-extra');const g=document.createElementNS('http://www.w3.org/2000/svg','g');
-g.innerHTML=`<rect x="55" y="700" width="405" height="120" rx="20" class="cluster"/><text x="82" y="732" class="cluster-label">${esc(key)} pool</text><text id="pool-${key}-count" x="440" y="732" text-anchor="end" class="small"></text><g id="pods-${key}"></g>`;row.appendChild(g)}
+const bx=cfg.x-25;
+g.innerHTML=`<rect x="${bx}" y="700" width="405" height="120" rx="20" class="cluster"/><text x="${bx+27}" y="732" class="cluster-label">${esc(key)} pool</text><text id="pool-${key}-count" x="${bx+385}" y="732" text-anchor="end" class="small"></text><g id="pods-${key}"></g>`;row.appendChild(g)}
 function renderPool(key,state,y){const cfg=POOLS[key];if(!cfg)return;const{pods,count}=podList(cfg,state),W=355,gap=10,shown=pods.slice(0,3),more=pods.length-shown.length,w=(W-gap*(shown.length-1))/shown.length;
 const el=$('pool-'+key+'-count');if(!el)return;el.textContent=count;
 $('pods-'+key).innerHTML=shown.map((p,i)=>{const x=cfg.x+i*(w+gap),up=p.kind==='up',dot=up?'#55e6a0':p.kind==='down'?'#ff4d5e':p.kind==='pending'?'#ffc76a':'#6b7c90',dashed=['zero','pending','unknown'].includes(p.kind)?' dashed':'';
