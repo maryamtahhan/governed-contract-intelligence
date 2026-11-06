@@ -1,0 +1,59 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# The all-pools-simulated variant: the cluster twin of the compose fake
+# profile (deploy/linux/docker-compose.yml --profile fake). Everything from
+# the base (praxis v0.9.1 with the PPE policy layer, trace-ui, netpols)
+# with ALL FOUR pools running as hybrid-pool containers — deterministic
+# tiered error rates, device-time headers, no model downloads, no GPUs, no
+# KServe. This is the functional-test environment for CPU-only clusters:
+# routing, failover, fail-closed, the policy gate and the shadow PII
+# screen all exercise end-to-end; only model quality is not real, and no
+# number from here belongs in a measured row.
+#
+# Distinguished from deploy/openshift/fake-gpu/, which keeps the CPU pool
+# a real vLLM InferenceService (and therefore needs KServe and the model
+# cache): fake-all chains to manifests/base directly, so `oc apply -k`
+# works on a bare cluster with no RHOAI/KServe.
+#
+# The image is built into the internal registry with a binary build:
+#   oc -n openshell-demo new-build --binary --strategy docker --name hybrid-demo
+#   oc -n openshell-demo start-build hybrid-demo --from-dir=demo --follow
+namespace: openshell-demo
+
+resources:
+  - ../../../manifests/base
+  - fake-pools.yaml
+
+patches:
+  # This cluster's ODF RBD. The base PVC sets no storageClassName, which
+  # binds wherever a default StorageClass exists (ROSA: gp3-csi); a bare
+  # cluster with no default leaves it Pending, so the overlay names one.
+  # Cluster-specific by design — change it when the overlay moves.
+  - target:
+      kind: PersistentVolumeClaim
+      name: trace-ui-data
+    patch: |-
+      - op: add
+        path: /spec/storageClassName
+        value: ocs-storagecluster-ceph-rbd
+  # Point every trace-ui relay at the simulated pool (the fake-gpu overlay
+  # leaves VLLM_CPU_UPSTREAM on the real InferenceService; here it is a
+  # fake too).
+  - target:
+      kind: Deployment
+      name: trace-ui
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/env
+        value:
+          - {name: TRACE_DB_PATH, value: /data/traces.db}
+          - {name: PRAXIS_UPSTREAM, value: "http://praxis:80"}
+          - {name: SENSITIVE_UPSTREAM, value: "http://praxis:8083"}
+          - {name: JUDGMENT_UPSTREAM, value: "http://praxis:8086"}
+          - {name: SENSITIVE_JUDGMENT_UPSTREAM, value: "http://praxis:8087"}
+          - {name: TRACE_POOLS, value: "vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small"}
+          - {name: VLLM_CPU_UPSTREAM, value: "http://fake-vllm-cpu:8000"}
+          - {name: VLLM_GPU_UPSTREAM, value: "http://fake-vllm-gpu:8000"}
+          - {name: VLLM_GPU_APPROVED_UPSTREAM, value: "http://fake-vllm-gpu-approved:8000"}
+          - {name: VLLM_GPU_SMALL_UPSTREAM, value: "http://fake-vllm-gpu-small:8000"}

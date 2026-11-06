@@ -38,7 +38,7 @@ $COMPOSE --profile "$PROFILE" -f "$STACK/docker-compose.yml" up -d --build
 echo -n "waiting for the gateway"
 ready=0
 for i in $(seq 1 240); do
-  if curl -sf "$GATEWAY/v1/models" >/dev/null 2>&1; then echo " ok"; ready=1; break; fi
+  if curl -sf -H "X-API-Key: ${HYBRID_API_KEY_EVAL:-gci-demo-key-eval}" "$GATEWAY/v1/models" >/dev/null 2>&1; then echo " ok"; ready=1; break; fi
   echo -n .
   sleep 2
 done

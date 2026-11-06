@@ -8,5 +8,6 @@ NS="${NS:-openshell-demo}"
 
 oc create configmap trace-ui-server \
   --from-file=server.py=demo/src/hybrid_demo/traceui/server.py \
+  --from-file=otel.py=demo/src/hybrid_demo/traceui/otel.py \
   --dry-run=client -o yaml | oc apply -f - > /dev/null
 oc apply -k manifests

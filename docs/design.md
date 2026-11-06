@@ -185,7 +185,10 @@ uv run hybrid-run --target gateway \
 Praxis exposes four listeners, and none of them consults a classifier:
 
 - **general (:8080)** — pinned `vllm-cpu`. On failure, fails over to any
-  general pool with `X-Praxis-Fallback: true` (the visible "degraded" flag).
+  general pool; the visible "degraded" signal is the failed hop on a
+  completed request, which the trace UI badges as a fallback. (praxis does
+  not emit `X-Praxis-Fallback` on proxied failovers — FINDINGS §7 — and
+  the label/route mismatch signal left with the classifier.)
 - **sensitive (:8083)** — the pipeline's PII screen sends documents
   containing personal data here. Also pinned `vllm-cpu`, but its failover
   pool contains **only** the approved in-cluster GPU backend, so when both
@@ -209,7 +212,15 @@ Every entry also runs the praxis `policy` filter — the Praxis Policy Engine
 per-step API key (`X-API-Key`; SHA-256 digests in `manifests/base/praxis/
 api-keys.yaml`, plaintext in `demo/src/hybrid_demo/common.py`), so a request
 without a known key fails closed at the gateway rather than reaching a pool.
-The sensitive entries additionally taint the session (`X-Session-Id`, one
+The policy filter's identity gate runs ahead of the static-response body,
+so this includes `GET /v1/models`: what used to be an unauthenticated
+liveness answer now 401s, and the stack's own probes (up.sh, arms.sh,
+smoke) present the eval key. (Conditioning the policy filter to exempt the
+path is not an option — praxis rejects conditioned security filters at
+load, correctly: a security filter that can be bypassed for non-matching
+requests is a fail-open hazard.) The k8s pod probes are unaffected: they
+use the admin port's `/healthy`, not the data path. The sensitive entries
+additionally taint the session (`X-Session-Id`, one
 per document) with a `sensitive` label on arrival: the label still originates
 from the pipeline's screen — the trust model is unchanged — but the fact now
 lives in gateway-owned state the client cannot rewrite. Nothing denies on

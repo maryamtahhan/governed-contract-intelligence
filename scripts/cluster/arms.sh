@@ -103,7 +103,7 @@ PF3=$!
 trap 'kill ${PF:-} ${PF2:-} $PF3 2>/dev/null' EXIT
 for i in $(seq 1 30); do curl -sf "$GATEWAY/_trace/healthz" >/dev/null 2>&1 && break; sleep 1; done
 
-curl -sf -H "Authorization: Bearer ${TRACE_API_TOKEN:-}" "$GATEWAY/v1/models" | grep -q Semantic-Qwen || { echo "gateway not reachable through trace-ui" >&2; exit 1; }
+curl -sf -H "Authorization: Bearer ${TRACE_API_TOKEN:-}" -H "X-API-Key: ${HYBRID_API_KEY_EVAL:-gci-demo-key-eval}" "$GATEWAY/v1/models" | grep -q Semantic-Qwen || { echo "gateway not reachable through trace-ui" >&2; exit 1; }
 
 for requested in $CONFIGS; do
   config=$(config_name "$requested")

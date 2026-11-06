@@ -47,7 +47,7 @@ spec:
             - name: judgment
               containerPort: 8086
               protocol: TCP
-            - name: sensitive-judgment
+            - name: sens-judgment
               containerPort: 8087
               protocol: TCP
             - name: admin
@@ -119,9 +119,9 @@ spec:
       port: 8086
       targetPort: judgment
       protocol: TCP
-    - name: sensitive-judgment
+    - name: sens-judgment
       port: 8087
-      targetPort: sensitive-judgment
+      targetPort: sens-judgment
       protocol: TCP
     - name: metrics
       port: 9902

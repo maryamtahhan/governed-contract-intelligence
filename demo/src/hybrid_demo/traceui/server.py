@@ -30,7 +30,13 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, parse_qsl, urlencode, urlsplit
 from urllib.request import Request, urlopen
 
-from . import otel
+try:
+    from . import otel  # installed package (compose: hybrid-traceui)
+except ImportError:
+    # Standalone (cluster: 02-apply.sh mounts this file from a ConfigMap,
+    # with otel.py beside it). Script dir is sys.path[0], so the plain
+    # import resolves.
+    import otel  # type: ignore[no-redef]
 
 DATABASE = Path(os.environ.get("TRACE_DB_PATH", "/data/traces.db"))
 UPSTREAM = os.environ.get("PRAXIS_UPSTREAM", "http://praxis:8080").rstrip("/")
@@ -277,6 +283,17 @@ def complete_trace(trace_id: str, status: int, headers: dict[str, str], started:
                 route = route or row[1]
         if row and _is_sensitive_entry(row[2]) and not STORE_SENSITIVE_CONTENT:
             response_text = None
+        # Degradation without a classifier: an errored hop on a request that
+        # still completed means the failover set served it. The header never
+        # worked (FINDINGS §7: praxis does not emit X-Praxis-Fallback on
+        # proxied failovers) and the label/route mismatch signal left with
+        # the classifier, so the failed hop is the durable signal.
+        if not fallback and status == 200:
+            errored = connection.execute(
+                "SELECT 1 FROM hops WHERE trace_id=? AND error IS NOT NULL LIMIT 1",
+                (trace_id,)).fetchone()
+            if errored:
+                fallback = True
         # Degradation is an implication, not an equivalence: GPU-tier work on
         # a non-GPU pool is degraded, but SIMPLE/MEDIUM work on a GPU pool
         # (arm B's intended split) is not.
