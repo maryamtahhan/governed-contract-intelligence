@@ -84,7 +84,12 @@ VARIATIONS = {
 
 
 async def main(base_url: str) -> None:
-    async with httpx.AsyncClient(base_url=base_url, timeout=180) as client:
+    # The gateway's policy filter denies keyless requests; present the eval
+    # key (digest in manifests/base/praxis/api-keys.yaml).
+    from hybrid_demo.common import DEMO_API_KEYS
+
+    async with httpx.AsyncClient(base_url=base_url, timeout=180,
+                                 headers={"X-API-Key": DEMO_API_KEYS["eval"]}) as client:
         for name, messages in VARIATIONS.items():
             body = {"model": "Semantic-Qwen", "temperature": 0, "max_tokens": 24, "messages": messages}
             r = await client.post("/v1/chat/completions", json=body)

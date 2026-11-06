@@ -13,6 +13,27 @@ from typing import Any
 NGRAM = 3
 EMBED_DIM = 256
 
+# Demo API keys for the gateway's PPE policy layer (Phase 1 of the
+# integration plan). Fixed demo credentials, not secrets: they exist so the
+# praxis policy filter can attribute every request to its caller (pipeline
+# step, eval harness) instead of seeing anonymous traffic. The SHA-256
+# digests live in manifests/base/praxis/api-keys.yaml — rotate by changing
+# both sides together. Override per caller with HYBRID_API_KEY_<NAME> when
+# a stack runs its own keys.
+DEMO_API_KEYS = {
+    "classify": os.environ.get("HYBRID_API_KEY_CLASSIFY", "gci-demo-key-classify"),
+    "extract": os.environ.get("HYBRID_API_KEY_EXTRACT", "gci-demo-key-extract"),
+    "risk": os.environ.get("HYBRID_API_KEY_RISK", "gci-demo-key-risk"),
+    "report": os.environ.get("HYBRID_API_KEY_REPORT", "gci-demo-key-report"),
+    "eval": os.environ.get("HYBRID_API_KEY_EVAL", "gci-demo-key-eval"),
+}
+
+
+def api_key_for_step(step: str) -> str:
+    """The X-API-Key for a pipeline step ("extract:MSA-1.1" -> the extract key)."""
+    stage = step.split(":", 1)[0]
+    return DEMO_API_KEYS.get(stage, DEMO_API_KEYS["eval"])
+
 
 def new_id(prefix: str) -> str:
     return f"{prefix}-{uuid.uuid4().hex[:12]}"

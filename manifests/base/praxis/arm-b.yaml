@@ -72,6 +72,14 @@ filter_chains:
             value: application/json
         body: >-
           {"object":"list","data":[{"id":"Semantic-Qwen","object":"model","created":0,"owned_by":"praxis"}]}
+      # PPE policy layer (Phase 1): API-key identity gate, same as the
+      # hybrid config's general entry, so attribution is uniform across
+      # arms. No pool steering here either — the pin below is the policy.
+      - filter: policy
+        config_path: /etc/praxis/policy.yaml
+        body_access: read_only
+        llm:
+          max_request_bytes: 4194304
       - filter: iterative_request_router
         initial_step: route
         max_iterations: 3

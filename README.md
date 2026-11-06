@@ -408,7 +408,13 @@ scripts/linux/down.sh -v             # Linux stack, -v deletes traces too
 - OpenShell's chart is experimental upstream; Kata is untested.
 - The gateway runs plaintext HTTP behind port-forwards (add OIDC/mTLS
   before sharing). The trace UI can be published with an opt-in Route plus
-  `TRACE_API_TOKEN`, but the gateway path itself has no auth.
+  `TRACE_API_TOKEN`, and since the PPE integration the gateway path itself
+  authenticates requests (per-step API keys, fail closed) — but the keys
+  are fixed demo credentials checked into the repo, so that is attribution,
+  not access control.
+- The external llm-d-batch-gateway dispatches carry no `X-API-Key`, so the
+  batch path through the gateway entries is denied by the policy layer
+  until that component can present a key (docs/design.md §3.1).
 - The sensitive entry is chosen by the pipeline's PII screen (a DLP-style
   gate). Moving that decision into the gateway — llm-d-sc's sensitivity
   taxonomy over gRPC, two-label routing in one praxis chain — is unvalidated

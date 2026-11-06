@@ -25,3 +25,23 @@ jobs:
         # CUAD is not committed; its tests skip cleanly when data/cuad is
         # absent, so CI covers the converter only when the data is present.
         run: uv run pytest -q
+
+  gateway-configs:
+    # Boot check for the praxis configs in the real gateway image (amd64;
+    # the praxis binary hangs under qemu on arm64 hosts, so local checks
+    # are not possible). --validate runs the real startup path — filter
+    # construction, chain expansion, cluster alignment — which since the
+    # PPE integration also loads the policy documents and the API-key
+    # directory, so a policy mistake fails here instead of at pod startup.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate praxis configs in the gateway image
+        run: |
+          for cfg in config.yaml arm-a.yaml arm-b.yaml arm-c.yaml; do
+            echo "::group::validate $cfg"
+            podman run --rm \
+              -v "$PWD/manifests/base/praxis:/etc/praxis:ro" \
+              quay.io/mtahhan/gci-praxis:v0.9.0 --validate -c "/etc/praxis/$cfg"
+            echo "::endgroup::"
+          done
