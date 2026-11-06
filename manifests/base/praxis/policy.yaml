@@ -38,6 +38,38 @@ plugins:
           id: user
           roles: groups
 
+  # Decision records (image v0.9.1+): one JSON line per verdict — allow,
+  # deny, modify — including which route ruled and the identity that asked.
+  # Lists no hooks, which is what attaches it as a sink. destination:
+  # stderr lands in the container logs (docker compose logs praxis / oc
+  # logs deploy/praxis); the run harness captures them for the audit trail
+  # alongside trace-ui's SQLite.
+  - name: audit
+    kind: audit/logger
+    mode: audit
+    capabilities:
+      - read_subject
+      - read_client
+      - read_labels
+    config:
+      destination: stderr
+      source: gci-gateway
+
+  # Shadow PII screen (V19 groundwork): the gateway-side scanner, run in
+  # observe mode. It NEVER denies and NEVER rewrites — it logs one
+  # structured line per scanned request (session, subject, matched entity
+  # names), keyed for hybrid-pii-agreement to join against the pipeline's
+  # client-side screen (demo/src/hybrid_demo/pii.py). The pattern catalog
+  # mirrors that screen regex-for-regex. Promoting this to a gate is a
+  # measured decision for a later run, not a config flip.
+  - name: pii-observe
+    kind: validator/gci-pii-observe
+    mode: audit
+    hooks: [cmf.llm_input]
+    capabilities:
+      - read_agent
+      - read_subject
+
 global:
   authentication: [api-keys]
   authorization:

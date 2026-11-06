@@ -213,8 +213,21 @@ The sensitive entries additionally taint the session (`X-Session-Id`, one
 per document) with a `sensitive` label on arrival: the label still originates
 from the pipeline's screen — the trust model is unchanged — but the fact now
 lives in gateway-owned state the client cannot rewrite. Nothing denies on
-the label yet; it is groundwork for decision records and any future
-measured rule.
+the label; any future rule on it is a measured decision.
+
+Since image v0.9.1 the same policy layer emits **decision records** (one
+JSON line per verdict, from PPE's reference `audit/logger` sink, which the
+image host-registers because the engine deliberately does not bundle it)
+and runs a **shadow PII screen**: `validator/gci-pii-observe`, an
+observe-only scanner over `cmf.llm_input` whose pattern catalog mirrors
+`pii.py` regex-for-regex. It never denies and never rewrites; it logs one
+structured line per request, and `hybrid-pii-agreement` joins those lines
+against a run's records to report whether the gateway would have made the
+pipeline's screen call — the V19 groundwork. The comparison point is the
+classify-time observation; later steps are context, because their prompts
+embed document text (a screened document's risk prompt literally says
+"contains personal data"). Both records land in the praxis container logs
+alongside the trace-ui SQLite audit trail.
 
 The policy layer attributes and audits; it does not steer pools. PPE's
 `restrict` effect is exactly the pool-constraint primitive this design

@@ -44,11 +44,13 @@ async-trait = "0.1"
 # register_policy_plugin_factory. The ai-gateway build enables it too, so
 # the features unify to one instance of praxis-filter in the graph.
 praxis-filter = { package = "praxis-proxy-filter", version = "0.7.5" }
-# Must resolve to the same praxis-policy-core 0.5.0 the praxis-filter
-# umbrella (praxis-policy 0.5.0) pulls in, or the PluginFactory trait here
-# would be a different type than the one register_policy_plugin_factory
-# expects. Same package + same version from crates.io unifies.
-praxis-policy-core = "0.5.0"
+# Must resolve to the same praxis-policy-core the PUBLISHED praxis-filter
+# 0.7.5 pulls in — that is 0.4.1 (praxis main has bumped to 0.5.0 but no
+# release carries it). A different core here means the PluginFactory trait
+# this crate implements is a different type than the one
+# register_policy_plugin_factory expects, and the build fails with two
+# praxis-policy-core copies in the graph. Bump together with PPE_REF.
+praxis-policy-core = "0.4.1"
 praxis-policy-plugin-audit-logger = { path = "../praxis-policy-plugin-audit-logger" }
 regex = "1"
 serde = { version = "1", features = ["derive"] }
