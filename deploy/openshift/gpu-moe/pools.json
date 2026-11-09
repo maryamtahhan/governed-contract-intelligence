@@ -12,7 +12,8 @@
   "vllm-gpu-approved": {
     "model": "Qwen/Qwen3.5-35B-A3B",
     "hardware": "4x A10G (TP=4)",
-    "deployment": "gpumoe-vllm (shared with vllm-gpu)"
+    "deployment": "gpumoe-vllm (shared with vllm-gpu)",
+    "shared_with": "vllm-gpu"
   },
   "vllm-gpu-small": {
     "model": "Qwen/Qwen2.5-1.5B-Instruct",

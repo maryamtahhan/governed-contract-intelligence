@@ -1,0 +1,254 @@
+{
+ "truth_docs": 200,
+ "dataset": "200 synthetic documents (seed 42, licences: synthetic, no personal data)",
+ "arms": [
+  {
+   "arm": "D",
+   "config": "hybrid",
+   "mode": "matrix",
+   "docs": 2,
+   "wall_s": 19.07,
+   "run_doc_ids": [
+    "C-2026-0001",
+    "C-2026-0003"
+   ],
+   "extraction": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "fields_correct": 8,
+    "fields_total": 8,
+    "match_metric": "containment",
+    "by_mode": {
+     "exact": {
+      "mode": "exact",
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 7,
+      "fp": 0,
+      "fn": 0
+     },
+     "containment": {
+      "mode": "containment",
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 7,
+      "fp": 0,
+      "fn": 0
+     },
+     "partial": {
+      "mode": "partial",
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "tp": 7,
+      "fp": 0,
+      "fn": 0
+     }
+    },
+    "absence": {
+     "correct": 1,
+     "total": 1
+    },
+    "offset": {
+     "strict": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "correct": 7,
+      "incorrect": 0,
+      "partial": 0,
+      "missed": 0,
+      "spurious": 0
+     },
+     "exact": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "correct": 7,
+      "incorrect": 0,
+      "partial": 0,
+      "missed": 0,
+      "spurious": 0
+     },
+     "partial": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "correct": 7,
+      "incorrect": 0,
+      "partial": 0,
+      "missed": 0,
+      "spurious": 0
+     },
+     "ent_type": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "correct": 7,
+      "incorrect": 0,
+      "partial": 0,
+      "missed": 0,
+      "spurious": 0
+     }
+    },
+    "offset_backend": "nervaluate"
+   },
+   "risk_accuracy": 1.0,
+   "type_accuracy": 1.0,
+   "report_accuracy": 1.0,
+   "docs_fully_correct": 2,
+   "classifier": {
+    "labelled": 0,
+    "accuracy": null,
+    "confusion": {}
+   },
+   "screen": {
+    "tp": 1,
+    "fp": 0,
+    "tn": 1,
+    "fn": 0
+   },
+   "sensitivity": {
+    "groups": {
+     "sensitive": {
+      "docs": 1,
+      "steps": 6,
+      "extraction": {
+       "precision": 1.0,
+       "recall": 1.0,
+       "f1": 1.0,
+       "fields_correct": 4,
+       "fields_total": 4,
+       "match_metric": "containment",
+       "by_mode": {
+        "exact": {
+         "mode": "exact",
+         "precision": 1.0,
+         "recall": 1.0,
+         "f1": 1.0,
+         "tp": 3,
+         "fp": 0,
+         "fn": 0
+        },
+        "containment": {
+         "mode": "containment",
+         "precision": 1.0,
+         "recall": 1.0,
+         "f1": 1.0,
+         "tp": 3,
+         "fp": 0,
+         "fn": 0
+        },
+        "partial": {
+         "mode": "partial",
+         "precision": 1.0,
+         "recall": 1.0,
+         "f1": 1.0,
+         "tp": 3,
+         "fp": 0,
+         "fn": 0
+        }
+       },
+       "absence": {
+        "correct": 1,
+        "total": 1
+       },
+       "offset": null,
+       "offset_backend": "unavailable"
+      },
+      "risk_accuracy": 1.0,
+      "type_accuracy": 1.0,
+      "docs_fully_correct": 1,
+      "routes": {
+       "vllm-cpu": 5,
+       "vllm-gpu-approved": 1
+      }
+     },
+     "non-sensitive": {
+      "docs": 1,
+      "steps": 6,
+      "extraction": {
+       "precision": 1.0,
+       "recall": 1.0,
+       "f1": 1.0,
+       "fields_correct": 4,
+       "fields_total": 4,
+       "match_metric": "containment",
+       "by_mode": {
+        "exact": {
+         "mode": "exact",
+         "precision": 1.0,
+         "recall": 1.0,
+         "f1": 1.0,
+         "tp": 4,
+         "fp": 0,
+         "fn": 0
+        },
+        "containment": {
+         "mode": "containment",
+         "precision": 1.0,
+         "recall": 1.0,
+         "f1": 1.0,
+         "tp": 4,
+         "fp": 0,
+         "fn": 0
+        },
+        "partial": {
+         "mode": "partial",
+         "precision": 1.0,
+         "recall": 1.0,
+         "f1": 1.0,
+         "tp": 4,
+         "fp": 0,
+         "fn": 0
+        }
+       },
+       "absence": {
+        "correct": 0,
+        "total": 0
+       },
+       "offset": null,
+       "offset_backend": "unavailable"
+      },
+      "risk_accuracy": 1.0,
+      "type_accuracy": 1.0,
+      "docs_fully_correct": 1,
+      "routes": {
+       "vllm-cpu": 5,
+       "vllm-gpu": 1
+      }
+     }
+    },
+    "unlabelled_docs": 0
+   },
+   "routing": {
+    "routes": {
+     "vllm-cpu": 10,
+     "vllm-gpu-approved": 2,
+     "vllm-gpu": 1
+    },
+    "cpu_served_share": 0.769,
+    "needs_cpu": true,
+    "needs_gpu": true,
+    "gpu_seconds": 0.0,
+    "cpu_core_seconds": 115.7,
+    "gpu_seconds_per_doc": 0.0,
+    "cpu_core_seconds_per_doc": 57.84,
+    "gpu_time_measured": true,
+    "cpu_time_measured": true,
+    "device_time_measured": 115.68,
+    "cost_method": "measured (vLLM /metrics samples; per-pool method in metrics.json)",
+    "sensitive_steps": 7,
+    "sensitive_on_approved": 7,
+    "sensitive_violations": 0,
+    "judgment_steps": 3,
+    "judgment_on_gpu": 3,
+    "fallback": 0,
+    "errors": 0
+   }
+  }
+ ]
+}

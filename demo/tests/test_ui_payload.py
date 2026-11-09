@@ -97,6 +97,31 @@ def test_route_comes_from_the_response_headers():
     assert doc["routes"] == {"vllm-cpu": 1}
 
 
+def test_extract_stage_counts_only_extract_routes():
+    """The header above the extract cards must not count classify or risk.
+
+    Regression: ``doc.routes`` covers every call for the document, so the
+    "Extract clauses" header showed ``vllm-cpu x5, vllm-gpu-approved x1`` for a
+    document with four CPU extracts, one CPU classify and one GPU risk, while
+    every card underneath correctly said ``vllm-cpu``.
+    """
+    def routed(step: str, route: str, content: dict) -> dict:
+        rec = _rec(step, content=content)
+        rec["headers"] = {"x-demo-route": route}
+        return rec
+
+    doc = _doc([
+        routed("classify", "vllm-cpu", {"type": "MSA"}),
+        routed("extract:termination", "vllm-cpu", {"found": False}),
+        routed("extract:governing_law", "vllm-cpu",
+               {"found": True, "text": "laws of England"}),
+        routed("risk", "vllm-gpu-approved", {"risk": "low"}),
+    ])
+
+    assert doc["extract_routes"] == {"vllm-cpu": 2}
+    assert doc["routes"] == {"vllm-cpu": 3, "vllm-gpu-approved": 1}
+
+
 def test_a_failed_call_is_not_reported_as_an_unrouted_request():
     """A 504 has no route header because nothing answered.
 

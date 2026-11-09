@@ -18,6 +18,7 @@ from .questions import (  # noqa: F401
     CLAUSE_ALIASES,
     CUAD_QUESTIONS,
     QUESTION_RE,
+    cause_question_for,
     clause_from_prompt,
     question_for,
 )

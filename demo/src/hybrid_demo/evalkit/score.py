@@ -22,6 +22,11 @@ from .spans import text_matches
 # here because retrieval/endtoend.py and the report import it from score.
 MATCH_METRIC = "containment"
 
+# Risk and report are the judgment stages. Termination extraction is still
+# extraction (the CPU specialist asks a cause follow-up) and must not inflate
+# this count in the report.
+JUDGMENT_STEPS = {"risk", "report"}
+
 
 # The report's governing-law counts name jurisdictions, but ground truth stores
 # the whole annotated clause ("...the laws of the State of New York"). Counting
@@ -315,8 +320,40 @@ def classifier_scores(records: list[dict]) -> dict:
     }
 
 
+def _shared_backend(pool: str, pools: dict | None) -> str:
+    """Group routes that point at the same physical backend.
+
+    A pool map may declare ``shared_with`` explicitly. Older run summaries only
+    carry the deploy-time string ``"<deployment> (shared with <route>)"``, so
+    parse that as a fallback. Without either, a route is its own backend.
+    """
+    info = (pools or {}).get(pool) or {}
+    explicit = info.get("shared_with")
+    if explicit:
+        return str(explicit)
+    deployment = str(info.get("deployment") or "")
+    marker = "(shared with "
+    if marker in deployment:
+        return deployment.split(marker, 1)[1].split(")", 1)[0].strip()
+    return pool
+
+
+def gpu_device_seconds(metrics: dict | None, pools: dict | None = None) -> float:
+    """Measured GPU device time, counting a shared physical backend once."""
+    groups: dict[str, float] = {}
+    for pool, summary in (metrics or {}).items():
+        if pool not in GPU_ROUTES or not isinstance(summary, dict):
+            continue
+        active = summary.get("device_active_s")
+        if active is None:
+            continue
+        backend = _shared_backend(pool, pools)
+        groups[backend] = max(groups.get(backend, 0.0), float(active))
+    return sum(groups.values())
+
+
 def routing_scores(records: list[dict], docs_in_run: int, cores_per_cpu_replica: int,
-                   metrics: dict | None = None) -> dict:
+                   metrics: dict | None = None, pools: dict | None = None) -> dict:
     by_route: dict[str, int] = {}
     gpu_busy_ms = 0.0
     cpu_busy_ms = 0.0
@@ -325,16 +362,20 @@ def routing_scores(records: list[dict], docs_in_run: int, cores_per_cpu_replica:
     sensitive_ok = 0
     judgment_steps = 0
     judgment_on_gpu = 0
+    termination_routes: dict[str, int] = {}
     fallback = 0
     errors = 0
     for r in records:
         route = (r.get("headers", {}) or {}).get("x-demo-route")
         if route:
             by_route[route] = by_route.get(route, 0) + 1
-            if "judgment" in (r.get("entry") or ""):
+            stage = (r.get("step") or "").split(":", 1)[0]
+            if stage in JUDGMENT_STEPS and "judgment" in (r.get("entry") or ""):
                 judgment_steps += 1
                 if route in GPU_ROUTES:
                     judgment_on_gpu += 1
+            if r.get("step") == "extract:termination":
+                termination_routes[route] = termination_routes.get(route, 0) + 1
         busy = (r.get("headers", {}) or {}).get("x-busy-ms")
         try:
             busy = float(busy) if busy else None
@@ -368,7 +409,7 @@ def routing_scores(records: list[dict], docs_in_run: int, cores_per_cpu_replica:
     gpu_time_measured = bool(gpu_busy_ms)
     cpu_time_measured = bool(cpu_busy_ms)
     if metrics:
-        gpu_s = 0.0
+        gpu_groups: dict[str, float] = {}
         cpu_s = 0.0
         for pool, summary in metrics.items():
             if not isinstance(summary, dict):
@@ -377,11 +418,16 @@ def routing_scores(records: list[dict], docs_in_run: int, cores_per_cpu_replica:
             if active is None:
                 continue
             if pool in GPU_ROUTES:
-                gpu_s += active
+                # Two routes can front the same pod (gpumoe-vllm-approved
+                # selects gpumoe-vllm on the ROSA stack). Summing both
+                # double-counts one physical GPU; max each backend group.
+                backend = _shared_backend(pool, pools)
+                gpu_groups[backend] = max(gpu_groups.get(backend, 0.0), float(active))
                 gpu_time_measured = True
             elif pool in CPU_ROUTES:
                 cpu_s += active
                 cpu_time_measured = True
+        gpu_s = sum(gpu_groups.values())
         if gpu_s or cpu_s:
             cost_method = "measured (vLLM /metrics samples; per-pool method in metrics.json)"
             gpu_seconds = gpu_s
@@ -407,6 +453,7 @@ def routing_scores(records: list[dict], docs_in_run: int, cores_per_cpu_replica:
         "sensitive_violations": sensitive_violations,
         "judgment_steps": judgment_steps,
         "judgment_on_gpu": judgment_on_gpu,
+        "termination_routes": termination_routes,
         "fallback": fallback,
         "errors": errors,
     }
@@ -502,7 +549,11 @@ def score_run(run: dict, truth_docs: dict[str, dict], cores_per_cpu_replica: int
         "classifier": classifier_scores(records),
         "screen": summary.get("screen"),
         "sensitivity": sensitivity_breakdown(records, truth_docs),
-        "routing": routing_scores(records, docs_in_run, cores_per_cpu_replica, metrics),
+        # The pools map is recorded with the run; the scorer uses it to avoid
+        # counting one physical backend twice when two routes front it.
+        "pools": summary.get("pools") or {},
+        "routing": routing_scores(records, docs_in_run, cores_per_cpu_replica, metrics,
+                                  pools=summary.get("pools") or {}),
     }
 
 
@@ -536,8 +587,10 @@ def build_report(run_dirs: list[str], data_dir: str, cores_per_cpu_replica: int,
     lines.append("")
     lines.append(f"Ground truth: {dataset}.")
     lines.append("Each config's table row names the number of documents it actually ran.")
-    lines.append("Device-time and dollar figures are SIMULATED where the fake pool backends were "
-                 "used; against real vLLM pools only request counts, routes and wall-clock hold.")
+    lines.append("Device-time is measured from the real pools' `/metrics` samples where the "
+                 "sampler succeeded; simulated `X-Busy-Ms` headers are labeled as such, and a "
+                 "run with neither prints `n/a`, never zero. Dollar figures are illustrative "
+                 "sweeps over the measured device time, not a quote.")
     lines.append("")
 
     lines.append("## Configs overview")
@@ -675,6 +728,17 @@ def build_report(run_dirs: list[str], data_dir: str, cores_per_cpu_replica: int,
                      + ", ".join(f"config {s['config']} {s['routing']['judgment_on_gpu']}/"
                                  f"{s['routing']['judgment_steps']} on GPU" for s in judgment)
                      + ".")
+    termination = [s for s in scored if s["routing"].get("termination_routes")]
+    if termination:
+        lines.append("")
+        lines.append("Termination extraction routes (CPU specialist; the canonical CUAD "
+                     "convenience question is asked first and a cause follow-up only when it "
+                     "finds nothing and the contract has cause language): "
+                     + "; ".join(f"config {s['config']} "
+                                 + ", ".join(f"{route}={n}" for route, n
+                                             in sorted(s["routing"]["termination_routes"].items()))
+                                 for s in termination)
+                     + ".")
     if unrouted:
         lines.append("")
         lines.append("Direct run(s) " + ", ".join(unrouted) + " carry no route headers: one bare "
@@ -707,6 +771,21 @@ def build_report(run_dirs: list[str], data_dir: str, cores_per_cpu_replica: int,
         else:
             cpu = r["cpu_core_seconds_per_doc"] if r.get("cpu_time_measured", True) else "n/a"
         lines.append(f"| {s['config']} | {gpu} | {cpu} |")
+    lines.append("")
+    lines.append("- GPU-s/doc counts each physical backend once. Routes whose pool map "
+                 "declares `shared_with` (or a deployment marked `(shared with ...)`) are "
+                 "maxed, not summed.")
+    route_hardware: set[str] = set()
+    for s in scored:
+        for route, info in (s.get("pools") or {}).items():
+            if route not in GPU_ROUTES:
+                continue
+            hardware = str((info or {}).get("hardware") or "").lower()
+            if hardware.startswith("cpu") or "cpu (" in hardware:
+                route_hardware.add(route)
+    for route in sorted(route_hardware):
+        lines.append(f"- Route `{route}` is accounted as GPU but its pool map records CPU "
+                     "hardware; its GPU-s/doc is route-name accounting, not GPU device time.")
     lines.append("")
     unmeasured = {s["config"] for s in scored
                   if (s["routing"].get("needs_cpu")

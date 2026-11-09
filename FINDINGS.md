@@ -1074,8 +1074,10 @@ back to semantic routing (`docs/design.md` §5).
   it forwards outside praxis and would bypass the approved set; the pool
   relay's `X-Demo-Route` header hides the composite's real backend, so read
   the composite's own logs for where forwarded calls actually went; and the
-  27 failed documents are a specialist termination-extraction issue, not a
-  routing issue — do not count them against any routing change.
+  27 failed documents are a specialist **termination-taxonomy** issue (the
+  synthetic clause is termination for cause; the CUAD question asks
+  termination for convenience), not a routing issue — do not count them
+  against any routing change.
 
 ### 15.7 Direct baselines (no router, same 200 documents)
 
@@ -1112,6 +1114,123 @@ classifier, no screen and no approved-pool check. Raw records:
   figures are `n/a`; wall-clock is the comparison. The direct arm ran at
   concurrency 8 vs 12 for the stacked matrix, so the ratios are indicative,
   not a controlled throughput benchmark.
+
+### 15.8 Classifier-free re-measurement, GPU termination route (2026-11-09)
+
+`runs/rosa-200-2026-11-09-gpu-term` is a **measured alternative route, not the
+current policy** (§15.9 supersedes it). The hybrid arm was rerun with
+termination extraction on the GPU-bound entry; the all-gpu, gpu-small and
+round-robin arms were copied from the same-day run because the routing change
+only applies to the governed hybrid. §15.1-§15.7 are the earlier
+classifier-in-path record and must not be mixed with it.
+
+| arm | wall | extract F1 | risk acc | report acc | fully correct | CPU-served | sensitive approved | violations | GPU-s/doc |
+|---|---|---|---|---|---|---|---|---|---|
+| all-gpu | 202.83 s | 1.000 | 0.995 | 0.756 | 199/200 | 0.0% | 0/247 | 247 | 1.013 |
+| gpu-small | 454.21 s | 1.000 | 0.395 | 0.278 | 75/200 | 0.0% | 0/247 | 247 | 2.241* |
+| round-robin | 570.81 s | 0.991 | 1.000 | 0.756 | 186/200 | 50.0% | 129/247 | 118 | 1.773 |
+| **hybrid** | **726.77 s** | **1.000** | **1.000** | **0.756** | **200/200** | **66.6%** | **247/247** | **0** | **0.508** |
+
+Zero errors and zero fallbacks in all four arms. The screen was 41/0/159/0.
+Hybrid judgment steps were 201/201 on GPU.
+
+- **The governance result is unchanged.** Hybrid is the only arm with 0
+  violations and 247/247 sensitive steps on approved pools.
+- **The economics changed because the policy changed.** Hybrid sends
+  termination extraction (200 steps) plus risk/report (201) to GPU-bound
+  entries. It uses ~2.0x less GPU time than all-gpu (0.508 vs 1.013 GPU-s/doc;
+  101.6 vs 202.7 GPU-s total), and wall time is 726.77 s — faster than the
+  802.85 s run where termination was on the CPU specialist.
+- **GPU-s/doc counts a physical backend once.** `gpumoe-vllm-approved` selects
+  the same pod as `gpumoe-vllm`; the scorer maxes a declared shared group
+  instead of summing both routes. Without that correction the figures are
+  doubled (1.991 / 0.398) and the saving reads ~6x. Raw samples are unchanged.
+- **`gpu-small` is CPU hardware (`*`).** `vllm-gpu-small` is route-accounted
+  as GPU but the pool map records the x8i CPU node; 2.241 is not GPU time. It
+  is a negative control: risk 0.395 and report 0.278 show the small model
+  collapsing, not a device effect.
+- **Termination recall was a taxonomy issue, fixed by routing.** The previous
+  hybrid run scored 173/200 because all 27 misses were the same synthetic
+  template — “terminated only for material breach…” — which is **termination
+  for cause**. The specialist is asked CUAD's canonical **“Termination For
+  Convenience”** question (`specialist/questions.py`): “Can a party terminate
+  without cause?” Under that narrower question, `found=false` is defensible.
+  It still returned 21 of the 48 cause clauses, and all 152 convenience
+  clauses; this was a **question/taxonomy mismatch**, not a clean capability
+  gap. The general 35B model extracts both forms, so `extract:termination` now
+  uses the GPU-bound entry (`vllm-gpu`; approved pool for sensitive
+  documents). The other three extraction clauses stay on the CPU specialist.
+  The new run scores extraction F1 **1.000**, **200/200 fully correct**, and
+  precision 1.000. Another CUAD expert inherits the same question; the route or
+  the label is the fix, not a different specialist.
+- `runs/rosa-200-2026-11-09-gpu-term/report.md` carries the corrected cost
+  notes; the run recorded `git_dirty: true` because the routing change was in
+  the working tree at run time.
+
+The three direct baselines in §15.7 have not been rerun on the 2026-11-09
+stack; treat them as the earlier comparison until that run is repeated.
+
+### 15.9 CPU termination with the conditional cause follow-up (2026-11-09)
+
+`runs/rosa-200-2026-11-09-cpu-term` is the current classifier-free record and
+the current policy. Termination extraction is back on the CPU specialist: the
+specialist asks CUAD's canonical convenience question first and, only when that
+returns no span and the contract contains explicit cause language
+(`material breach`, `uncured`, `termination for cause`, `for cause`), a focused
+termination-for-cause follow-up (`specialist/questions.py`,
+`specialist/server.py`). Judgment (risk/report) stays on the GPU-bound entries.
+The all-gpu, gpu-small and round-robin arms are the same-day §15.8 copies.
+
+| arm | wall | extract F1 | risk acc | report acc | fully correct | CPU-served | sensitive approved | violations | GPU-s/doc |
+|---|---|---|---|---|---|---|---|---|---|
+| all-gpu | 202.83 s | 1.000 | 0.995 | 0.756 | 199/200 | 0.0% | 0/247 | 247 | 1.013 |
+| gpu-small | 454.21 s | 1.000 | 0.395 | 0.278 | 75/200 | 0.0% | 0/247 | 247 | 2.241* |
+| round-robin | 570.81 s | 0.991 | 1.000 | 0.756 | 186/200 | 50.0% | 129/247 | 118 | 1.773 |
+| **hybrid** | **823.84 s** | **1.000** | **0.990** | **0.752** | **198/200** | **83.3%** | **247/247** | **0** | **0.217** |
+
+Zero errors and zero fallbacks; screen 41/0/159/0; judgment steps 201/201 on
+GPU; termination extraction 200/200 on `vllm-cpu`. GPU device time is 43.4 s
+(0.217 GPU-s/doc) against 101.6 s (0.508) for the GPU-term route and 202.7 s
+(1.013) for all-gpu: the CPU policy keeps the extraction quality of the GPU
+route at the baseline hybrid's GPU cost, and wall time is 823.84 s.
+
+- **The cause follow-up closed the extraction gap.** Extraction is 1.000
+  P/R/F1 on all 200 documents with zero false positives: all 48 cause clauses
+  are now found (the baseline hybrid missed 27 of them) and all 152 convenience
+  clauses still come from the canonical question. The follow-up fired on ~27
+  documents, matching the offline prediction; the pod's cumulative
+  `clause_extraction_cause` counter (54) also includes ~27 fires from the
+  interrupted first attempt and 1 from the live smoke test, which is why it
+  reads higher than one run.
+- **Risk is 0.990, not the predicted 1.000 — two borderline judgment flips on
+  the GPU MoE, and they are serving variance, not a prompt defect.** Both are
+  sensitive documents. `C-2026-0094`: the extraction inputs are byte-identical
+  to the §15.8 baseline run where risk scored high (correct); this run the
+  model took the "termination only for material breach → medium" branch over "no
+  data-protection clause → high". `C-2026-0187`: the cause follow-up *fixed*
+  a missed termination extraction (one of the baseline's 27), and the model
+  then answered low, ignoring the material-breach branch that the recovered
+  span literally quotes. **A same-prompt, same-inputs replay of all 200 risk
+  calls against the GPU pool scores 200/200** — the flips do not reproduce;
+  they are temperature-0 kernel divergence under batch load, the same class
+  of divergence §14 records between CPU and GPU serving. An ordered
+  decision-list rubric ("evaluate in order, stop at the first match") was
+  A/B-tested on the same inputs and rejected: no gain on the synthetic corpus
+  (200/200 either way) and a CUAD regression (14/19 vs 15/19 on the §17.2
+  inputs). all-gpu itself scores 0.995 on the same corpus, so 0.990 is within
+  the judgment stage's observed variance, not a routing regression — the
+  failure moved from extraction (27 documents) to two borderline judgment
+  calls.
+- **CUAD held-out quality is preserved by the conditional design.** On the
+  19-document CUAD test split the canonical question alone scores termination
+  F1 0.714; replacing it outright with a cause or general question regresses
+  to 0.667. The conditional strategy (canonical first, cause follow-up only on
+  no-span + cause language) scores 0.714 — identical to canonical — because
+  the follow-up only fires where the canonical question already returned
+  nothing. 200/200 on the synthetic corpus, 0.714 on CUAD: the fix targets the
+  synthetic taxonomy gap without disturbing real-data quality.
+- The run recorded `git_dirty: true`; the routing change was in the working
+  tree at run time.
 
 ## 16. Open-source reuse audit and adapters (2026-11-05)
 
@@ -1282,3 +1401,123 @@ collector, and any GPU throughput from the new bench wrappers.
   ingress: it would bypass the governance path.
 - Treating `common.embed` as a production embedder: the 256-dim char-trigram
   hash is a stand-in; `litil-embed-0.6b` remains the measured candidate.
+
+## 17. The CUAD risk gap is an input gap (2026-11-09)
+
+The question (§4 of the 2026-11-09 handoff): the CUAD test-split risk accuracy
+of the 35B-A3B — 0.632 on both the direct CPU and direct GPU runs — sits below
+the majority-class baseline (0.684, "always answer high"). Is that a
+model/prompt/rubric problem?
+
+### 17.1 Rule-following is perfect; the inputs are wrong
+
+Method: replay the shared rubric (`pipeline/risk.assess_risk`) over each
+run's *own extracted clauses* and compare with the model's recorded risk
+answer, per document, on the two recorded direct runs
+(`runs/cuad-test/arm-direct-moe-gpu-v2`, `arm-direct-cpu-moe-v2`).
+
+- GPU direct: risk answer = rubric(own extractions) on **19/19 documents**.
+- CPU direct: **19/19** — identical on both hardware paths.
+
+The model applies the rubric exactly to the clause set it is given. Every
+error is an input error. Decomposition of the seven misses (of 19):
+
+| document | truth | model | cause |
+|---|---|---|---|
+| HPILHOLDING | low | high | liability cap missed by the MoE's extraction (CUAD annotates one) |
+| PLAYAHOTELS | medium | high | liability cap missed |
+| MSCIINC | medium | high | liability cap missed |
+| FEDERATED | high | low | MoE answered with a cap ("capped to the assets of the Fund"); CUAD annotates none |
+| CURAEGISTECHNOLOGIES | medium | low | false-positive termination (CUAD annotates no convenience clause) |
+| TRIZETTO | medium | low | false-positive termination |
+| PAXMEDICA | high | medium | taxonomy: truth derives from CUAD's "Uncapped Liability" annotation — a fifth category no pipeline stage extracts |
+
+Six of seven errors are extraction quality feeding the judgment stage; one is
+a truth-construction gap (the mirror image of the known "CUAD has no
+data-protection category" gap). The risk prompt is not the problem, and
+changing it cannot help: the model already follows it perfectly.
+
+### 17.2 The hybrid pipeline is the fix: specialist extraction (measured)
+
+`runs/cuad-test/arm-direct-specialist-rosa` (2026-11-09, ROSA): the direct arm
+against the specialist endpoint, so extraction is the CUAD-trained checkpoint
+on all four clause keys and judgment (classify/risk/report) is forwarded to
+the 35B MoE — the path with measured CPU/GPU judgment parity (§14). 19
+documents, 912.6 s wall, concurrency 4, no gateway in the path (labelled
+direct; it is a model-quality measurement, not a governance claim).
+
+Extraction per clause (containment, vs the CUAD test-split annotations):
+
+| clause | P | R | F1 | notes |
+|---|---:|---:|---:|---|
+| governing_law | 1.000 | 1.000 | 1.000 | perfect |
+| audit_rights | 1.000 | 1.000 | 1.000 | perfect |
+| termination | 0.556 | 1.000 | 0.714 | all 5 truths found; the 4 FPs are the same annotated-negative docs the canonical question already FPs on — the cause follow-up added none |
+| liability_cap | 0.333 | 0.286 | 0.308 | CUAD's hardest category; the checkpoint misses annotated caps (HPILHOLDING, PLAYAHOTELS, MSCIINC, PAXMEDICA, TRIZETTO) the MoE finds |
+
+Risk: **14/19 = 0.737** measured (one answer unparseable — Scansource
+rambled past the JSON contract), against **0.632** for the direct MoE
+extraction and the **0.684** majority baseline. A same-input replay of the
+19 risk prompts on the GPU MoE scores **15/19 = 0.789** (the unparseable
+answer parses and is correct), consistent with §14's CPU/GPU judgment parity.
+Specialist extraction recovers HPILHOLDING, PLAYAHOTELS-partly, MSCIINC and
+FEDERATED; what remains wrong is the cap-category weakness above, four
+termination FPs, and the PAXMEDICA taxonomy gap (§17.4).
+
+Judgment fidelity held: the MoE's answers track a found/absent replay of the
+rubric on its own extractions on 14/19, and on **four documents the model was
+right where the found/absent replay was wrong** — it read the clause *text*
+(e.g. answered high on a "fully liable, without limitation" span the
+specialist had filed under liability_cap). The rubric asks for text reading
+("uncapped"), not presence counting; the model does the former.
+
+Direct-vs-hybrid per stage: the MoE is the better *cap* extractor on CUAD and
+the specialist is the better termination/governing-law/audit extractor; risk
+quality follows whichever inputs each stage receives. A clause-level split
+(caps to the MoE, the rest to the specialist) is the obvious next experiment;
+it is not measured today.
+
+### 17.3 The through-stack CUAD path is timeout-bound (finding)
+
+The first attempt to measure this end-to-end through the ROSA stack
+(`runs/cuad-test-hybrid-2026-11-09`) hit a structural limit and **must not be
+quoted as a policy result**:
+
+- The specialist pod (2 pinned cores, `--concurrency 4`) answers a
+  ~6k-token CUAD contract in 19–295 s under load. Praxis's
+  `step_timeout_ms: 120000` aborts the slower calls, and after consecutive
+  failures the subrequest circuit breaker opens for the `vllm-cpu` peer
+  (`sub-request circuit open for peer …:8081` in the praxis log).
+- 34 of 80 extraction steps were then served by the 35B MoE through the
+  failover sets — 16 on `vllm-gpu` via `vllm-any` (general entry), 18 on
+  `vllm-gpu-approved` (sensitive entry) — and 15 failed closed with 503,
+  including aborts at exactly 120.002 s.
+- **The run summary counted `fallback: 0` while 34 steps were degraded.**
+  Praxis does not emit `X-Praxis-Fallback` on proxied failovers (§7) and the
+  classifier-label mismatch signal left with the classifier; the trace-UI's
+  errored-hop inference does mark these requests. The pipeline's run summary
+  needs the same inference (or an entry-vs-route pin check) before a degraded
+  run can be disclosed by its summary alone.
+- The resulting mixture — 31 specialist answers, 34 MoE answers, 15 failed
+  extractions — scored risk 0.65 and extraction F1 0.692: not interpretable
+  as either policy.
+- The same shape appears in the SNO-era `runs/cuad-test/arm-D-specialist`
+  (21 errors, 337 s average latency, 2,543 s wall): the
+  specialist-through-gateway path on long real contracts has always been
+  timeout-bound. This is not a ROSA regression.
+
+Options, not implemented today: raise `step_timeout_ms` for long-document
+workloads (the pipeline client and route timeout are already 600 s), give the
+specialist more cores or a higher semaphore, or keep CUAD quality
+measurements on the direct path. Until one of those is chosen and measured,
+the direct-specialist measurement (§17.2) is the honest number.
+
+### 17.4 What remains
+
+PAXMEDICA-type documents stay wrong under any four-key extraction: CUAD's
+"Uncapped Liability" annotation feeds the truth rule but no pipeline stage
+extracts that category. Fixing it means either extracting a fifth clause
+category — which changes the CUAD manifest shape and breaks comparability
+with every recorded run — or documenting the gap. That is the same choice the
+data-protection category already faced, and documenting it is the honest
+option for now.

@@ -71,9 +71,14 @@ async def test_arm_d_full_matrix(stack, tmp_path):
     results = json.loads((tmp_path / "d" / "results.json").read_text())
     records = results["records"]
 
-    per_clause = [r for r in records if r["step"].startswith("extract:") or r["step"] == "classify"]
-    assert per_clause
-    assert routes(per_clause) == {"vllm-cpu"}
+    classify = [r for r in records if r["step"] == "classify"]
+    extracts = [r for r in records if r["step"].startswith("extract:")]
+    assert classify and extracts
+    assert routes(classify) == {"vllm-cpu"}
+    # All extraction, including termination, stays on the CPU specialist.
+    # Termination-for-cause is a follow-up question inside that service, not a
+    # GPU route. Sensitive documents use the approved CPU entry.
+    assert routes(extracts) == {"vllm-cpu"}
 
     risk_steps = [r for r in records if r["step"] == "risk"]
     # Non-sensitive judgment goes to the general GPU pool; sensitive judgment
@@ -91,7 +96,9 @@ async def test_arm_d_full_matrix(stack, tmp_path):
     assert all(r["entry"].startswith("sensitive") for r in sensitive)
     assert all(r["headers"].get("x-demo-route") in APPROVED for r in sensitive)
     assert summary["judgment_split"] is True
-    assert summary["judgment_steps"] > 0
+    # Judgment is risk/report only; extraction (including termination) must
+    # not inflate the count.
+    assert summary["judgment_steps"] == len(risk_steps) + len(report_steps)
     assert summary["judgment_on_gpu"] == summary["judgment_steps"]
     assert summary["stage_routes"]["risk"].keys() <= {"vllm-gpu", "vllm-gpu-approved"}
 

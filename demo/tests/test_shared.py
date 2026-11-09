@@ -62,3 +62,15 @@ def test_extraction_prompt_maps_back_to_a_cuad_question():
     body = review.extract_body("Some contract text", "audit_rights")
     assert questions.clause_from_prompt(body["messages"]) == "audit rights"
     assert questions.question_for(questions.clause_from_prompt(body["messages"]))
+
+
+def test_cause_question_is_a_narrow_termination_fallback():
+    cause = "This Agreement may be terminated only for material breach that remains uncured."
+    convenience = "Either party may terminate this Agreement upon thirty days' notice."
+    assert questions.cause_question_for("termination", cause) == (
+        questions.CAUSE_TERMINATION_QUESTION)
+    assert questions.cause_question_for("termination", convenience) is None
+    # A generic breach in a warranty clause must not trigger the cause question.
+    assert questions.cause_question_for(
+        "termination", "The Supplier warrants no breach of any representation.") is None
+    assert questions.cause_question_for("governing_law", cause) is None

@@ -19,6 +19,7 @@ from ..configs import (
     GOVERNED_CONFIGS,
     resolve_config,
 )
+from ..evalkit.score import gpu_device_seconds
 from ..routes import APPROVED_ROUTES, GPU_ROUTES
 from .generate import CLAUSE_KEYS
 from .risk import DATA_PROTECTION_KEY, rubric_text
@@ -26,7 +27,9 @@ from .schemas import apply as apply_schema
 
 # Steps whose work is judgment rather than extraction. The hybrid config gives
 # them their own praxis listeners pinned to the GPU, so the split is a policy
-# decision by step type, not the classifier's guess.
+# decision by step type, not the classifier's guess. Extraction stays on the
+# CPU specialist, including termination: its cause follow-up question lives in
+# the specialist, so no extraction step needs the GPU entry.
 JUDGMENT_STEPS = {"risk", "report"}
 
 # Thinking mode (the quality lever tested in FINDINGS §8): Qwen3.5 emits
@@ -273,12 +276,14 @@ class ReviewRun:
         """Pick the entry (and its trace label) for one pipeline step.
 
         Judgment steps use the judgment listeners when configured; otherwise
-        they fall back to the stage-agnostic entries. A sensitive document
-        always stays on an approved entry: that is a governance constraint,
+        they fall back to the stage-agnostic entries. Extraction, including
+        termination, stays on the CPU specialist. A sensitive document always
+        stays on an approved entry: that is a governance constraint,
         independent of which stage is calling.
         """
         stage = step.split(":", 1)[0]
-        if stage in JUDGMENT_STEPS and self.governance:
+        gpu_bound = stage in JUDGMENT_STEPS
+        if gpu_bound and self.governance:
             if screened_sensitive:
                 if self.sensitive_judgment:
                     return self.sensitive_judgment, "sensitive-judgment"
@@ -386,10 +391,11 @@ class ReviewRun:
         client, entry = self.entry_for_step(screened, "classify")
         await self.call(client, entry, "classify", classify_body(doc_text), doc_id, "SIMPLE", screened)
         clauses: dict[str, str | None] = {}
-        client, entry = self.entry_for_step(screened, "extract")
         for clause in self.clause_keys:
+            step = f"extract:{clause}"
+            client, entry = self.entry_for_step(screened, step)
             display = clause.replace("_", " ")
-            rec = await self.call(client, entry, f"extract:{clause}", extract_body(doc_text, display),
+            rec = await self.call(client, entry, step, extract_body(doc_text, display),
                                   doc_id, "SIMPLE", screened)
             content = rec.get("content", {})
             clauses[clause] = content.get("text") if content.get("found") else None
@@ -513,7 +519,7 @@ def summarise(records: list[dict], screen_stats: dict) -> dict:
             by_route[route] = by_route.get(route, 0) + 1
             per_stage_routes = stage_routes.setdefault(stage, {})
             per_stage_routes[route] = per_stage_routes.get(route, 0) + 1
-            if "judgment" in (r.get("entry") or ""):
+            if stage in JUDGMENT_STEPS and "judgment" in (r.get("entry") or ""):
                 judgment_steps += 1
                 if route in GPU_ROUTES:
                     judgment_on_gpu += 1
@@ -598,6 +604,7 @@ async def run_arm(
     doc_ids: list[str] | None = None,
     judgment_base: str | None = None,
     sensitive_judgment_base: str | None = None,
+    run_kind: str = "batch",
 ) -> dict:
     arm = CONFIG_ALIASES.get(str(arm).strip().lower(), arm)
     mode = CONFIG_MODES.get(arm, arm)
@@ -610,6 +617,7 @@ async def run_arm(
     started_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
     sampler = None
+    metrics: dict | None = None
     if sample_metrics:
         from ..evalkit.sampler import MetricsSampler
 
@@ -627,8 +635,10 @@ async def run_arm(
 
     if sampler is not None:
         try:
-            (out / "metrics.json").write_text(json.dumps(sampler.stop_and_summary(), indent=1))
+            metrics = sampler.stop_and_summary()
+            (out / "metrics.json").write_text(json.dumps(metrics, indent=1))
         except Exception as exc:  # metrics must never kill the run
+            metrics = None
             print(f"WARN: metrics sampling failed: {exc}")
 
     summary = {
@@ -655,7 +665,15 @@ async def run_arm(
         # in the pool. Recording the deploy-time mapping with the run keeps
         # "direct vs through-stack" answerable months later.
         **run_provenance(environment, cluster, pools),
+        # "batch" is a measured config arm; the MCP facade and ad-hoc smoke
+        # checks post with a different kind so they cannot displace the matrix
+        # row in the trace UI's "latest per config" table.
+        "run_kind": run_kind,
     }
+    if metrics:
+        gpu_s = gpu_device_seconds(metrics, pools)
+        summary["gpu_device_active_s"] = round(gpu_s, 2)
+        summary["gpu_s_per_doc"] = round(gpu_s / max(len(docs), 1), 3)
     (out / "results.json").write_text(
         json.dumps({"summary": summary, "records": run.records}, indent=1)
     )

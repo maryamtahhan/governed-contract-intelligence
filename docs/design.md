@@ -53,14 +53,17 @@ different things**, and the same word can appear in more than one layer.
    `results.json` → `summary.pools`; for ROSA deploy metadata, that is
    `deploy/openshift/rosa/pools.json`. Do not infer hardware from a route
    name.
-5. **The current run directory is `runs/rosa-200/hybrid`** (old `arm-D`).
-   The default dashboard uses A = that run, B = `runs/direct/gpu-moe`.
+5. **The current run directory is
+   `runs/rosa-200-2026-11-09-cpu-term/hybrid`** (old `arm-D`). The default
+   dashboard uses A = that run, B = the same-run all-gpu control.
+   `runs/rosa-200-2026-11-09-gpu-term/hybrid` is the measured GPU-termination
+   alternative, not the current policy.
 
 ### 2.2 Five layers that look like names
 
 | Layer | Example | Where to read it |
 |---|---|---|
-| Run directory | `runs/rosa-200/hybrid` | the path; maps to one recorded run |
+| Run directory | `runs/rosa-200-2026-11-09-cpu-term/hybrid` | the path; maps to one recorded run |
 | Routing policy / config | `hybrid` (old D) | `summary.config`; legacy `summary.arm` |
 | Route / cluster | `vllm-cpu`, `vllm-gpu-approved` | `x-demo-route` response header; `summary.routes` |
 | Served model | `Qwen3.5-35B-A3B`, `cuad-specialist` | response `model`; `summary.stage_models` |
@@ -132,15 +135,15 @@ through-stack.
 
 | Path | Meaning |
 |---|---|
-| `runs/rosa-200/all-gpu` | through-stack config `all-gpu`, 200 docs |
-| `runs/rosa-200/gpu-small` | through-stack config `gpu-small`, 200 docs |
-| `runs/rosa-200/round-robin` | through-stack config `round-robin`, 200 docs |
-| `runs/rosa-200/hybrid` | through-stack config `hybrid`, 200 docs (old `arm-D`) |
+| `runs/rosa-200-2026-11-09/all-gpu` | through-stack config `all-gpu`, 200 docs (same-day §15.9 copy) |
+| `runs/rosa-200-2026-11-09/gpu-small` | through-stack config `gpu-small`, 200 docs (same-day §15.9 copy) |
+| `runs/rosa-200-2026-11-09/round-robin` | through-stack config `round-robin`, 200 docs (same-day §15.9 copy) |
+| `runs/rosa-200-2026-11-09-cpu-term/hybrid` | current through-stack `hybrid`, 200 docs (old `arm-D`), CPU termination policy |
+| `runs/rosa-200-2026-11-09-gpu-term/hybrid` | measured GPU-termination alternative, 200 docs (not the current policy) |
 | `runs/direct/gpu-moe` | direct, one GPU endpoint, 35B-A3B |
 | `runs/direct/cpu-moe` | direct, one CPU endpoint, 35B-A3B |
 | `runs/direct/cpu-small` | direct, one CPU endpoint, 1.5B |
-| `runs/cuad-test/arm-*` | historical CUAD evidence; ids preserved |
-| `runs/simulated/arm-*`, `runs/gpu-measured/arm-*`, `runs/cuad-mixed/arm-*` | historical evidence; ids preserved |
+| `runs/cuad-test/arm-*` | CUAD appendix evidence; ids preserved |
 
 See `runs/README.md` for the short version.
 
@@ -270,15 +273,17 @@ default stack: the pins above express the routing that actually happened,
 without the gRPC hop, and the claim is "containment plus GPU-first
 economics", never "the AI decides what is hard".
 
-The removal is **built and tested, not re-measured**: every §15 number came
-from the classifier-in-path config. The classifier Deployment, its arm-B
-label-routed config and the workflow jobs that published its image are
-preserved in git history at commit `aa080e9`; the published image and
-mirrored modelcar stay in the registry for §5's experiment.
+The removal was **built and tested**; the 2026-11-09 classifier-free matrix
+in §3.3 is its re-measurement. Every §15 number before §15.8 came from the
+classifier-in-path config. The classifier Deployment, its arm-B label-routed
+config and the workflow jobs that published its image are preserved in git
+history at commit `aa080e9`; the published image and mirrored modelcar stay
+in the registry for §5's experiment.
 
 ### 3.3 The measured justification (ROSA 200-document matrix)
 
-From `runs/rosa-200/report.json` (FINDINGS §15 has the full analysis):
+From `runs/rosa-200/report.json` (classifier-in-path; historical — FINDINGS §15
+has the full analysis):
 
 | Config | Calls by route | Extract F1 | Risk acc | Wall s | Recorded GPU-s/doc | Note |
 |---|---|---:|---:|---:|---:|---|
@@ -295,7 +300,47 @@ run's pool map says the backend was CPU-served; the route name is doing the
 accounting, not the hardware. Why `hybrid` works: the same steps go to the
 large 35B on CPU, only the report goes to the approved GPU — quality kept
 (F1 0.982, risk 0.995) with recorded GPU time cut to 0.036 GPU-s/doc, at
-the cost of wall-clock (1112 s vs 202 s).
+the cost of wall-clock (1112 s vs 202 s). Those recorded figures sum both
+routes that front the same `gpumoe-vllm` pod; the classifier-free table below
+corrects that and is the current policy.
+
+#### 2026-11-09 classifier-free re-measurement
+
+`runs/rosa-200-2026-11-09-cpu-term` is the current classifier-free record.
+The hybrid arm runs termination extraction on the CPU specialist with a
+conditional cause follow-up (canonical CUAD convenience question first; a
+focused termination-for-cause question only when that returns no span and the
+contract has cause language); judgment stays risk/report on the GPU-bound
+entries. The other three arms are the same-day copies. All arms: 200 documents,
+1,201 steps, 0 errors, 0 fallback, regex screen 41/0/159/0.
+
+| config | wall | extract F1 | risk | report | fully correct | CPU share | sensitive approved | violations | GPU-s/doc |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| all-gpu | 202.83 | 1.000 | 0.995 | 0.756 | 199/200 | 0.0 | 0/247 | 247 | 1.013 |
+| gpu-small | 454.21 | 1.000 | 0.395 | 0.278 | 75/200 | 0.0 | 0/247 | 247 | 2.241* |
+| round-robin | 570.81 | 0.991 | 1.000 | 0.756 | 186/200 | 0.5 | 129/247 | 118 | 1.773 |
+| **hybrid** | **823.84** | **1.000** | **0.990** | **0.752** | **198/200** | **0.833** | **247/247** | **0** | **0.217** |
+
+`*` `vllm-gpu-small` is route-accounted as GPU but the pool map records CPU
+hardware; do not read 2.241 as GPU time. GPU-s/doc counts a shared physical
+backend once: `gpumoe-vllm-approved` and `gpumoe-vllm` are the same pod, so the
+scorer maxes the group instead of summing it. Hybrid uses ~4.7x less GPU time
+than all-gpu (0.217 vs 1.013; 43.4 vs 202.7 GPU-s total). Judgment steps:
+201/201 on GPU. Termination extraction (200 steps) is back on the CPU
+specialist: the earlier hybrid run scored 173/200 because all 27 misses were
+termination-for-cause clauses, while `cuad-specialist` is asked CUAD's
+canonical “Termination For Convenience” question. The conditional cause
+follow-up recovers all 48 cause clauses with zero false positives (extraction
+1.000/1.000/1.000), without regressing CUAD held-out termination F1 (0.714,
+identical to canonical — the follow-up only fires where the canonical question
+already returned nothing). Risk is 0.990: two sensitive documents flipped on
+rubric priority at the GPU judgment stage (FINDINGS §15.9) — one on inputs
+byte-identical to a run where it scored correctly — against all-gpu's 0.995 on
+the same corpus. The GPU termination route (`runs/rosa-200-2026-11-09-gpu-term`,
+726.77 s, 0.508 GPU-s/doc, 200/200) remains a measured alternative: it closes
+the same extraction gap on the GPU at 2.3x the GPU cost. The old
+`runs/rosa-200` numbers remain the classifier-in-path record and must not be
+mixed with this table.
 
 ### 3.4 Do not break
 
@@ -353,6 +398,13 @@ The intended catalog is small and domain-level:
 | `review_document` | tool | the full deterministic review (screen → report) |
 | `screen_document`, `extract_clause`, `assess_risk`, `build_report` | tools | one stage each, for agent composition |
 | `search_clauses` | tool | retrieval over the clause index |
+
+The first cut is implemented in `src/hybrid_demo/mcp/server.py` (console script
+`hybrid-mcp`, plus the root launcher `mcp/contract_review_server.py`). It
+serves `contract://{doc_id}`, `review_document`, `screen_document`,
+`extract_clause`, `assess_risk` and `build_report`; `search_clauses` waits for
+the clause index. The tools call the ingress relays, use the same per-step API
+keys, and never reach a pool directly.
 
 The MCP server is a **thin adapter**, not a second control plane. It runs
 inside the sandbox/namespace, uses the same per-step API keys as the
@@ -851,11 +903,14 @@ reports, the regenerated ROSA report, and the alias regression tests —
 4. **Local, no cluster needed:** the Presidio A/B on a labelled sample and
    the docling-offsets A/B on the D11 regression set (§4.6's open list),
    and the embedder-tier call (FINDINGS §9/§11).
-5. **MCP facade and agent trigger** (§3.5, no re-measurement required): add
-   `mcp/contract_review_server.py` with the catalog above, wire OpenClaw to
-   it, and run the same two-document batch scripted and agent-driven. Keep
-   the agent path labelled **functional, not measured** until it has its own
-   run record; the measured reference path is unchanged.
+5. **MCP facade and agent trigger** (§3.5, no re-measurement required). The
+   facade is scaffolded (`hybrid-mcp`, `src/hybrid_demo/mcp/server.py`, root
+   launcher `mcp/contract_review_server.py`) with `contract://`, the full
+   review and the stage tools. Remaining: wire OpenClaw to it, add
+   `search_clauses` once the index lands, and run the same two-document batch
+   scripted and agent-driven. Keep the agent path labelled **functional, not
+   measured** until it has its own run record; the measured reference path is
+   unchanged.
 
 Quick verification of the whole surface:
 

@@ -15,10 +15,10 @@
 
 PORT     ?= 8099
 HOST     ?= 127.0.0.1
-RUN      ?= ../runs/rosa-200/hybrid
+RUN      ?= ../runs/rosa-200-2026-11-09-cpu-term/hybrid
 DATA     ?= data/synthetic
-COMPARE  ?= ../runs/direct/gpu-moe
-RUNS_DIR ?= ../runs/rosa-200
+COMPARE  ?= ../runs/rosa-200-2026-11-09/all-gpu
+RUNS_DIR ?= ../runs
 # Live mode: the OpenAI-compatible base URL the live routes proxy to, and the
 # token that gates them (X-Live-Token / Authorization: Bearer; also read from
 # HYBRID_UI_LIVE_TOKEN). Live mode on a non-loopback HOST refuses to start

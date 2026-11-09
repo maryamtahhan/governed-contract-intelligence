@@ -26,7 +26,7 @@ from prometheus_client import CollectorRegistry, Counter, Gauge, generate_latest
 
 from ..common import new_id
 from .cache import create_cache
-from .qa import best_spans, clause_from_prompt, question_for
+from .qa import best_spans, cause_question_for, clause_from_prompt, question_for
 
 POOL = "vllm-cpu-specialist"
 
@@ -101,6 +101,15 @@ def create_app(args: argparse.Namespace) -> FastAPI:
                     best_spans, model, tok, question, context,
                     null_margin=args.null_margin,
                 )
+                if span is None:
+                    followup = cause_question_for(clause, context)
+                    if followup:
+                        requests_total.labels(
+                            pool=POOL, task="clause_extraction_cause").inc()
+                        span = await asyncio.to_thread(
+                            best_spans, model, tok, followup, context,
+                            null_margin=args.null_margin,
+                        )
         finally:
             inflight.labels(pool=POOL).dec()
         device_ms.labels(pool=POOL).inc((time.monotonic() - started) * 1000)

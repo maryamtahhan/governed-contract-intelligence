@@ -296,8 +296,9 @@ before quoting any of these:
 
 - **Governance**: the hybrid config = 0 sensitive violations on every stack,
   every dataset — including 0/247 sensitive steps on the 200-document ROSA
-  run. Ungoverned controls leak: ROSA all-gpu/gpu-small 247/247, round-robin
-  122/247; earlier SNO/CUAD all-gpu/gpu-small 25, round-robin 12–24. This is a
+  run. Ungoverned controls leak: classifier-free ROSA all-gpu/gpu-small
+  247/247, round-robin 118/247 (the earlier classifier-in-path run leaked 122);
+  earlier SNO/CUAD all-gpu/gpu-small 25, round-robin 12–24. This is a
   containment result — routing, not PII ground truth (FINDINGS §2).
 - **Quality (CUAD held-out test split, 19 unique contracts)**: 1.5B F1 0.242
   (recall 1.0, precision ~0.15 — always answers, usually wrong: the worst
@@ -305,22 +306,40 @@ before quoting any of these:
   discrimination, identical on CPU and 4× A10G (same weights). The 7B was
   never run on the test split, so the old mixed-split comparison is retired.
   The retrieval-first specialist reaches F1 0.800 — a local direct run, not
-  through-stack.
+  through-stack. **The CUAD risk gap is an input gap, not a judgment gap
+  (FINDINGS §17):** the MoE applies the risk rubric perfectly to the clauses
+  it is given (19/19 on both direct runs); every miss traces to extraction.
+  With the CUAD-trained specialist doing the extraction and the MoE judging
+  (`runs/cuad-test/arm-direct-specialist-rosa`), risk rises to **0.737**
+  measured (**0.789** on a same-input GPU replay), above the 0.684
+  majority-class baseline; the specialist is perfect on governing law and
+  audit rights, and weak on CUAD's hardest category, caps on liability
+  (F1 0.308) — a clause-level routing split is the unmeasured next step.
 - **Direct parity (ROSA, 200 docs)**: the same 35B-A3B weights score
   identically on a bare CPU and a bare GPU (extract F1 1.0, risk 1.0; report
-  0.746 vs 0.768), and all-CPU is 9.2× slower (2095 s vs 228 s). The only
-  quality loss in the governed path is the specialist (F1 0.982), not the
-  device; direct runs are ungoverned by construction (all 247 sensitive
-  steps on one endpoint).
-- **Cost (ROSA demo stack, 200 synthetic docs)**: the hybrid config used
-  **0.036 GPU-s/doc vs the all-gpu config's 1.974 (54×)** — 7.3 vs 394.8
-  GPU-seconds total — at extract F1 0.982 vs 1.0 and risk 0.995 vs 1.0. That
-  GPU time is one cross-document report per run: the measured hybrid arm is a
-  **CPU-first policy** (classify, extraction and risk on CPU; the portfolio
-  report on GPU), not demonstrated semantic routing (FINDINGS §15.5). The
-  earlier g5 validation
-  measured 45× (0.21 vs 9.35). At the illustrative $1.10/GPU-hour that is
-  ≈ $0.002 vs ≈ $0.12 of GPU time for the batch.
+  0.746 vs 0.768), and all-CPU is 9.2× slower (2095 s vs 228 s). The
+  specialist's `termination` field used to be the one quality loss in the
+  governed path (F1 0.982; 173/200 fully correct): all 27 misses were
+  synthetic termination-for-cause clauses scored against CUAD's **Termination
+  For Convenience** question, with precision still 1.000 — a taxonomy
+  mismatch, not the device. The conditional cause follow-up (canonical
+  question first, cause question only on no-span + cause language) closes it:
+  extraction F1 1.000, zero false positives, 198/200 fully correct, with CUAD
+  held-out termination F1 unchanged at 0.714. Direct runs are ungoverned by
+  construction (all 247 sensitive steps on one endpoint).
+- **Cost (ROSA demo stack, classifier-free, 200 synthetic docs, 2026-11-09)**:
+  the hybrid config used **0.217 GPU-s/doc vs the all-gpu config's 1.013
+  (≈4.7×)** — 43.4 vs 202.7 GPU-seconds total — at extract F1 1.000 vs 1.000,
+  risk 0.990 vs 0.995 and report 0.752 vs 0.756 (198/200 vs 199/200 documents
+  fully correct; the two hybrid misses are borderline rubric-priority flips at
+  the GPU judgment stage, FINDINGS §15.9). GPU time is the 201 judgment steps
+  (risk + report) on the judgment entries; general work is CPU-first. The
+  GPU-termination alternative measured 0.508 GPU-s/doc
+  (`runs/rosa-200-2026-11-09-gpu-term`) and the earlier classifier-in-path
+  run (0.036 vs 1.974) is a different policy; neither is the current record
+  (FINDINGS §15.8-§15.9). GPU-s/doc counts the shared `gpumoe-vllm`
+  backend once. At the illustrative $1.10/GPU-hour that is ≈ $0.013 vs
+  ≈ $0.062 of GPU time for the batch.
 - **Retrieval (single runs)**: regime decides the winner. Within-document
   (the retrieve-then-extract regime) the MTEB(Law) ordering inverts — the
   0.6B litil beats the top-scoring 8B by ~10 points on R@1/MRR
@@ -351,10 +370,11 @@ demo/src/hybrid_demo/
     fakepool/            simulated backends + llm-d-inference-sim adapter
     traceui/             recording relays, dashboard, audit, OTel export
     pii.py               pluggable PII detectors (regex default)
+    mcp/                 MCP facade: review + stage tools, ingress only
     bench.py             vLLM bench / GuideLLM command builder
 demo/tools/              classifier probes, prompt calibration, validators,
                          paired-significance tests (mcnemar.py), PII compare
-demo/tests/             206 tests incl. e2e against a praxis stub
+demo/tests/             212 tests incl. e2e against a praxis stub
 manifests/               OpenShift base (pools, praxis, trace-ui, netpols)
 manifests/base/          non-KServe base; base/praxis/ holds the four routing
                          configs, shared with the Linux stack
@@ -373,6 +393,7 @@ runs/retrieval/          embedder evals, corrections, e2e runs (FINDINGS §11)
 docs/                    design.md (the design doc), architecture + pipeline
                          diagrams (SVG), OCTO business-case doc (v0.3),
                          review guide, stage-runbook.md (one-page talk)
+mcp/                     launcher for the MCP facade (design §3.5)
 sandbox/policy.yaml      OpenShell sandbox egress policy (praxis + github RO)
 FINDINGS.md              the measurement record — read before quoting numbers
 ```

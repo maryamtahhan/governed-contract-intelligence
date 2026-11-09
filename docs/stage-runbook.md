@@ -5,15 +5,16 @@ three beats below are the same in replay and live; only beat 2 needs a live
 cluster (or the recording fallback).
 
 Read the header run line before every beat: in the default dashboard **A is
-the gateway-routed ROSA run** (`runs/rosa-200/hybrid`) and **B is the direct
-GPU run** (`runs/direct/gpu-moe`). The appendix CUAD example reverses that
-order.
+the classifier-free ROSA hybrid run** (`runs/rosa-200-2026-11-09-cpu-term/hybrid`)
+and **B is the same-day all-GPU control** (`runs/rosa-200-2026-11-09/all-gpu`).
+Both cross Praxis; A is governed, B is not. The CUAD appendix instead uses a
+direct run for A and a failed gateway run for B.
 
 ## Pre-flight (5 minutes)
 
 ```bash
 cd demo
-uv run pytest -q                 # 206 passed
+uv run --extra mcp pytest -q     # 216 passed (MCP tests skip without the extra)
 make dashboard-up                # 127.0.0.1:8099, replay only
 open http://127.0.0.1:8099/
 curl -s http://127.0.0.1:8099/api/health   # {"ok":true,...,"live_enabled":false}
@@ -28,7 +29,8 @@ Leave the A/B toggle on **A**. On the ROSA run the header reads
 `measured · <redacted-cluster> · rosa`; the hardware line names
 `vllm-cpu` and `vllm-gpu-approved` and ends with **0 sensitive violations**.
 Point at the routing figures: **247/247 sensitive steps on approved pools,
-0 violations**, and **1200 CPU / 1 approved-GPU** general steps.
+0 violations**, **1000 CPU-served general steps** (classify + extraction) and
+**201 judgment steps on GPU** (159 `vllm-gpu` + 42 approved).
 
 Say: *“This is the recorded routing evidence. The sensitive entry never
 reached a non-approved pool; when the approved pool was unavailable it failed
@@ -71,14 +73,23 @@ the last live run instead.
 
 Stay on **A**. Quote the measured run, not a model estimate:
 
-- **0.036 GPU-seconds/document** vs **1.974** for all-GPU — **54× less**.
-- **7.3 GPU-seconds total** vs **394.8** over 200 documents.
-- At the illustrative **$1.10/GPU-hour**: about **$0.002** of GPU time for
-  200 contracts vs **$0.12** all-GPU.
+- **0.217 GPU-seconds/document** vs **1.013** for all-GPU — about **4.7× less**.
+- **43.4 GPU-seconds total** vs **202.7** over 200 documents.
+- At the illustrative **$1.10/GPU-hour**: about **$0.013** of GPU time for
+  200 contracts vs **$0.062** all-GPU.
+- Source: the 2026-11-09 classifier-free CPU-termination run
+  (`runs/rosa-200-2026-11-09-cpu-term`). GPU-s/doc counts the shared
+  `gpumoe-vllm` backend once. Do not use the old **0.036 / 1.974 / 54×**
+  figures: that was the classifier-in-path policy and it double-counted the
+  shared backend. The GPU-termination alternative
+  (`runs/rosa-200-2026-11-09-gpu-term`) measured **0.508** GPU-s/doc — a
+  measured route, not the current policy.
 
 Say: *“The saving is the GPU capacity you did not have to buy or queue for.”*
-Quality is supporting evidence, not the headline: extraction F1 **0.690**,
-risk **0.632**, report **0.645** with the current scorer.
+Quality is supporting evidence, not the headline: on the 200-document
+synthetic corpus, extraction F1 **1.000** (the conditional cause follow-up
+recovered all 48 termination-for-cause clauses with zero false positives),
+risk **0.990**, report **0.752**, **198/200 documents fully correct**.
 
 ## Do not claim
 
@@ -94,7 +105,8 @@ risk **0.632**, report **0.645** with the current scorer.
 - Do not quote **26.3%** for the report. That is the pre-fix value; the page
   and the re-scored `metrics.json` both read **64.5%**.
 - Do not claim the **200-document run** was live today. It was measured on
-  2026-11-04; today's live run is a separate, smaller run.
+  2026-11-09 (CPU-termination policy); today's live run is a separate, smaller
+  run.
 
 ## Live cluster quick reference
 

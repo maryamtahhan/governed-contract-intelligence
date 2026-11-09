@@ -225,6 +225,11 @@ def build_document(doc_id: str, doc_text: str, records: list[dict],
 
     routes = Counter(t["route"] for t in (_trace(r) for r in by_step.values())
                      if t["route"])
+    # The extraction stage header must count only extraction calls. Using the
+    # document-wide route count there mixed classify and risk into a row that
+    # sits above the extraction cards (e.g. "vllm-cpu x5, vllm-gpu x1" for a
+    # document with four CPU extracts, one CPU classify and one GPU risk).
+    extract_routes = Counter(e["route"] for e in extracts if e["route"])
     return {
         "doc_id": doc_id,
         "chars": len(doc_text),
@@ -237,6 +242,8 @@ def build_document(doc_id: str, doc_text: str, records: list[dict],
         # Where this document's calls actually went. Empty for a direct run:
         # that is the distinction the page has to make visible, not hide.
         "routes": dict(routes),
+        # The same count, scoped to the cards rendered under "Extract clauses".
+        "extract_routes": dict(extract_routes),
         "sensitive": any(r.get("true_sensitive") for r in by_step.values()),
         "correct_fields": sum(checks),
         "fields_total": len(checks),

@@ -82,6 +82,9 @@ def test_runs_and_audit_export(traceui):
     traceui.record_run({"arm": "D", "docs": 12, "sensitive_violations": 0, "routes": {"vllm-cpu": 5}})
     traceui.record_run({"arm": "D", "docs": 6, "sensitive_violations": 0, "routes": {}})
     traceui.record_run({"arm": "A", "docs": 12, "sensitive_violations": 3, "routes": {}})
+    # A newer MCP one-document review must not displace the matrix row.
+    traceui.record_run({"arm": "D", "docs": 1, "run_kind": "mcp",
+                        "sensitive_violations": 0, "routes": {"vllm-cpu": 1}})
     runs = traceui.list_runs()
     assert [r["arm"] for r in runs] == ["A", "D"]
     assert runs[1]["docs"] == 6

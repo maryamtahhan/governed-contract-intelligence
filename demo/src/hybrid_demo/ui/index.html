@@ -1133,7 +1133,7 @@ function classifyCard(doc) {
 function extractsCard(doc) {
   const sum = doc.extracts.reduce((a, e) => a + (e.latency_ms || 0), 0);
   const cards = doc.extracts.map((e) => extractCard(e, doc.scored !== false)).join("");
-  const routes = Object.entries(doc.routes || {})
+  const routes = Object.entries(doc.extract_routes || {})
     .map(([r, n]) => `<span class="chip route ${routeClass(r)}">${esc(r)} ×${n}</span>`).join("");
   return `<section class="stage" data-node="extract">
     <div class="stage-head">

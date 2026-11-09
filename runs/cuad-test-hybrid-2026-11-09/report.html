@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Hybrid demo report</title>
+<style>
+:root{color-scheme:dark}body{margin:0;padding:32px;background:#07111f;color:#e9f2ff;
+font:15px/1.5 Inter,ui-sans-serif,system-ui,sans-serif}
+main{max-width:1000px;margin:auto}h1{font-size:24px}h2{font-size:18px;margin-top:32px}
+table{border-collapse:collapse;width:100%;margin:12px 0}
+th,td{border:1px solid #2b4865;padding:6px 10px;text-align:left}
+th{background:#0d1b2d}tr:nth-child(even) td{background:#0b1626}
+.bad{color:#ff4d5e;font-weight:700}.good{color:#55e6a0}
+p.note{color:#9db1c8}
+</style></head><body><main>
+<h1>Hybrid CPU+GPU demo - measurement report</h1>
+<p class="note">Device-time and dollar figures are SIMULATED where the fake pool backends were used; ground truth: 20 CUAD v1 real contracts (CUAD v1 (CC BY 4.0, verify before use); seed 42; licences: CC BY 4.0 - verify before redistribution).</p>
+<h2>Configs overview</h2><table><thead><tr><th>config</th><th>mode</th><th>docs</th><th>wall s</th><th>errors</th><th>fallback (degraded)</th></tr></thead><tbody><tr><td>hybrid</td><td>matrix</td><td>20</td><td>452.35</td><td>15</td><td>0</td></tr></tbody></table>
+<h2>Quality vs ground truth</h2><table><thead><tr><th>config</th><th>extract P (containment)</th><th>extract R (containment)</th><th>extract F1</th><th>risk acc</th><th>type acc</th><th>report acc</th><th>docs fully correct</th></tr></thead><tbody><tr><td>hybrid</td><td>0.75</td><td>0.643</td><td>0.692</td><td>0.65</td><td>None</td><td>0.526</td><td>4/20</td></tr></tbody></table>
+<h2>Routing and governance</h2><table><thead><tr><th>config</th><th>CPU-served share</th><th>sensitive steps</th><th>on approved pool</th><th>violations</th></tr></thead><tbody><tr><td>hybrid</td><td>0.481</td><td>31</td><td>31</td><td class="good">0</td></tr></tbody></table>
+<h2>Cost (device-time; measured)</h2><table><thead><tr><th>config</th><th>GPU-s/doc</th><th>CPU core-s/doc</th></tr></thead><tbody><tr><td>hybrid</td><td>3.435</td><td>158.665</td></tr></tbody></table>
+</main></body></html>

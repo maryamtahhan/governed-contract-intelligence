@@ -1,0 +1,48 @@
+{
+ "extraction": {
+  "precision": 0.657,
+  "recall": 0.958,
+  "f1": 0.78,
+  "fields_correct": 63,
+  "fields_total": 76,
+  "match_metric": "containment",
+  "by_mode": {
+   "exact": {
+    "mode": "exact",
+    "precision": 0.852,
+    "recall": 0.821,
+    "f1": 0.836,
+    "tp": 23,
+    "fp": 4,
+    "fn": 5
+   },
+   "containment": {
+    "mode": "containment",
+    "precision": 0.852,
+    "recall": 0.821,
+    "f1": 0.836,
+    "tp": 23,
+    "fp": 4,
+    "fn": 5
+   },
+   "partial": {
+    "mode": "partial",
+    "precision": 0.889,
+    "recall": 0.857,
+    "f1": 0.873,
+    "tp": 24,
+    "fp": 3,
+    "fn": 4
+   }
+  },
+  "absence": {
+   "correct": 40,
+   "total": 48
+  },
+  "offset": null,
+  "offset_backend": "unavailable"
+ },
+ "risk_accuracy": 0.737,
+ "report_accuracy": 0.645,
+ "docs_fully_correct": 7
+}

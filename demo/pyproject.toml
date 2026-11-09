@@ -59,6 +59,11 @@ rag = [
     "ragas>=0.2,<1",
     "datasets>=2.20,<5",
 ]
+# MCP facade (design §3.5). Additive: the measured pipeline does not import
+# this extra, and the server only calls the governed ingress relays.
+mcp = [
+    "mcp>=1.0,<2",
+]
 
 [project.scripts]
 hybrid-gendata = "hybrid_demo.pipeline.generate:main"
@@ -79,6 +84,7 @@ hybrid-bench = "hybrid_demo.bench:main"
 hybrid-batch = "hybrid_demo.pipeline.batch:main"
 hybrid-pii = "hybrid_demo.pii:main"
 hybrid-eval-contract-steps = "hybrid_demo.evalkit.contract_steps:main"
+hybrid-mcp = "hybrid_demo.mcp.server:main"
 
 [dependency-groups]
 dev = [

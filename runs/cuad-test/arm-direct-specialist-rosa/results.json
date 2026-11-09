@@ -1,0 +1,2638 @@
+{
+ "summary": {
+  "arm": "direct",
+  "mode": "direct",
+  "docs": 19,
+  "endpoint": "http://127.0.0.1:18090/v1",
+  "model": "cuad-specialist (roberta-large) forwarding to Qwen3.5-35B-A3B",
+  "served_model": null,
+  "thinking": false,
+  "docs_limit": 20,
+  "doc_ids": [
+   "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "MSCIINC_02_28_2008-EX-10-10-",
+   "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I"
+  ],
+  "concurrency": 4,
+  "timeout_s": 900.0,
+  "wall_s": 912.6,
+  "started_at": "2026-11-09T15:56:23Z",
+  "environment": "rosa",
+  "cluster": "<redacted-cluster>",
+  "git_sha": "cb56bfc93ae81f964ebf4047b37f2ab647527672",
+  "git_dirty": true,
+  "pools": {
+   "direct-specialist": {
+    "model": "CUAD RoBERTa-large QA (fine-tuned 2021 checkpoint); non-extraction prompts forwarded to Qwen/Qwen3.5-35B-A3B",
+    "hardware": "cpu (ROSA x8i.24xlarge, 2 pinned cores; forwarded judgment on the 16-core cpureal-vllm-cpu pool)",
+    "deployment": "cpureal-specialist (forwards to cpureal-vllm-cpu)"
+   }
+  }
+ },
+ "records": [
+  {
+   "step": "classify",
+   "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "outcome": "served",
+   "latency_ms": 7181.4,
+   "content": {
+    "type": "NDA",
+    "initial_term_months": 36,
+    "ref": "Section 1(d)"
+   },
+   "usage": {
+    "prompt_tokens": 4892,
+    "total_tokens": 4927,
+    "completion_tokens": 35,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "outcome": "served",
+   "latency_ms": 56916.2,
+   "content": {
+    "clause": "termination",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "outcome": "served",
+   "latency_ms": 57662.6,
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "THIS AGREEMENT SHALL BE GOVERNED BY AND CONSTRUED IN ACCORDANCE WITH THE INTERNAL LAWS OF THE COMMONWEALTH OF PENNSYLVANIA WITHOUT GIVING EFFECT TO ANY CHOICE OR CONFLICT OF LAW PROVISION OR RULE (WHETHER OF THE COMMONWEALTH OF PENNSYLVANIA OR ANY OTHER JURISDICTION).",
+    "score": 13.16
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "outcome": "served",
+   "latency_ms": 63283.6,
+   "content": {
+    "clause": "liability cap",
+    "found": true,
+    "text": "Each Seller agrees that in the event of a breach of this Agreement, the damage to Buyer will be inestimable and that therefore any remedy at Law or in monetary damages shall be inadequate.",
+    "score": 4.45
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "outcome": "served",
+   "latency_ms": 57907.9,
+   "content": {
+    "clause": "audit rights",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "risk",
+   "doc_id": "Quaker-Chemical-Corporation---NON-COMPETITION-AN",
+   "outcome": "served",
+   "latency_ms": 9537.0,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Liability is uncapped as the clause explicitly states damages are inestimable and monetary remedies are inadequate, effectively removing any cap."
+    ],
+    "ref": "liability_cap"
+   },
+   "usage": {
+    "prompt_tokens": 289,
+    "total_tokens": 350,
+    "completion_tokens": 61,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "classify",
+   "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "outcome": "served",
+   "latency_ms": 9642.6,
+   "content": {
+    "type": "SOW",
+    "initial_term_months": 12,
+    "ref": "Section 2.1"
+   },
+   "usage": {
+    "prompt_tokens": 4225,
+    "total_tokens": 4261,
+    "completion_tokens": 36,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "outcome": "served",
+   "latency_ms": 50150.6,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "Either party may terminate this Agreement prior to expiration of the Term: (i) upon thirty (30) days prior written notice, or (ii) immediately upon written notice to the other party if: (a) the other party declares or a petition is filed in any court for insolvency or bankruptcy and such petition is not dismissed in thirty (30) days; (b) the other party reorganizes under the relevant bankruptcy act or any similar statute in such party's jurisdiction of incorporation; (c) the other party consents to the appointment of a trustee in bankruptcy or a receiver or similar entity; or (d) the Developer breaches DSS's Technology or Intellectual Property rights contained herein.",
+    "score": 9.89
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "outcome": "served",
+   "latency_ms": 49844.9,
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "This Agreement shall be governed in accordance with the laws of the State of New York without regard to conflict of laws principles.",
+    "score": 14.47
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "outcome": "served",
+   "latency_ms": 53940.3,
+   "content": {
+    "clause": "liability cap",
+    "found": true,
+    "text": "Developer shall be fully liable, without limitation, for money damages resulting from its improper or unauthorized use, modification, alteration, licensing or transfer of the Technology or Improvements, or resulting from its failure to provide functional and merchantable Improvements hereunder, which failure shall be deemed a material breach of this Agreement by Developer.",
+    "score": 9.68
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "outcome": "served",
+   "latency_ms": 50304.6,
+   "content": {
+    "clause": "audit rights",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "risk",
+   "doc_id": "HfEnterprisesInc_20191223_S-1_EX-10-22_11931299_",
+   "outcome": "served",
+   "latency_ms": 11572.4,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Liability is uncapped or absent as the clause states the Developer shall be 'fully liable, without limitation' for specific damages."
+    ],
+    "ref": "liability_cap"
+   },
+   "usage": {
+    "prompt_tokens": 409,
+    "total_tokens": 470,
+    "completion_tokens": 61,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "classify",
+   "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "outcome": "served",
+   "latency_ms": 7039.2,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 0,
+    "ref": "3.1"
+   },
+   "usage": {
+    "prompt_tokens": 3640,
+    "total_tokens": 3673,
+    "completion_tokens": 33,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "outcome": "served",
+   "latency_ms": 36530.3,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "Client may terminate this Agreement on thirty (30) days written notice without cause.",
+    "score": 13.36
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "outcome": "served",
+   "latency_ms": 38185.9,
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "This Agreement shall be governed by the laws of the State of Connecticut, U.S.A. without regard to conflict of law principles.",
+    "score": 14.75
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "outcome": "served",
+   "latency_ms": 42286.4,
+   "content": {
+    "clause": "liability cap",
+    "found": true,
+    "text": "Notwithstanding any other provision of this Agreement, each party's total liability in respect of damages under this Agreement, any regulation or common law shall be limited to the sum of all amounts received from Client in terms of this Agreement; provided, however, that this limitation shall not apply with respect to any claims arising out of or relating to clause 6 (Inventions and Proprietary Information), indemnification obligations or damages arising from a party's gross negligence or willful misconduct.",
+    "score": 11.21
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "outcome": "served",
+   "latency_ms": 42425.0,
+   "content": {
+    "clause": "audit rights",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "risk",
+   "doc_id": "PAXMEDICA-INC_07_02_2020-EX-10-12-Master-Service",
+   "outcome": "served",
+   "latency_ms": 14147.8,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "Liability is capped to the sum of amounts received, with standard exceptions.",
+     "Termination is explicitly permitted for convenience (without cause) with 30 days notice."
+    ],
+    "ref": "liability_cap, termination"
+   },
+   "usage": {
+    "prompt_tokens": 317,
+    "total_tokens": 390,
+    "completion_tokens": 73,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "classify",
+   "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "outcome": "served",
+   "latency_ms": 7180.4,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 12,
+    "ref": "Section 1"
+   },
+   "usage": {
+    "prompt_tokens": 3958,
+    "total_tokens": 3992,
+    "completion_tokens": 34,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "outcome": "served",
+   "latency_ms": 45966.4,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "The Parties may terminate its performance of related obligations under this Agreement within thirty (30) days of receipt by the Party of written termination notice.",
+    "score": 11.8
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "outcome": "served",
+   "latency_ms": 46097.4,
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "This Agreement and its application and interpretation will be governed exclusively by its terms and the laws of the State of Nevada (USA), and excluding any conflicts of law provisions which would require the application of any law other than Nevada.",
+    "score": 15.0
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "outcome": "served",
+   "latency_ms": 50603.6,
+   "content": {
+    "clause": "liability cap",
+    "found": true,
+    "text": "HPIL ET agrees that the sole and exclusive remedy for money damages relating to this Agreement and the transactions contemplated hereby shall be the rights to indemnification set forth in this Section 10.",
+    "score": 9.95
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "outcome": "served",
+   "latency_ms": 45421.8,
+   "content": {
+    "clause": "audit rights",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "risk",
+   "doc_id": "HPILHOLDING_01_07_2015-EX-99-1-COOPERATION-AGREE",
+   "outcome": "served",
+   "latency_ms": 12594.2,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "Termination rights are explicitly defined.",
+     "Liability is capped to the exclusive remedy of indemnification."
+    ],
+    "ref": "termination found; liability_cap found"
+   },
+   "usage": {
+    "prompt_tokens": 290,
+    "total_tokens": 350,
+    "completion_tokens": 60,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "classify",
+   "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "outcome": "served",
+   "latency_ms": 10851.4,
+   "content": {
+    "type": "SOW",
+    "initial_term_months": 6,
+    "ref": "Exhibit 10.3"
+   },
+   "usage": {
+    "prompt_tokens": 3093,
+    "total_tokens": 3130,
+    "completion_tokens": 37,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "outcome": "served",
+   "latency_ms": 46091.1,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "Either party may terminate this Agreement without cause at any time effective upon thirty (30) days' written notice.",
+    "score": 13.89
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "outcome": "served",
+   "latency_ms": 41764.4,
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "This Agreement was entered into in the State of Florida, and its validity, construction, interpretation, and legal effect shall be governed by the laws and judicial decisions of the State of Florida applicable to contracts entered into and performed entirely within the State of Florida.",
+    "score": 11.79
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "outcome": "served",
+   "latency_ms": 45804.7,
+   "content": {
+    "clause": "liability cap",
+    "found": true,
+    "text": "i-on will not be liable under any circumstances for any lost profits or other consequential damages, even if i-on has been advised as to the possibility of such damages. i-on's liability for damages to the Customer for any cause whatsoever, regardless of the form of action, and whether in contract or in tort, including negligence, shall be limited to one (1) month's fees and the remaining portion of any prepaid fees.",
+    "score": 11.34
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "outcome": "served",
+   "latency_ms": 45787.7,
+   "content": {
+    "clause": "audit rights",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "risk",
+   "doc_id": "CENTRACKINTERNATIONALINC_10_29_1999-EX-10-3-WEB-",
+   "outcome": "served",
+   "latency_ms": 10117.2,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "Liability is explicitly capped at one month's fees and prepaid fees.",
+     "Termination rights are present and allow for termination without cause."
+    ],
+    "ref": "liability_cap, termination"
+   },
+   "usage": {
+    "prompt_tokens": 337,
+    "total_tokens": 403,
+    "completion_tokens": 66,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "classify",
+   "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "outcome": "served",
+   "latency_ms": 7142.8,
+   "content": {
+    "type": "SOW",
+    "initial_term_months": 12,
+    "ref": "Section 8"
+   },
+   "usage": {
+    "prompt_tokens": 2690,
+    "total_tokens": 2715,
+    "completion_tokens": 25,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "outcome": "served",
+   "latency_ms": 42726.5,
+   "content": {
+    "clause": "termination",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "outcome": "served",
+   "latency_ms": 38063.1,
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "The Joint Venturers declare that in entering into this      Agreement, they have contracted with reference to the laws of the      Commonwealth of Pennsylvania, and the construction and interpretation of      the terms and provisions of this Agreement shall be interpreted and      construed under the laws of the Commonwealth of Pennsylvania, except in      such cases and to such extent as the laws of another jurisdiction shall      necessarily control.",
+    "score": 12.01
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "outcome": "served",
+   "latency_ms": 42353.2,
+   "content": {
+    "clause": "liability cap",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "outcome": "served",
+   "latency_ms": 42396.8,
+   "content": {
+    "clause": "audit rights",
+    "found": true,
+    "text": "If requested      by a Joint Venturer, the Joint Venture books and records shall be audited      as of the close of each year by an independent accountant acceptable to      both Joint Venturers.",
+    "score": 10.34
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "risk",
+   "doc_id": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX",
+   "outcome": "served",
+   "latency_ms": 12035.5,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Liability is uncapped as no liability cap clause was found.",
+     "Termination rights are absent as no termination clause was found."
+    ],
+    "ref": "Extracted clauses: termination found=false, liability_cap found=false"
+   },
+   "usage": {
+    "prompt_tokens": 295,
+    "total_tokens": 367,
+    "completion_tokens": 72,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "classify",
+   "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "outcome": "served",
+   "latency_ms": 9560.1,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 12,
+    "ref": "Section 5"
+   },
+   "usage": {
+    "prompt_tokens": 3823,
+    "total_tokens": 3857,
+    "completion_tokens": 34,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "outcome": "served",
+   "latency_ms": 43402.3,
+   "content": {
+    "clause": "termination",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "outcome": "served",
+   "latency_ms": 42476.7,
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "This Agreement shall be governed by and construed in accordance with the internal laws of the State of Delaware applicable to agreements made and to be performed within that state.",
+    "score": 14.37
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "outcome": "served",
+   "latency_ms": 46379.6,
+   "content": {
+    "clause": "liability cap",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "outcome": "served",
+   "latency_ms": 41927.4,
+   "content": {
+    "clause": "audit rights",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "risk",
+   "doc_id": "SPOKHOLDINGS-INC_06_19_2020-EX-10-1-COOPERATION-",
+   "outcome": "served",
+   "latency_ms": 10867.9,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Liability is uncapped or absent as no liability cap was found.",
+     "Termination rights are absent."
+    ],
+    "ref": "Extracted clauses: termination found=false, liability_cap found=false"
+   },
+   "usage": {
+    "prompt_tokens": 210,
+    "total_tokens": 277,
+    "completion_tokens": 67,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "classify",
+   "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "outcome": "served",
+   "latency_ms": 8250.3,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 36,
+    "ref": "Section 1"
+   },
+   "usage": {
+    "prompt_tokens": 4841,
+    "total_tokens": 4875,
+    "completion_tokens": 34,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "outcome": "served",
+   "latency_ms": 58211.6,
+   "content": {
+    "clause": "termination",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "outcome": "served",
+   "latency_ms": 54017.9,
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "Except to the extent governed by the Federal Arbitration Act or other federal law, this Agreement and all claims arising from the relationship between Hyatt (and/or any of its Affiliates) and Playa (and/or any of its Affiliates) under this Agreement will be governed by the laws of the State of Illinois (U.S.A.), without regard to its conflict of laws rules, except that any Illinois law or any other law regulating the offer or sale of franchises, business opportunities, or similar interests, or governing the relationship between a franchisor and a franchisee or any similar relationship, will not apply unless its jurisdictional requirements are met independently without reference to this Section 4.",
+    "score": 12.2
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "outcome": "served",
+   "latency_ms": 57614.6,
+   "content": {
+    "clause": "liability cap",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "outcome": "served",
+   "latency_ms": 56882.2,
+   "content": {
+    "clause": "audit rights",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "risk",
+   "doc_id": "PLAYAHOTELS_RESORTSNV_03_14_2017-EX-10-22-STRATE",
+   "outcome": "served",
+   "latency_ms": 6451.7,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Liability is uncapped or absent",
+     "Termination clause is absent"
+    ],
+    "ref": "liability_cap: found=false, termination: found=false"
+   },
+   "usage": {
+    "prompt_tokens": 317,
+    "total_tokens": 360,
+    "completion_tokens": 43,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "classify",
+   "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "outcome": "served",
+   "latency_ms": 10064.7,
+   "content": {
+    "type": "SOW",
+    "initial_term_months": 120,
+    "ref": "ARTICLE XII - TERM"
+   },
+   "usage": {
+    "prompt_tokens": 3943,
+    "total_tokens": 3980,
+    "completion_tokens": 37,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "outcome": "served",
+   "latency_ms": 50118.2,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "Notwithstanding the foregoing, if at any time Tennessee terminates the July 8, 2002, Negotiated Rate Agreement between Tennessee and Shipper for any reason, Shipper shall have the unilateral right to notify Tennessee of its intent to terminate this Agreement effective sixty days after the referenced Negotiated Rate Agreement terminates.",
+    "score": 8.06
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "outcome": "served",
+   "latency_ms": 45545.2,
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "THE INTERPRETATION AND PERFORMANCE OF THIS CONTRACT SHALL BE IN ACCORDANCE WITH AND CONTROLLED BY THE LAWS OF THE STATE OF TEXAS, WITHOUT REGARD TO THE DOCTRINES GOVERNING CHOICE OF LAW.",
+    "score": 13.2
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "outcome": "served",
+   "latency_ms": 50104.2,
+   "content": {
+    "clause": "liability cap",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "outcome": "served",
+   "latency_ms": 40411.5,
+   "content": {
+    "clause": "audit rights",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "risk",
+   "doc_id": "KENTUCKYUTILITIESCO_03_25_2003-EX-10-65-TRANSPOR",
+   "outcome": "served",
+   "latency_ms": 9248.6,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Liability is uncapped as no liability cap clause was found."
+    ],
+    "ref": "liability_cap"
+   },
+   "usage": {
+    "prompt_tokens": 289,
+    "total_tokens": 337,
+    "completion_tokens": 48,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "classify",
+   "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+   "outcome": "served",
+   "latency_ms": 10942.4,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 0,
+    "ref": "Section 2.1, 2.2"
+   },
+   "usage": {
+    "prompt_tokens": 2672,
+    "total_tokens": 2712,
+    "completion_tokens": 40,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+   "outcome": "served",
+   "latency_ms": 34774.9,
+   "content": {
+    "clause": "termination",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+   "outcome": "served",
+   "latency_ms": 31029.0,
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "This Agreement shall be construed in accordance with and governed by the substantive internal laws of the State of New York.",
+    "score": 14.51
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+   "outcome": "served",
+   "latency_ms": 34803.7,
+   "content": {
+    "clause": "liability cap",
+    "found": true,
+    "text": "Notwithstanding the provisions of Section 5(a) and (b), none of the members of the MS Provider Group and the MSCI Provider Group shall be liable for any special, indirect, incidental, consequential or punitive damages of any kind whatsoever in any way due to, resulting from or arising in connection with the performance of or failure to perform MS's or MSCI's obligations under this Agreement.",
+    "score": 9.95
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+   "outcome": "served",
+   "latency_ms": 34400.0,
+   "content": {
+    "clause": "audit rights",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "risk",
+   "doc_id": "MSCIINC_02_28_2008-EX-10-10-",
+   "outcome": "served",
+   "latency_ms": 4777.1,
+   "content": {
+    "risk": "medium",
+    "reasons": [
+     "Termination clause is absent."
+    ],
+    "ref": "termination"
+   },
+   "usage": {
+    "prompt_tokens": 280,
+    "total_tokens": 305,
+    "completion_tokens": 25,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "classify",
+   "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "outcome": "served",
+   "latency_ms": 5299.5,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 0,
+    "ref": "Exhibit A"
+   },
+   "usage": {
+    "prompt_tokens": 1120,
+    "total_tokens": 1144,
+    "completion_tokens": 24,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "outcome": "served",
+   "latency_ms": 15792.8,
+   "content": {
+    "clause": "termination",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "outcome": "served",
+   "latency_ms": 11956.9,
+   "content": {
+    "clause": "governing law",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "outcome": "served",
+   "latency_ms": 15735.7,
+   "content": {
+    "clause": "liability cap",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "outcome": "served",
+   "latency_ms": 15669.4,
+   "content": {
+    "clause": "audit rights",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "risk",
+   "doc_id": "GALERATHERAPEUTICS-INC_02_14_2020-EX-99-A-JOINT-",
+   "outcome": "served",
+   "latency_ms": 6536.7,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Liability is uncapped or absent as no liability cap was found.",
+     "Termination rights are absent as no termination clause was found."
+    ],
+    "ref": "Extracted clauses: termination found=false, liability_cap found=false"
+   },
+   "usage": {
+    "prompt_tokens": 179,
+    "total_tokens": 236,
+    "completion_tokens": 57,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "classify",
+   "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "outcome": "served",
+   "latency_ms": 11158.7,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 0,
+    "ref": "PCQUOTE COM INC, S-1/A, 7/21/1999"
+   },
+   "usage": {
+    "prompt_tokens": 344,
+    "total_tokens": 385,
+    "completion_tokens": 41,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "outcome": "served",
+   "latency_ms": 2874.4,
+   "content": {
+    "clause": "termination",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "outcome": "served",
+   "latency_ms": 2909.3,
+   "content": {
+    "clause": "governing law",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "outcome": "served",
+   "latency_ms": 2920.6,
+   "content": {
+    "clause": "liability cap",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "outcome": "served",
+   "latency_ms": 2858.4,
+   "content": {
+    "clause": "audit rights",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "risk",
+   "doc_id": "PcquoteComInc_19990721_S-1A_EX-10-11_6377149_EX-",
+   "outcome": "served",
+   "latency_ms": 6745.3,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Liability is uncapped or absent as no liability cap was found.",
+     "Termination rights are absent as no termination clause was found."
+    ],
+    "ref": "Extracted clauses: termination found=false, liability_cap found=false"
+   },
+   "usage": {
+    "prompt_tokens": 179,
+    "total_tokens": 236,
+    "completion_tokens": 57,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "classify",
+   "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "outcome": "served",
+   "latency_ms": 9063.7,
+   "content": {
+    "type": "SOW",
+    "initial_term_months": 12,
+    "ref": "Exhibit 10.1"
+   },
+   "usage": {
+    "prompt_tokens": 553,
+    "total_tokens": 582,
+    "completion_tokens": 29,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "outcome": "served",
+   "latency_ms": 7993.9,
+   "content": {
+    "clause": "termination",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "outcome": "served",
+   "latency_ms": 4307.9,
+   "content": {
+    "clause": "governing law",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "outcome": "served",
+   "latency_ms": 8099.4,
+   "content": {
+    "clause": "liability cap",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "outcome": "served",
+   "latency_ms": 8256.5,
+   "content": {
+    "clause": "audit rights",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "risk",
+   "doc_id": "WatchitMediaInc_20061201_8-K_EX-10-1_4148672_EX-",
+   "outcome": "served",
+   "latency_ms": 10715.1,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Liability is uncapped or absent as no liability cap was found.",
+     "Termination rights are absent as no termination clause was found."
+    ],
+    "ref": "Extracted clauses: termination found=false, liability_cap found=false"
+   },
+   "usage": {
+    "prompt_tokens": 179,
+    "total_tokens": 236,
+    "completion_tokens": 57,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "classify",
+   "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "outcome": "served",
+   "latency_ms": 9734.9,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 0,
+    "ref": "Section 7"
+   },
+   "usage": {
+    "prompt_tokens": 3441,
+    "total_tokens": 3474,
+    "completion_tokens": 33,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "outcome": "served",
+   "latency_ms": 42255.8,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "This Addendum may be terminated at any time by either Party in accordance with the termination provisions of the Distribution Agreement.",
+    "score": 12.43
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "outcome": "served",
+   "latency_ms": 38028.6,
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "The terms of the Governing Law and Dispute Resolution provisions of the Distribution Agreement will apply to this Addendum.",
+    "score": 6.29
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "outcome": "served",
+   "latency_ms": 42283.6,
+   "content": {
+    "clause": "liability cap",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "outcome": "served",
+   "latency_ms": 39389.6,
+   "content": {
+    "clause": "audit rights",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "risk",
+   "doc_id": "ScansourceInc_20190509_10-Q_EX-10-2_11661422_EX-",
+   "outcome": "served",
+   "latency_ms": 38610.3,
+   "content": {
+    "raw": "{\n  \"risk\": \"low\",\n  \"reasons\": [\n    \"Termination rights are present and not restricted to uncured material breach.\",\n    \"Liability cap is absent, but the rubric defines high risk specifically as 'uncapped or absent' liability; however, the presence of termination rights and governing law provisions referencing an existing agreement suggests a structured framework. Re-evaluating the strict rubric: 'risk is high if liability is uncapped or absent'. Since liability_cap found is false, this triggers the high risk condition.\"\n  ],\n  \"ref\": \"liability_cap\"\n}\n\nWait, let me re-read the rubric strictly.\n\"risk is high if liability is uncapped or absent\"\nThe data shows `liability_cap`: `{\"found\": false, \"text\": null}`.\nThis means liability is uncapped/absent.\nTherefore, risk is HIGH.\nMy previous thought process had a momentary confusion about the \"otherwise low\" clause, but the \"if\" condition for high risk is met first.\n\nCorrected Logic:\n1. Check liability: `found: false` -> Uncapped/Absent -> Risk = High.\n2. The rubric is an \"if... else if... else\" structure.\n   - If liability uncapped/absent -> High.\n   - Else if termination absent or only material breach uncured -> Medium.\n  "
+   },
+   "usage": {
+    "prompt_tokens": 225,
+    "total_tokens": 525,
+    "completion_tokens": 300,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "classify",
+   "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "outcome": "served",
+   "latency_ms": 9348.2,
+   "content": {
+    "type": "SOW",
+    "initial_term_months": 6,
+    "ref": "Section 1"
+   },
+   "usage": {
+    "prompt_tokens": 2777,
+    "total_tokens": 2810,
+    "completion_tokens": 33,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "outcome": "served",
+   "latency_ms": 34461.2,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "Notwithstanding the above, Torvec may, in its sole  discretion, cancel its participation in any of the above-referenced events by notifying Vendor of such cancellation not later than two weeks  prior to the due date(s) for payment hereunder.",
+    "score": 8.46
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "outcome": "served",
+   "latency_ms": 31155.8,
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "This Agreement is to be governed and construed according to the laws of the State of New York without regard to conflicts of law.",
+    "score": 14.46
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "outcome": "served",
+   "latency_ms": 34711.2,
+   "content": {
+    "clause": "liability cap",
+    "found": true,
+    "text": "Upon termination of this Agreement, NEITHER PARTY SHALL BE LIABLE TO THE OTHER FOR ANY CONSEQUENTIAL,  EXEMPLARY, SPECIAL, INCIDENTAL OR PUNITIVE DAMAGES, EVEN IF IT HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH  DAMAGES, WHICH ARE RELATED TO THE AGREEMENT OR ITS BREACH.",
+    "score": 11.33
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "outcome": "served",
+   "latency_ms": 34420.6,
+   "content": {
+    "clause": "audit rights",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "risk",
+   "doc_id": "CURAEGISTECHNOLOGIES-INC_05_26_2010-EX-1-CORPORA",
+   "outcome": "served",
+   "latency_ms": 10948.6,
+   "content": {
+    "risk": "medium",
+    "reasons": [
+     "Termination is permitted only for specific events (sole discretion to cancel participation) and does not explicitly allow termination for material breach that remains uncured, creating a potential gap in standard termination rights."
+    ],
+    "ref": "termination"
+   },
+   "usage": {
+    "prompt_tokens": 312,
+    "total_tokens": 383,
+    "completion_tokens": 71,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "classify",
+   "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "outcome": "served",
+   "latency_ms": 9540.1,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 0,
+    "ref": "EXHIBIT D JOINT FILING AGREEMENT"
+   },
+   "usage": {
+    "prompt_tokens": 1031,
+    "total_tokens": 1063,
+    "completion_tokens": 32,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "outcome": "served",
+   "latency_ms": 11980.0,
+   "content": {
+    "clause": "termination",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "outcome": "served",
+   "latency_ms": 12139.2,
+   "content": {
+    "clause": "governing law",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "outcome": "served",
+   "latency_ms": 12050.8,
+   "content": {
+    "clause": "liability cap",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "outcome": "served",
+   "latency_ms": 11788.7,
+   "content": {
+    "clause": "audit rights",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "risk",
+   "doc_id": "MFAFINANCIAL-INC_07_06_2020-EX-99-D-JOINT-FILING",
+   "outcome": "served",
+   "latency_ms": 11478.2,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Liability is uncapped or absent as no liability cap was found.",
+     "Termination rights are absent as no termination clause was found."
+    ],
+    "ref": "Extracted clauses: termination found=false, liability_cap found=false"
+   },
+   "usage": {
+    "prompt_tokens": 179,
+    "total_tokens": 236,
+    "completion_tokens": 57,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "classify",
+   "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "outcome": "served",
+   "latency_ms": 8523.3,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 0,
+    "ref": "Revocable upon termination of Services Agreement or Investment Advisory Contract"
+   },
+   "usage": {
+    "prompt_tokens": 2884,
+    "total_tokens": 2917,
+    "completion_tokens": 33,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "outcome": "served",
+   "latency_ms": 34784.9,
+   "content": {
+    "clause": "termination",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "outcome": "served",
+   "latency_ms": 34603.2,
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "This Limited Power of Attorney shall be governed and construed in accordance with the laws of the Commonwealth of Pennsylvania without reference to principles of conflicts of laws.",
+    "score": 11.55
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "outcome": "served",
+   "latency_ms": 34885.8,
+   "content": {
+    "clause": "liability cap",
+    "found": true,
+    "text": "Liability for or recourse under or upon any undertaking of FASC pursuant to the power or authority granted to FASC under this Limited Power of Attorney under any rule of law, statute or constitution or by the enforcement of any assessment or penalty or by legal or equitable proceedings or otherwise shall be limited only to the assets of the Fund on whose behalf FASC was acting pursuant to the authority granted hereunder.",
+    "score": 11.13
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "outcome": "served",
+   "latency_ms": 31411.5,
+   "content": {
+    "clause": "audit rights",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "risk",
+   "doc_id": "FEDERATEDGOVERNMENTINCOMESECURITIESINC_04_28_202",
+   "outcome": "served",
+   "latency_ms": 6245.4,
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "Termination clause is absent."
+    ],
+    "ref": "termination: found=false"
+   },
+   "usage": {
+    "prompt_tokens": 288,
+    "total_tokens": 330,
+    "completion_tokens": 42,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "classify",
+   "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "outcome": "served",
+   "latency_ms": 8510.9,
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 240,
+    "ref": "EXHIBIT 99.4"
+   },
+   "usage": {
+    "prompt_tokens": 4082,
+    "total_tokens": 4123,
+    "completion_tokens": 41,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "outcome": "served",
+   "latency_ms": 78319.3,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "XFN may terminate this Agreement by giving thirty (30) days written notice      to the CEIS.",
+    "score": 13.33
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "outcome": "served",
+   "latency_ms": 78278.3,
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "This Agreement is governed by and shall be construed in      accordance with the laws of Hong Kong",
+    "score": 13.06
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "outcome": "served",
+   "latency_ms": 82262.4,
+   "content": {
+    "clause": "liability cap",
+    "found": true,
+    "text": "XFN's only payment      obligation to CEIS in consideration of the rights granted pursuant to this      Clause 2 is set forth in Clause 4.",
+    "score": 4.37
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "outcome": "served",
+   "latency_ms": 37784.4,
+   "content": {
+    "clause": "audit rights",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "risk",
+   "doc_id": "XinhuaSportsEntertainmentLtd_20070221_F-1_EX-99-",
+   "outcome": "served",
+   "latency_ms": 11210.4,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "Termination rights are explicitly present.",
+     "Liability is capped as payment obligations are limited to specific clauses."
+    ],
+    "ref": "termination found; liability_cap found"
+   },
+   "usage": {
+    "prompt_tokens": 250,
+    "total_tokens": 311,
+    "completion_tokens": 61,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "classify",
+   "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+   "outcome": "served",
+   "latency_ms": 6881.1,
+   "content": {
+    "type": "SOW",
+    "initial_term_months": 12,
+    "ref": "EXHIBIT 10.17"
+   },
+   "usage": {
+    "prompt_tokens": 3362,
+    "total_tokens": 3403,
+    "completion_tokens": 41,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+   "outcome": "served",
+   "latency_ms": 82504.0,
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "Customer, upon thirty days prior written notice, may cancel this           Agreement at the end of the Initial Term and thereafter on each           anniversary of the end of the Initial Term.",
+    "score": 12.83
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+   "outcome": "served",
+   "latency_ms": 79050.8,
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "This Agreement shall be interpreted in accordance with the                   laws of the State of Indiana.",
+    "score": 13.72
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+   "outcome": "served",
+   "latency_ms": 86443.6,
+   "content": {
+    "clause": "liability cap",
+    "found": true,
+    "text": "MMMW shall NOT be liable for INCIDENTAL or CONSEQUENTIAL                   DAMAGES, even if MMMW has been advised, knew or should have                   known of the possibility of such damages.",
+    "score": 8.92
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "extract:audit_rights",
+   "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+   "outcome": "served",
+   "latency_ms": 38606.0,
+   "content": {
+    "clause": "audit rights",
+    "found": false,
+    "text": null,
+    "score": null
+   },
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+   },
+   "response_model": "cuad-specialist",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "risk",
+   "doc_id": "TRIZETTOGROUPINC_08_18_1999-EX-10-17-TECHNICAL-I",
+   "outcome": "served",
+   "latency_ms": 8490.1,
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "Termination rights are explicitly defined.",
+     "Liability for consequential damages is capped/excluded."
+    ],
+    "ref": "termination found; liability_cap found"
+   },
+   "usage": {
+    "prompt_tokens": 265,
+    "total_tokens": 323,
+    "completion_tokens": 58,
+    "prompt_tokens_details": null,
+    "completion_tokens_details": {
+     "reasoning_tokens": 0
+    }
+   },
+   "response_model": "Semantic-Qwen",
+   "route": null,
+   "entry": null,
+   "trace_id": null
+  },
+  {
+   "step": "report",
+   "doc_id": null,
+   "outcome": "served",
+   "latency_ms": 53298.4,
+   "content": {
+    "documents": 19,
+    "risk_counts": {
+     "high": 11,
+     "low": 5,
+     "medium": 2,
+     "unknown": 1
+    },
+    "governing_law_counts": {
+     "THIS AGREEMENT SHALL BE GOVERNED BY AND CONSTRUED IN ACCORDANCE WITH THE INTERNAL LAWS OF THE COMMON": 1,
+     "This Agreement shall be governed in accordance with the laws of the State of New York without regard": 1,
+     "This Agreement shall be governed by the laws of the State of Connecticut, U.S.A. without regard to c": 1,
+     "This Agreement and its application and interpretation will be governed exclusively by its terms and ": 1,
+     "This Agreement was entered into in the State of Florida, and its validity, construction, interpretat": 1,
+     "The Joint Venturers declare that in entering into this      Agreement, they have contracted with ref": 1,
+     "This Agreement shall be governed by and construed in accordance with the internal laws of the State ": 1,
+     "Except to the extent governed by the Federal Arbitration Act or other federal law, this Agreement an": 1,
+     "THE INTERPRETATION AND PERFORMANCE OF THIS CONTRACT SHALL BE IN ACCORDANCE WITH AND CONTROLLED BY TH": 1,
+     "This Agreement shall be construed in accordance with and governed by the substantive internal laws o": 1,
+     "missing": 4,
+     "The terms of the Governing Law and Dispute Resolution provisions of the Distribution Agreement will ": 1,
+     "This Agreement is to be governed and construed according to the laws of the State of New York withou": 1,
+     "This Limited Power of Attorney shall be governed and construed in accordance with the laws of the Co": 1,
+     "This Agreement is governed by and shall be construed in      accordance with the laws of Hong Kong": 1,
+     "This Agreement shall be interpreted in accordance with the                   laws of the State of In": 1
+    },
+    "highest_risk_ref": "ACCELERATEDTECHNOLOGIESHOLDINGCORP_04_24_2003-EX"
+   }
+  }
+ ]
+}

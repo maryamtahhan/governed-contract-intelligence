@@ -3,6 +3,18 @@
 Demo plan and business case · **Draft v0.3 · measured on the ROSA demo stack**
 (2026-10-29 → 2026-11-04)
 
+> **Update 2026-11-09 — current numbers are classifier-free, CPU termination
+> policy.** The 2026-11-09 ROSA matrix (`runs/rosa-200-2026-11-09-cpu-term`)
+> runs the four configs without the classifier, termination extraction back on
+> the CPU specialist with a conditional cause follow-up: hybrid **0.217 vs
+> all-gpu 1.013 GPU-s/doc (~4.7×)**, 0 sensitive violations, 247/247 sensitive
+> steps approved, 201/201 judgment steps on GPU, extract F1 1.000, risk 0.990,
+> 198/200 fully correct. The GPU-termination alternative
+> (`runs/rosa-200-2026-11-09-gpu-term`, 0.508 GPU-s/doc) is a measured route,
+> not the policy. The **0.036 / 1.974 / 54×** figures in this document are the
+> earlier classifier-in-path record and double-count the shared `gpumoe-vllm`
+> backend; do not quote them as current. See FINDINGS §15.8-§15.9.
+
 Every number in this document comes from our own measurements; evidence packs
 and protocols live in the source repository (`FINDINGS.md` + `runs*/`). Claims
 are labelled **[measured]** (our numbers, our replay), **[external]** (cited,
@@ -170,7 +182,7 @@ runtime — was built and measured.
 | # | Hypothesis (v0.1) | Result |
 |---|---|---|
 | 1 | A meaningful share of agent steps can run on CPU with acceptable quality | **Confirmed [measured].** ~99% of steps CPU-served in the governed arm; the 35B-A3B MoE on CPU matched the same weights on 4× A10G on the held-out split (F1 0.690, risk 0.632, 5/19 fully correct on both), and the 1.5B scores 0.242. The retrieval-first specialist reaches 0.800 (local direct run, not through-stack; §2b) |
-| 2 | This reduces GPU-seconds per completed task vs all-GPU | **Confirmed [measured].** ROSA, 200 synthetic documents: 0.036 vs 1.974 GPU-s/document (54×; 7.3 vs 394.8 GPU-s total) at equal-or-near quality. Earlier g5 validation: 0.21 vs 9.35 (45×). A 200-document batch is roughly $0.002 of GPU time hybrid vs $0.12 all-GPU at the illustrative $1.10/GPU-hour |
+| 2 | This reduces GPU-seconds per completed task vs all-GPU | **Confirmed [measured].** Current classifier-free ROSA run (CPU termination policy), 200 synthetic documents: 0.217 vs 1.013 GPU-s/doc (~4.7×; 43.4 vs 202.7 GPU-s total) at F1 1.000 vs 1.000 and risk 0.990 vs 0.995. A 200-document batch is roughly $0.013 of GPU time hybrid vs $0.062 all-GPU at the illustrative $1.10/GPU-hour. The earlier classifier-in-path run reported 0.036 vs 1.974 (54×) but double-counted the shared `gpumoe-vllm` backend and is not comparable (FINDINGS §15.8-§15.9) |
 | 3 | Graceful degradation when the GPU pool is saturated or removed | **Confirmed [measured].** SIMPLE traffic unaffected; REASONING degrades to CPU with a visible flag; SENSITIVE+REASONING fails closed (explicit 502, never spilled) — verified from the gateway's own trace records |
 | 4 (new) | Sensitive documents never leave the approved pool set | **Confirmed [measured] — the headline result.** Zero sensitive violations in the governed arm, on every stack, every dataset; the naive arms score 12–25 |
 

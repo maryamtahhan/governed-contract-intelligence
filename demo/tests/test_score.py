@@ -7,15 +7,18 @@ from hybrid_demo.evalkit.score import (
     APPROVED_ROUTES,
     docs_fully_correct,
     extraction_scores,
+    gpu_device_seconds,
     routing_scores,
     text_matches,
 )
 
 
-def record(step, doc, found, text, route=None, sensitive=False, fallback=None, busy=None):
+def record(step, doc, found, text, route=None, sensitive=False, fallback=None, busy=None,
+           entry=None):
     return {
         "step": step,
         "doc_id": doc,
+        "entry": entry,
         "true_complexity": "SIMPLE",
         "true_sensitive": sensitive,
         "headers": {
@@ -76,6 +79,21 @@ def test_routing_scores_governance_and_cost():
     assert scores["cpu_served_share"] == 0.6
 
 
+def test_termination_on_a_judgment_entry_is_not_scored_as_judgment():
+    """Termination remains extraction even if a run records a judgment entry."""
+    records = [
+        record("extract:termination", "d1", True, "x", route="vllm-gpu",
+               entry="judgment"),
+        record("risk", "d1", True, "x", route="vllm-gpu", entry="judgment"),
+        record("report", "d1", True, "x", route="vllm-gpu-approved",
+               entry="sensitive-judgment"),
+    ]
+    scores = routing_scores(records, docs_in_run=1, cores_per_cpu_replica=8)
+    assert scores["judgment_steps"] == 2
+    assert scores["judgment_on_gpu"] == 2
+    assert scores["termination_routes"] == {"vllm-gpu": 1}
+
+
 def test_approved_routes_definition():
     assert "vllm-cpu" in APPROVED_ROUTES
     assert "vllm-gpu-approved" in APPROVED_ROUTES
@@ -111,6 +129,27 @@ def test_routing_scores_prefers_measured_metrics():
     header = routing_scores(records, docs_in_run=2, cores_per_cpu_replica=8)
     assert header["gpu_seconds"] == 2.0
     assert "simulated" in header["cost_method"]
+
+
+def test_shared_gpu_backend_is_counted_once():
+    records = [record("report", None, True, "x", route="vllm-gpu")]
+    metrics = {
+        "vllm-gpu": {"device_active_s": 5.0},
+        "vllm-gpu-approved": {"device_active_s": 4.0},
+    }
+    pools = {"vllm-gpu-approved": {"shared_with": "vllm-gpu"}}
+    scores = routing_scores(records, docs_in_run=1, cores_per_cpu_replica=8,
+                            metrics=metrics, pools=pools)
+    assert scores["gpu_seconds"] == 5.0
+    assert gpu_device_seconds(metrics, pools) == 5.0
+    # Older summaries carry only the deploy-time string; use it as the fallback.
+    parsed = routing_scores(
+        records, docs_in_run=1, cores_per_cpu_replica=8, metrics=metrics,
+        pools={"vllm-gpu-approved": {"deployment": "gpumoe-vllm (shared with vllm-gpu)"}})
+    assert parsed["gpu_seconds"] == 5.0
+    # Historical reports are still reproducible when no sharing is recorded.
+    legacy = routing_scores(records, docs_in_run=1, cores_per_cpu_replica=8, metrics=metrics)
+    assert legacy["gpu_seconds"] == 9.0
 
 
 def test_majority_risk_baseline():
