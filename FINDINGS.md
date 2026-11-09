@@ -1172,8 +1172,8 @@ stack; treat them as the earlier comparison until that run is repeated.
 
 ### 15.9 CPU termination with the conditional cause follow-up (2026-11-09)
 
-`runs/rosa-200-2026-11-09-cpu-term` is the current classifier-free record and
-the current policy. Termination extraction is back on the CPU specialist: the
+`runs/rosa-200-2026-11-09-cpu-term-rerun` is the current classifier-free
+record and the current policy. Termination extraction is back on the CPU specialist: the
 specialist asks CUAD's canonical convenience question first and, only when that
 returns no span and the contract contains explicit cause language
 (`material breach`, `uncured`, `termination for cause`, `for cause`), a focused
@@ -1186,13 +1186,19 @@ The all-gpu, gpu-small and round-robin arms are the same-day §15.8 copies.
 | all-gpu | 202.83 s | 1.000 | 0.995 | 0.756 | 199/200 | 0.0% | 0/247 | 247 | 1.013 |
 | gpu-small | 454.21 s | 1.000 | 0.395 | 0.278 | 75/200 | 0.0% | 0/247 | 247 | 2.241* |
 | round-robin | 570.81 s | 0.991 | 1.000 | 0.756 | 186/200 | 50.0% | 129/247 | 118 | 1.773 |
-| **hybrid** | **823.84 s** | **1.000** | **0.990** | **0.752** | **198/200** | **83.3%** | **247/247** | **0** | **0.217** |
+| **hybrid** | **816.59 s** | **1.000** | **1.000** | **0.752** | **200/200** | **83.3%** | **247/247** | **0** | **0.22** |
 
 Zero errors and zero fallbacks; screen 41/0/159/0; judgment steps 201/201 on
-GPU; termination extraction 200/200 on `vllm-cpu`. GPU device time is 43.4 s
-(0.217 GPU-s/doc) against 101.6 s (0.508) for the GPU-term route and 202.7 s
+GPU; termination extraction 200/200 on `vllm-cpu`. GPU device time is 44.0 s
+(0.22 GPU-s/doc) against 101.6 s (0.508) for the GPU-term route and 202.7 s
 (1.013) for all-gpu: the CPU policy keeps the extraction quality of the GPU
-route at the baseline hybrid's GPU cost, and wall time is 823.84 s.
+route at the baseline hybrid's GPU cost, and wall time is 816.59 s.
+
+The policy was measured twice on the same commit and the same pools. The
+first run (`runs/rosa-200-2026-11-09-cpu-term`, wall 823.84 s, 43.4 GPU-s)
+scored 198/200 with risk 0.990; the quoted rerun, on a stack rebuilt from
+the identical tree (fresh model caches, fresh specialist image build),
+scored 200/200 with risk 1.000.
 
 - **The cause follow-up closed the extraction gap.** Extraction is 1.000
   P/R/F1 on all 200 documents with zero false positives: all 48 cause clauses
@@ -1202,10 +1208,11 @@ route at the baseline hybrid's GPU cost, and wall time is 823.84 s.
   `clause_extraction_cause` counter (54) also includes ~27 fires from the
   interrupted first attempt and 1 from the live smoke test, which is why it
   reads higher than one run.
-- **Risk is 0.990, not the predicted 1.000 — two borderline judgment flips on
-  the GPU MoE, and they are serving variance, not a prompt defect.** Both are
-  sensitive documents. `C-2026-0094`: the extraction inputs are byte-identical
-  to the §15.8 baseline run where risk scored high (correct); this run the
+- **The first run scored 0.990, not the predicted 1.000 — two borderline
+  judgment flips on the GPU MoE — and the rerun confirms they were serving
+  variance, not a prompt defect.** Both were sensitive documents.
+  `C-2026-0094`: the extraction inputs are byte-identical
+  to the §15.8 baseline run where risk scored high (correct); in that run the
   model took the "termination only for material breach → medium" branch over "no
   data-protection clause → high". `C-2026-0187`: the cause follow-up *fixed*
   a missed termination extraction (one of the baseline's 27), and the model
@@ -1220,7 +1227,9 @@ route at the baseline hybrid's GPU cost, and wall time is 823.84 s.
   inputs). all-gpu itself scores 0.995 on the same corpus, so 0.990 is within
   the judgment stage's observed variance, not a routing regression — the
   failure moved from extraction (27 documents) to two borderline judgment
-  calls.
+  calls. The quoted rerun scored risk 1.000 with 200/200 documents fully
+  correct on the same commit, corpus and pools: the flips did not reproduce
+  there either, which is the confirmation the variance diagnosis predicted.
 - **CUAD held-out quality is preserved by the conditional design.** On the
   19-document CUAD test split the canonical question alone scores termination
   F1 0.714; replacing it outright with a cause or general question regresses
@@ -1229,8 +1238,9 @@ route at the baseline hybrid's GPU cost, and wall time is 823.84 s.
   the follow-up only fires where the canonical question already returned
   nothing. 200/200 on the synthetic corpus, 0.714 on CUAD: the fix targets the
   synthetic taxonomy gap without disturbing real-data quality.
-- The run recorded `git_dirty: true`; the routing change was in the working
-  tree at run time.
+- Both runs recorded `git_dirty: true`: the routing change was in the working
+  tree at first-run time, and the design-doc table edit was uncommitted at
+  rerun time.
 
 ## 16. Open-source reuse audit and adapters (2026-11-05)
 

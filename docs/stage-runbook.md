@@ -73,12 +73,12 @@ the last live run instead.
 
 Stay on **A**. Quote the measured run, not a model estimate:
 
-- **0.217 GPU-seconds/document** vs **1.013** for all-GPU — about **4.7× less**.
-- **43.4 GPU-seconds total** vs **202.7** over 200 documents.
+- **0.22 GPU-seconds/document** vs **1.013** for all-GPU — about **4.6× less**.
+- **44.0 GPU-seconds total** vs **202.7** over 200 documents.
 - At the illustrative **$1.10/GPU-hour**: about **$0.013** of GPU time for
   200 contracts vs **$0.062** all-GPU.
-- Source: the 2026-11-09 classifier-free CPU-termination run
-  (`runs/rosa-200-2026-11-09-cpu-term`). GPU-s/doc counts the shared
+- Source: the 2026-11-09 classifier-free CPU-termination rerun
+  (`runs/rosa-200-2026-11-09-cpu-term-rerun`). GPU-s/doc counts the shared
   `gpumoe-vllm` backend once. Do not use the old **0.036 / 1.974 / 54×**
   figures: that was the classifier-in-path policy and it double-counted the
   shared backend. The GPU-termination alternative
@@ -89,7 +89,7 @@ Say: *“The saving is the GPU capacity you did not have to buy or queue for.”
 Quality is supporting evidence, not the headline: on the 200-document
 synthetic corpus, extraction F1 **1.000** (the conditional cause follow-up
 recovered all 48 termination-for-cause clauses with zero false positives),
-risk **0.990**, report **0.752**, **198/200 documents fully correct**.
+risk **1.000**, report **0.752**, **200/200 documents fully correct**.
 
 ## Do not claim
 

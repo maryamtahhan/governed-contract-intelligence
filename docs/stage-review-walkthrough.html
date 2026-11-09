@@ -754,14 +754,14 @@ footer .mono { font-size: 11.5px; }
         <tr><td><b>A</b></td><td>all-GPU</td><td class="num">203</td><td class="num">1.000</td><td class="num">0.995</td><td class="num">199/200</td><td class="num" style="color:var(--bad)">247</td><td class="num">1.013</td></tr>
         <tr><td><b>B</b></td><td>GPU-small</td><td class="num">454</td><td class="num">1.000</td><td class="num">0.395</td><td class="num">75/200</td><td class="num" style="color:var(--bad)">247</td><td class="num">2.241*</td></tr>
         <tr><td><b>C</b></td><td>round-robin</td><td class="num">571</td><td class="num">0.991</td><td class="num">1.000</td><td class="num">186/200</td><td class="num" style="color:var(--bad)">118</td><td class="num">1.773</td></tr>
-        <tr><td><b>D</b></td><td>matrix</td><td class="num">824</td><td class="num">1.000</td><td class="num">0.990</td><td class="num">198/200</td><td class="num" style="color:var(--ok)"><b>0</b></td><td class="num">0.217</td></tr>
+        <tr><td><b>D</b></td><td>matrix</td><td class="num">817</td><td class="num">1.000</td><td class="num">1.000</td><td class="num">200/200</td><td class="num" style="color:var(--ok)"><b>0</b></td><td class="num">0.22</td></tr>
       </tbody>
     </table>
   </div>
   <p class="pipe-note" style="margin-top:12px">The governance result is config D: all <b>247</b> sensitive steps
     landed on approved pools, with zero violations, and <b>201/201</b> judgment steps ran on GPU. Config D used
-    <b>0.217 GPU-s/doc</b> against config A's 1.013 — about <b>4.7×</b> less GPU time (43.4 vs 202.7 GPU-seconds
-    total) — at 1.000 vs 1.000 extraction F1 and 0.990 vs 0.995 risk accuracy. GPU-s/doc counts the shared
+    <b>0.22 GPU-s/doc</b> against config A's 1.013 — about <b>4.6×</b> less GPU time (44.0 vs 202.7 GPU-seconds
+    total) — at 1.000 vs 1.000 extraction F1 and 1.000 vs 0.995 risk accuracy. GPU-s/doc counts the shared
     <span class="mono">gpumoe-vllm</span> backend once. <b>*</b> <span class="mono">vllm-gpu-small</span> is
     route-accounted as GPU but the pool map records CPU hardware; do not read 2.241 as GPU time. Full report:
     <span class="mono">runs/rosa-200-2026-11-09-cpu-term/report.md</span>.</p>
@@ -776,7 +776,7 @@ footer .mono { font-size: 11.5px; }
     current fix keeps it on the CPU specialist: ask the canonical question first, and only when it returns no
     span <i>and</i> the contract contains explicit cause language, ask a focused termination-for-cause
     follow-up. The 200-document run scores <b>extraction F1 1.000</b> (all 48 cause clauses recovered, zero
-    false positives) at <b>0.217 GPU-s/doc</b>, and CUAD held-out termination F1 stays at the canonical
+    false positives) at <b>0.22 GPU-s/doc</b>, and CUAD held-out termination F1 stays at the canonical
     <b>0.714</b> because the follow-up only fires where the canonical question already found nothing.</p>
   </div>
   <div class="callout warn">
@@ -785,9 +785,10 @@ footer .mono { font-size: 11.5px; }
     classify and all four extraction clauses stay on the CPU, while risk/report use the GPU entries; sensitive
     documents use only approved pools. Its <b>83.3% CPU-served</b> share is the policy, not a learned
     separation of simple from complex work. The honest claim is governance and GPU economics, not that a
-    classifier decided difficulty. Risk 0.990 (not 1.000): two sensitive documents flipped on rubric priority
-    at the GPU judgment stage — one on inputs byte-identical to a run where it scored correctly — within the
-    temperature-0 divergence already recorded between runs; all-GPU scores 0.995 on the same corpus.</p>
+    classifier decided difficulty. Risk 1.000 in the quoted rerun: the first same-day run scored 0.990 with
+    two sensitive documents flipping on rubric priority at the GPU judgment stage — one on inputs
+    byte-identical to a run where it scored correctly — and the flips did not reproduce on the rerun,
+    within the temperature-0 divergence already recorded between runs; all-GPU scores 0.995 on the same corpus.</p>
   </div>
 </section>
 

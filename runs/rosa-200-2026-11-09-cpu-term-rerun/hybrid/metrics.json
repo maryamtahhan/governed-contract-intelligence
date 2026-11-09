@@ -1,0 +1,42 @@
+{
+ "vllm-cpu": {
+  "samples": 111,
+  "elapsed_s": 810.1,
+  "scrape_errors": 0,
+  "method": "integrated (in-flight gauges; batching means the device serves several requests while occupied)",
+  "device_active_s": 339.51,
+  "request_seconds": 3741.57,
+  "prompt_tokens": 148765.0,
+  "generation_tokens": 23426.0
+ },
+ "vllm-gpu": {
+  "samples": 111,
+  "elapsed_s": 810.1,
+  "scrape_errors": 0,
+  "method": "integrated (in-flight gauges; batching means the device serves several requests while occupied)",
+  "device_active_s": 44.0,
+  "request_seconds": 296.91,
+  "prompt_tokens": 52673.0,
+  "generation_tokens": 10233.0
+ },
+ "vllm-gpu-approved": {
+  "samples": 111,
+  "elapsed_s": 810.1,
+  "scrape_errors": 0,
+  "method": "integrated (in-flight gauges; batching means the device serves several requests while occupied)",
+  "device_active_s": 44.0,
+  "request_seconds": 304.27,
+  "prompt_tokens": 52673.0,
+  "generation_tokens": 10247.0
+ },
+ "vllm-gpu-small": {
+  "samples": 111,
+  "elapsed_s": 810.1,
+  "scrape_errors": 0,
+  "method": "integrated (in-flight gauges; batching means the device serves several requests while occupied)",
+  "device_active_s": 0.0,
+  "request_seconds": 0.0,
+  "prompt_tokens": null,
+  "generation_tokens": null
+ }
+}

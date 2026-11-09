@@ -15,7 +15,7 @@
 
 PORT     ?= 8099
 HOST     ?= 127.0.0.1
-RUN      ?= ../runs/rosa-200-2026-11-09-cpu-term/hybrid
+RUN      ?= ../runs/rosa-200-2026-11-09-cpu-term-rerun/hybrid
 DATA     ?= data/synthetic
 COMPARE  ?= ../runs/rosa-200-2026-11-09/all-gpu
 RUNS_DIR ?= ../runs

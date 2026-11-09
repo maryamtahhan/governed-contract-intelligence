@@ -324,15 +324,16 @@ before quoting any of these:
   For Convenience** question, with precision still 1.000 — a taxonomy
   mismatch, not the device. The conditional cause follow-up (canonical
   question first, cause question only on no-span + cause language) closes it:
-  extraction F1 1.000, zero false positives, 198/200 fully correct, with CUAD
+  extraction F1 1.000, zero false positives, 200/200 fully correct, with CUAD
   held-out termination F1 unchanged at 0.714. Direct runs are ungoverned by
   construction (all 247 sensitive steps on one endpoint).
 - **Cost (ROSA demo stack, classifier-free, 200 synthetic docs, 2026-11-09)**:
-  the hybrid config used **0.217 GPU-s/doc vs the all-gpu config's 1.013
-  (≈4.7×)** — 43.4 vs 202.7 GPU-seconds total — at extract F1 1.000 vs 1.000,
-  risk 0.990 vs 0.995 and report 0.752 vs 0.756 (198/200 vs 199/200 documents
-  fully correct; the two hybrid misses are borderline rubric-priority flips at
-  the GPU judgment stage, FINDINGS §15.9). GPU time is the 201 judgment steps
+  the hybrid config used **0.22 GPU-s/doc vs the all-gpu config's 1.013
+  (≈4.6×)** — 44.0 vs 202.7 GPU-seconds total — at extract F1 1.000 vs 1.000,
+  risk 1.000 vs 0.995 and report 0.752 vs 0.756 (200/200 vs 199/200 documents
+  fully correct; the policy was measured twice on the same commit, and the
+  first run's two risk misses did not reproduce in the quoted rerun,
+  FINDINGS §15.9). GPU time is the 201 judgment steps
   (risk + report) on the judgment entries; general work is CPU-first. The
   GPU-termination alternative measured 0.508 GPU-s/doc
   (`runs/rosa-200-2026-11-09-gpu-term`) and the earlier classifier-in-path

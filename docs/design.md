@@ -54,16 +54,18 @@ different things**, and the same word can appear in more than one layer.
    `deploy/openshift/rosa/pools.json`. Do not infer hardware from a route
    name.
 5. **The current run directory is
-   `runs/rosa-200-2026-11-09-cpu-term/hybrid`** (old `arm-D`). The default
+   `runs/rosa-200-2026-11-09-cpu-term-rerun/hybrid`** (old `arm-D`). The default
    dashboard uses A = that run, B = the same-run all-gpu control.
    `runs/rosa-200-2026-11-09-gpu-term/hybrid` is the measured GPU-termination
-   alternative, not the current policy.
+   alternative, not the current policy; `runs/rosa-200-2026-11-09-cpu-term`
+   is the same policy's first measurement (its two risk misses did not
+   reproduce in the rerun).
 
 ### 2.2 Five layers that look like names
 
 | Layer | Example | Where to read it |
 |---|---|---|
-| Run directory | `runs/rosa-200-2026-11-09-cpu-term/hybrid` | the path; maps to one recorded run |
+| Run directory | `runs/rosa-200-2026-11-09-cpu-term-rerun/hybrid` | the path; maps to one recorded run |
 | Routing policy / config | `hybrid` (old D) | `summary.config`; legacy `summary.arm` |
 | Route / cluster | `vllm-cpu`, `vllm-gpu-approved` | `x-demo-route` response header; `summary.routes` |
 | Served model | `Qwen3.5-35B-A3B`, `cuad-specialist` | response `model`; `summary.stage_models` |
@@ -71,6 +73,39 @@ different things**, and the same word can appear in more than one layer.
 
 A route can be composite: the route name says where praxis sent the request,
 but the response model can be a specialist behind that route. Route ≠ model.
+
+#### What actually serves each pipeline step (ROSA)
+
+The `vllm-cpu` route is the composite case: praxis sends the request through
+the `:8081` pool relay to the `cpureal-specialist` endpoint, and what answers
+depends on the prompt. Extraction prompts for the three CUAD-trained clauses
+run the RoBERTa-large QA checkpoint in a single encoder pass — a plain
+FastAPI/uvicorn service holding plain `transformers` weights, not vLLM (vLLM
+is a generation server; it cannot serve extractive QA). Everything else that endpoint receives — the classify step,
+and the data-protection clause, for which CUAD has no category — is forwarded
+by the same pod to the real vLLM CPU server (`cpureal-vllm-cpu`,
+Qwen3.5-35B-A3B). Judgment (risk/report) is pinned to the GPU pools.
+
+Per document, in the 200-doc CPU-policy run
+(`runs/rosa-200-2026-11-09-cpu-term-rerun/hybrid`):
+
+| Step | Actually served by | Steps/run | Response `model` |
+|---|---|---:|---|
+| `classify` | vLLM CPU (Qwen MoE) — forwarded by the specialist pod | 200 | `Semantic-Qwen` |
+| `extract:termination` | RoBERTa encoder (cause follow-up stays inside the step) | 200 | `cuad-specialist` |
+| `extract:governing_law` | RoBERTa encoder | 200 | `cuad-specialist` |
+| `extract:liability_cap` | RoBERTa encoder | 200 | `cuad-specialist` |
+| `extract:data_protection` | vLLM CPU (Qwen MoE) — forwarded, no CUAD category | 200 | `Semantic-Qwen` |
+| `risk` | vLLM GPU (`gpumoe-vllm`, 4×A10G, TP=4) | 200 | `Semantic-Qwen` |
+| `report` (once per run) | vLLM GPU approved (same A10G backend, `shared_with`) | 1 | `Semantic-Qwen` |
+
+So a route count of `vllm-cpu: 1000` in a 200-doc run is 600 RoBERTa encoder
+passes plus 400 vLLM Qwen calls relayed through the specialist pod. Evidence
+per run: `summary.stage_routes` (route counts per stage) and
+`summary.stage_models` (what actually answered — `response_model` is the only
+per-step record of which checkpoint did the work). The specialist's `/health`
+states the split directly: `{"model": "/opt/cuad-model/roberta-large",
+"forwards_to": "http://cpureal-vllm-cpu:8000"}`.
 
 ### 2.3 The four routing configs
 
@@ -138,7 +173,8 @@ through-stack.
 | `runs/rosa-200-2026-11-09/all-gpu` | through-stack config `all-gpu`, 200 docs (same-day §15.9 copy) |
 | `runs/rosa-200-2026-11-09/gpu-small` | through-stack config `gpu-small`, 200 docs (same-day §15.9 copy) |
 | `runs/rosa-200-2026-11-09/round-robin` | through-stack config `round-robin`, 200 docs (same-day §15.9 copy) |
-| `runs/rosa-200-2026-11-09-cpu-term/hybrid` | current through-stack `hybrid`, 200 docs (old `arm-D`), CPU termination policy |
+| `runs/rosa-200-2026-11-09-cpu-term-rerun/hybrid` | current through-stack `hybrid`, 200 docs (old `arm-D`), CPU termination policy — the quoted record |
+| `runs/rosa-200-2026-11-09-cpu-term/hybrid` | same policy, first measurement (198/200; two risk flips documented as serving variance) |
 | `runs/rosa-200-2026-11-09-gpu-term/hybrid` | measured GPU-termination alternative, 200 docs (not the current policy) |
 | `runs/direct/gpu-moe` | direct, one GPU endpoint, 35B-A3B |
 | `runs/direct/cpu-moe` | direct, one CPU endpoint, 35B-A3B |
@@ -306,7 +342,7 @@ corrects that and is the current policy.
 
 #### 2026-11-09 classifier-free re-measurement
 
-`runs/rosa-200-2026-11-09-cpu-term` is the current classifier-free record.
+`runs/rosa-200-2026-11-09-cpu-term-rerun` is the current classifier-free record.
 The hybrid arm runs termination extraction on the CPU specialist with a
 conditional cause follow-up (canonical CUAD convenience question first; a
 focused termination-for-cause question only when that returns no span and the
@@ -319,13 +355,13 @@ entries. The other three arms are the same-day copies. All arms: 200 documents,
 | all-gpu | 202.83 | 1.000 | 0.995 | 0.756 | 199/200 | 0.0 | 0/247 | 247 | 1.013 |
 | gpu-small | 454.21 | 1.000 | 0.395 | 0.278 | 75/200 | 0.0 | 0/247 | 247 | 2.241* |
 | round-robin | 570.81 | 0.991 | 1.000 | 0.756 | 186/200 | 0.5 | 129/247 | 118 | 1.773 |
-| **hybrid** | **823.84** | **1.000** | **0.990** | **0.752** | **198/200** | **0.833** | **247/247** | **0** | **0.217** |
+| **hybrid** | **816.59** | **1.000** | **1.000** | **0.752** | **200/200** | **0.833** | **247/247** | **0** | **0.22** |
 
 `*` `vllm-gpu-small` is route-accounted as GPU but the pool map records CPU
 hardware; do not read 2.241 as GPU time. GPU-s/doc counts a shared physical
 backend once: `gpumoe-vllm-approved` and `gpumoe-vllm` are the same pod, so the
-scorer maxes the group instead of summing it. Hybrid uses ~4.7x less GPU time
-than all-gpu (0.217 vs 1.013; 43.4 vs 202.7 GPU-s total). Judgment steps:
+scorer maxes the group instead of summing it. Hybrid uses ~4.6x less GPU time
+than all-gpu (0.22 vs 1.013; 44.0 vs 202.7 GPU-s total). Judgment steps:
 201/201 on GPU. Termination extraction (200 steps) is back on the CPU
 specialist: the earlier hybrid run scored 173/200 because all 27 misses were
 termination-for-cause clauses, while `cuad-specialist` is asked CUAD's
@@ -333,10 +369,12 @@ canonical “Termination For Convenience” question. The conditional cause
 follow-up recovers all 48 cause clauses with zero false positives (extraction
 1.000/1.000/1.000), without regressing CUAD held-out termination F1 (0.714,
 identical to canonical — the follow-up only fires where the canonical question
-already returned nothing). Risk is 0.990: two sensitive documents flipped on
-rubric priority at the GPU judgment stage (FINDINGS §15.9) — one on inputs
-byte-identical to a run where it scored correctly — against all-gpu's 0.995 on
-the same corpus. The GPU termination route (`runs/rosa-200-2026-11-09-gpu-term`,
+already returned nothing). Risk is 1.000 in the quoted rerun: the first
+same-day measurement of the same policy scored 0.990 with two sensitive
+documents flipping on rubric priority at the GPU judgment stage (FINDINGS
+§15.9), and the flips did not reproduce on the rerun — temperature-0 serving
+variance, not a routing regression — against all-gpu's 0.995 on the same
+corpus. The GPU termination route (`runs/rosa-200-2026-11-09-gpu-term`,
 726.77 s, 0.508 GPU-s/doc, 200/200) remains a measured alternative: it closes
 the same extraction gap on the GPU at 2.3x the GPU cost. The old
 `runs/rosa-200` numbers remain the classifier-in-path record and must not be
