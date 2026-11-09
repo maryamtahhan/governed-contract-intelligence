@@ -9,8 +9,9 @@ semantic-routing path); those files are preserved in git history at commit
 `b76645b`, and the older decision log they absorbed lives at commit
 `8798da3` (`DECISIONS.md`).
 
-The companions: [README.md](../README.md) is the runbook (how to run it) and
-[FINDINGS.md](../FINDINGS.md) is the measurement record (what was measured).
+The companions: [README.md](../README.md) is the runbook (how to run it),
+[FINDINGS.md](../FINDINGS.md) is the measurement record (what was measured),
+and [stage-runbook.md](stage-runbook.md) is the one-page stage script.
 Where those say *what happened*, this says *how it is designed and why*.
 
 ## 1. Purpose and thesis
@@ -310,6 +311,70 @@ the cost of wall-clock (1112 s vs 202 s).
   the pool relay's `X-Demo-Route` header hides the composite's real backend,
   so read the composite's own logs for where forwarded calls actually went.
 
+### 3.5 The agentic surface: MCP above, governance below
+
+> Naming note: in this repository `oc get mcp` means OpenShift
+> **MachineConfigPool**. This section means **Model Context Protocol (MCP)**.
+
+The question “why didn’t you use an agent framework?” is the right one to
+ask, and the answer is not “frameworks are unnecessary.” It is a question
+about which layer owns which decision. Three layers are easy to conflate:
+
+| Layer | In this repo | What it decides |
+|---|---|---|
+| **Workflow** | `pipeline/review.py`, `direct.py`, `batch.py`, `hybrid-run` | The stage order and prompts: screen, classify, extract, risk, report |
+| **Agent runtime** | OpenClaw in the OpenShell sandbox (the live tool-calling trigger is still open) | Which tools to call, in what order, with what memory and planning |
+| **Governance plane** | trace-ui ingress relays, praxis, per-pool relays, NetworkPolicies, sandbox egress | Which entry and pool may serve a request, when to fail closed, what is recorded |
+
+The measured four-arm matrix uses the deterministic workflow as a
+**reference client**. That is not a claim that an agent framework is
+unsuitable; it is a controlled comparison. An agent that plans, retries or
+reorders calls would confound the routing comparison, and the governance
+result comes from the gateway, not the orchestrator. The reference client is
+the golden path the agent is compared against, not the product boundary.
+
+The product surface is the inverse composition, and it is a repeatable
+methodology:
+
+1. **Define the domain tool/resource catalog first** (MCP), not prompts
+   buried inside a framework.
+2. **Put the agent framework above MCP** for planning, memory and tool
+   choice.
+3. **Keep the policy/egress gateway below MCP**; the agent never reaches a
+   model or a data source directly.
+4. **Keep a deterministic reference client** for measurement and replay.
+5. **Measure the reference, demo the agent, and label which is which.**
+
+The intended catalog is small and domain-level:
+
+| MCP surface | Kind | Calls |
+|---|---|---|
+| `contract://{doc_id}` | resource | document text and annotations |
+| `review_document` | tool | the full deterministic review (screen → report) |
+| `screen_document`, `extract_clause`, `assess_risk`, `build_report` | tools | one stage each, for agent composition |
+| `search_clauses` | tool | retrieval over the clause index |
+
+The MCP server is a **thin adapter**, not a second control plane. It runs
+inside the sandbox/namespace, uses the same per-step API keys as the
+pipeline, and calls the ingress relays. It must never call a pool's vLLM
+endpoint directly: that would bypass the approved set and the audit trail.
+The sandbox's egress policy still allows only praxis, so a compromised agent
+can invoke the governed tools and nothing else.
+
+What this buys: MCP hosts (OpenClaw, IDE assistants, other agent frameworks)
+can discover the capability without importing this repository's prompts or
+transport. What it does **not** buy: containment, fail-closed routing or
+audit. Those remain the governance plane's job. An MCP gateway or registry
+can add tool-level authentication and allowlists, but it still does not know
+which model pool may serve a sensitive document; that decision stays in
+praxis.
+
+The stage answer to “why didn’t you use an agent framework?” is therefore:
+*“We used a deterministic reference client for the measured comparison, and
+an agent runtime above MCP for the interactive surface. The same tools and
+the same gateway serve both; the difference is who chooses the next call.”*
+The live agent trigger is the open item, not a rewrite of the measured path.
+
 ## 4. Composing with upstream open source
 
 The short version: **the commodity mechanics are available from upstream;
@@ -534,7 +599,7 @@ length/quality; A/B it.
 
 ### 4.6 Verification status
 
-- 196 tests pass; the adapter tests cover defaults, opt-in wire formats,
+- 206 tests pass; the adapter tests cover defaults, opt-in wire formats,
   offset relocation, JSONL export, mock batch transport, metric definitions
   and the cache factory.
 - Base environment: `presidio`, `docling`, `ranx`, `redisvl`, `statsmodels`
@@ -786,6 +851,11 @@ reports, the regenerated ROSA report, and the alias regression tests —
 4. **Local, no cluster needed:** the Presidio A/B on a labelled sample and
    the docling-offsets A/B on the D11 regression set (§4.6's open list),
    and the embedder-tier call (FINDINGS §9/§11).
+5. **MCP facade and agent trigger** (§3.5, no re-measurement required): add
+   `mcp/contract_review_server.py` with the catalog above, wire OpenClaw to
+   it, and run the same two-document batch scripted and agent-driven. Keep
+   the agent path labelled **functional, not measured** until it has its own
+   run record; the measured reference path is unchanged.
 
 Quick verification of the whole surface:
 

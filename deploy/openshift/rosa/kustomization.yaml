@@ -71,7 +71,9 @@ kind: Kustomization
 #   2. oc apply -f gpu-operator.yaml        # driver install ~10-15 min, start early
 #   3. wait for both nodes; scripts/cluster/cpu-topology.sh <x8i-node>
 #      -> paste the proposed VLLM_CPU_OMP_THREADS_BIND lists into pools-cpu.yaml
-#   4. oc apply -f storage.yaml && oc apply -f seeders.yaml   # weights land warm
+#   4. oc apply -n openshell-demo -f storage.yaml && oc apply -n openshell-demo -f seeders.yaml   # weights land warm
+#      oc -n openshell-demo wait --for=condition=complete job/seed-model-cache-{cpu,gpu}
+#      oc -n openshell-demo delete pod -l 'job-name in (seed-model-cache-cpu,seed-model-cache-gpu)'
 #   5. oc apply -k deploy/openshift/rosa    # idempotent; pools boot from cache
 #
 # When recording runs against this overlay, pass the matching provenance

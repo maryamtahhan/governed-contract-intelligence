@@ -1,12 +1,13 @@
 {
- "extraction": {
-  "precision": 0.625,
-  "recall": 0.769,
-  "f1": 0.69,
-  "fields_correct": 58,
-  "fields_total": 76
- },
- "risk_accuracy": 0.632,
- "report_accuracy": 0.263,
- "docs_fully_correct": 5
+  "extraction": {
+    "precision": 0.625,
+    "recall": 0.769,
+    "f1": 0.69,
+    "fields_correct": 58,
+    "fields_total": 76
+  },
+  "risk_accuracy": 0.632,
+  "report_accuracy": 0.645,
+  "docs_fully_correct": 5,
+  "report_accuracy_note": "Re-scored 2026-11-09 with the current report scorer (was 0.263 at run time). The old value measured the pre-fix checks: governing-law keys were the whole annotated clause instead of a jurisdiction, and highest_risk_ref accepted only one alphabetical high-risk id. See FINDINGS.md \u00a73 and the walkthrough."
 }

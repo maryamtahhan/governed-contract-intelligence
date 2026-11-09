@@ -44,7 +44,7 @@ semantic-routing path, and the open decisions.
 | Semantic cache in the specialist (V5 ordering rules, zero-FP threshold) | **built, measured** |
 | Four-arm measurement (A/B/C/D) + model-variant comparison on OCP | **built** |
 | Trace UI (waterfall, arms panel, dashboard, audit) | **built** |
-| Test suite | **196 tests green** (`cd demo && uv run pytest`) |
+| Test suite | **206 tests green** (`cd demo && uv run pytest`) |
 | Contract-step taxonomy + evaluation harness | **candidate, not measured** — evaluate before routing ([design §5](docs/design.md)) |
 | Praxis 0.9.0 / ai-gateway 0.9.0 gateway rebuild | **built and published** — `quay.io/mtahhan/gci-praxis:v0.9.0`, base manifests switched ([docs](deploy/images/praxis-llm-d-sc/README.md)) |
 | Retrieval evaluation (chunking + recall@k/MRR vs annotation spans) | **run, both regimes — ordering inverts within-doc, restores cross-doc (FINDINGS §11)** |
@@ -354,7 +354,7 @@ demo/src/hybrid_demo/
     bench.py             vLLM bench / GuideLLM command builder
 demo/tools/              classifier probes, prompt calibration, validators,
                          paired-significance tests (mcnemar.py), PII compare
-demo/tests/             193 tests incl. e2e against a praxis stub
+demo/tests/             206 tests incl. e2e against a praxis stub
 manifests/               OpenShift base (pools, praxis, trace-ui, netpols)
 manifests/base/          non-KServe base; base/praxis/ holds the four routing
                          configs, shared with the Linux stack
@@ -372,7 +372,7 @@ runs/gpu-measured/       g5 measured-GPU evidence
 runs/retrieval/          embedder evals, corrections, e2e runs (FINDINGS §11)
 docs/                    design.md (the design doc), architecture + pipeline
                          diagrams (SVG), OCTO business-case doc (v0.3),
-                         review guide
+                         review guide, stage-runbook.md (one-page talk)
 sandbox/policy.yaml      OpenShell sandbox egress policy (praxis + github RO)
 FINDINGS.md              the measurement record — read before quoting numbers
 ```

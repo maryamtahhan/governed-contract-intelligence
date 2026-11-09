@@ -59,33 +59,50 @@ spec:
                 # approved-only entries. Prompt content does not steer the
                 # routing — the entry pins do; these lists just match the
                 # vocabulary of each step.
-                SIMPLE = [
+                # Prompts are grouped by the step that will label the request,
+                # so the UI never shows a "classify" step carrying an extract
+                # prompt (or a "risk" step on an extraction). The entry pins,
+                # not the prompt, still decide routing.
+                GENERAL_CLASSIFY = [
                     "Classify the following contract by type and state its initial term.",
-                    "Extract the termination clause from the following contract. If the clause is absent, say not found.",
-                    "Extract the governing law clause from the following contract.",
-                    "Extract the liability cap clause from the following contract.",
                     "Classify this agreement: MSA, NDA, SOW or DPA, and state the initial term in months.",
                     "Does this contract contain a data protection clause?",
                 ]
-                REASONING = [
+                GENERAL_EXTRACT = [
+                    "Extract the termination clause from the following contract. If the clause is absent, say not found.",
+                    "Extract the governing law clause from the following contract.",
+                    "Extract the liability cap clause from the following contract.",
+                ]
+                RISK = [
                     "Assess the aggregate risk exposure across these contracts and rank them by severity.",
                     "Judge this contract's exposure given its termination, liability and data-protection clauses, and justify the rating.",
-                    "Produce the cross-document risk report across all 12 documents. Synthesise and compare the extractions, derive the aggregate counts, and prove the ranking.",
                     "Compare the liability caps across the portfolio and identify the outliers with reasons.",
+                ]
+                REPORT = [
+                    "Produce the cross-document risk report across all 12 documents. Synthesise and compare the extractions, derive the aggregate counts, and prove the ranking.",
                     "Derive the portfolio-level compliance posture from the extracted clauses and defend each conclusion.",
                 ]
-                SENSITIVE = [
-                    "Extract the termination clause from the contract listing Jane Doe as signatory.",
-                    "Classify the agreement naming Acme Ltd. and state its initial term.",
+                # Sensitive prompts carry markers the default regex screen
+                # actually matches (email, EMP id, "personal data"), so the
+                # gateway's observe line agrees with the entry. Sending a
+                # sensitive label with clean content would misrepresent the
+                # sensitive share in the UI.
+                SENSITIVE_EXTRACT = [
+                    "Extract the termination clause from the contract whose data controller is aoife@example.com (EMP-123456).",
+                    "Extract the governing law clause from the agreement listing the data processor at aoife@example.com.",
+                ]
+                SENSITIVE_RISK = [
+                    "Assess the aggregate risk exposure across these contracts containing personal data; the data controller is aoife@example.com (EMP-123456).",
+                    "Judge this portfolio's exposure given the special categories of personal data listed by aoife@example.com.",
                 ]
                 # (entry label, trace-ui ingest port, step, prompts)
                 ROUTES = [
-                    ("general", 8080, "classify", SIMPLE),
-                    ("general", 8080, "extract", SIMPLE),
-                    ("judgment", 8086, "risk", REASONING),
-                    ("judgment", 8086, "report", REASONING),
-                    ("sensitive", 8083, "extract", SENSITIVE),
-                    ("sensitive-judgment", 8087, "risk", SENSITIVE),
+                    ("general", 8080, "classify", GENERAL_CLASSIFY),
+                    ("general", 8080, "extract", GENERAL_EXTRACT),
+                    ("judgment", 8086, "risk", RISK),
+                    ("judgment", 8086, "report", REPORT),
+                    ("sensitive", 8083, "extract", SENSITIVE_EXTRACT),
+                    ("sensitive-judgment", 8087, "risk", SENSITIVE_RISK),
                 ]
                 n = 0
                 while True:
@@ -93,7 +110,12 @@ spec:
                     n += 1
                     entry, port, step, prompts = random.choice(ROUTES)
                     prompt = random.choice(prompts)
-                    doc = "demo-doc-%d" % (n % 6)
+                    # Sensitive sessions are kept separate from general ones:
+                    # the policy taint is keyed by (subject, X-Session-Id), so
+                    # reusing a general session id here would taint unrelated
+                    # background traffic.
+                    prefix = "demo-sensitive-doc" if entry.startswith("sensitive") else "demo-doc"
+                    doc = "%s-%d" % (prefix, n % 6)
                     body = json.dumps({
                         "model": "Semantic-Qwen",
                         "messages": [{"role": "user", "content": prompt}],

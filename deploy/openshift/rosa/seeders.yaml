@@ -9,9 +9,11 @@
 # belt-and-braces even though EBS is not NFS).
 #
 # Apply BEFORE the pools (they run HF_HUB_OFFLINE=1):
-#   oc apply -f deploy/openshift/rosa/storage.yaml
-#   oc apply -f deploy/openshift/rosa/seeders.yaml
+#   oc apply -n openshell-demo -f deploy/openshift/rosa/storage.yaml
+#   oc apply -n openshell-demo -f deploy/openshift/rosa/seeders.yaml
 #   oc -n openshell-demo wait --for=condition=complete job/seed-model-cache-cpu job/seed-model-cache-gpu --timeout=3600s
+#   # release the RWO caches before the pools mount them
+#   oc -n openshell-demo delete pod -l 'job-name in (seed-model-cache-cpu,seed-model-cache-gpu)'
 apiVersion: batch/v1
 kind: Job
 metadata:

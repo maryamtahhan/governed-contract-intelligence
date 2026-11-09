@@ -26,8 +26,18 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+# Candidate deployments, most specific first. On the ROSA overlay the two GPU
+# routes share one Deployment (gpumoe-vllm); the cpureal-vllm-gpu* objects
+# also exist there but are parked at replicas 0, so trying them first would
+# scale the wrong workload and the trace UI would show no outage.
+case "$POOL" in
+  vllm-gpu|vllm-gpu-approved)
+    candidates=("$POOL-predictor" "gpumoe-vllm" "cpureal-$POOL" "$POOL") ;;
+  *)
+    candidates=("$POOL-predictor" "cpureal-$POOL" "$POOL") ;;
+esac
 DEPLOY=""
-for candidate in "$POOL-predictor" "cpureal-$POOL" "$POOL"; do
+for candidate in "${candidates[@]}"; do
   if oc -n "$NS" get "deploy/$candidate" >/dev/null 2>&1; then
     DEPLOY="$candidate"
     break

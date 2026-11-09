@@ -73,12 +73,20 @@ model caches, digest-pinned vLLM image).
 
    ```bash
    oc create ns openshell-demo
+   # server.py imports otel.py beside it; a ConfigMap with only server.py
+   # crash-loops with ModuleNotFoundError: No module named 'otel'.
    oc -n openshell-demo create configmap trace-ui-server \
-     --from-file=server.py=demo/src/hybrid_demo/traceui/server.py
-   oc apply -f deploy/openshift/rosa/storage.yaml
-   oc apply -f deploy/openshift/rosa/seeders.yaml
+     --from-file=server.py=demo/src/hybrid_demo/traceui/server.py \
+     --from-file=otel.py=demo/src/hybrid_demo/traceui/otel.py \
+     --dry-run=client -o yaml | oc apply -f -
+   oc apply -n openshell-demo -f deploy/openshift/rosa/storage.yaml
+   oc apply -n openshell-demo -f deploy/openshift/rosa/seeders.yaml
    oc -n openshell-demo wait --for=condition=complete \
      job/seed-model-cache-cpu job/seed-model-cache-gpu --timeout=3600s
+   # Completed seeder pods keep the RWO caches mounted; delete just the pods
+   # (not the Jobs, which apply -k would recreate) before the pools start.
+   oc -n openshell-demo delete pod \
+     -l 'job-name in (seed-model-cache-cpu,seed-model-cache-gpu)'
    oc apply -k deploy/openshift/rosa
    ```
 
