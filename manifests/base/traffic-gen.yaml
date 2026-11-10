@@ -52,26 +52,27 @@ spec:
                     "risk": os.environ.get("KEY_RISK", "gci-demo-key-risk"),
                     "report": os.environ.get("KEY_REPORT", "gci-demo-key-report"),
                 }
-                # Background traffic mirrors how the pipeline picks entries:
-                # classify/extract are batch work (general entry, CPU pin),
-                # risk/report are judgment work (judgment entry, GPU pin),
-                # and a synthetic sensitive document shows the
-                # approved-only entries. Prompt content does not steer the
-                # routing — the entry pins do; these lists just match the
-                # vocabulary of each step.
-                # Prompts are grouped by the step that will label the request,
-                # so the UI never shows a "classify" step carrying an extract
-                # prompt (or a "risk" step on an extraction). The entry pins,
-                # not the prompt, still decide routing.
+                # Background traffic mirrors the pipeline: the entry states
+                # only the data classification (general vs sensitive). Praxis
+                # reads X-Demo-Step and chooses the pool (specialist, CPU, GPU,
+                # approved GPU), so every list below is grouped by the step
+                # that will label the request.
                 GENERAL_CLASSIFY = [
                     "Classify the following contract by type and state its initial term.",
                     "Classify this agreement: MSA, NDA, SOW or DPA, and state the initial term in months.",
                     "Does this contract contain a data protection clause?",
                 ]
-                GENERAL_EXTRACT = [
+                GENERAL_TERMINATION = [
                     "Extract the termination clause from the following contract. If the clause is absent, say not found.",
+                ]
+                GENERAL_GOVERNING_LAW = [
                     "Extract the governing law clause from the following contract.",
+                ]
+                GENERAL_LIABILITY = [
                     "Extract the liability cap clause from the following contract.",
+                ]
+                GENERAL_DATA_PROTECTION = [
+                    "Extract the data protection clause from the following contract.",
                 ]
                 RISK = [
                     "Assess the aggregate risk exposure across these contracts and rank them by severity.",
@@ -95,14 +96,19 @@ spec:
                     "Assess the aggregate risk exposure across these contracts containing personal data; the data controller is aoife@example.com (EMP-123456).",
                     "Judge this portfolio's exposure given the special categories of personal data listed by aoife@example.com.",
                 ]
-                # (entry label, trace-ui ingest port, step, prompts)
+                # (entry label, trace-ui ingest port, step, prompts). The
+                # extract:* values are the exact keys in the praxis route
+                # table that send the CUAD clauses to the specialist.
                 ROUTES = [
                     ("general", 8080, "classify", GENERAL_CLASSIFY),
-                    ("general", 8080, "extract", GENERAL_EXTRACT),
-                    ("judgment", 8086, "risk", RISK),
-                    ("judgment", 8086, "report", REPORT),
-                    ("sensitive", 8083, "extract", SENSITIVE_EXTRACT),
-                    ("sensitive-judgment", 8087, "risk", SENSITIVE_RISK),
+                    ("general", 8080, "extract:termination", GENERAL_TERMINATION),
+                    ("general", 8080, "extract:governing_law", GENERAL_GOVERNING_LAW),
+                    ("general", 8080, "extract:liability_cap", GENERAL_LIABILITY),
+                    ("general", 8080, "extract:data_protection", GENERAL_DATA_PROTECTION),
+                    ("general", 8080, "risk", RISK),
+                    ("general", 8080, "report", REPORT),
+                    ("sensitive", 8083, "extract:termination", SENSITIVE_EXTRACT),
+                    ("sensitive", 8083, "risk", SENSITIVE_RISK),
                 ]
                 n = 0
                 while True:
@@ -126,7 +132,7 @@ spec:
                         data=body,
                         headers={
                             "Content-Type": "application/json",
-                            "X-API-Key": KEYS[step],
+                            "X-API-Key": KEYS[step.split(":", 1)[0]],
                             "X-Demo-Step": step,
                             "X-Demo-Entry": entry,
                             "X-Session-Id": doc,

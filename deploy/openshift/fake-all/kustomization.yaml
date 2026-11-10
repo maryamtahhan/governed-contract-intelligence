@@ -4,7 +4,7 @@ kind: Kustomization
 # The all-pools-simulated variant: the cluster twin of the compose fake
 # profile (deploy/linux/docker-compose.yml --profile fake). Everything from
 # the base (praxis v0.9.1 with the PPE policy layer, trace-ui, netpols)
-# with ALL FOUR pools running as hybrid-pool containers — deterministic
+# with ALL FIVE routes running as hybrid-pool containers — deterministic
 # tiered error rates, device-time headers, no model downloads, no GPUs, no
 # KServe. This is the functional-test environment for CPU-only clusters:
 # routing, failover, fail-closed, the policy gate and the shadow PII
@@ -50,9 +50,8 @@ patches:
           - {name: TRACE_DB_PATH, value: /data/traces.db}
           - {name: PRAXIS_UPSTREAM, value: "http://praxis:80"}
           - {name: SENSITIVE_UPSTREAM, value: "http://praxis:8083"}
-          - {name: JUDGMENT_UPSTREAM, value: "http://praxis:8086"}
-          - {name: SENSITIVE_JUDGMENT_UPSTREAM, value: "http://praxis:8087"}
-          - {name: TRACE_POOLS, value: "vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small"}
+          - {name: TRACE_POOLS, value: "cuad-specialist,vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small"}
+          - {name: CUAD_SPECIALIST_UPSTREAM, value: "http://fake-specialist:8000"}
           - {name: VLLM_CPU_UPSTREAM, value: "http://fake-vllm-cpu:8000"}
           - {name: VLLM_GPU_UPSTREAM, value: "http://fake-vllm-gpu:8000"}
           - {name: VLLM_GPU_APPROVED_UPSTREAM, value: "http://fake-vllm-gpu-approved:8000"}

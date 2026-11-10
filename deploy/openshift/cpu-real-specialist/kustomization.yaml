@@ -1,9 +1,9 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# Specialist-composite CPU pool (see specialist.yaml). Stacks on cpu-real:
-# the 1.5B keeps serving classify/risk via forwarding, the QA checkpoint
-# answers extraction. Build the image first:
+# CUAD specialist route (see specialist.yaml) beside the CPU MoE. Stacks on
+# cpu-real: classify/data-protection use the CPU MoE, CUAD clauses use the
+# specialist. Build the image first:
 #   oc -n openshell-demo new-build --binary --strategy docker --name hybrid-specialist
 #   oc -n openshell-demo start-build hybrid-specialist --from-dir=demo \
 #       --dockerfile Dockerfile.specialist --follow
@@ -24,10 +24,9 @@ patches:
           - {name: TRACE_DB_PATH, value: /data/traces.db}
           - {name: PRAXIS_UPSTREAM, value: "http://praxis:80"}
           - {name: SENSITIVE_UPSTREAM, value: "http://praxis:8083"}
-          - {name: JUDGMENT_UPSTREAM, value: "http://praxis:8086"}
-          - {name: SENSITIVE_JUDGMENT_UPSTREAM, value: "http://praxis:8087"}
-          - {name: TRACE_POOLS, value: "vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small"}
-          - {name: VLLM_CPU_UPSTREAM, value: "http://cpureal-specialist:8000"}
+          - {name: TRACE_POOLS, value: "cuad-specialist,vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small"}
+          - {name: CUAD_SPECIALIST_UPSTREAM, value: "http://cpureal-specialist:8000"}
+          - {name: VLLM_CPU_UPSTREAM, value: "http://cpureal-vllm-cpu:8000"}
           - {name: VLLM_GPU_UPSTREAM, value: "http://cpureal-vllm-gpu:8000"}
           - {name: VLLM_GPU_APPROVED_UPSTREAM, value: "http://cpureal-vllm-gpu-approved:8000"}
           - {name: VLLM_GPU_SMALL_UPSTREAM, value: "http://cpureal-vllm-gpu-small:8000"}

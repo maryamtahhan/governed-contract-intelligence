@@ -1,9 +1,48 @@
-# All four pools simulated (see kustomization.yaml): the CPU pool joins the
-# three GPU pools as hybrid-pool containers, the same parameters the compose
-# fake profile runs (deploy/linux/docker-compose.yml), so routing behavior
-# is comparable across the two stacks. Labels follow the plain-pools
+# All five routes simulated (see kustomization.yaml): the specialist and CPU
+# pools join the three GPU pools as hybrid-pool containers, the same
+# parameters the compose fake profile runs (deploy/linux/docker-compose.yml),
+# so routing behavior is comparable across the two stacks. Labels follow the plain-pools
 # netpol contract: demo.openshell.ai/pool selects the pool pods, ingress is
 # restricted to the trace-ui relays on the pool port.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fake-specialist
+  labels: {app: fake-specialist, demo.openshell.ai/pool: cuad-specialist, demo.openshell.ai/simulated: "true", demo.openshell.ai/specialist: cuad-qa}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: fake-specialist}}
+  template:
+    metadata:
+      labels: {app: fake-specialist, demo.openshell.ai/pool: cuad-specialist, demo.openshell.ai/simulated: "true", demo.openshell.ai/specialist: cuad-qa}
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: pool
+          image: image-registry.openshift-image-registry.svc:5000/openshell-demo/hybrid-demo:latest
+          args: ["hybrid-pool", "--pool", "cuad-specialist", "--model", "cuad-specialist",
+                 "--host", "0.0.0.0", "--port", "8000",
+                 "--prefill-ms-per-ktok", "20", "--decode-ms-per-tok", "5", "--concurrency", "4",
+                 "--error-rates", "simple=0.0,complex=0.0,reasoning=0.0"]
+          ports: [{containerPort: 8000}]
+          readinessProbe: {httpGet: {path: /healthz, port: 8000}, initialDelaySeconds: 2}
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {memory: 256Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fake-specialist
+spec:
+  selector: {app: fake-specialist}
+  ports: [{name: http, port: 8000, targetPort: 8000}]
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:

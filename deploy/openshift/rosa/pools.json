@@ -20,9 +20,9 @@
     "hardware": "cpu (ROSA x8i.24xlarge, 12 pinned cores, OMP-bind)",
     "deployment": "cpureal-vllm-gpu-small"
   },
-  "specialist": {
+  "cuad-specialist": {
     "model": "CUAD RoBERTa-large QA (fine-tuned 2021 checkpoint)",
-    "hardware": "cpu (ROSA x8i.24xlarge, 2 cores, composite relay to cpureal-vllm-cpu)",
+    "hardware": "cpu (ROSA x8i.24xlarge, 2 cores, taskset-pinned; model endpoint only)",
     "deployment": "cpureal-specialist"
   }
 }

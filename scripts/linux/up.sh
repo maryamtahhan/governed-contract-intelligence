@@ -26,6 +26,9 @@ PRAXIS_DIR=manifests/base/praxis
 [ -f "$PRAXIS_DIR/live.yaml" ] || cp "$PRAXIS_DIR/config.yaml" "$PRAXIS_DIR/live.yaml"
 
 if [ "$PROFILE" = "real" ]; then
+  # No RoBERTa service in the Linux compose profile: the specialist route
+  # falls back to the real CPU model so the routing shape still works.
+  export CUAD_SPECIALIST_UPSTREAM="http://vllm-cpu-real:8000"
   export VLLM_CPU_UPSTREAM="http://vllm-cpu-real:8000"
   export VLLM_GPU_UPSTREAM="http://vllm-gpu-real:8000"
   export VLLM_GPU_APPROVED_UPSTREAM="http://vllm-gpu-approved-real:8000"
@@ -51,7 +54,7 @@ if [ "$PROFILE" = "real" ]; then
   echo -n "waiting for the model pools (first start downloads ~36GB of weights)"
   for i in $(seq 1 360); do
     ok=0
-    for port in 18081 18082 18084 18085; do
+    for port in 18088 18081 18082 18084 18085; do
       curl -sf -m 3 "http://127.0.0.1:$port/health" >/dev/null 2>&1 || ok=1
     done
     if [ "$ok" = 0 ]; then echo " ok"; break; fi

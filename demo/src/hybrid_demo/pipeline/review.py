@@ -25,11 +25,10 @@ from .generate import CLAUSE_KEYS
 from .risk import DATA_PROTECTION_KEY, rubric_text
 from .schemas import apply as apply_schema
 
-# Steps whose work is judgment rather than extraction. The hybrid config gives
-# them their own praxis listeners pinned to the GPU, so the split is a policy
-# decision by step type, not the classifier's guess. Extraction stays on the
-# CPU specialist, including termination: its cause follow-up question lives in
-# the specialist, so no extraction step needs the GPU entry.
+# Steps whose work is judgment rather than extraction. The praxis config
+# routes them to a GPU pool by X-Demo-Step, so the split is a policy decision
+# by step type, not the classifier's guess. Extraction stays on the CPU: CUAD
+# clauses on the specialist, data protection on the CPU MoE.
 JUDGMENT_STEPS = {"risk", "report"}
 
 # Thinking mode (the quality lever tested in FINDINGS §8): Qwen3.5 emits
@@ -238,9 +237,7 @@ def request_headers(step: str, entry: str, doc_id: str | None) -> dict[str, str]
 class ReviewRun:
     def __init__(self, general_base: str, sensitive_base: str | None, concurrency: int,
                  governance: bool, clause_keys: list[str] | None = None,
-                 timeout: float = 600.0, token: str | None = None,
-                 judgment_base: str | None = None,
-                 sensitive_judgment_base: str | None = None) -> None:
+                 timeout: float = 600.0, token: str | None = None) -> None:
         self.clause_keys = clause_keys or list(CLAUSE_KEYS)
         # When the trace UI is exposed through a Route it can require a
         # bearer token; the relay forwards the header, so the same token
@@ -253,11 +250,6 @@ class ReviewRun:
 
         self.general = client(general_base)
         self.sensitive = client(sensitive_base)
-        # The judgment entries are optional: when they are not configured the
-        # pipeline keeps the previous stage-agnostic behaviour (and records
-        # judgment_split=false), so older stacks still run.
-        self.judgment = client(judgment_base)
-        self.sensitive_judgment = client(sensitive_judgment_base)
         self.concurrency = max(1, concurrency)
         self.sem = asyncio.Semaphore(self.concurrency)
         self.governance = governance
@@ -266,31 +258,19 @@ class ReviewRun:
         self.screen_stats = {"tp": 0, "fp": 0, "tn": 0, "fn": 0}
 
     async def close(self) -> None:
-        for client in (self.general, self.sensitive, self.judgment,
-                       self.sensitive_judgment):
+        for client in (self.general, self.sensitive):
             if client:
                 await client.aclose()
 
-    def entry_for_step(self, screened_sensitive: bool,
-                       step: str) -> tuple[httpx.AsyncClient, str]:
-        """Pick the entry (and its trace label) for one pipeline step.
+    def entry_for_sensitivity(self, screened_sensitive: bool
+                              ) -> tuple[httpx.AsyncClient, str]:
+        """Pick the data-classification entry, never a pool.
 
-        Judgment steps use the judgment listeners when configured; otherwise
-        they fall back to the stage-agnostic entries. Extraction, including
-        termination, stays on the CPU specialist. A sensitive document always
-        stays on an approved entry: that is a governance constraint,
-        independent of which stage is calling.
+        The pipeline's PII screen is the only routing decision made here: a
+        document with personal data goes to the sensitive listener, everything
+        else to the general listener. Praxis reads X-Demo-Step on the request
+        and chooses the pool (specialist, CPU or GPU) in config.
         """
-        stage = step.split(":", 1)[0]
-        gpu_bound = stage in JUDGMENT_STEPS
-        if gpu_bound and self.governance:
-            if screened_sensitive:
-                if self.sensitive_judgment:
-                    return self.sensitive_judgment, "sensitive-judgment"
-                if self.sensitive:
-                    return self.sensitive, "sensitive"
-            elif self.judgment:
-                return self.judgment, "judgment"
         if screened_sensitive and self.governance and self.sensitive:
             return self.sensitive, "sensitive"
         return self.general, "general"
@@ -388,18 +368,18 @@ class ReviewRun:
         screened = detect_sensitivity(doc_text)
         self.screened[doc_id] = screened
         self.note_screen(screened, doc.get("sensitive"))
-        client, entry = self.entry_for_step(screened, "classify")
+        client, entry = self.entry_for_sensitivity(screened)
         await self.call(client, entry, "classify", classify_body(doc_text), doc_id, "SIMPLE", screened)
         clauses: dict[str, str | None] = {}
         for clause in self.clause_keys:
             step = f"extract:{clause}"
-            client, entry = self.entry_for_step(screened, step)
+            client, entry = self.entry_for_sensitivity(screened)
             display = clause.replace("_", " ")
             rec = await self.call(client, entry, step, extract_body(doc_text, display),
                                   doc_id, "SIMPLE", screened)
             content = rec.get("content", {})
             clauses[clause] = content.get("text") if content.get("found") else None
-        client, entry = self.entry_for_step(screened, "risk")
+        client, entry = self.entry_for_sensitivity(screened)
         await self.call(client, entry, "risk", risk_body(clauses, screened), doc_id, "COMPLEX", screened)
         return clauses
 
@@ -450,7 +430,7 @@ class ReviewRun:
                 )
             )
         prefixed = [f"- {line}" for line in doc_lines]
-        client, entry = self.entry_for_step(any_sensitive, "report")
+        client, entry = self.entry_for_sensitivity(any_sensitive)
         has_data_protection = DATA_PROTECTION_KEY in self.clause_keys
         await self.call(client, entry, "report",
                         report_body(prefixed, len(docs), has_data_protection), None,
@@ -519,7 +499,7 @@ def summarise(records: list[dict], screen_stats: dict) -> dict:
             by_route[route] = by_route.get(route, 0) + 1
             per_stage_routes = stage_routes.setdefault(stage, {})
             per_stage_routes[route] = per_stage_routes.get(route, 0) + 1
-            if stage in JUDGMENT_STEPS and "judgment" in (r.get("entry") or ""):
+            if stage in JUDGMENT_STEPS:
                 judgment_steps += 1
                 if route in GPU_ROUTES:
                     judgment_on_gpu += 1
@@ -567,9 +547,9 @@ def summarise(records: list[dict], screen_stats: dict) -> dict:
         "models": by_model,
         "stage_models": stage_models,
         "stage_routes": stage_routes,
-        # Risk/report steps that used a judgment entry; on_gpu counts the ones
-        # whose selected route was a GPU pool. Both zero when the judgment
-        # entries are not configured (legacy stage-agnostic run).
+        # Risk/report steps and how many reached a GPU pool. Pool choice is
+        # praxis's, so this is measured from the route header, not from the
+        # entry the pipeline chose.
         "judgment_steps": judgment_steps,
         "judgment_on_gpu": judgment_on_gpu,
         "fallback": fallback,
@@ -602,8 +582,6 @@ async def run_arm(
     cluster: str | None = None,
     pools: dict | None = None,
     doc_ids: list[str] | None = None,
-    judgment_base: str | None = None,
-    sensitive_judgment_base: str | None = None,
     run_kind: str = "batch",
 ) -> dict:
     arm = CONFIG_ALIASES.get(str(arm).strip().lower(), arm)
@@ -628,8 +606,7 @@ async def run_arm(
         sampler.start()
 
     run = ReviewRun(gateway_base, sensitive_base, concurrency, governance, clause_keys,
-                    timeout=timeout, token=token, judgment_base=judgment_base,
-                    sensitive_judgment_base=sensitive_judgment_base)
+                    timeout=timeout, token=token)
     await run.run(docs, texts)
     await run.close()
 
@@ -652,14 +629,12 @@ async def run_arm(
         "timeout_s": timeout,
         "started_at": started_at,
         "wall_s": round(run.wall_s, 2),
-        # Whether the stage-aware split was active. A run with the flags
-        # omitted is still valid, but it is a CPU-first run by fallback, not
-        # evidence for the judgment-on-GPU policy. The flags are ignored by
-        # the ungoverned baselines (A/B/C), so they must not be recorded as
-        # active there either: arms.sh passes all gateways to every config.
-        "judgment_split": governance and run.judgment is not None,
-        "sensitive_judgment_split": (governance
-                                     and run.sensitive_judgment is not None),
+        # Whether the praxis policy entries are active. Kept under the old
+        # key for existing score/report code: in the rebuilt stack both
+        # judgment classes are routed by X-Demo-Step inside the single
+        # general/sensitive pair, not by separate listeners.
+        "judgment_split": governance,
+        "sensitive_judgment_split": governance,
         **summarise(run.records, run.screen_stats),
         # Routes and labels say which pool answered; they cannot say what was
         # in the pool. Recording the deploy-time mapping with the run keeps
@@ -693,16 +668,6 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--gateway", required=True, help="general entry base URL (trace-ui ingress)")
     parser.add_argument("--sensitive-gateway", default=None,
                         help="sensitive entry base URL; required for the hybrid config")
-    parser.add_argument("--judgment-gateway", default=os.environ.get("HYBRID_JUDGMENT_GATEWAY") or None,
-                        help="judgment entry base URL (risk + report on GPU); "
-                             "defaults to HYBRID_JUDGMENT_GATEWAY, then the "
-                             "stage-agnostic entries")
-    parser.add_argument("--sensitive-judgment-gateway",
-                        default=os.environ.get("HYBRID_SENSITIVE_JUDGMENT_GATEWAY") or None,
-                        help="approved judgment entry base URL for sensitive "
-                             "documents; defaults to "
-                             "HYBRID_SENSITIVE_JUDGMENT_GATEWAY, then the "
-                             "sensitive entry")
     parser.add_argument("--data", default="data/synthetic")
     parser.add_argument("--out", required=True)
     parser.add_argument("--config", default=None,
@@ -757,8 +722,7 @@ def main(argv: list[str] | None = None) -> None:
                 args.docs, args.concurrency, args.sample_metrics, args.timeout,
                 args.token, args.model, environment=args.environment,
                 cluster=args.cluster, pools=parse_pools(args.pools),
-                doc_ids=doc_ids, judgment_base=args.judgment_gateway,
-                sensitive_judgment_base=args.sensitive_judgment_gateway)
+                doc_ids=doc_ids)
     )
     print(json.dumps(summary, indent=1))
 

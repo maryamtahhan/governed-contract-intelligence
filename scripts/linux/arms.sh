@@ -15,8 +15,6 @@ DATA="${DATA:-data/synthetic}"
 CONCURRENCY="${CONCURRENCY:-12}"
 GATEWAY="${GATEWAY:-http://127.0.0.1:8080}"
 SENSITIVE="${SENSITIVE:-http://127.0.0.1:8083}"
-JUDGMENT="${JUDGMENT:-http://127.0.0.1:8086}"
-SENSITIVE_JUDGMENT="${SENSITIVE_JUDGMENT:-http://127.0.0.1:8087}"
 CONFIGS="${CONFIGS:-${ARMS:-all-gpu gpu-small round-robin hybrid}}"
 
 for c in curl uv; do command -v "$c" >/dev/null || { echo "missing: $c" >&2; exit 1; }; done
@@ -36,6 +34,7 @@ set_config() { bash scripts/linux/set_config.sh "$1" >/dev/null; }
 scrape() {  # scrape <outdir> <tag>
   mkdir -p "$1"
   curl -sf http://127.0.0.1:19002/metrics > "$1/praxis-$2.txt" 2>/dev/null || true
+  curl -sf http://127.0.0.1:18088/metrics > "$1/cuad-specialist-$2.txt" 2>/dev/null || true
   curl -sf http://127.0.0.1:18081/metrics > "$1/vllm-cpu-$2.txt" 2>/dev/null || true
   curl -sf http://127.0.0.1:18082/metrics > "$1/vllm-gpu-$2.txt" 2>/dev/null || true
   curl -sf http://127.0.0.1:18084/metrics > "$1/vllm-gpu-approved-$2.txt" 2>/dev/null || true
@@ -45,7 +44,7 @@ scrape() {  # scrape <outdir> <tag>
 # Live metrics sampling during each run -> measured device-time in the report.
 SAMPLE_ARGS=""
 if curl -sf -m 3 http://127.0.0.1:18081/health >/dev/null 2>&1; then
-  SAMPLE_ARGS="--sample-metrics vllm-cpu=http://127.0.0.1:18081,vllm-gpu=http://127.0.0.1:18082,vllm-gpu-approved=http://127.0.0.1:18084,vllm-gpu-small=http://127.0.0.1:18085"
+  SAMPLE_ARGS="--sample-metrics cuad-specialist=http://127.0.0.1:18088,vllm-cpu=http://127.0.0.1:18081,vllm-gpu=http://127.0.0.1:18082,vllm-gpu-approved=http://127.0.0.1:18084,vllm-gpu-small=http://127.0.0.1:18085"
 fi
 
 for requested in $CONFIGS; do
@@ -58,7 +57,6 @@ for requested in $CONFIGS; do
   scrape "$out" before
   (cd demo && uv run hybrid-run --target gateway \
     --gateway "$GATEWAY" --sensitive-gateway "$SENSITIVE" \
-    --judgment-gateway "$JUDGMENT" --sensitive-judgment-gateway "$SENSITIVE_JUDGMENT" \
     --data "$DATA" --out "../$out" --config "$config" \
     --docs "$DOCS" --concurrency "$CONCURRENCY" $SAMPLE_ARGS)
   scrape "$out" after

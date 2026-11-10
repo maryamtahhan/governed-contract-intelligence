@@ -1,10 +1,10 @@
 """OpenAI-compatible server for the CUAD specialist pool.
 
-A composite pool: extraction prompts ("Extract the <clause> clause...") are
-answered by the fine-tuned QA checkpoint in a single encoder pass; every
-other prompt (classification, risk, report) is forwarded to a general model
-served by vLLM (FORWARD_TO). This keeps the pool drop-in behind the trace-ui
-relay with no changes to praxis or the pipeline.
+A model endpoint, not a router: extraction prompts ("Extract the <clause>
+clause...") are answered by the fine-tuned QA checkpoint in a single encoder
+pass. Praxis owns the work-to-pool table, so this service never forwards a
+prompt it does not understand; unsupported requests fail with 400 and a
+misroute stays visible instead of being silently corrected here.
 
 The QA answer is formatted to the pipeline's JSON contract:
     {"clause": ..., "found": true/false, "text": ...}
@@ -18,7 +18,6 @@ import asyncio
 import json
 import time
 
-import httpx
 import uvicorn
 from fastapi import Body, FastAPI, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
@@ -51,7 +50,6 @@ def create_app(args: argparse.Namespace) -> FastAPI:
     model = AutoModelForQuestionAnswering.from_pretrained(args.model, dtype=torch.float32)
     model.eval()
     semaphore = asyncio.Semaphore(args.concurrency)
-    client = httpx.AsyncClient(timeout=600.0)
     cache = (create_cache(args.cache_backend, threshold=args.cache_threshold,
                           max_entries=args.cache_entries,
                           redis_url=args.cache_redis_url)
@@ -63,7 +61,6 @@ def create_app(args: argparse.Namespace) -> FastAPI:
     @app.get("/healthz")
     async def health():
         return {"status": "ok", "pool": POOL, "model": args.model,
-                "forwards_to": args.forward_to,
                 "semantic_cache": cache.snapshot() if cache else None}
 
     @app.get("/metrics")
@@ -84,7 +81,11 @@ def create_app(args: argparse.Namespace) -> FastAPI:
         context = _contract_text(prompt)
 
         if question is None or context is None:
-            return await _forward(body)
+            return JSONResponse(status_code=400, content={
+                "error": {"message": "cuad-specialist only answers CUAD clause "
+                                     "extraction prompts; praxis routes other work "
+                                     "to another pool",
+                          "type": "unsupported_prompt"}})
 
         if cache is not None:
             cached, served_as = await asyncio.to_thread(
@@ -128,17 +129,6 @@ def create_app(args: argparse.Namespace) -> FastAPI:
         generation_tokens.labels(pool=POOL).inc(max(1, len(content) // 4))
         return JSONResponse(content=_completion(content))
 
-    async def _forward(body: dict) -> JSONResponse:
-        if not args.forward_to:
-            return JSONResponse(status_code=503, content={
-                "error": {"message": "specialist pool only answers extraction prompts",
-                          "type": "unsupported"}})
-        requests_total.labels(pool=POOL, task="forwarded").inc()
-        resp = await client.post(args.forward_to.rstrip("/") + "/v1/chat/completions",
-                                 json=body)
-        return JSONResponse(content=resp.json(), status_code=resp.status_code,
-                            headers={"X-Specialist-Forwarded": "true"})
-
     def _completion(content: str) -> dict:
         return {
             "id": new_id("chatcmpl"),
@@ -170,9 +160,6 @@ def main() -> None:
     parser.add_argument("--port", type=int, required=True)
     parser.add_argument("--concurrency", type=int, default=4)
     parser.add_argument("--null-margin", type=float, default=1.0)
-    parser.add_argument("--forward-to", default=None,
-                        help="general-model endpoint for non-extraction prompts "
-                             "(e.g. http://cpureal-vllm-cpu:8000)")
     parser.add_argument("--fast-tokenizer", action="store_true",
                         help="DeBERTa checkpoints need the slow tokenizer")
     parser.add_argument("--semantic-cache", action="store_true",

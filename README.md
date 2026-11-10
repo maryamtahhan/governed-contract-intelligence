@@ -61,11 +61,11 @@ pipeline, the measurement harness and the OpenShell sandbox.
 | Praxis routing, governance, fail-closed, audit export | **built, verified on 3 stacks** |
 | PPE policy layer: per-step API keys, audit records, shadow PII screen | **built; observe-only** — deny-on-PII is an open measured decision (design §3.1) |
 | CUAD review pipeline (extraction → risk → report), scored vs ground truth | **built** |
-| CUAD specialist pool (RoBERTa-large QA, composite with forwarding) | **built** |
+| CUAD specialist pool (RoBERTa-large QA, model endpoint only) | **built** |
 | Semantic cache in the specialist (V5 ordering rules, zero-FP threshold) | **built, measured** |
 | Four-arm measurement (A/B/C/D) + model-variant comparison on OCP | **built** |
 | Trace UI (waterfall, arms panel, dashboard, audit) | **built** |
-| Test suite | **216 tests green** (`cd demo && uv run pytest`) |
+| Test suite | **212 tests green** (`cd demo && uv run pytest`) |
 | Contract-step taxonomy + evaluation harness | **candidate, not measured** — evaluate before routing ([design §5](docs/design.md)) |
 | Gateway image `v0.9.1` (Praxis 0.7.5 / ai-gateway 0.9.0 + PPE host plugins) | **built and published** — `quay.io/mtahhan/gci-praxis:v0.9.1`, base manifests switched ([docs](deploy/images/praxis-llm-d-sc/README.md)) |
 | Retrieval evaluation (chunking + recall@k/MRR vs annotation spans) | **run, both regimes — ordering inverts within-doc, restores cross-doc (FINDINGS §11)** |
@@ -106,26 +106,29 @@ difference explicit:
   gate + pinned routing) → pool relay → pool → model. It measures routing,
   governance, audit and cost.
 
-  ![Through-stack run: one request, six stops — two trace-ui relays, the Praxis policy/route gate, the pool and the model](docs/pipeline-through-stack.svg)
+  ![Through-stack run: one request, six stops — two trace-ui relays, the Praxis policy/step-route gate, the pool and the model](docs/pipeline-through-stack.svg)
 
   The six stops are three kinds of work: the CLI builds and scores, the two
   trace-ui relays record, and Praxis decides. Only the last stop runs a model.
 
 Key properties of the governed path:
 
-- **Sensitivity is a constraint; batch is CPU-first.** The general listener
-  pins single-document work to the CPU pool (the measured behaviour: the
-  classifier used to label 1,200 of 1,201 steps MEDIUM, FINDINGS §15.5, so
-  the pin reproduces the recorded routing without it). The sensitive
-  listener — fed by the PII screen — pins to CPU too, but its failover pool
-  contains *only* the approved GPU backend, so when both are down a request
-  **fails closed** (explicit 502, verified in the traces). General work
-  degrades to any pool with a visible signal (the trace's "fell back"
-  badge).
-- **Judgment is worth a GPU.** Risk and report use dedicated judgment
-  listeners pinned to GPU; sensitive judgment pins to the approved GPU only
-  and fails closed. Extraction, including the termination follow-up, stays
-  on the CPU specialist.
+- **Sensitivity is the only routing choice the app makes.** The PII screen
+  sends personal-data documents to the sensitive entry; everything else goes
+  to general. The app never names a pool or a port.
+- **Praxis owns the work-to-pool table.** Inside each entry, the router
+  matches `X-Demo-Step`: CUAD clause extraction to `cuad-specialist`,
+  classify and data-protection extraction to `vllm-cpu`, risk/report to a
+  GPU route. The general entry uses `vllm-gpu`; the sensitive entry uses
+  `vllm-gpu-approved` and its failover set contains *only* that approved
+  backend, so it **fails closed** rather than spill. General CPU work
+  degrades to the general GPU with a visible "fell back" badge.
+- **Judgment is worth a GPU.** Risk and report route to the GPU with no CPU
+  fallback; sensitive judgment pins to the approved GPU only. Extraction,
+  including the termination follow-up, stays on CPU.
+- **The specialist is a model, not a router.** It answers the CUAD clauses
+  extractively and returns 400 for anything else; a misroute stays visible
+  instead of being silently forwarded inside the pod.
 - **Praxis reaches the pools only through the trace-ui relays** — every
   request recorded with route, per-hop timings; SQLite is the audit trail,
   exported as `audit.jsonl`.
@@ -137,10 +140,11 @@ Key properties of the governed path:
   stack and OpenShift, so routing is byte-identical on both.
 - **Arms** (measurement baselines, swapped live): **A** all-GPU large model,
   **B** all-GPU small model, **C** naive hybrid round-robin, **D** the hybrid
-  policy — CPU-first pinned general/sensitive entries plus pinned judgment
-  entries for risk and report (GPU), with fail-closed sensitive failover.
-  The pinned judgment entries are an implemented policy, not yet a measured
-  ROSA result; the measured D run predates them (FINDINGS §15.5).
+  policy — two data-classification entries with the `X-Demo-Step` route
+  table inside them, and fail-closed sensitive failover.
+  The measured D run predates the rebuilt route table (and the specialist
+  split); re-measuring it is a new run directory, not a reinterpretation of
+  the old one (FINDINGS §15.5, §15.9).
 
 ## What runs where
 
@@ -250,10 +254,11 @@ Two rules follow from this:
 1. **Never infer hardware from a route or config name.** On ROSA,
    `vllm-gpu-small` is served by Qwen2.5-1.5B **on CPU**; `all-gpu` is a
    routing policy, not a hardware promise.
-2. **`vllm-cpu` is a composite route.** On the measured ROSA stack it
-   reaches the CUAD specialist pod, which answers extraction prompts with a
-   RoBERTa encoder and forwards everything else to the vLLM CPU server. A
-   route count is not a model count; read `summary.stage_models`.
+2. **Routes name one endpoint since the 2026-11-10 rebuild.**
+   `cuad-specialist` is the RoBERTa service and `vllm-cpu` is the CPU MoE;
+   there is no forwarding inside the specialist. The quoted 2026-11-09
+   measurement predates the split, when `vllm-cpu` was composite — read
+   `summary.stage_models` for that run rather than assuming the new graph.
 
 ## Linux runbook
 
@@ -629,7 +634,11 @@ before quoting any of these:
   fully correct; the policy was measured twice on the same commit, and the
   first run's two risk misses did not reproduce in the quoted rerun,
   FINDINGS §15.9). GPU time is the 201 judgment steps
-  (risk + report) on the judgment entries; general work is CPU-first. The
+  (risk + report); in that run they used the judgment listeners, which the
+  2026-11-10 rebuild replaced with `X-Demo-Step` routes inside the general
+  and sensitive entries. The measured route counts and quality stay tied to
+  the run that produced them; the rebuilt graph has not been re-measured.
+  General work is CPU-first. The
   GPU-termination alternative measured 0.508 GPU-s/doc (archived at
   `cfc52cc`) and the earlier classifier-in-path run (0.036 vs 1.974) is a
   different policy; neither is the current record
@@ -706,8 +715,11 @@ recorded run directories.
   still the client's. Moving that decision into the gateway — llm-d-sc's
   sensitivity taxonomy over gRPC, two-label routing in one praxis chain,
   or a promoted PPE rule — remains unvalidated (V19); the scanner's
-  agreement number is the prerequisite evidence either way. Re-adding the
-  classifier means git history, commit `aa080e9`. Network policies provide
+  agreement number is the prerequisite evidence either way. The rebuilt
+  stack authenticates the caller but not the claimed `X-Demo-Step`, so a
+  valid key can ask for another step's pool; binding key scope to step is
+  Phase 2. Re-adding the classifier means git history, commit `aa080e9`.
+  Network policies provide
   the enforcement layer either way (V15).
 - rhgaudi3s2 was found emptied of our workloads on 2026-10-31 (FINDINGS
   §7); redeploy from the runbooks above before any cluster-dependent demo.

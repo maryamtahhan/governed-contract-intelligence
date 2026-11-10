@@ -101,13 +101,12 @@ resources:
   - gpu-operator.yaml
 
 patches:
-  # The composed relay map (specialist-moe + gpu-moe): the CPU relay fronts
-  # the CUAD specialist (extraction answered by the QA model in one encoder
-  # pass; risk/classify forwarded to the MoE behind the same relay); the
-  # two "expensive" names land on the 4x A10G pool serving the SAME
-  # checkpoint as the CPU pool - the controlled CPU-vs-GPU comparison.
-  # To rerun the plain MoE arm instead, point VLLM_CPU_UPSTREAM at
-  # http://cpureal-vllm-cpu:8000 and restart trace-ui.
+  # The relay map has a route per model endpoint. praxis owns the
+  # work-to-pool table: CUAD clause extraction reaches the specialist relay,
+  # data-protection and classify reach the CPU MoE relay, and judgment
+  # reaches the GPU relays. The two "expensive" GPU names land on the 4x
+  # A10G pool serving the SAME checkpoint as the CPU pool - the controlled
+  # CPU-vs-GPU comparison.
   - target:
       kind: Deployment
       name: trace-ui
@@ -118,10 +117,9 @@ patches:
           - {name: TRACE_DB_PATH, value: /data/traces.db}
           - {name: PRAXIS_UPSTREAM, value: "http://praxis:80"}
           - {name: SENSITIVE_UPSTREAM, value: "http://praxis:8083"}
-          - {name: JUDGMENT_UPSTREAM, value: "http://praxis:8086"}
-          - {name: SENSITIVE_JUDGMENT_UPSTREAM, value: "http://praxis:8087"}
-          - {name: TRACE_POOLS, value: "vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small"}
-          - {name: VLLM_CPU_UPSTREAM, value: "http://cpureal-specialist:8000"}
+          - {name: TRACE_POOLS, value: "cuad-specialist,vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small"}
+          - {name: CUAD_SPECIALIST_UPSTREAM, value: "http://cpureal-specialist:8000"}
+          - {name: VLLM_CPU_UPSTREAM, value: "http://cpureal-vllm-cpu:8000"}
           - {name: VLLM_GPU_UPSTREAM, value: "http://gpumoe-vllm:8000"}
           - {name: VLLM_GPU_APPROVED_UPSTREAM, value: "http://gpumoe-vllm-approved:8000"}
           - {name: VLLM_GPU_SMALL_UPSTREAM, value: "http://cpureal-vllm-gpu-small:8000"}

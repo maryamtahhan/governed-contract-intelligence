@@ -441,23 +441,22 @@ the event stream, so the presenter can say what was ignored.
 
 *(Editable source: `docs/architecture-as-built.svg`.)*
 
-- **Praxis** is the gateway (V13 resolved), routing by **pinned policy**
-  with no classifier in the request path: the general and sensitive entries
-  are CPU-first (the measured runs showed the llm-d-sc complexity labels
-  were effectively all MEDIUM → CPU, so the pins reproduce the recorded
-  routing without the gRPC hop; FINDINGS §15.5), and the judgment entries
-  pin risk/report to the GPU pools (the pipeline's PII screen picks the
-  sensitive entries — two labels in one routing chain remains open, V19);
-  the routing configurations implement the
-  measurement arms; the same configs drive Linux and OpenShift byte-identically.
+- **Praxis** is the gateway (V13 resolved), routing by an **X-Demo-Step
+  table** with no classifier in the request path: CUAD clause extraction
+  goes to `cuad-specialist`, classify/data-protection to `vllm-cpu`, and
+  risk/report to a GPU route (general `vllm-gpu`, sensitive
+  `vllm-gpu-approved`). The pipeline chooses only the general/sensitive
+  entry via its PII screen; it never names a pool. The specialist is a model
+  endpoint with no forwarding branch. The same configs drive Linux and
+  OpenShift byte-identically.
 - Pools are plain vLLM Deployments on OpenShift (KServe's storage-initializer
   cannot reach HuggingFace from this cluster — documented, worked around;
   the ROSA overlay uses per-node gp3 model caches seeded offline instead).
-- The **CUAD specialist** is a composite pool: extraction prompts answered by
-  the fine-tuned RoBERTa-large QA checkpoint in one encoder pass; everything
-  else forwarded to the general model behind the same relay. An opt-in
-  semantic cache with the agreed ordering rules is available (measured on
-  the Linux stack — zero-FP threshold 0.98; off in the OCP overlay as
+- The **CUAD specialist** is its own route and model endpoint: the fine-tuned
+  RoBERTa-large QA checkpoint answers the CUAD clause prompts in one encoder
+  pass and returns 400 for anything else; there is no forwarding branch. An
+  opt-in semantic cache with the agreed ordering rules is available (measured
+  on the Linux stack — zero-FP threshold 0.98; off in the OCP overlay as
   deployed: exact-match always safe, similarity serving never stores or
   serves sensitive content).
 
@@ -531,7 +530,7 @@ demo runs. Direct and stacked are measured as separate instruments:
 | live demo | 1–2 (`--doc-ids`, one sensitive) | arm D | containment visible in the trace |
 | batch | 200 synthetic (41 sensitive) | arms A–D | quality, routing, zero-violation at scale |
 | direct | 200 synthetic + 19 CUAD-test | `hybrid-direct-arm` per pool | single-model quality baseline |
-| stacked | 200 synthetic | arm D + specialist | is the composite worth it |
+| stacked | 200 synthetic | arm D + specialist | is the specialist worth it |
 
 `--docs N` alone prefers the manifest's golden set, so the first document is
 non-sensitive; explicit `--doc-ids` is required to put a sensitive contract

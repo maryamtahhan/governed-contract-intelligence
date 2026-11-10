@@ -1,6 +1,6 @@
-# PPE policy document for the general and judgment gateway entries
-# (listeners :8080 and :8086 in manifests/base/praxis/config.yaml, and the
-# single entry of arms A/B/C).
+# PPE policy document for the general gateway entry (listener :8080 in
+# manifests/base/praxis/config.yaml, and the single entry of arms A/B/C).
+# The sensitive entry (:8083) uses policy-sensitive.yaml.
 #
 # Phase 1 of the PPE integration (docs/design.md and the integration plan):
 # per-step identity and a fail-closed authentication gate. Every inference
@@ -12,9 +12,9 @@
 # What this policy deliberately does NOT do:
 #   - pool steering: PPE's restrict effect is not consumed by the praxis
 #     router (no backend labels, one served-model name), so which pool may
-#     serve a request stays expressed by the entry pinning in the praxis
-#     configs. Do not claim policy-driven routing.
-#   - sensitivity: the sensitive entries (:8083/:8087) load
+#     serve a request stays expressed by the router's X-Demo-Step table in
+#     the praxis config. Do not claim policy-driven routing.
+#   - sensitivity: the sensitive entry (:8083) loads
 #     policy-sensitive.yaml, which additionally taints the session.
 #   - llm.input.* predicates: praxis does not yet populate the normalized
 #     request parts (praxis-proxy/praxis#1429); rules keyed on them would

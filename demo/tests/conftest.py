@@ -15,6 +15,9 @@ PRAXIS_CONFIGS = REPO_ROOT / "manifests" / "base" / "praxis"
 STUB = Path(__file__).parent / "stub_praxis.py"
 
 POOLS = {
+    "cuad-specialist": dict(prefill=20, decode=5, concurrency=4,
+                            errors="simple=0.0,complex=0.0,reasoning=0.0",
+                            model="cuad-specialist"),
     "vllm-cpu": dict(prefill=700, decode=24, concurrency=8,
                      errors="simple=0.10,complex=0.18,reasoning=0.55"),
     "vllm-gpu": dict(prefill=40, decode=12, concurrency=12,
@@ -25,13 +28,13 @@ POOLS = {
                            errors="simple=0.04,complex=0.30,reasoning=0.50"),
 }
 RELAY_PORTS = {
+    "cuad-specialist": 8088,
     "vllm-cpu": 8081,
     "vllm-gpu": 8082,
     "vllm-gpu-approved": 8084,
     "vllm-gpu-small": 8085,
 }
-STUB_LISTENER_PORTS = {8080: "general", 8083: "sensitive",
-                       8086: "judgment", 8087: "sensitive-judgment"}
+STUB_LISTENER_PORTS = {8080: "general", 8083: "sensitive"}
 
 
 def free_port() -> int:
@@ -79,12 +82,8 @@ class LocalStack:
         self.stub: subprocess.Popen | None = None
         self.stub_general_port = free_port()
         self.stub_sensitive_port = free_port()
-        self.stub_judgment_port = free_port()
-        self.stub_sensitive_judgment_port = free_port()
         self.ingress_port = free_port()
         self.sensitive_ingress_port = free_port()
-        self.judgment_ingress_port = free_port()
-        self.sensitive_judgment_ingress_port = free_port()
 
         for name, profile in POOLS.items():
             port = free_port()
@@ -93,7 +92,8 @@ class LocalStack:
             self.pools[name] = subprocess.Popen(
                 [
                     sys.executable, "-m", "hybrid_demo.fakepool.server",
-                    "--pool", name, "--model", "Semantic-Qwen",
+                    "--pool", name, "--model",
+                    profile.get("model", "Semantic-Qwen"),
                     "--host", "127.0.0.1", "--port", str(port),
                     "--prefill-ms-per-ktok", str(profile["prefill"]),
                     "--decode-ms-per-tok", str(profile["decode"]),
@@ -110,14 +110,9 @@ class LocalStack:
             "TRACE_DB_PATH": str(tmpdir / "traces.db"),
             "PRAXIS_UPSTREAM": f"http://127.0.0.1:{self.stub_general_port}",
             "SENSITIVE_UPSTREAM": f"http://127.0.0.1:{self.stub_sensitive_port}",
-            "JUDGMENT_UPSTREAM": f"http://127.0.0.1:{self.stub_judgment_port}",
-            "SENSITIVE_JUDGMENT_UPSTREAM": (
-                f"http://127.0.0.1:{self.stub_sensitive_judgment_port}"),
             "TRACE_POOLS": ",".join(POOLS),
             "TRACE_INGRESS_PORT": str(self.ingress_port),
             "SENSITIVE_INGRESS_PORT": str(self.sensitive_ingress_port),
-            "JUDGMENT_INGRESS_PORT": str(self.judgment_ingress_port),
-            "SENSITIVE_JUDGMENT_INGRESS_PORT": str(self.sensitive_judgment_ingress_port),
         })
         for name in POOLS:
             env[f"{name.upper().replace('-', '_')}_UPSTREAM"] = f"http://127.0.0.1:{self.pool_ports[name]}"
@@ -136,9 +131,8 @@ class LocalStack:
             f"trace-ui:{RELAY_PORTS[name]}=http://127.0.0.1:{self.relay_ports[name]}"
             for name in POOLS
         )
-        port_map = (f"8080={self.stub_general_port},8083={self.stub_sensitive_port},"
-                    f"8086={self.stub_judgment_port},"
-                    f"8087={self.stub_sensitive_judgment_port}")
+        port_map = (f"8080={self.stub_general_port},"
+                    f"8083={self.stub_sensitive_port}")
         self.stub = subprocess.Popen(
             [
                 sys.executable, str(STUB),
@@ -159,9 +153,9 @@ class LocalStack:
         if 8083 in ports:
             wait_http(f"http://127.0.0.1:{self.stub_sensitive_port}/v1/models")
         if 8086 in ports:
-            wait_http(f"http://127.0.0.1:{self.stub_judgment_port}/v1/models")
+            wait_http(f"http://127.0.0.1:{self.stub_general_port}/v1/models")
         if 8087 in ports:
-            wait_http(f"http://127.0.0.1:{self.stub_sensitive_judgment_port}/v1/models")
+            wait_http(f"http://127.0.0.1:{self.stub_general_port}/v1/models")
 
     def stop_stub(self) -> None:
         if self.stub:
@@ -186,7 +180,8 @@ class LocalStack:
         self.pools[name] = subprocess.Popen(
             [
                 sys.executable, "-m", "hybrid_demo.fakepool.server",
-                "--pool", name, "--model", "Semantic-Qwen",
+                "--pool", name, "--model",
+                profile.get("model", "Semantic-Qwen"),
                 "--host", "127.0.0.1", "--port", str(port),
                 "--prefill-ms-per-ktok", str(profile["prefill"]),
                 "--decode-ms-per-tok", str(profile["decode"]),
@@ -210,14 +205,6 @@ class LocalStack:
     @property
     def sensitive_gateway(self) -> str:
         return f"http://127.0.0.1:{self.sensitive_ingress_port}"
-
-    @property
-    def judgment_gateway(self) -> str:
-        return f"http://127.0.0.1:{self.judgment_ingress_port}"
-
-    @property
-    def sensitive_judgment_gateway(self) -> str:
-        return f"http://127.0.0.1:{self.sensitive_judgment_ingress_port}"
 
     def teardown(self) -> None:
         self.stop_stub()

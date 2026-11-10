@@ -17,6 +17,12 @@ the working tree.
 | `cuad-test/` | direct + gateway | CUAD example and appendix used by the guide |
 | `retrieval/` | local direct | specialist quality evidence |
 
+**These runs predate the 2026-11-10 route-graph rebuild.** They measured the
+old four-entry policy with a composite `vllm-cpu` route (CUAD extraction plus
+forwarding). Their quality, route counts and cost stay tied to that graph.
+The rebuilt two-entry / `X-Demo-Step` graph has no recorded run yet; the next
+measurement must create a new directory here rather than edit these.
+
 ## Removed historical runs
 
 These directories were pruned from the working tree to keep the checkout

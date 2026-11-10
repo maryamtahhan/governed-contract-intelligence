@@ -1,9 +1,10 @@
 # The trace UI / recording relay. server.py is the extended copy in
 # demo/src/hybrid_demo/traceui/server.py, mounted from a generated ConfigMap
-# so no image build is needed. It relays praxis -> pools (:8081/:8082/:8084/:8085),
-# serves the ingress (:8080), the sensitive ingress (:8083) and the two
-# judgment ingresses (:8086/:8087), records every request into SQLite on a
-# PVC, and renders the live dashboard.
+# so no image build is needed. It relays praxis -> pools
+# (:8088 specialist, :8081 CPU, :8082 GPU, :8084 approved, :8085 small),
+# serves the general ingress (:8080) and the sensitive ingress (:8083),
+# records every request into SQLite on a PVC, and renders the live dashboard.
+# Praxis picks the pool from X-Demo-Step; the relay only records the hop.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -75,12 +76,17 @@ spec:
               value: http://praxis:8080
             - name: SENSITIVE_UPSTREAM
               value: http://praxis:8083
-            - name: JUDGMENT_UPSTREAM
-              value: http://praxis:8086
-            - name: SENSITIVE_JUDGMENT_UPSTREAM
-              value: http://praxis:8087
             - name: TRACE_POOLS
-              value: vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small
+              value: cuad-specialist,vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small
+            # The base has no RoBERTa service. Overlays with a real specialist
+            # (rosa, cpu-real-specialist*) override this; the default keeps the
+            # route resolvable on the simulated and CPU-only stacks.
+            - name: CUAD_SPECIALIST_UPSTREAM
+              value: http://vllm-cpu-predictor:80
+            # No separate specialist Deployment in the base; the dashboard
+            # should follow the CPU predictor the route actually reaches.
+            - name: TRACE_CUAD_SPECIALIST_DEPLOYMENT
+              value: vllm-cpu-predictor
             - name: VLLM_CPU_UPSTREAM
               value: http://vllm-cpu-predictor:80
             - name: VLLM_GPU_UPSTREAM
@@ -94,10 +100,6 @@ spec:
               containerPort: 8080
             - name: sensitive
               containerPort: 8083
-            - name: judgment
-              containerPort: 8086
-            - name: sens-judgment
-              containerPort: 8087
             - name: cpu-backend
               containerPort: 8081
             - name: gpu-backend
@@ -106,6 +108,8 @@ spec:
               containerPort: 8084
             - name: small-backend
               containerPort: 8085
+            - name: specialist-backend
+              containerPort: 8088
           readinessProbe:
             httpGet:
               path: /_trace/healthz
@@ -139,12 +143,6 @@ spec:
     - name: sensitive
       port: 8083
       targetPort: sensitive
-    - name: judgment
-      port: 8086
-      targetPort: judgment
-    - name: sens-judgment
-      port: 8087
-      targetPort: sens-judgment
     - name: cpu-backend
       port: 8081
       targetPort: cpu-backend
@@ -157,6 +155,9 @@ spec:
     - name: small-backend
       port: 8085
       targetPort: small-backend
+    - name: specialist-backend
+      port: 8088
+      targetPort: specialist-backend
 # No Route here: the trace UI holds contract text and an unauthenticated
 # dashboard on a public hostname is a disclosure path. Reach it with
 # `oc port-forward svc/trace-ui 8080:8080`, or opt in explicitly with

@@ -52,27 +52,23 @@ services:
       TRACE_DB_PATH: /data/traces.db
       PRAXIS_UPSTREAM: http://praxis:8080
       SENSITIVE_UPSTREAM: http://praxis:8083
-      JUDGMENT_UPSTREAM: http://praxis:8086
-      SENSITIVE_JUDGMENT_UPSTREAM: http://praxis:8087
-      TRACE_POOLS: vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small
+      TRACE_POOLS: cuad-specialist,vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small
       # Point at the real vLLM services when running --profile real
       # (scripts/linux/up.sh --real exports these).
+      CUAD_SPECIALIST_UPSTREAM: ${CUAD_SPECIALIST_UPSTREAM:-http://fake-specialist:8000}
       VLLM_CPU_UPSTREAM: ${VLLM_CPU_UPSTREAM:-http://fake-cpu:8000}
       VLLM_GPU_UPSTREAM: ${VLLM_GPU_UPSTREAM:-http://fake-gpu:8000}
       VLLM_GPU_APPROVED_UPSTREAM: ${VLLM_GPU_APPROVED_UPSTREAM:-http://fake-approved:8000}
       VLLM_GPU_SMALL_UPSTREAM: ${VLLM_GPU_SMALL_UPSTREAM:-http://fake-gpu-small:8000}
       TRACE_INGRESS_PORT: "8080"
       SENSITIVE_INGRESS_PORT: "8083"
-      JUDGMENT_INGRESS_PORT: "8086"
-      SENSITIVE_JUDGMENT_INGRESS_PORT: "8087"
     volumes:
       - trace-data:/data
     ports:
       - "8080:8080"
       - "8083:8083"
-      - "8086:8086"
-      - "8087:8087"
       # Pool relays and praxis metrics, for the runner's scrapes and debugging.
+      - "18088:8088"
       - "18081:8081"
       - "18082:8082"
       - "18084:8084"
@@ -80,6 +76,13 @@ services:
 
   # ---- simulated backends: OpenAI-compatible, deterministic tiered error
   # ---- rates, device-time headers. For CI and CPU-only hosts.
+  fake-specialist:
+    build: ../../demo
+    profiles: ["fake"]
+    command: ["hybrid-pool", "--pool", "cuad-specialist", "--model", "cuad-specialist",
+              "--host", "0.0.0.0", "--port", "8000",
+              "--prefill-ms-per-ktok", "20", "--decode-ms-per-tok", "5", "--concurrency", "4",
+              "--error-rates", "simple=0.0,complex=0.0,reasoning=0.0"]
   fake-cpu:
     build: ../../demo
     profiles: ["fake"]

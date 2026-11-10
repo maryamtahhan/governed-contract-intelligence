@@ -25,8 +25,6 @@ def data_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setenv("HYBRID_DATA", str(tmp_path))
     monkeypatch.setenv("HYBRID_GATEWAY", "http://gateway")
     monkeypatch.setenv("HYBRID_SENSITIVE_GATEWAY", "http://sensitive")
-    monkeypatch.setenv("HYBRID_JUDGMENT_GATEWAY", "http://judgment")
-    monkeypatch.setenv("HYBRID_SENSITIVE_JUDGMENT_GATEWAY", "http://sensitive-judgment")
     monkeypatch.delenv("HYBRID_PII_DETECTOR", raising=False)
     return tmp_path
 

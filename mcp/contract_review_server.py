@@ -9,8 +9,9 @@ Configure the governed ingress URLs first (never a pool's vLLM endpoint):
 
     HYBRID_GATEWAY=http://<trace-ui-general-host>
     HYBRID_SENSITIVE_GATEWAY=http://<trace-ui-sensitive-host>
-    HYBRID_JUDGMENT_GATEWAY=http://<trace-ui-judgment-host>
-    HYBRID_SENSITIVE_JUDGMENT_GATEWAY=http://<trace-ui-sensitive-judgment-host>
+
+Praxis chooses the pool from X-Demo-Step; the MCP facade only picks the
+general or sensitive entry from the document's sensitivity.
 """
 
 from hybrid_demo.mcp.server import main

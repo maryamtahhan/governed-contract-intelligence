@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="620" viewBox="0 0 1280 620" font-family="Inter, ui-sans-serif, system-ui, sans-serif" role="img" aria-labelledby="t d">
   <title id="t">Through-stack run — one request, six stops, three kinds of work</title>
-  <desc id="d">Three grouped stages. The client stage is the batch runner: a CPU-side CLI that reads documents, builds prompts and scores answers. The record-and-decide stage has three stops: a trace-ui ingress relay that writes an audit row and forwards to praxis; praxis, which authenticates the per-step API key, fails closed on an unknown key, and uses the active routing config to pick a pool (a sensitive entry also taints the document session); and a trace-ui pool relay that writes the model-call row and forwards to the chosen pool. The inference stage is the pool, which is only a route name in the config, and the model inside it, the only stop that runs inference. The response returns through the same hops and carries headers naming the entry, route and trace id. A green lane explains the sensitive path: PII-positive documents enter at the sensitive door, may route only to the CPU or approved GPU pool, and fail closed if that pool is down.</desc>
+  <desc id="d">Three grouped stages. The client stage is the batch runner: a CPU-side CLI that reads documents, builds prompts and scores answers. The record-and-decide stage has three stops: a trace-ui ingress relay that writes an audit row and forwards to praxis; praxis, which authenticates the per-step API key, fails closed on an unknown key, and matches the declarative X-Demo-Step header against the work-to-pool table (a sensitive entry also taints the document session); and a trace-ui pool relay that writes the model-call row and forwards to the chosen pool. The inference stage is the pool, which is only a route name in the config, and the model inside it, the only stop that runs inference. The response returns through the same hops and carries headers naming the entry, route and trace id. A green lane explains the sensitive path: PII-positive documents enter at the sensitive door, may route only to the specialist, CPU or approved GPU pool, and fail closed if the required pool is down.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#9db1c8"/>
@@ -45,18 +45,17 @@
   <text x="378" y="192" font-size="9.5" fill="#9db1c8" text-anchor="middle">trace-ui</text>
   <text x="378" y="222" font-size="10.5" fill="#c9d8ea" text-anchor="middle">writes an audit row</text>
   <text x="378" y="240" font-size="10.5" fill="#c9d8ea" text-anchor="middle">forwards to praxis</text>
-  <text x="378" y="274" font-size="9.5" fill="#6f8298" text-anchor="middle">the four doors:</text>
+  <text x="378" y="274" font-size="9.5" fill="#6f8298" text-anchor="middle">the two doors:</text>
   <text x="378" y="291" font-size="9" fill="#6f8298" text-anchor="middle">:8080 general · :8083 sensitive</text>
-  <text x="378" y="306" font-size="9" fill="#6f8298" text-anchor="middle">:8086 judgment · :8087 sens.-judgment</text>
 
   <rect x="496" y="145" width="186" height="190" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
   <text x="589" y="172" font-size="12.5" font-weight="700" fill="#e9f2ff" text-anchor="middle">3 · POLICY + ROUTE</text>
   <text x="589" y="192" font-size="9.5" fill="#9db1c8" text-anchor="middle">praxis · PPE</text>
   <text x="589" y="222" font-size="10.5" fill="#c9d8ea" text-anchor="middle">authenticates every step</text>
   <text x="589" y="240" font-size="10.5" fill="#c9d8ea" text-anchor="middle">unknown key → fail closed</text>
-  <text x="589" y="258" font-size="10.5" fill="#c9d8ea" text-anchor="middle">active config picks a pool</text>
+  <text x="589" y="258" font-size="10.5" fill="#c9d8ea" text-anchor="middle">X-Demo-Step picks a pool</text>
   <text x="589" y="276" font-size="10.5" fill="#c9d8ea" text-anchor="middle">sensitive → taint session</text>
-  <text x="589" y="315" font-size="9.5" fill="#6f8298" text-anchor="middle">judgment (risk, report) → GPU</text>
+  <text x="589" y="315" font-size="9.5" fill="#6f8298" text-anchor="middle">risk + report → GPU route</text>
 
   <rect x="707" y="145" width="186" height="190" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
   <text x="800" y="172" font-size="12.5" font-weight="700" fill="#e9f2ff" text-anchor="middle">4 · POOL RELAY</text>
@@ -64,7 +63,7 @@
   <text x="800" y="222" font-size="10.5" fill="#c9d8ea" text-anchor="middle">writes model-call row</text>
   <text x="800" y="240" font-size="10.5" fill="#c9d8ea" text-anchor="middle">forwards to the pool</text>
   <text x="800" y="274" font-size="9.5" fill="#6f8298" text-anchor="middle">one per pool:</text>
-  <text x="800" y="291" font-size="9.5" fill="#6f8298" text-anchor="middle">:8081 · :8082 · :8084 · :8085</text>
+  <text x="800" y="291" font-size="9.5" fill="#6f8298" text-anchor="middle">:8088 · :8081 · :8082 · :8084 · :8085</text>
   <text x="800" y="315" font-size="9.5" fill="#6f8298" text-anchor="middle">praxis never calls a pool directly</text>
 
   <!-- stage 3: inference -->
@@ -74,17 +73,18 @@
   <rect x="955" y="145" width="127" height="190" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
   <text x="1018" y="172" font-size="12.5" font-weight="700" fill="#e9f2ff" text-anchor="middle">5 · POOL</text>
   <text x="1018" y="192" font-size="9.5" fill="#9db1c8" text-anchor="middle">a route name</text>
-  <text x="1018" y="222" font-size="10" fill="#c9d8ea" text-anchor="middle">vllm-cpu</text>
-  <text x="1018" y="240" font-size="10" fill="#c9d8ea" text-anchor="middle">vllm-gpu</text>
-  <text x="1018" y="258" font-size="9.5" fill="#c9d8ea" text-anchor="middle">vllm-gpu-approved</text>
-  <text x="1018" y="276" font-size="9.5" fill="#c9d8ea" text-anchor="middle">vllm-gpu-small</text>
+  <text x="1018" y="216" font-size="9.5" fill="#c9d8ea" text-anchor="middle">cuad-specialist</text>
+  <text x="1018" y="232" font-size="10" fill="#c9d8ea" text-anchor="middle">vllm-cpu</text>
+  <text x="1018" y="248" font-size="10" fill="#c9d8ea" text-anchor="middle">vllm-gpu</text>
+  <text x="1018" y="264" font-size="9.5" fill="#c9d8ea" text-anchor="middle">vllm-gpu-approved</text>
+  <text x="1018" y="280" font-size="9.5" fill="#c9d8ea" text-anchor="middle">vllm-gpu-small</text>
   <text x="1018" y="306" font-size="9.5" fill="#6f8298" text-anchor="middle">a label,</text>
   <text x="1018" y="321" font-size="9.5" fill="#6f8298" text-anchor="middle">not hardware</text>
 
   <rect x="1100" y="145" width="128" height="190" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
   <text x="1164" y="172" font-size="12.5" font-weight="700" fill="#e9f2ff" text-anchor="middle">6 · MODEL</text>
   <text x="1164" y="192" font-size="9.5" fill="#9db1c8" text-anchor="middle">inside a pool</text>
-  <text x="1164" y="222" font-size="10.5" fill="#c9d8ea" text-anchor="middle">vLLM runs</text>
+  <text x="1164" y="222" font-size="10.5" fill="#c9d8ea" text-anchor="middle">the server runs</text>
   <text x="1164" y="240" font-size="10.5" fill="#c9d8ea" text-anchor="middle">inference</text>
   <text x="1164" y="274" font-size="9.5" fill="#6f8298" text-anchor="middle">one model</text>
   <text x="1164" y="289" font-size="9.5" fill="#6f8298" text-anchor="middle">answers the call</text>
@@ -98,9 +98,9 @@
 
   <!-- sensitive lane -->
   <rect x="270" y="405" width="975" height="115" rx="8" fill="#0a1f18" stroke="#55e6a0" stroke-width="1.5" stroke-dasharray="6 4"/>
-  <text x="288" y="430" font-size="11.5" font-weight="700" fill="#55e6a0">SENSITIVE PATH — PII-positive documents use :8083 (:8087 for judgment), not :8080</text>
-  <text x="288" y="454" font-size="11" fill="#c9d8ea">Praxis may route them only to vllm-cpu or vllm-gpu-approved. The general GPU pool is forbidden.</text>
-  <text x="288" y="476" font-size="11" fill="#c9d8ea">If the approved pool is down, the call fails closed with an explicit 502 — a policy decision, not a model error.</text>
+  <text x="288" y="430" font-size="11.5" font-weight="700" fill="#55e6a0">SENSITIVE PATH — PII-positive documents use :8083, not :8080</text>
+  <text x="288" y="454" font-size="11" fill="#c9d8ea">Praxis may route them only to cuad-specialist, vllm-cpu or vllm-gpu-approved. The general GPU pool is forbidden.</text>
+  <text x="288" y="476" font-size="11" fill="#c9d8ea">If the required approved pool is down, the call fails closed with an explicit 502 — a policy decision, not a model error.</text>
   <text x="288" y="500" font-size="10.5" fill="#6f8298">The sensitive entry also taints the document session at the gateway, so a later step cannot silently move to a general pool.</text>
   <line x1="589" y1="337" x2="589" y2="401" stroke="#55e6a0" stroke-width="1.3" stroke-dasharray="4 4" marker-end="url(#arrow-green)"/>
 

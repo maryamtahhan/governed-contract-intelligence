@@ -18,8 +18,6 @@ CONCURRENCY="${CONCURRENCY:-12}"
 CONFIGS="${CONFIGS:-${ARMS:-all-gpu gpu-small round-robin hybrid}}"
 LOCAL_PORT="${LOCAL_PORT:-18080}"
 SENSITIVE_PORT="${LOCAL_SENSITIVE_PORT:-18083}"
-JUDGMENT_PORT="${LOCAL_JUDGMENT_PORT:-18086}"
-SENSITIVE_JUDGMENT_PORT="${LOCAL_SENSITIVE_JUDGMENT_PORT:-18087}"
 # Provenance travels with the run. Default to the ROSA cluster this script
 # targets; set ENVIRONMENT=sno (or example) for an older stack so it is not
 # presented as a measured ROSA result. POOLS_JSON swaps the pool map for
@@ -84,24 +82,18 @@ if [ "$USE_ROUTES" = "1" ]; then
   }
   ensure_route trace-ui-general 8080
   ensure_route trace-ui-sensitive 8083
-  ensure_route trace-ui-judgment 8086
-  ensure_route trace-ui-sensitive-judgment 8087
   GATEWAY="http://$(oc -n "$NS" get route trace-ui-general -o jsonpath='{.spec.host}')"
   SENSITIVE="http://$(oc -n "$NS" get route trace-ui-sensitive -o jsonpath='{.spec.host}')"
-  JUDGMENT="http://$(oc -n "$NS" get route trace-ui-judgment -o jsonpath='{.spec.host}')"
-  SENSITIVE_JUDGMENT="http://$(oc -n "$NS" get route trace-ui-sensitive-judgment -o jsonpath='{.spec.host}')"
 else
-  oc -n "$NS" port-forward svc/trace-ui "$LOCAL_PORT:8080" "$SENSITIVE_PORT:8083" "$JUDGMENT_PORT:8086" "$SENSITIVE_JUDGMENT_PORT:8087" >/dev/null &
+  oc -n "$NS" port-forward svc/trace-ui "$LOCAL_PORT:8080" "$SENSITIVE_PORT:8083" >/dev/null &
   PF=$!
   trap 'kill $PF 2>/dev/null' EXIT
   GATEWAY="http://127.0.0.1:$LOCAL_PORT"
   SENSITIVE="http://127.0.0.1:$SENSITIVE_PORT"
-  JUDGMENT="http://127.0.0.1:$JUDGMENT_PORT"
-  SENSITIVE_JUDGMENT="http://127.0.0.1:$SENSITIVE_JUDGMENT_PORT"
 fi
 # Relay ports, for live metrics sampling during the runs (port-forwards by
 # design: a sampler failure loses a metric, never a request).
-oc -n "$NS" port-forward svc/trace-ui 18081:8081 18082:8082 18084:8084 18085:8085 >/dev/null &
+oc -n "$NS" port-forward svc/trace-ui 18088:8088 18081:8081 18082:8082 18084:8084 18085:8085 >/dev/null &
 PF3=$!
 trap 'kill ${PF:-} ${PF2:-} $PF3 2>/dev/null' EXIT
 for i in $(seq 1 30); do curl -sf "$GATEWAY/_trace/healthz" >/dev/null 2>&1 && break; sleep 1; done
@@ -119,11 +111,10 @@ for requested in $CONFIGS; do
   [ -n "$DOC_IDS" ] && doc_args=(--doc-ids "$DOC_IDS")
   (cd demo && uv run hybrid-run --target gateway \
     --gateway "$GATEWAY" --sensitive-gateway "$SENSITIVE" \
-    --judgment-gateway "$JUDGMENT" --sensitive-judgment-gateway "$SENSITIVE_JUDGMENT" \
     --data "$DATA" --out "../$out" --config "$config" \
     "${doc_args[@]}" --concurrency "$CONCURRENCY" \
     "${prov_args[@]}" \
-    --sample-metrics vllm-cpu=http://127.0.0.1:18081,vllm-gpu=http://127.0.0.1:18082,vllm-gpu-approved=http://127.0.0.1:18084,vllm-gpu-small=http://127.0.0.1:18085)
+    --sample-metrics cuad-specialist=http://127.0.0.1:18088,vllm-cpu=http://127.0.0.1:18081,vllm-gpu=http://127.0.0.1:18082,vllm-gpu-approved=http://127.0.0.1:18084,vllm-gpu-small=http://127.0.0.1:18085)
 done
 
 set_config hybrid

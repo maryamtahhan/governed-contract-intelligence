@@ -77,8 +77,6 @@ def _gateways() -> dict[str, str | None]:
     return {
         "general": general,
         "sensitive": _env_url("HYBRID_SENSITIVE_GATEWAY"),
-        "judgment": _env_url("HYBRID_JUDGMENT_GATEWAY"),
-        "sensitive_judgment": _env_url("HYBRID_SENSITIVE_JUDGMENT_GATEWAY"),
     }
 
 
@@ -102,8 +100,6 @@ def _new_run() -> ReviewRun:
         governance=governance,
         timeout=float(os.environ.get("HYBRID_TIMEOUT", "600")),
         token=os.environ.get("TRACE_API_TOKEN"),
-        judgment_base=gateways["judgment"],
-        sensitive_judgment_base=gateways["sensitive_judgment"],
     )
 
 
@@ -126,7 +122,7 @@ async def _stage(
     """Make one governed stage call and return its traceable result."""
     run = _new_run()
     try:
-        client, entry = run.entry_for_step(screened, step)
+        client, entry = run.entry_for_sensitivity(screened)
         if client is None:
             raise RuntimeError(f"no gateway client for entry {entry!r}")
         record = await run.call(client, entry, step, body, doc_id, complexity, screened)
@@ -208,8 +204,6 @@ async def review_document(doc_id: str) -> dict[str, Any]:
                 cluster=os.environ.get("HYBRID_CLUSTER"),
                 pools=_pools(),
                 doc_ids=[doc_id],
-                judgment_base=gateways["judgment"],
-                sensitive_judgment_base=gateways["sensitive_judgment"],
                 run_kind="mcp",
             )
             results = json.loads((Path(out_dir) / "results.json").read_text())
@@ -233,7 +227,7 @@ async def extract_clause(doc_id: str, clause: str) -> dict[str, Any]:
 async def assess_risk(
     doc_id: str, clauses: dict[str, str | None]
 ) -> dict[str, Any]:
-    """Assess risk from already-extracted clauses through the judgment entry."""
+    """Assess risk from already-extracted clauses through the governed entry."""
     unknown = sorted(set(clauses) - set(CLAUSE_KEYS))
     if unknown:
         raise ValueError(f"unknown clauses {unknown}; choose {', '.join(CLAUSE_KEYS)}")

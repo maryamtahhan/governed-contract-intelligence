@@ -1,5 +1,5 @@
-# PPE policy document for the sensitive gateway entries (listeners :8083
-# and :8087 in manifests/base/praxis/config.yaml).
+# PPE policy document for the sensitive gateway entry (listener :8083 in
+# manifests/base/praxis/config.yaml).
 #
 # Same contract as policy.yaml, plus one effect: a request that arrives on a
 # sensitive entry taints its session with the `sensitive` label. Arrival here
@@ -16,7 +16,8 @@
 #
 # Enforcing pool containment from this label would be the `restrict`
 # effect; the praxis router does not consume it, so containment remains the
-# entry's failover set (approved-only, fail closed) in the praxis config.
+# entry's failover set (approved-only, fail closed) in the praxis config;
+# the route table inside the entry chooses the approved pool by X-Demo-Step.
 plugins:
   - name: api-keys
     kind: identity/api-key

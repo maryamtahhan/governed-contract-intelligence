@@ -5,11 +5,12 @@ It parses the SAME praxis YAML configs the Linux and OpenShift stacks use
 (manifests/base/praxis/*.yaml) and reproduces the externally visible
 contract:
 
-- listeners and filter chains per config (general :8080, sensitive :8083,
-  judgment :8086, sensitive-judgment :8087)
-- pin + failover routing: every chain pins a primary cluster and, when the
-  config has a failover step, degrades onto the failover cluster with
+- listeners and filter chains per config (general :8080, sensitive :8083)
+- header-routed pools: a router route with X-Demo-Step constraints selects
+  the primary cluster, exactly as praxis does (more header constraints win),
+  then the failover step degrades onto its cluster with
   X-Praxis-Fallback: true
+- legacy pin chains from the baseline arm configs
 - round-robin across a cluster's endpoints (arm C)
 - the static /v1/models response
 
@@ -55,7 +56,7 @@ def parse_config(path: str, endpoint_map: dict[str, str]) -> dict:
     chains = {}
     for chain in raw.get("filter_chains", []):
         name = chain["name"]
-        parsed = {"kind": "unknown", "pin": None, "failover": None}
+        parsed = {"kind": "unknown", "pin": None, "routes": [], "failover": None}
         for f in chain.get("filters", []):
             if f.get("filter") == "router" and parsed["kind"] == "unknown":
                 routes = f.get("routes", [])
@@ -63,18 +64,25 @@ def parse_config(path: str, endpoint_map: dict[str, str]) -> dict:
                     parsed["kind"] = "pin"
                     parsed["pin"] = routes[0].get("cluster")
             elif f.get("filter") == "iterative_request_router":
-                # Iterative chains are a pin plus an optional failover step:
-                # the first step pins the primary cluster; a step named
-                # "failover" names the degraded set.
-                parsed["kind"] = "pin"
                 for step in f.get("steps", []):
                     for sf in step.get("filters", []):
                         if sf.get("filter") == "router":
-                            cluster = sf.get("routes", [{}])[0].get("cluster")
+                            routes = sf.get("routes", [])
                             if step.get("name") == "failover":
-                                parsed["failover"] = cluster
-                            elif parsed["pin"] is None:
-                                parsed["pin"] = cluster
+                                parsed["failover"] = routes[0].get("cluster") if routes else None
+                            elif any(r.get("headers") for r in routes):
+                                # A work-to-pool table. Keep the full route
+                                # list so the stub can match X-Demo-Step.
+                                parsed["kind"] = "matrix"
+                                parsed["routes"] = [
+                                    {"headers": {k.lower(): v for k, v in
+                                                 (r.get("headers") or {}).items()},
+                                     "cluster": r.get("cluster")}
+                                    for r in routes
+                                ]
+                            elif routes and parsed["pin"] is None:
+                                parsed["kind"] = "pin"
+                                parsed["pin"] = routes[0].get("cluster")
                         elif sf.get("filter") == "load_balancer":
                             _register_lb_clusters(step.get("filters", []), clusters, endpoint_map)
         if parsed["kind"] == "unknown":
@@ -107,6 +115,21 @@ class StubState:
         return endpoints[self.rr[cluster] % len(endpoints)]
 
 
+def _route_cluster(chain: dict, headers) -> str | None:
+    """Match a request against the header routes, most constraints first."""
+    if chain["kind"] != "matrix":
+        return chain["pin"]
+    best = None
+    best_score = -1
+    for route in chain["routes"]:
+        required = route.get("headers") or {}
+        if all(headers.get(name) == value for name, value in required.items()):
+            score = len(required)
+            if score > best_score:
+                best, best_score = route["cluster"], score
+    return best
+
+
 def create_stub_app(state: StubState, chain: dict) -> FastAPI:
     app = FastAPI(docs_url=None, redoc_url=None)
 
@@ -120,7 +143,8 @@ def create_stub_app(state: StubState, chain: dict) -> FastAPI:
 
     @app.post("/v1/chat/completions")
     async def completions(request: Request, body: dict = Body(...)):
-        attempts = [a for a in (chain["pin"], chain["failover"]) if a]
+        attempts = [a for a in (_route_cluster(chain, request.headers),
+                                chain["failover"]) if a]
         forward_headers = {
             k: v for k, v in request.headers.items()
             if k.lower() not in {"host", "content-length", "connection", "accept-encoding"}

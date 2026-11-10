@@ -1,7 +1,8 @@
-# The praxis gateway: four listeners (general :8080, sensitive :8083,
-# judgment :8086, sensitive-judgment :8087), four pools
-# behind the trace-ui relays, no classifier in the request path (removed
-# 2026-11-05; FINDINGS §15.5). The three configs
+# The praxis gateway: two listeners (general :8080, sensitive :8083) and
+# five routes behind the trace-ui relays (specialist, CPU, GPU, approved GPU,
+# small GPU). The pool choice is the router's X-Demo-Step table in
+# config.yaml, not app code and not a classifier (removed 2026-11-05;
+# FINDINGS §15.5). The three configs
 # (config.yaml = arm D + the A/C baselines) come from deploy/linux/praxis/
 # via the kustomize configMapGenerator, so the Linux stack and OpenShift run
 # byte-identical routing configs. Arms are swapped with
@@ -43,12 +44,6 @@ spec:
               protocol: TCP
             - name: sensitive
               containerPort: 8083
-              protocol: TCP
-            - name: judgment
-              containerPort: 8086
-              protocol: TCP
-            - name: sens-judgment
-              containerPort: 8087
               protocol: TCP
             - name: admin
               containerPort: 9901
@@ -114,14 +109,6 @@ spec:
     - name: sensitive
       port: 8083
       targetPort: sensitive
-      protocol: TCP
-    - name: judgment
-      port: 8086
-      targetPort: judgment
-      protocol: TCP
-    - name: sens-judgment
-      port: 8087
-      targetPort: sens-judgment
       protocol: TCP
     - name: metrics
       port: 9902

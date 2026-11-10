@@ -1,10 +1,10 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# The staged pipeline as a pool: the CUAD QA specialist answers extraction
-# prompts (single encoder pass, cannot hallucinate a quote), and everything
-# else - risk judgment on the extracted spans, classification - is forwarded
-# to the Qwen3.5-35B-A3B MoE running as cpureal-vllm-cpu. The MoE never sees
+# The staged pipeline as two routes: the CUAD QA specialist answers extraction
+# prompts (single encoder pass, cannot hallucinate a quote), and classify/
+# data-protection go to the Qwen3.5-35B-A3B MoE running as cpureal-vllm-cpu.
+# The specialist never forwards. The MoE never sees
 # a whole contract for extraction: its only per-document work is the risk
 # step over the span JSON and the classify step, cutting its token volume
 # roughly 5x versus the MoE-only arm.
@@ -28,10 +28,9 @@ patches:
           - {name: TRACE_DB_PATH, value: /data/traces.db}
           - {name: PRAXIS_UPSTREAM, value: "http://praxis:80"}
           - {name: SENSITIVE_UPSTREAM, value: "http://praxis:8083"}
-          - {name: JUDGMENT_UPSTREAM, value: "http://praxis:8086"}
-          - {name: SENSITIVE_JUDGMENT_UPSTREAM, value: "http://praxis:8087"}
-          - {name: TRACE_POOLS, value: "vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small"}
-          - {name: VLLM_CPU_UPSTREAM, value: "http://cpureal-specialist:8000"}
+          - {name: TRACE_POOLS, value: "cuad-specialist,vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small"}
+          - {name: CUAD_SPECIALIST_UPSTREAM, value: "http://cpureal-specialist:8000"}
+          - {name: VLLM_CPU_UPSTREAM, value: "http://cpureal-vllm-cpu:8000"}
           - {name: VLLM_GPU_UPSTREAM, value: "http://cpureal-vllm-gpu:8000"}
           - {name: VLLM_GPU_APPROVED_UPSTREAM, value: "http://cpureal-vllm-gpu-approved:8000"}
           - {name: VLLM_GPU_SMALL_UPSTREAM, value: "http://cpureal-vllm-gpu-small:8000"}

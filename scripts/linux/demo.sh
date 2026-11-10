@@ -8,13 +8,12 @@ COMPOSE="${COMPOSE:-docker compose}"
 RUNS="${RUNS:-runs}"
 GW="${GATEWAY:-http://127.0.0.1:8080}"
 SGW="${SENSITIVE:-http://127.0.0.1:8083}"
-JGW="${JUDGMENT:-http://127.0.0.1:8086}"
-SJGW="${SENSITIVE_JUDGMENT:-http://127.0.0.1:8087}"
 DOCS="${DOCS:-40}"
 
 dc() { $COMPOSE -f "$STACK/docker-compose.yml" "$@" >/dev/null; }
 pool_services() {
   case "$1" in
+    cuad-specialist) echo fake-specialist ;;
     vllm-cpu) echo fake-cpu vllm-cpu-real ;;
     vllm-gpu) echo fake-gpu vllm-gpu-real ;;
     vllm-gpu-approved) echo fake-approved vllm-gpu-approved-real ;;
@@ -51,14 +50,14 @@ print(f'traces={total} fallback={fb} sensitive-entry={sens}')"; }
 curl -sf -H "X-API-Key: ${HYBRID_API_KEY_EVAL:-gci-demo-key-eval}" "$GW/v1/models" >/dev/null || { echo "stack not up: scripts/linux/up.sh" >&2; exit 1; }
 
 echo "On screen: $GW  (architecture diagram + live request traces)"
-echo "The story: a legal-ops batch of $DOCS contracts; classify and extraction stay"
-echo "on the CPU pool, risk judgment and the cross-document report take the GPU"
-echo "judgment entries, and documents with personal data stay on approved pools only."
+echo "The story: a legal-ops batch of $DOCS contracts; praxis routes by step."
+echo "CUAD extraction goes to the specialist, data-protection/classify to the"
+echo "CPU MoE, and risk/report to the GPU route for the entry (general vllm-gpu,"
+echo "sensitive vllm-gpu-approved). Personal-data documents stay on approved pools."
 
 pause "ACT 1 - fan-out: $DOCS contracts through the hybrid config"
 set_config hybrid
 (cd demo && uv run hybrid-run --target gateway --gateway "$GW" --sensitive-gateway "$SGW" \
-  --judgment-gateway "$JGW" --sensitive-judgment-gateway "$SJGW" \
   --data data/synthetic --out "../$RUNS/demo-hybrid" --config hybrid --docs "$DOCS" --concurrency 12 >/dev/null) &
 RUNPID=$!
 echo "batch running (pid $RUNPID); watch the traces table and the diagram light up"
@@ -66,23 +65,23 @@ echo "live: $(counts)"
 sleep 8; echo "live: $(counts)"
 wait $RUNPID
 echo "batch done: $(counts)"
-echo "Split to point at: risk/report rows served by the judgment entries on the GPU,"
-echo "extraction rows on vllm-cpu, and SENS-badged rows staying on approved pools."
+echo "Split to point at: CUAD rows on cuad-specialist, data-protection/classify"
+echo "rows on vllm-cpu, risk/report rows on a GPU pool, and SENS-badged rows"
+echo "staying on approved pools."
 
 pause "ACT 2 - sensitivity pinning, verified from the gateway's own records"
 (cd demo && uv run hybrid-score governance --trace-ui "$GW")
 
 pause "ACT 3 - pull the plug: GPU pool removed mid-run"
 (cd demo && uv run hybrid-run --target gateway --gateway "$GW" --sensitive-gateway "$SGW" \
-  --judgment-gateway "$JGW" --sensitive-judgment-gateway "$SJGW" \
   --data data/synthetic --out "../$RUNS/demo-hybrid-outage" --config hybrid --docs "$DOCS" --concurrency 12 >/dev/null) &
 RUNPID=$!
 sleep 6
 echo "scaling the GPU pool to zero..."
 pool_stop vllm-gpu
 for _ in 1 2 3; do sleep 5; echo "during outage: $(counts)"; done
-echo "Non-sensitive judgment now fails closed on the judgment entry; extraction"
-echo "continues on CPU. The general entry's REASONING->CPU fallback is in smoke.sh."
+echo "Non-sensitive judgment now fails closed on the GPU route; CPU work"
+echo "continues. The general entry's CPU->GPU fallback is in smoke.sh."
 pool_start vllm-gpu
 wait $RUNPID
 echo "GPU back; recovered: $(counts)"
@@ -91,7 +90,6 @@ pause "ACT 4 - fail closed: the approved pool is removed"
 pool_stop vllm-gpu-approved
 sleep 12
 (cd demo && uv run hybrid-run --target gateway --gateway "$GW" --sensitive-gateway "$SGW" \
-  --judgment-gateway "$JGW" --sensitive-judgment-gateway "$SJGW" \
   --data data/synthetic --out "../$RUNS/demo-hybrid-failclosed" --config hybrid --docs 8 --concurrency 4 >/dev/null) || true
 echo "Sensitive judgment and the report failed closed (explicit error), never"
 echo "spilled to a non-approved pool; extraction continued. Traces show the errors."
@@ -101,7 +99,6 @@ sleep 12
 pause "ACT 5 - kill switch: route everything to GPU (all-gpu config) and compare"
 set_config all-gpu
 (cd demo && uv run hybrid-run --target gateway --gateway "$GW" --sensitive-gateway "$SGW" \
-  --judgment-gateway "$JGW" --sensitive-judgment-gateway "$SJGW" \
   --data data/synthetic --out "../$RUNS/demo-all-gpu" --config all-gpu --docs "$DOCS" --concurrency 12 >/dev/null)
 echo "all-gpu config done: $(counts)"
 echo "Note the GPU-seconds per document difference in the configs table (simulated"

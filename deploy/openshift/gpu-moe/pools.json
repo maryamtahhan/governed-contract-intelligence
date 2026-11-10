@@ -1,4 +1,9 @@
 {
+  "cuad-specialist": {
+    "model": "Qwen/Qwen3.5-35B-A3B",
+    "hardware": "cpu (SNO, 16 cores) \u2014 no RoBERTa service in this overlay; route falls back to the CPU MoE",
+    "deployment": "cpureal-vllm-cpu"
+  },
   "vllm-cpu": {
     "model": "Qwen/Qwen3.5-35B-A3B",
     "hardware": "cpu (SNO, 16 cores)",

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="830" viewBox="0 0 1280 830" font-family="Inter, ui-sans-serif, system-ui, sans-serif" role="img" aria-labelledby="t d">
   <title id="t">As-built architecture — clients, recorders, policy gate and pools</title>
-  <desc id="d">Four layers. Clients: the review pipeline and the OpenShell sandbox. The pipeline sends each request to a trace-ui ingress relay; the sandbox may reach only praxis, enforced by its egress policy. Record and decide: trace-ui holds four ingress doors (general, sensitive, judgment, sensitive-judgment) and writes an audit row for every request, while praxis authenticates each step's API key, records the request, runs an observe-only PII scan, and uses the active routing config to pick a pool. Pool relays: one trace-ui relay per pool records the model call and its timing; praxis never calls a pool directly. Pools: vllm-cpu and vllm-gpu-approved sit inside the approved set where sensitive data may run; vllm-gpu and vllm-gpu-small are the general pools. The gateway audit trail, not a log line, is the evidence.</desc>
+  <desc id="d">Four layers. Clients: the review pipeline and the OpenShell sandbox. The pipeline sends each request to one of two trace-ui ingress relays, general or sensitive, chosen only by the PII screen; the sandbox may reach only praxis, enforced by its egress policy. Record and decide: trace-ui records the entry and forwards to praxis, while praxis authenticates each step's API key, records the request, runs an observe-only PII scan, and matches the declarative X-Demo-Step header against the work-to-pool table to pick a pool. Pool relays: one trace-ui relay per pool records the model call and its timing; praxis never calls a pool directly. Pools: cuad-specialist, vllm-cpu and vllm-gpu-approved sit inside the approved set where sensitive data may run; vllm-gpu and vllm-gpu-small are the general pools. The gateway audit trail, not a log line, is the evidence.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#9db1c8"/>
@@ -43,8 +43,8 @@
 
   <rect x="40" y="258" width="520" height="180" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
   <text x="60" y="284" font-size="14" font-weight="600" fill="#e9f2ff">TRACE-UI · RECORDERS</text>
-  <text x="60" y="310" font-size="10.5" fill="#c9d8ea">four ingress doors: general · sensitive ·</text>
-  <text x="60" y="328" font-size="10.5" fill="#c9d8ea">judgment · sensitive-judgment</text>
+  <text x="60" y="310" font-size="10.5" fill="#c9d8ea">two ingress doors: general · sensitive</text>
+  <text x="60" y="328" font-size="10.5" fill="#c9d8ea">the PII screen picks the door; both record</text>
   <text x="60" y="350" font-size="10.5" fill="#c9d8ea">writes a request row, then forwards to praxis</text>
   <text x="60" y="372" font-size="10.5" fill="#c9d8ea">SQLite on a PVC · waterfall UI · audit.jsonl</text>
   <text x="60" y="400" font-size="9.5" fill="#6f8298">the audit trail is the evidence, not a log line</text>
@@ -58,9 +58,9 @@
   <text x="640" y="310" font-size="10.5" fill="#c9d8ea">PPE: per-step API key; an unknown key fails closed</text>
   <text x="640" y="332" font-size="10.5" fill="#c9d8ea">audit record for every request</text>
   <text x="640" y="354" font-size="10.5" fill="#c9d8ea">shadow PII scan — observe-only, never routes</text>
-  <text x="640" y="376" font-size="10.5" fill="#c9d8ea">active config maps entry + step → pool</text>
-  <text x="640" y="398" font-size="10.5" fill="#c9d8ea">hybrid: risk/report use GPU judgment entries</text>
-  <text x="640" y="420" font-size="9.5" fill="#6f8298">sensitive entries may only use approved pools</text>
+  <text x="640" y="376" font-size="10.5" fill="#c9d8ea">router matches X-Demo-Step → work-to-pool table</text>
+  <text x="640" y="398" font-size="10.5" fill="#c9d8ea">hybrid: risk/report use the GPU route</text>
+  <text x="640" y="420" font-size="9.5" fill="#6f8298">the sensitive route may only use approved pools</text>
 
   <!-- layer 3: pool relays -->
   <text x="40" y="466" font-size="9.5" font-weight="700" letter-spacing="1.1" fill="#7fb2e5">POOL RELAYS · ONE PER POOL</text>
@@ -68,50 +68,57 @@
   <rect x="40" y="476" width="1140" height="86" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
   <text x="60" y="502" font-size="14" font-weight="600" fill="#e9f2ff">TRACE-UI · MODEL-CALL RECORDERS</text>
   <text x="60" y="526" font-size="10.5" fill="#c9d8ea">writes the model-call row — route, timing and device time — then forwards to the pool it names</text>
-  <text x="60" y="548" font-size="10" fill="#6f8298">:8081 / :8082 / :8084 / :8085 — praxis only talks to these, never to a pool directly</text>
+  <text x="60" y="548" font-size="10" fill="#6f8298">:8088 / :8081 / :8082 / :8084 / :8085 — praxis only talks to these, never to a pool directly</text>
 
   <path d="M 900 440 L 900 472" fill="none" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
 
   <!-- layer 4: pools -->
-  <path d="M 610 564 L 610 586 L 177 586 L 177 628" fill="none" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <path d="M 422 586 L 422 628" fill="none" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <path d="M 610 586 L 765 586 L 765 628" fill="none" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <path d="M 1032 586 L 1032 628" fill="none" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <text x="625" y="581" font-size="9.5" fill="#6f8298">the active config picks one pool</text>
+  <path d="M 610 564 L 610 586 L 152 586 L 152 628" fill="none" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M 610 564 L 610 586 L 352 586 L 352 628" fill="none" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M 610 564 L 610 586 L 562 586 L 562 628" fill="none" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M 610 564 L 610 586 L 845 586 L 845 628" fill="none" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M 610 564 L 610 586 L 1080 586 L 1080 628" fill="none" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="625" y="581" font-size="9.5" fill="#6f8298">the step table picks one pool</text>
 
   <!-- approved set -->
-  <rect x="40" y="596" width="520" height="180" rx="10" fill="#0a1f18" fill-opacity="0.45" stroke="#55e6a0" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <rect x="40" y="596" width="650" height="180" rx="10" fill="#0a1f18" fill-opacity="0.45" stroke="#55e6a0" stroke-width="1.5" stroke-dasharray="6 4"/>
 
-  <rect x="60" y="632" width="235" height="112" rx="8" fill="#0d1b2d" stroke="#55e6a0" stroke-width="1.2"/>
-  <text x="177" y="658" font-size="12" font-weight="700" fill="#e9f2ff" text-anchor="middle">vllm-cpu</text>
-  <text x="177" y="680" font-size="10" fill="#c9d8ea" text-anchor="middle">CUAD specialist + vLLM</text>
-  <text x="177" y="698" font-size="10" fill="#c9d8ea" text-anchor="middle">x8i.24xlarge · 48 cores</text>
-  <text x="177" y="724" font-size="9" fill="#6f8298" text-anchor="middle">forwards non-CUAD prompts to CPU vLLM</text>
+  <rect x="60" y="632" width="185" height="112" rx="8" fill="#0d1b2d" stroke="#55e6a0" stroke-width="1.2"/>
+  <text x="152" y="656" font-size="11.5" font-weight="700" fill="#e9f2ff" text-anchor="middle">cuad-specialist</text>
+  <text x="152" y="678" font-size="10" fill="#c9d8ea" text-anchor="middle">RoBERTa-large QA</text>
+  <text x="152" y="696" font-size="10" fill="#c9d8ea" text-anchor="middle">CPU · 2 cores</text>
+  <text x="152" y="722" font-size="9" fill="#6f8298" text-anchor="middle">CUAD clauses · extract only</text>
 
-  <rect x="305" y="632" width="235" height="112" rx="8" fill="#0d1b2d" stroke="#55e6a0" stroke-width="1.2"/>
-  <text x="422" y="658" font-size="12" font-weight="700" fill="#e9f2ff" text-anchor="middle">vllm-gpu-approved</text>
-  <text x="422" y="680" font-size="10" fill="#c9d8ea" text-anchor="middle">4× A10G · TP=4</text>
-  <text x="422" y="698" font-size="10" fill="#c9d8ea" text-anchor="middle">sensitive-only pin</text>
-  <text x="422" y="724" font-size="9.5" fill="#6f8298" text-anchor="middle">fails closed if it is down</text>
+  <rect x="260" y="632" width="185" height="112" rx="8" fill="#0d1b2d" stroke="#55e6a0" stroke-width="1.2"/>
+  <text x="352" y="656" font-size="11.5" font-weight="700" fill="#e9f2ff" text-anchor="middle">vllm-cpu</text>
+  <text x="352" y="678" font-size="10" fill="#c9d8ea" text-anchor="middle">Qwen3.5-35B-A3B</text>
+  <text x="352" y="696" font-size="10" fill="#c9d8ea" text-anchor="middle">CPU MoE · x8i.24xlarge</text>
+  <text x="352" y="722" font-size="9" fill="#6f8298" text-anchor="middle">classify + data protection</text>
 
-  <text x="300" y="768" font-size="10" font-weight="700" fill="#55e6a0" text-anchor="middle">APPROVED SET — sensitive data may run only here</text>
+  <rect x="460" y="632" width="205" height="112" rx="8" fill="#0d1b2d" stroke="#55e6a0" stroke-width="1.2"/>
+  <text x="562" y="656" font-size="11.5" font-weight="700" fill="#e9f2ff" text-anchor="middle">vllm-gpu-approved</text>
+  <text x="562" y="678" font-size="10" fill="#c9d8ea" text-anchor="middle">4× A10G · TP=4</text>
+  <text x="562" y="696" font-size="10" fill="#c9d8ea" text-anchor="middle">sensitive-only route</text>
+  <text x="562" y="722" font-size="9" fill="#6f8298" text-anchor="middle">fails closed if it is down</text>
+
+  <text x="365" y="768" font-size="10" font-weight="700" fill="#55e6a0" text-anchor="middle">APPROVED SET — sensitive data may run only here</text>
 
   <!-- general pools -->
-  <rect x="620" y="596" width="560" height="180" rx="10" fill="none" stroke="#2b4865" stroke-width="1.2" stroke-dasharray="6 4"/>
+  <rect x="710" y="596" width="490" height="180" rx="10" fill="none" stroke="#2b4865" stroke-width="1.2" stroke-dasharray="6 4"/>
 
-  <rect x="640" y="632" width="250" height="112" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.2"/>
-  <text x="765" y="658" font-size="12" font-weight="700" fill="#e9f2ff" text-anchor="middle">vllm-gpu</text>
-  <text x="765" y="680" font-size="10" fill="#c9d8ea" text-anchor="middle">4× A10G · TP=4</text>
-  <text x="765" y="698" font-size="10" fill="#c9d8ea" text-anchor="middle">Qwen3.5-35B-A3B</text>
-  <text x="765" y="724" font-size="9.5" fill="#6f8298" text-anchor="middle">general + judgment work</text>
+  <rect x="730" y="632" width="225" height="112" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.2"/>
+  <text x="842" y="656" font-size="11.5" font-weight="700" fill="#e9f2ff" text-anchor="middle">vllm-gpu</text>
+  <text x="842" y="678" font-size="10" fill="#c9d8ea" text-anchor="middle">4× A10G · TP=4</text>
+  <text x="842" y="696" font-size="10" fill="#c9d8ea" text-anchor="middle">Qwen3.5-35B-A3B</text>
+  <text x="842" y="722" font-size="9" fill="#6f8298" text-anchor="middle">general risk + report</text>
 
-  <rect x="905" y="632" width="255" height="112" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.2"/>
-  <text x="1032" y="658" font-size="12" font-weight="700" fill="#e9f2ff" text-anchor="middle">vllm-gpu-small</text>
-  <text x="1032" y="680" font-size="10" fill="#c9d8ea" text-anchor="middle">Qwen2.5-1.5B</text>
-  <text x="1032" y="698" font-size="10" fill="#c9d8ea" text-anchor="middle">served on CPU on ROSA</text>
-  <text x="1032" y="724" font-size="9.5" fill="#6f8298" text-anchor="middle">a route name, not a GPU</text>
+  <rect x="975" y="632" width="205" height="112" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.2"/>
+  <text x="1077" y="656" font-size="11.5" font-weight="700" fill="#e9f2ff" text-anchor="middle">vllm-gpu-small</text>
+  <text x="1077" y="678" font-size="10" fill="#c9d8ea" text-anchor="middle">Qwen2.5-1.5B</text>
+  <text x="1077" y="696" font-size="10" fill="#c9d8ea" text-anchor="middle">served on CPU on ROSA</text>
+  <text x="1077" y="722" font-size="9" fill="#6f8298" text-anchor="middle">a route name, not a GPU</text>
 
-  <text x="900" y="768" font-size="10" font-weight="700" fill="#9db1c8" text-anchor="middle">GENERAL POOLS — never receive sensitive data</text>
+  <text x="955" y="768" font-size="10" font-weight="700" fill="#9db1c8" text-anchor="middle">GENERAL POOLS — never receive sensitive data</text>
 
-  <text x="40" y="806" font-size="11" fill="#6f8298">Route names are policies, not hardware: vllm-gpu-small is CPU-served, and vllm-cpu is a composite that holds the CUAD specialist. Read the pool map before quoting a device.</text>
+  <text x="40" y="806" font-size="11" fill="#6f8298">Route names are policies, not hardware: vllm-gpu-small is CPU-served, and vllm-cpu is a plain CPU MoE endpoint; the CUAD specialist is its own route. Read the pool map before quoting a device.</text>
 </svg>

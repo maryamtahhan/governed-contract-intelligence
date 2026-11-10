@@ -115,18 +115,6 @@ def test_sensitive_content_redacted_by_default(traceui_redacted):
     assert row["response"] is None
 
 
-def test_judgment_ingress_flags(traceui, monkeypatch):
-    monkeypatch.setenv("JUDGMENT_UPSTREAM", "http://praxis:8086")
-    monkeypatch.setenv("SENSITIVE_JUDGMENT_UPSTREAM", "http://praxis:8087")
-    monkeypatch.setenv("JUDGMENT_INGRESS_PORT", "8086")
-    monkeypatch.setenv("SENSITIVE_JUDGMENT_INGRESS_PORT", "8087")
-    module = importlib.reload(traceui)
-    assert module.JUDGMENT_UPSTREAM == "http://praxis:8086"
-    assert module.JUDGMENT_INGRESS_PORT == 8086
-    assert module.SENSITIVE_JUDGMENT_UPSTREAM == "http://praxis:8087"
-    assert module.SENSITIVE_JUDGMENT_INGRESS_PORT == 8087
-
-
 def test_sensitive_judgment_is_redacted_like_the_sensitive_entry(traceui_redacted):
     traceui_redacted.create_trace(
         "t1", "POST", "/v1/chat/completions", "r1", "salary is 90000",

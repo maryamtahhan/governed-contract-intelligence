@@ -20,8 +20,6 @@ DOCS="${DOCS:-20}"
 CONCURRENCY="${CONCURRENCY:-12}"
 LOCAL_PORT="${LOCAL_PORT:-18080}"
 SENSITIVE_PORT="${LOCAL_SENSITIVE_PORT:-18083}"
-JUDGMENT_PORT="${LOCAL_JUDGMENT_PORT:-18086}"
-SENSITIVE_JUDGMENT_PORT="${LOCAL_SENSITIVE_JUDGMENT_PORT:-18087}"
 
 case "$VARIANT" in
   moe)        OVERLAY=deploy/openshift/cpu-real-moe; POOL_DEPLOY=cpureal-vllm-cpu ;;
@@ -60,9 +58,9 @@ echo "== applying $OVERLAY"
 oc apply -k "$OVERLAY" >/dev/null
 
 echo -n "== waiting for the CPU pool to become healthy (72GB downloads take a while)"
-# specialist variants front a backend pool via forwarding: its health must
-# be verified too, or the warm step 500s against a still-compiling backend
-# (the 2026-11-03 fast-fail)
+# specialist variants deploy both the specialist model endpoint and the CPU
+# MoE route; verify both, or the warm step 500s against a still-compiling
+# backend (the 2026-11-03 fast-fail)
 HEALTH_DEPLOYS=("$POOL_DEPLOY")
 if [[ "$VARIANT" == specialist* ]]; then
   HEALTH_DEPLOYS+=("cpureal-vllm-cpu")
@@ -112,26 +110,20 @@ if [[ "${USE_ROUTES:-1}" = 1 ]]; then
   }
   ensure_route trace-ui-general 8080
   ensure_route trace-ui-sensitive 8083
-  ensure_route trace-ui-judgment 8086
-  ensure_route trace-ui-sensitive-judgment 8087
   GATEWAY_HOST=$(oc -n "$NS" get route trace-ui-general -o jsonpath='{.spec.host}')
   GATEWAY="http://$GATEWAY_HOST"
   SENSITIVE_GATEWAY="http://$(oc -n "$NS" get route trace-ui-sensitive -o jsonpath='{.spec.host}')"
-  JUDGMENT_GATEWAY="http://$(oc -n "$NS" get route trace-ui-judgment -o jsonpath='{.spec.host}')"
-  SENSITIVE_JUDGMENT_GATEWAY="http://$(oc -n "$NS" get route trace-ui-sensitive-judgment -o jsonpath='{.spec.host}')"
   for i in $(seq 1 30); do curl -sf "$GATEWAY/_trace/healthz" >/dev/null 2>&1 && break; sleep 1; done
   curl -sf "$GATEWAY/_trace/healthz" >/dev/null || { echo "route to trace-ui not healthy" >&2; exit 1; }
 else
-  oc -n "$NS" port-forward svc/trace-ui "$LOCAL_PORT:8080" "$SENSITIVE_PORT:8083" "$JUDGMENT_PORT:8086" "$SENSITIVE_JUDGMENT_PORT:8087" >/dev/null &
+  oc -n "$NS" port-forward svc/trace-ui "$LOCAL_PORT:8080" "$SENSITIVE_PORT:8083" >/dev/null &
   PF=$!
   trap 'kill $PF 2>/dev/null' EXIT
   GATEWAY="http://127.0.0.1:$LOCAL_PORT"
   SENSITIVE_GATEWAY="http://127.0.0.1:$SENSITIVE_PORT"
-  JUDGMENT_GATEWAY="http://127.0.0.1:$JUDGMENT_PORT"
-  SENSITIVE_JUDGMENT_GATEWAY="http://127.0.0.1:$SENSITIVE_JUDGMENT_PORT"
   for i in $(seq 1 30); do curl -sf "$GATEWAY/_trace/healthz" >/dev/null 2>&1 && break; sleep 1; done
 fi
-oc -n "$NS" port-forward svc/trace-ui 18081:8081 18082:8082 18084:8084 18085:8085 >/dev/null &
+oc -n "$NS" port-forward svc/trace-ui 18088:8088 18081:8081 18082:8082 18084:8084 18085:8085 >/dev/null &
 PF2=$!
 trap 'kill $PF2 2>/dev/null' EXIT
 
@@ -160,10 +152,9 @@ if [[ "$VARIANT" == moe-thinking ]]; then
 fi
 (cd demo && uv run hybrid-run --target gateway \
   --gateway "$GATEWAY" --sensitive-gateway "$SENSITIVE_GATEWAY" \
-  --judgment-gateway "$JUDGMENT_GATEWAY" --sensitive-judgment-gateway "$SENSITIVE_JUDGMENT_GATEWAY" \
   --data "$DATA" --out "../$out" --config hybrid --docs "$DOCS" --concurrency "$CONCURRENCY" \
   $REVIEW_EXTRA \
-  --sample-metrics vllm-cpu=http://127.0.0.1:18081,vllm-gpu=http://127.0.0.1:18082,vllm-gpu-approved=http://127.0.0.1:18084,vllm-gpu-small=http://127.0.0.1:18085)
+  --sample-metrics cuad-specialist=http://127.0.0.1:18088,vllm-cpu=http://127.0.0.1:18081,vllm-gpu=http://127.0.0.1:18082,vllm-gpu-approved=http://127.0.0.1:18084,vllm-gpu-small=http://127.0.0.1:18085)
 
 echo
 echo "done: $out"

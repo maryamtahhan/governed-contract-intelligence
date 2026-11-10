@@ -370,7 +370,7 @@ def routing_scores(records: list[dict], docs_in_run: int, cores_per_cpu_replica:
         if route:
             by_route[route] = by_route.get(route, 0) + 1
             stage = (r.get("step") or "").split(":", 1)[0]
-            if stage in JUDGMENT_STEPS and "judgment" in (r.get("entry") or ""):
+            if stage in JUDGMENT_STEPS:
                 judgment_steps += 1
                 if route in GPU_ROUTES:
                     judgment_on_gpu += 1

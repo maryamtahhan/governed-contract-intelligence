@@ -1046,12 +1046,15 @@ margins of 0.3-0.99. The demo claim is therefore containment plus
 GPU-first economics, not "the AI decides what is hard".
 
 Follow-on (2026-11-05): **llm-d-sc was removed from the default stack.**
-The judgment entries (:8086/:8087) already route risk/report stage-aware
+The judgment entries (:8086/:8087; replaced by `X-Demo-Step` routes in the
+2026-11-10 rebuild, §15.10) already route risk/report stage-aware
 without a classifier, and everything else the classifier saw was labelled
 MEDIUM -> CPU anyway, so the general (:8080) and sensitive (:8083)
-listeners are now **pinned CPU-first** (general fails over to any pool
-with the visible degraded flag; sensitive keeps the approved-only
-failover set, preserving fail-closed). This is a config change past the
+listeners are now **CPU-first for batch work** (general fails over to the
+general GPU with the visible degraded flag; sensitive keeps the
+approved-only failover set, preserving fail-closed). The 2026-11-10 rebuild
+keeps the two-entry containment boundary and moves per-step pool choice to
+the router table (§15.10). This is a config change past the
 recorded runs: built and tested, **not measured** — every number in §15
 came from the classifier-in-path config. The classifier-routed arm B
 config and the llm-d-sc Deployment are preserved in git history
@@ -1246,6 +1249,39 @@ scored 200/200 with risk 1.000.
 - Both runs recorded `git_dirty: true`: the routing change was in the working
   tree at first-run time, and the design-doc table edit was uncommitted at
   rerun time.
+
+### 15.10 Route-graph rebuild: work-to-pool in Praxis (2026-11-10, not yet measured)
+
+The 2026-11-09 runs measured a four-entry policy (general, sensitive, judgment,
+sensitive-judgment) with a composite `vllm-cpu` route. On 2026-11-10 the stack
+was rebuilt around **two entries and a declarative work-to-pool table**:
+
+- The pipeline chooses only the data-classification entry. The PII screen
+  sends personal-data documents to `:8083`; everything else uses `:8080`.
+  The app no longer knows pool names, ports, or hardware.
+- Inside each entry, the Praxis `router` filter matches `X-Demo-Step`:
+  CUAD clause extraction → `cuad-specialist`; classify and
+  `extract:data_protection` → `vllm-cpu`; risk/report → `vllm-gpu`
+  (general) or `vllm-gpu-approved` (sensitive).
+- The general failover set is `vllm-gpu`; a judgment request that is already
+  on the GPU retries GPU and then fails, rather than preserving the old
+  all-CPU result. The sensitive failover set is `vllm-gpu-approved` only.
+- `cuad-specialist` is a pure model endpoint: unsupported prompts return 400.
+  There is no `--forward-to` and no second hop outside Praxis.
+- The two GPU routes still point at the same `gpumoe-vllm` deployment. The
+  split is a policy boundary, not duplicate hardware: fail-closed containment
+  is preserved, and `vllm-gpu` can carry non-sensitive GPU work without
+  becoming an approved route.
+
+The quoted 200-document result
+(`runs/rosa-200-2026-11-09-cpu-term-rerun/hybrid`) belongs to the old graph:
+its `vllm-cpu` count was 600 RoBERTa encoder passes plus 400 forwarded Qwen
+calls. It is not evidence for the rebuilt graph. The rebuilt graph has **not
+been re-measured** because the ROSA footprint is torn down; the next
+measurement must write a new `runs/` directory and verify, per trace:
+`cuad-specialist` for CUAD clauses, `vllm-cpu` for classify/data-protection,
+`vllm-gpu` for non-sensitive risk/report, and `vllm-gpu-approved` for
+sensitive work. Do not edit or reinterpret the recorded runs.
 
 ## 16. Open-source reuse audit and adapters (2026-11-05)
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Assertion-based smoke test for the local Linux stack. Verifies the routing
-# matrix, the visible fallback flag, strict fail-closed for sensitive
-# REASONING work, recovery, and the governance claim from the trace UI's own
-# records. Run this on the Linux instance after scripts/linux/up.sh.
+# Assertion-based smoke test for the local Linux stack. Verifies the Praxis
+# work-to-pool table, the visible CPU->GPU fallback, strict fail-closed for
+# sensitive judgment work, recovery, and the governance claim from the trace
+# UI's own records. Run this on the Linux instance after scripts/linux/up.sh.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 STACK=deploy/linux
@@ -24,6 +24,7 @@ ok() { PASS=$((PASS + 1)); echo "ok $PASS - $*"; }
 # per profile (fake-* vs *-real); try both, ignore the one that does not exist.
 pool_services() {
   case "$1" in
+    cuad-specialist) echo fake-specialist ;;
     vllm-cpu) echo fake-cpu vllm-cpu-real ;;
     vllm-gpu) echo fake-gpu vllm-gpu-real ;;
     vllm-gpu-approved) echo fake-approved vllm-gpu-approved-real ;;
@@ -52,6 +53,8 @@ dc() { $COMPOSE -f "$STACK/docker-compose.yml" "$@" >/dev/null; }
 # A previously failed run may have left pools stopped; bring them back and
 # let praxis health checks mark them healthy before asserting anything.
 restore_pools() {
+  pool_start cuad-specialist 2>/dev/null || true
+  pool_start vllm-cpu 2>/dev/null || true
   pool_start vllm-gpu 2>/dev/null || true
   pool_start vllm-gpu-approved 2>/dev/null || true
 }
@@ -63,7 +66,7 @@ wait_pools() {
   echo -n "waiting for model pools"
   for i in $(seq 1 240); do
     ok=0
-    for port in 18081 18082 18084 18085; do
+    for port in 18088 18081 18082 18084 18085; do
       curl -sf -m 3 "http://127.0.0.1:$port/health" >/dev/null 2>&1 || ok=1
     done
     if [ "$ok" = 0 ]; then echo " ok"; return 0; fi
@@ -79,29 +82,29 @@ wait_pools
 # praxis's step timeout. Fire one request per pool, failures tolerated.
 warm_pool() {
   curl -s -m 300 -o /dev/null "http://127.0.0.1:$1/v1/chat/completions" \
-    -H 'Content-Type: application/json' \
+    -H 'Content-Type: application/json' -H "X-Demo-Step: $2" \
     -d '{"model":"Semantic-Qwen","messages":[{"role":"user","content":"Say ok."}],"max_tokens":8}' \
     || true
 }
 echo -n "warming pools"
-for port in 18081 18082 18084 18085; do
-  warm_pool "$port"
-  echo -n " $port"
-done
+warm_pool 18088 extract:termination; echo -n " specialist"
+warm_pool 18081 classify; echo -n " cpu"
+warm_pool 18082 risk; echo -n " gpu"
+warm_pool 18084 risk; echo -n " approved"
 echo " done"
 
-simple_prompt() { curl -sf -D /tmp/h -o /tmp/b "$GW/v1/chat/completions" -H 'Content-Type: application/json' \
-  -H "X-API-Key: $API_KEY" -H 'X-Session-Id: smoke-test' \
-  -d '{"model":"Semantic-Qwen","messages":[{"role":"user","content":"What is the capital of France?"}],"max_tokens":24}'; }
-reasoning_prompt() { curl -s -D /tmp/h -o /tmp/b "$GW/v1/chat/completions" -H 'Content-Type: application/json' \
-  -H "X-API-Key: $API_KEY" -H 'X-Session-Id: smoke-test' \
-  -d '{"model":"Semantic-Qwen","messages":[{"role":"user","content":"Prove that the halting problem is undecidable, then compare it with the halting problem across all 3 documents and synthesise the overall risk report."}],"max_tokens":48}'; }
-sensitive_reasoning() { curl -s -D /tmp/h -o /tmp/b "$SGW/v1/chat/completions" -H 'Content-Type: application/json' \
-  -H "X-API-Key: $API_KEY" -H 'X-Session-Id: smoke-test' \
-  -d '{"model":"Semantic-Qwen","messages":[{"role":"user","content":"Produce the cross-document risk report across all 3 documents containing personal data for the data controller. Synthesise and compare the extractions, derive the aggregate counts, and prove the ranking. Return JSON."}],"max_tokens":48}'; }
-sensitive_simple() { curl -sf -D /tmp/h -o /tmp/b "$SGW/v1/chat/completions" -H 'Content-Type: application/json' \
-  -H "X-API-Key: $API_KEY" -H 'X-Session-Id: smoke-test' \
-  -d '{"model":"Semantic-Qwen","messages":[{"role":"user","content":"What is the capital of France? The data controller contact is aoife@example.com, EMP-123456."}],"max_tokens":24}'; }
+gateway_post() { # url step prompt max_tokens
+  curl -sf -D /tmp/h -o /tmp/b "$1/v1/chat/completions" \
+    -H 'Content-Type: application/json' -H "X-API-Key: $API_KEY" \
+    -H "X-Session-Id: smoke-test" -H "X-Demo-Step: $2" \
+    -d "{\"model\":\"Semantic-Qwen\",\"messages\":[{\"role\":\"user\",\"content\":\"$3\"}],\"max_tokens\":$4}"
+}
+simple_prompt() { gateway_post "$GW" classify 'What is the capital of France?' 24; }
+termination_prompt() { gateway_post "$GW" extract:termination 'Extract the termination clause from the following contract. If the clause is absent, say not found.' 30; }
+data_protection_prompt() { gateway_post "$GW" extract:data_protection 'Extract the data protection clause from the following contract.' 30; }
+risk_prompt() { gateway_post "$GW" risk 'Assess the aggregate risk exposure across these contracts and rank them.' 48; }
+sensitive_simple() { gateway_post "$SGW" classify 'What is the capital of France? The data controller contact is aoife@example.com, EMP-123456.' 24; }
+sensitive_risk() { gateway_post "$SGW" risk 'Assess the aggregate risk exposure across these contracts containing personal data; the data controller is aoife@example.com (EMP-123456).' 48; }
 keyless_prompt() { curl -s -D /tmp/h -o /tmp/b "$GW/v1/chat/completions" -H 'Content-Type: application/json' \
   -d '{"model":"Semantic-Qwen","messages":[{"role":"user","content":"What is the capital of France?"}],"max_tokens":24}'; }
 badkey_prompt() { curl -s -D /tmp/h -o /tmp/b "$GW/v1/chat/completions" -H 'Content-Type: application/json' \
@@ -120,89 +123,107 @@ echo "== 1. gateway up"
 curl -sf -H "X-API-Key: $API_KEY" "$GW/v1/models" | grep -q Semantic-Qwen || fail "/v1/models"
 ok "gateway serves /v1/models (keyed probe; keyless fails closed)"
 
-echo "== 2. SIMPLE routes to the CPU pool"
+echo "== 2. general entry: classify stays on the CPU pool"
 simple_prompt
 [ "$(status_of)" = 200 ] || fail "simple status $(status_of)"
-[ "$(hdr X-Demo-Route)" = "vllm-cpu" ] || fail "simple route $(hdr X-Demo-Route)"
-ok "SIMPLE -> vllm-cpu (label $(hdr X-Demo-Classification))"
+[ "$(hdr X-Demo-Route)" = "vllm-cpu" ] || fail "classify route $(hdr X-Demo-Route)"
+ok "general classify -> vllm-cpu"
 
-echo "== 3. REASONING routes to the GPU pool"
-reasoning_prompt
-[ "$(status_of)" = 200 ] || fail "reasoning status $(status_of)"
-[ "$(hdr X-Demo-Route)" = "vllm-gpu" ] || fail "reasoning route $(hdr X-Demo-Route)"
-ok "REASONING -> vllm-gpu (label $(hdr X-Demo-Classification))"
+echo "== 3. general entry: CUAD extraction routes to the specialist"
+termination_prompt
+[ "$(status_of)" = 200 ] || fail "termination status $(status_of)"
+[ "$(hdr X-Demo-Route)" = "cuad-specialist" ] || fail "termination route $(hdr X-Demo-Route)"
+ok "extract:termination -> cuad-specialist"
 
-echo "== 4. sensitive entry: SIMPLE stays on the in-cluster CPU pool"
+echo "== 4. general entry: data-protection extraction routes to the CPU MoE"
+data_protection_prompt
+[ "$(status_of)" = 200 ] || fail "data-protection status $(status_of)"
+[ "$(hdr X-Demo-Route)" = "vllm-cpu" ] || fail "data-protection route $(hdr X-Demo-Route)"
+ok "extract:data_protection -> vllm-cpu"
+
+echo "== 5. general entry: judgment routes to the GPU pool"
+risk_prompt
+[ "$(status_of)" = 200 ] || fail "general risk status $(status_of)"
+[ "$(hdr X-Demo-Route)" = "vllm-gpu" ] || fail "general risk route $(hdr X-Demo-Route)"
+ok "general risk -> vllm-gpu"
+
+echo "== 6. sensitive entry: CPU work stays approved"
 sensitive_simple
 [ "$(status_of)" = 200 ] || fail "sensitive simple status $(status_of)"
 [ "$(hdr X-Demo-Route)" = "vllm-cpu" ] || fail "sensitive simple route $(hdr X-Demo-Route)"
-ok "SENSITIVE+SIMPLE -> vllm-cpu"
+ok "sensitive classify -> vllm-cpu"
 
-echo "== 5. sensitive entry: REASONING pinned to the approved GPU pool"
-sensitive_reasoning
-[ "$(status_of)" = 200 ] || fail "sensitive reasoning status $(status_of)"
-[ "$(hdr X-Demo-Route)" = "vllm-gpu-approved" ] || fail "sensitive reasoning route $(hdr X-Demo-Route)"
-ok "SENSITIVE+REASONING -> vllm-gpu-approved"
+echo "== 7. sensitive entry: judgment routes to the approved GPU pool"
+sensitive_risk
+[ "$(status_of)" = 200 ] || fail "sensitive risk status $(status_of)"
+[ "$(hdr X-Demo-Route)" = "vllm-gpu-approved" ] || fail "sensitive risk route $(hdr X-Demo-Route)"
+ok "sensitive risk -> vllm-gpu-approved"
 
-echo "== 6. pull the plug on the GPU pool"
-pool_stop vllm-gpu
+echo "== 8. pull the plug on the CPU pool: general degrades visibly"
+pool_stop vllm-cpu
 sleep 14
-reasoning_prompt
-[ "$(status_of)" = 200 ] || fail "reasoning during gpu outage: $(status_of) $(cat /tmp/b)"
-[ "$(hdr X-Demo-Route)" = "vllm-cpu" ] || fail "reasoning during outage route $(hdr X-Demo-Route)"
-# praxis starts the failover step with empty headers, so the degraded response
-# carries no classifier label; the trace records the original label on the
-# failed GPU hop and badges the trace as "fell back". Verify from the trace:
+simple_prompt
+[ "$(status_of)" = 200 ] || fail "general during cpu outage: $(status_of) $(cat /tmp/b)"
+[ "$(hdr X-Demo-Route)" = "vllm-gpu" ] || fail "general during outage route $(hdr X-Demo-Route)"
 curl -s "$GW/_trace/api/traces" | python3 -c "
 import json, sys
 t = json.load(sys.stdin)['traces'][0]
-assert t['classification'] == 'REASONING', t
-assert t['route'] == 'vllm-cpu', t
+assert t['route'] == 'vllm-gpu', t
 assert t['fallback'] == 1, t
 assert any(h.get('error') for h in t['hops']), t
-" || fail "trace does not show the REASONING->CPU fallback"
-ok "REASONING degraded to CPU (trace: failed GPU hop, fell-back badge)"
-simple_prompt
-[ "$(status_of)" = 200 ] || fail "simple during outage"
-ok "SIMPLE traffic unaffected by the GPU outage"
+" || fail "trace does not show the CPU->GPU fallback"
+ok "general classify degraded to vllm-gpu (trace: failed CPU hop, fell-back badge)"
+risk_prompt
+[ "$(status_of)" = 200 ] || fail "risk during cpu outage"
+[ "$(hdr X-Demo-Route)" = "vllm-gpu" ] || fail "risk route during cpu outage"
+ok "risk traffic unaffected by the CPU outage"
 
-echo "== 7. recovery"
-pool_start vllm-gpu
-echo -n "waiting for the GPU pool to reload"
+echo "== 9. recovery"
+pool_start vllm-cpu
+echo -n "waiting for the CPU pool to reload"
 for i in $(seq 1 90); do
-  curl -sf -m 3 http://127.0.0.1:18082/health >/dev/null 2>&1 && { echo " up"; break; }
+  curl -sf -m 3 http://127.0.0.1:18081/health >/dev/null 2>&1 && { echo " up"; break; }
   echo -n .
   sleep 5
 done
-# praxis needs two consecutive successful probes before routing back.
 sleep 12
-reasoning_prompt
-[ "$(status_of)" = 200 ] || fail "reasoning after recovery: $(status_of)"
-[ "$(hdr X-Demo-Route)" = "vllm-gpu" ] || fail "reasoning after recovery route $(hdr X-Demo-Route)"
-[ "$(hdr X-Demo-Classification)" = "REASONING" ] || fail "label after recovery $(hdr X-Demo-Classification)"
-ok "REASONING back on vllm-gpu, mismatch cleared"
+simple_prompt
+[ "$(status_of)" = 200 ] || fail "general after recovery: $(status_of)"
+[ "$(hdr X-Demo-Route)" = "vllm-cpu" ] || fail "general after recovery route $(hdr X-Demo-Route)"
+curl -s "$GW/_trace/api/traces" | python3 -c "
+import json, sys
+t = json.load(sys.stdin)['traces'][0]
+assert t['route'] == 'vllm-cpu', t
+assert t['fallback'] == 0, t
+assert not any(h.get('error') for h in t['hops']), t
+" || fail "trace still shows fallback after recovery"
+ok "classify back on vllm-cpu, fallback cleared"
 
-echo "== 8. kill the approved pool: sensitive REASONING fails closed"
+echo "== 10. kill the approved pool: sensitive judgment fails closed"
 pool_stop vllm-gpu-approved
 sleep 14
-sensitive_reasoning
+sensitive_risk
 s_status=$(status_of)
 if [ "$s_status" = 200 ]; then
-  fail "sensitive reasoning served while the approved pool is down: route $(hdr X-Demo-Route)"
+  fail "sensitive risk served while the approved pool is down: route $(hdr X-Demo-Route)"
 fi
 route_during_fail=$(hdr X-Demo-Route)
 if [ -n "${route_during_fail:-}" ] && [ "$route_during_fail" != "vllm-gpu-approved" ]; then
-  fail "sensitive reasoning spilled to $route_during_fail"
+  fail "sensitive risk spilled to $route_during_fail"
 fi
-ok "SENSITIVE+REASONING failed closed (status $s_status, never spilled)"
-reasoning_prompt
-[ "$(status_of)" = 200 ] || fail "general reasoning broke while approved pool down"
-[ "$(hdr X-Demo-Route)" = "vllm-gpu" ] || fail "general reasoning route during approved outage"
-ok "general REASONING unaffected (pool isolation)"
+ok "sensitive risk failed closed (status $s_status, never spilled)"
+risk_prompt
+[ "$(status_of)" = 200 ] || fail "general risk broke while approved pool down"
+[ "$(hdr X-Demo-Route)" = "vllm-gpu" ] || fail "general risk route during approved outage"
+ok "general risk unaffected (pool isolation)"
+sensitive_simple
+[ "$(status_of)" = 200 ] || fail "sensitive simple broke while approved pool down"
+[ "$(hdr X-Demo-Route)" = "vllm-cpu" ] || fail "sensitive simple route during approved outage"
+ok "sensitive CPU work unaffected (approved pool only needed when CPU is down)"
 pool_start vllm-gpu-approved
 sleep 14
 
-echo "== 9. governance: sensitive-entry traces never left the approved set"
+echo "== 11. governance: sensitive-entry traces never left the approved set"
 (cd demo && uv run hybrid-score governance --trace-ui "$GW" > /tmp/gov.json)
 python3 - <<'EOF' || fail "governance check"
 import json
@@ -214,7 +235,7 @@ print(f"    {gov['sensitive_entry_traces']} sensitive-entry traces, all on appro
 EOF
 ok "governance claim verified from the trace UI's own records"
 
-echo "== 10. audit export"
+echo "== 12. audit export"
 curl -sf "$GW/_trace/api/audit.jsonl" -o /tmp/audit.jsonl || fail "audit.jsonl fetch"
 [ -s /tmp/audit.jsonl ] || fail "audit.jsonl empty"
 python3 -c "
@@ -227,7 +248,7 @@ print(f'    {len(lines)} traces exported as JSONL')
 " || fail "audit.jsonl parse"
 ok "audit.jsonl exports one JSON object per trace"
 
-echo "== 11. policy layer: the gateway fails closed without a valid key"
+echo "== 13. policy layer: the gateway fails closed without a valid key"
 keyless_prompt
 [ "$(status_of)" != "200" ] || fail "keyless request was served (status 200)"
 ok "keyless request denied (status $(status_of))"
@@ -238,7 +259,7 @@ simple_prompt
 [ "$(status_of)" = "200" ] || fail "known key not served after the denials: $(status_of)"
 ok "known key still served"
 
-echo "== 12. policy layer: decision records and the shadow PII screen"
+echo "== 14. policy layer: decision records and the shadow PII screen"
 praxis_logs > /tmp/praxis-logs.txt
 records=$(grep -c 'gci-gateway' /tmp/praxis-logs.txt || true)
 [ "${records:-0}" -gt 0 ] || fail "no audit decision records in praxis logs (source gci-gateway)"

@@ -1,9 +1,10 @@
 # In-cluster pinning for the model pools (the V15 enforcement layer): the
-# predictors accept traffic only from the trace-ui relays (and, for the CPU
-# pool, from the specialist that forwards to it), so a sensitive request
-# cannot bypass the gateway topology, and nothing outside the namespace can
-# reach the models directly. Egress stays open for the initial Hugging Face
-# model download; tighten once models are cached.
+# predictors accept traffic only from the trace-ui relays, so a sensitive
+# request cannot bypass the gateway topology, and nothing outside the
+# namespace can reach the models directly. The specialist is a model endpoint,
+# not a forwarding client, so it needs no egress into the CPU pool. Egress
+# stays open for the initial Hugging Face model download; tighten once models
+# are cached.
 #
 # Two selectors, because two deployment shapes exist:
 #   * KServe RawDeployment pools carry serving.kserve.io/inferenceservice
@@ -72,16 +73,6 @@ spec:
       ports:
         - protocol: TCP
           port: 8000
-    # The specialist answers from RoBERTa but forwards unmatched questions
-    # to the CPU pool, so it is a legitimate client of that pool.
-    - from:
-        - podSelector:
-            matchExpressions:
-              - key: demo.openshell.ai/specialist
-                operator: Exists
-      ports:
-        - protocol: TCP
-          port: 8000
 # plain-pools-egress removed 2026-11-03: on this cluster's OVN, ANY egress
 # policy on the pool pods breaks their DNS — three rule shapes tested
 # (namespaceSelector-any, ipBlock for the DNS service IP, and the canonical
@@ -90,8 +81,8 @@ spec:
 # and deleting the policy restores DNS instantly. The 2026-11-02 CNI
 # instability (FINDINGS §7) is the suspected cause; the MoE seed (emptyDir,
 # 72GB from Hugging Face) cannot work behind it. Containment is unchanged:
-# plain-pools-ingress below still restricts the pools to the trace-ui relays
-# and the forwarding specialist, which is the V15 enforcement layer. Restore
+# plain-pools-ingress above still restricts the pools to the trace-ui relays,
+# which is the V15 enforcement layer. Restore
 # an egress policy (starting from the kube-dns selector shape) only after
 # OVN is verified healthy on this node.
 #

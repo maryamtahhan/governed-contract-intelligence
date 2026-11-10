@@ -3,7 +3,7 @@
 Real CPU and GPU inference pools on a managed OpenShift cluster: the same
 Qwen3.5-35B-A3B checkpoint served by a tainted x8i (Granite Rapids, AMX)
 node and by 4x A10G on a g5 node, plus the 1.5B small pool and the CUAD
-specialist composite. This is the environment behind the ROSA row of
+specialist model endpoint. Praxis maps each work step to one of these routes. This is the environment behind the ROSA row of
 FINDINGS §1.
 
 Read `kustomization.yaml` first - its header explains every deliberate
@@ -90,7 +90,7 @@ model caches, digest-pinned vLLM image).
    oc apply -k deploy/openshift/rosa
    ```
 
-5. Build the specialist image (required for the specialist composite; the
+5. Build the specialist image (required for the `cuad-specialist` route; the
    checkpoint is baked in at build time). On 4.22 use the dockerfilePath +
    `--from-dir` workaround - `oc start-build --dockerfile` is not supported:
 
@@ -152,7 +152,7 @@ request fails with HTTP 400 *after* every per-document step has been paid
 for. `report_lines()` in `pipeline/direct.py` and its regression test encode
 the fix.
 
-"Stacked" is arm D above - the composite pipeline over the same documents.
+"Stacked" is arm D above - the staged pipeline over the same documents.
 Score direct and stacked together (one `--runs`, space-separated) so the
 report puts both rows in the same tables.
 
@@ -201,8 +201,9 @@ documents into "non-sensitive".
   0 violations, 0.036 GPU-s/doc; A (all-GPU) 202.2 s and 1.974 GPU-s/doc,
   247 violations; C (round-robin) 612.9 s, 122 violations. Full tables:
   `runs/rosa-200/report.md` (archived at `cfc52cc`) and plan §6.2. Arm D's extraction was 600/800
-  `cuad-specialist` responses (data protection stayed on the MoE), so the
-  composite — not the MoE — did most of the extraction work.
+  `cuad-specialist`-labelled responses (data protection stayed on the MoE),
+  so the specialist route — then still a composite pod — did most of the
+  extraction work. The 2026-11-10 rebuild separates the two routes.
 
   Direct baselines, same 200 documents, no router, concurrency 8:
   `cpu-moe` 2095.2 s, F1 1.0, risk 1.0, report 0.746, 200/200;

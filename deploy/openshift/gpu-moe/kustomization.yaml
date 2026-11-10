@@ -39,12 +39,11 @@ patches:
           - {name: TRACE_DB_PATH, value: /data/traces.db}
           - {name: PRAXIS_UPSTREAM, value: "http://praxis:80"}
           - {name: SENSITIVE_UPSTREAM, value: "http://praxis:8083"}
-          - {name: JUDGMENT_UPSTREAM, value: "http://praxis:8086"}
-          - {name: SENSITIVE_JUDGMENT_UPSTREAM, value: "http://praxis:8087"}
-          - {name: TRACE_POOLS, value: "vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small"}
+          - {name: TRACE_POOLS, value: "cuad-specialist,vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small"}
           # The three "cheap" names stay on the CPU-served pools from the
           # base. Only vllm-cpu is the 35B-A3B; vllm-gpu-small remains the
           # 1.5B it always was, so a small-model arm still has somewhere to go.
+          - {name: CUAD_SPECIALIST_UPSTREAM, value: "http://cpureal-vllm-cpu:8000"}
           - {name: VLLM_CPU_UPSTREAM, value: "http://cpureal-vllm-cpu:8000"}
           - {name: VLLM_GPU_SMALL_UPSTREAM, value: "http://cpureal-vllm-gpu-small:8000"}
           # COMPLEX/REASONING on the general entry, and COMPLEX/REASONING on

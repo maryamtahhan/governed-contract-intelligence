@@ -73,41 +73,37 @@ different things**, and the same word can appear in more than one layer.
 | Served model | `Qwen3.5-35B-A3B`, `cuad-specialist` | response `model`; `summary.stage_models` |
 | Actual hardware | `4× A10G`, `CPU x8i.24xlarge` | `summary.pools[route].hardware` |
 
-A route can be composite: the route name says where praxis sent the request,
-but the response model can be a specialist behind that route. Route ≠ model.
+A route names one model endpoint. Since the 2026-11-10 rebuild there is no
+composite route: the CUAD specialist and the CPU MoE are separate praxis
+routes, so the route count is also a model count. Route ≠ hardware still
+holds (a route can name a CPU-served pool), but route = endpoint.
 
-#### What actually serves each pipeline step (ROSA)
+#### What serves each pipeline step (rebuilt stack)
 
-The `vllm-cpu` route is the composite case: praxis sends the request through
-the `:8081` pool relay to the `cpureal-specialist` endpoint, and what answers
-depends on the prompt. Extraction prompts for the three CUAD-trained clauses
-run the RoBERTa-large QA checkpoint in a single encoder pass — a plain
-FastAPI/uvicorn service holding plain `transformers` weights, not vLLM (vLLM
-is a generation server; it cannot serve extractive QA). Everything else that endpoint receives — the classify step,
-and the data-protection clause, for which CUAD has no category — is forwarded
-by the same pod to the real vLLM CPU server (`cpureal-vllm-cpu`,
-Qwen3.5-35B-A3B). Judgment (risk/report) is pinned to the GPU pools.
+The pipeline sends `X-Demo-Step` and chooses only the general or sensitive
+entry. Praxis matches the step against the route table in
+`manifests/base/praxis/config.yaml`; the specialist is a model endpoint, not
+a router.
 
-Per document, in the 200-doc CPU-policy run
-(`runs/rosa-200-2026-11-09-cpu-term-rerun/hybrid`):
+| Step | Route | Served by | Response `model` |
+|---|---|---|---|
+| `classify` | `vllm-cpu` | vLLM CPU (Qwen3.5-35B-A3B MoE) | `Semantic-Qwen` |
+| `extract:termination` | `cuad-specialist` | RoBERTa-large QA (cause follow-up stays inside the step) | `cuad-specialist` |
+| `extract:governing_law` | `cuad-specialist` | RoBERTa-large QA | `cuad-specialist` |
+| `extract:liability_cap` | `cuad-specialist` | RoBERTa-large QA | `cuad-specialist` |
+| `extract:data_protection` | `vllm-cpu` | vLLM CPU (CUAD has no data-protection category) | `Semantic-Qwen` |
+| `risk` | `vllm-gpu` (general) / `vllm-gpu-approved` (sensitive) | vLLM GPU (`gpumoe-vllm`, 4×A10G, TP=4) | `Semantic-Qwen` |
+| `report` (once per run) | `vllm-gpu` / `vllm-gpu-approved` | same GPU backend | `Semantic-Qwen` |
 
-| Step | Actually served by | Steps/run | Response `model` |
-|---|---|---:|---|
-| `classify` | vLLM CPU (Qwen MoE) — forwarded by the specialist pod | 200 | `Semantic-Qwen` |
-| `extract:termination` | RoBERTa encoder (cause follow-up stays inside the step) | 200 | `cuad-specialist` |
-| `extract:governing_law` | RoBERTa encoder | 200 | `cuad-specialist` |
-| `extract:liability_cap` | RoBERTa encoder | 200 | `cuad-specialist` |
-| `extract:data_protection` | vLLM CPU (Qwen MoE) — forwarded, no CUAD category | 200 | `Semantic-Qwen` |
-| `risk` | vLLM GPU (`gpumoe-vllm`, 4×A10G, TP=4) | 200 | `Semantic-Qwen` |
-| `report` (once per run) | vLLM GPU approved (same A10G backend, `shared_with`) | 1 | `Semantic-Qwen` |
-
-So a route count of `vllm-cpu: 1000` in a 200-doc run is 600 RoBERTa encoder
-passes plus 400 vLLM Qwen calls relayed through the specialist pod. Evidence
-per run: `summary.stage_routes` (route counts per stage) and
-`summary.stage_models` (what actually answered — `response_model` is the only
-per-step record of which checkpoint did the work). The specialist's `/health`
-states the split directly: `{"model": "/opt/cuad-model/roberta-large",
-"forwards_to": "http://cpureal-vllm-cpu:8000"}`.
+**The quoted 200-doc measurement predates this split.** In
+`runs/rosa-200-2026-11-09-cpu-term-rerun/hybrid`, `vllm-cpu` was still a
+composite route: the specialist pod answered CUAD extraction and forwarded
+classify/data-protection to `cpureal-vllm-cpu`, so a `vllm-cpu: 1000` count
+was 600 RoBERTa passes plus 400 Qwen calls. The numbers stay valid for the
+routing that produced them; the new route graph needs a new run directory
+and has not been re-measured. Evidence per run remains
+`summary.stage_routes` and `summary.stage_models`; the specialist `/health`
+now reports only `{"model": "/opt/cuad-model/roberta-large"}`.
 
 ### 2.3 The four routing configs
 
@@ -119,7 +115,7 @@ not hardware.
 | `all-gpu` | A | Every request → `vllm-gpu`. No CPU, no failover. | `vllm-gpu` |
 | `gpu-small` | B (`gpu-split`) | Every request → `vllm-gpu-small` (historically label-routed; the classifier labelled everything MEDIUM, so the pin reproduces the measured routing). On failure, fail over to either GPU pool. | `vllm-gpu-small`, `vllm-gpu` |
 | `round-robin` | C | Alternate across CPU and GPU. | `vllm-cpu`, `vllm-gpu` |
-| `hybrid` | D (`matrix`) | General and sensitive entries pin to `vllm-cpu`; the general entry degrades to any pool, the sensitive entry only to `vllm-gpu-approved` (fail closed). Judgment entries pin risk/report to the GPU pools. | `vllm-cpu`, `vllm-gpu`, `vllm-gpu-approved` |
+| `hybrid` | D (`matrix`) | Two entries. Inside each, the router table sends CUAD clause extraction to `cuad-specialist`, classify/data-protection to `vllm-cpu`, and risk/report to a GPU route (`vllm-gpu` general, `vllm-gpu-approved` sensitive). The general entry degrades to `vllm-gpu`; the sensitive entry degrades only to `vllm-gpu-approved` (fail closed). | `cuad-specialist`, `vllm-cpu`, `vllm-gpu`, `vllm-gpu-approved` |
 
 Config manifests: `manifests/base/praxis/arm-a.yaml`, `arm-b.yaml`,
 `arm-c.yaml`, and `config.yaml` (hybrid). The filenames still use `arm-*`
@@ -130,11 +126,11 @@ rename them without a migration plan.
 
 | Route / cluster | ROSA (`<redacted-cluster>`) | Linux/g5 `real` profile | Earlier SNO |
 |---|---|---|---|
+| `cuad-specialist` | CUAD RoBERTa-large QA, CPU x8i.24xlarge (2 cores) | routed to the CPU pool (no RoBERTa service) | not part of A/B/C/D |
 | `vllm-cpu` | Qwen3.5-35B-A3B, CPU x8i.24xlarge | Qwen2.5-1.5B, CPU | CPU-served |
 | `vllm-gpu` | Qwen3.5-35B-A3B, 4×A10G (g5.12xlarge, TP=4) | Qwen2.5-7B, GPU | CPU-served |
 | `vllm-gpu-approved` | Qwen3.5-35B-A3B, same 4×A10G | Qwen2.5-7B, GPU | CPU-served |
 | `vllm-gpu-small` | **Qwen2.5-1.5B, CPU x8i.24xlarge** | **Qwen2.5-1.5B, GPU** | CPU-served |
-| `specialist` | CUAD RoBERTa-large QA, CPU (composite relay) | not part of A/B/C/D | not part of A/B/C/D |
 
 Sources: `deploy/openshift/rosa/pools.json` and each run's `summary.pools`;
 the ROSA all-CPU variant (`deploy/openshift/rosa/pools-cpu.yaml`); the
@@ -227,32 +223,44 @@ uv run hybrid-run --target gateway \
 
 ## 3. Routing and governance design
 
-### 3.1 The four entries
+### 3.1 Two entries, one work-to-pool table
 
-Praxis exposes four listeners, and none of them consults a classifier:
+Praxis exposes two listeners. The pipeline chooses only the data
+classification: the PII screen sends personal-data documents to the sensitive
+entry, everything else to general. Pool choice happens inside praxis and
+nowhere else.
 
-- **general (:8080)** — pinned `vllm-cpu`. On failure, fails over to any
-  general pool; the visible "degraded" signal is the failed hop on a
-  completed request, which the trace UI badges as a fallback. (praxis does
-  not emit `X-Praxis-Fallback` on proxied failovers — FINDINGS §7 — and
-  the label/route mismatch signal left with the classifier.)
-- **sensitive (:8083)** — the pipeline's PII screen sends documents
-  containing personal data here. Also pinned `vllm-cpu`, but its failover
-  pool contains **only** the approved in-cluster GPU backend, so when both
-  are down the request fails closed with an explicit error instead of
-  spilling to a non-approved pool.
-- **judgment (:8086)** and **sensitive-judgment (:8087)** — stage-aware
-  policy routing for the judgment steps (risk + report). Pinned to the GPU
-  with no CPU failover: judgment is the work worth a GPU, and a rerun must
-  not silently reproduce the all-CPU result. The sensitive judgment entry
-  pins to the approved GPU only, so it fails closed if that pool is down.
+Inside each entry, the `router` filter matches `X-Demo-Step` and sets the
+cluster (exact values, case-sensitive; more header constraints win over the
+bare path prefix):
 
-The pipeline chooses the entry: the PII screen picks sensitive over general,
-and the step type picks the judgment entries (risk and report) over the
-stage-agnostic ones. Sensitivity beats stage: a sensitive `RISK` or `REPORT`
-always uses an approved entry. Praxis reaches the pools only through the
-trace-ui relays (per-pool recording hops), and SQLite behind them is the
-audit trail, exported as `audit.jsonl`.
+| `X-Demo-Step` | General entry | Sensitive entry |
+|---|---|---|
+| `extract:termination`, `extract:governing_law`, `extract:liability_cap`, `extract:audit_rights` | `cuad-specialist` | `cuad-specialist` |
+| `extract:data_protection` | `vllm-cpu` | `vllm-cpu` |
+| `classify` | `vllm-cpu` | `vllm-cpu` |
+| `risk`, `report` | `vllm-gpu` | `vllm-gpu-approved` |
+| anything else | `vllm-cpu` | `vllm-cpu` |
+
+The general entry fails over to `vllm-gpu`; a judgment request that was
+already on `vllm-gpu` retries the same cluster and then fails rather than
+silently reproducing the all-CPU result. The sensitive entry fails over only
+to `vllm-gpu-approved`, so it fails closed when that pool is down. The
+visible "degraded" signal is the failed hop on a completed request, which the
+trace UI badges as a fallback (praxis does not emit `X-Praxis-Fallback` on
+proxied failovers — FINDINGS §7; the header is only set on the explicit
+failover step).
+
+The `X-Demo-Step` value is declarative task metadata, not an authenticated
+claim: the PPE policy checks that the key is known, but it does not bind a
+key to a step. A client with any valid key can ask for another step's route.
+For the demo the pipeline is trusted and the keys are fixed demo credentials;
+binding key scope to step is a Phase 2 policy change, not a property of this
+build.
+
+Praxis reaches the pools only through the trace-ui relays (per-pool recording
+hops), and SQLite behind them is the audit trail, exported as
+`audit.jsonl`.
 
 Every entry also runs the praxis `policy` filter — the Praxis Policy Engine
 (PPE) — ahead of its router. The pipeline authenticates each step with a
@@ -310,11 +318,11 @@ reality (ROSA, 200 documents, FINDINGS §15.5): the classifier labelled
 **1,200 of 1,201 steps MEDIUM** — a taxonomy mismatch, not degradation;
 its labels are prompt-difficulty, not per-step complexity. The one decision
 the labels did drive (the 37k-character cross-document report scoring
-REASONING → GPU) is exactly what the stage-aware judgment entries now do
+REASONING → GPU) is exactly what the `X-Demo-Step` route table now does
 directly, and better. So on 2026-11-05 the classifier was removed from the
-default stack: the pins above express the routing that actually happened,
-without the gRPC hop, and the claim is "containment plus GPU-first
-economics", never "the AI decides what is hard".
+default stack: the router table expresses the routing that actually
+happened, without the gRPC hop, and the claim is "containment plus
+GPU-first economics", never "the AI decides what is hard".
 
 The removal was **built and tested**; the 2026-11-09 classifier-free matrix
 in §3.3 is its re-measurement. Every §15 number before §15.8 came from the
@@ -353,8 +361,7 @@ corrects that and is the current policy.
 The hybrid arm runs termination extraction on the CPU specialist with a
 conditional cause follow-up (canonical CUAD convenience question first; a
 focused termination-for-cause question only when that returns no span and the
-contract has cause language); judgment stays risk/report on the GPU-bound
-entries. The other three arms are the same-day copies. All arms: 200 documents,
+contract has cause language); judgment stays risk/report on the GPU route. The other three arms are the same-day copies. All arms: 200 documents,
 1,201 steps, 0 errors, 0 fallback, regex screen 41/0/159/0.
 
 | config | wall | extract F1 | risk | report | fully correct | CPU share | sensitive approved | violations | GPU-s/doc |
@@ -397,10 +404,14 @@ classifier-in-path record and must not be mixed with this table.
   archived examples live under `runs/direct` at `cfc52cc`.
 - Keep `--arm`, letter aliases, `gpu-split`, and `matrix` working.
 - Keep `set_arm.sh` working even if `set_config.sh` is the documented name.
-- Do not just repoint the specialist composite's `--forward-to` at another
-  pool — it forwards outside praxis and would bypass the approved set; and
-  the pool relay's `X-Demo-Route` header hides the composite's real backend,
-  so read the composite's own logs for where forwarded calls actually went.
+- Do not reintroduce a forwarding branch in the specialist or any other
+  model pod. A second hop inside the app bypasses praxis's route table, and
+  the pool relay's `X-Demo-Route` header cannot show where the request
+  actually went.
+- Do not move step-to-pool choices into the pipeline. The app may declare
+  `X-Demo-Step`; only `manifests/base/praxis/config.yaml` maps it to a pool.
+- Do not treat `X-Demo-Step` as authenticated. The policy gate authenticates
+  the caller, not the claimed step.
 
 ### 3.5 The agentic surface: MCP above, governance below
 
@@ -730,8 +741,8 @@ The replacement taxonomy labels the **task stage**:
 | --- | --- | --- |
 | `CLASSIFY` | Identify the contract type and initial term | CPU |
 | `EXTRACT` | Locate and quote a named clause | CPU |
-| `RISK` | Judge one contract's exposure | GPU / judgment entry |
-| `REPORT` | Aggregate the batch into a portfolio report | GPU / judgment entry |
+| `RISK` | Judge one contract's exposure | GPU (`vllm-gpu` / approved) |
+| `REPORT` | Aggregate the batch into a portfolio report | GPU (`vllm-gpu` / approved) |
 
 This is stage routing, not complexity routing. Do not describe it as
 complexity routing and do not compare its numbers to the complexity arm's
