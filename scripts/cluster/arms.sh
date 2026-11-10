@@ -26,7 +26,15 @@ SENSITIVE_PORT="${LOCAL_SENSITIVE_PORT:-18083}"
 ENVIRONMENT="${ENVIRONMENT:-rosa}"
 CLUSTER="${CLUSTER:-}"
 POOLS_JSON="${POOLS_JSON:-$REPO/deploy/openshift/rosa/pools.json}"
-prov_args=(--environment "$ENVIRONMENT" --pools "@$POOLS_JSON")
+# The Python runner is launched from demo/, so a repo-relative pool map such
+# as deploy/openshift/rosa/pools.json would resolve inside demo/ and fail.
+# Accept absolute paths, repo-relative paths, and an optional leading @.
+POOLS_FILE="${POOLS_JSON#@}"
+case "$POOLS_FILE" in
+  /*) ;;
+  *) POOLS_FILE="$REPO/$POOLS_FILE" ;;
+esac
+prov_args=(--environment "$ENVIRONMENT" --pools "@$POOLS_FILE")
 [ -n "$CLUSTER" ] && prov_args+=(--cluster "$CLUSTER")
 
 for c in oc curl uv; do command -v "$c" >/dev/null || { echo "missing: $c" >&2; exit 1; }; done

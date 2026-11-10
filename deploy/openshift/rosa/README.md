@@ -205,6 +205,21 @@ documents into "non-sensitive".
   so the specialist route — then still a composite pod — did most of the
   extraction work. The 2026-11-10 rebuild separates the two routes.
 
+- 2026-11-10, us-east-1 `<redacted-cluster>` (rebuilt two-entry graph). Machine
+  pools re-created with the same labels/taints (`<redacted-gpu-pool>`,
+  `<redacted-cpu-pool>` in us-east-1a); the CPU topology script reproduced the
+  recorded bind lists exactly (`problems: []`). Batch, 200 synthetic
+  documents (41 sensitive), arms A-D, concurrency 12, recorded in
+  `runs/rosa-200-2026-11-10-praxis-routes/`. Hybrid: 839.9 s, 0 errors,
+  0 fallback, extract F1 1.000, risk 1.000, report 0.750, 200/200 fully
+  correct, 0 sensitive violations. Route counts: `vllm-cpu` 400,
+  `cuad-specialist` 600, `vllm-gpu` 159, `vllm-gpu-approved` 42; 247/247
+  sensitive steps on approved pools. The all-GPU control hit 11 transport
+  timeouts on termination prompts (601.2 s, 245 violations); gpu-small
+  457.6 s / 247 violations; round-robin 938.4 s / 117 violations. Device
+  time for the rebuilt hybrid arm is `n/a` (relay gauges unavailable), not
+  zero; do not reuse the pre-rebuild 0.22 GPU-s/doc figure for this graph.
+
   Direct baselines, same 200 documents, no router, concurrency 8:
   `cpu-moe` 2095.2 s, F1 1.0, risk 1.0, report 0.746, 200/200;
   `gpu-moe` 228.3 s, F1 1.0, risk 1.0, report 0.768, 200/200;

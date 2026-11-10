@@ -108,7 +108,7 @@ spec:
               containerPort: 8084
             - name: small-backend
               containerPort: 8085
-            - name: specialist-backend
+            - name: spec-backend
               containerPort: 8088
           readinessProbe:
             httpGet:
@@ -155,9 +155,9 @@ spec:
     - name: small-backend
       port: 8085
       targetPort: small-backend
-    - name: specialist-backend
+    - name: spec-backend
       port: 8088
-      targetPort: specialist-backend
+      targetPort: spec-backend
 # No Route here: the trace UI holds contract text and an unauthenticated
 # dashboard on a public hostname is a disclosure path. Reach it with
 # `oc port-forward svc/trace-ui 8080:8080`, or opt in explicitly with

@@ -5,9 +5,10 @@ three beats below are the same in replay and live; only beat 2 needs a live
 cluster (or the recording fallback).
 
 Read the header run line before every beat: in the default dashboard **A is
-the classifier-free ROSA hybrid run** (`runs/rosa-200-2026-11-09-cpu-term-rerun/hybrid`)
-and **B is the same-day all-GPU control** (`runs/rosa-200-2026-11-09/all-gpu`).
-Both cross Praxis; A is governed, B is not. The CUAD appendix instead uses a
+the rebuilt-graph ROSA hybrid run**
+(`runs/rosa-200-2026-11-10-praxis-routes/hybrid`) and **B is the same-run
+all-GPU control** (`runs/rosa-200-2026-11-10-praxis-routes/all-gpu`). Both
+cross Praxis; A is governed, B is not. The CUAD appendix instead uses a
 direct run for A and a failed gateway run for B.
 
 ## Pre-flight (5 minutes)
@@ -29,7 +30,8 @@ Leave the A/B toggle on **A**. On the ROSA run the header reads
 `measured · <redacted-cluster> · rosa`; the hardware line names
 `vllm-cpu` and `vllm-gpu-approved` and ends with **0 sensitive violations**.
 Point at the routing figures: **247/247 sensitive steps on approved pools,
-0 violations**, **1000 CPU-served general steps** (classify + extraction) and
+0 violations**, **1000 CPU-served steps** (400 `vllm-cpu` for
+classify/data-protection + 600 `cuad-specialist` for clause extraction) and
 **201 judgment steps on GPU** (159 `vllm-gpu` + 42 approved).
 
 Say: *“This is the recorded routing evidence. The sensitive entry never
@@ -65,31 +67,28 @@ never spills to a non-approved pool.
 
 **Fallback:** play the pre-recorded clip (record it once in prep; keep it at
 `docs/media/pull-the-plug.mp4`). Say plainly: *“This is a recording of the
-2026-11-09 ROSA run; the live cluster is not required for the talk.”* If the
+2026-11-10 ROSA run; the live cluster is not required for the talk.”* If the
 clip is missing, skip the outage claim and show the recorded trace rows from
 the last live run instead.
 
 ## Beat 3 — GPU economics (replay A)
 
-Stay on **A**. Quote the measured run, not a model estimate:
+Stay on **A**. The rebuilt 2026-11-10 run records routing and quality, but
+its per-pool device time is **`n/a`**, not zero. Do not present a GPU-cost
+number for the rebuilt graph.
 
-- **0.22 GPU-seconds/document** vs **1.013** for all-GPU — about **4.6× less**.
-- **44.0 GPU-seconds total** vs **202.7** over 200 documents.
-- At the illustrative **$1.10/GPU-hour**: about **$0.013** of GPU time for
-  200 contracts vs **$0.062** all-GPU.
-- Source: the 2026-11-09 classifier-free CPU-termination rerun
-  (`runs/rosa-200-2026-11-09-cpu-term-rerun`). GPU-s/doc counts the shared
-  `gpumoe-vllm` backend once. Do not use the old **0.036 / 1.974 / 54×**
-  figures: that was the classifier-in-path policy and it double-counted the
-  shared backend. The GPU-termination alternative
-  (`runs/rosa-200-2026-11-09-gpu-term`, archived at `cfc52cc`) measured **0.508** GPU-s/doc — a
-  measured route, not the current policy.
+- Routing: **400 `vllm-cpu` + 600 `cuad-specialist`** CPU-served, **159
+  `vllm-gpu` + 42 `vllm-gpu-approved`** judgment steps.
+- Quality: extraction F1 **1.000**, risk **1.000**, report **0.750**,
+  **200/200 documents fully correct**, **0 sensitive violations**.
+- Source: `runs/rosa-200-2026-11-10-praxis-routes/report.md`.
+- The **0.22 vs 1.013 GPU-s/doc** (≈4.6×) figure belongs to the pre-rebuild
+  2026-11-09 graph with the composite `vllm-cpu` route. If you use it, say
+  that explicitly; it is not a measurement of the rebuilt graph. Do not use
+  the old **0.036 / 1.974 / 54×** classifier-in-path figures at all.
 
-Say: *“The saving is the GPU capacity you did not have to buy or queue for.”*
-Quality is supporting evidence, not the headline: on the 200-document
-synthetic corpus, extraction F1 **1.000** (the conditional cause follow-up
-recovered all 48 termination-for-cause clauses with zero false positives),
-risk **1.000**, report **0.752**, **200/200 documents fully correct**.
+Say: *“The routing moved the expensive judgment work to GPU and kept the
+high-volume clause work on CPU; the governance boundary held.”*
 
 ## Do not claim
 
@@ -104,9 +103,8 @@ risk **1.000**, report **0.752**, **200/200 documents fully correct**.
 - **Quality is not the headline.** Lead with containment and GPU economics.
 - Do not quote **26.3%** for the report. That is the pre-fix value; the page
   and the re-scored `metrics.json` both read **64.5%**.
-- Do not claim the **200-document run** was live today. It was measured on
-  2026-11-09 (CPU-termination policy); today's live run is a separate, smaller
-  run.
+- Do not claim the **200-document run** was live today. It was recorded on
+  2026-11-10 in replay; a live run is a separate, smaller run.
 
 ## Live cluster quick reference
 

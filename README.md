@@ -243,7 +243,7 @@ hardware are **five different things** (full treatment: [design §2](docs/design
 
 | Layer | Example | Where to read it |
 |---|---|---|
-| Run directory | `runs/rosa-200-2026-11-09-cpu-term-rerun/hybrid` | the path; maps to one recorded run |
+| Run directory | `runs/rosa-200-2026-11-10-praxis-routes/hybrid` | the path; maps to one recorded run |
 | Routing policy / config | `hybrid` (old D) | `summary.config`; legacy `summary.arm` |
 | Route / cluster | `vllm-cpu`, `vllm-gpu-approved` | `x-demo-route` response header; `summary.routes` |
 | Served model | `Qwen3.5-35B-A3B`, `cuad-specialist` | response `model`; `summary.stage_models` |
@@ -412,12 +412,12 @@ make dashboard-up          # replay only, 127.0.0.1:8099
 open http://127.0.0.1:8099/
 ```
 
-It defaults to the quoted CPU-termination rerun
-(`runs/rosa-200-2026-11-09-cpu-term-rerun/hybrid`) with the same-day all-GPU
+It defaults to the current rebuilt-graph run
+(`runs/rosa-200-2026-11-10-praxis-routes/hybrid`) with the same-run all-GPU
 control as B. Useful variants:
 
 ```bash
-make dashboard-up RUN=../runs/rosa-200-2026-11-09/all-gpu COMPARE=   # show the all-GPU control
+make dashboard-up RUN=../runs/rosa-200-2026-11-10-praxis-routes/all-gpu COMPARE=   # show the all-GPU control
 make dashboard-live ENDPOINT=http://127.0.0.1:8000/v1   # one-document live runs
 make dashboard-live HOST=0.0.0.0 LIVE_TOKEN=sesame      # token-gated, non-loopback
 make dashboard-down
@@ -627,24 +627,21 @@ before quoting any of these:
   extraction F1 1.000, zero false positives, 200/200 fully correct, with CUAD
   held-out termination F1 unchanged at 0.714. Direct runs are ungoverned by
   construction (all 247 sensitive steps on one endpoint).
-- **Cost (ROSA demo stack, classifier-free, 200 synthetic docs, 2026-11-09)**:
-  the hybrid config used **0.22 GPU-s/doc vs the all-gpu config's 1.013
-  (≈4.6×)** — 44.0 vs 202.7 GPU-seconds total — at extract F1 1.000 vs 1.000,
-  risk 1.000 vs 0.995 and report 0.752 vs 0.756 (200/200 vs 199/200 documents
-  fully correct; the policy was measured twice on the same commit, and the
-  first run's two risk misses did not reproduce in the quoted rerun,
-  FINDINGS §15.9). GPU time is the 201 judgment steps
-  (risk + report); in that run they used the judgment listeners, which the
-  2026-11-10 rebuild replaced with `X-Demo-Step` routes inside the general
-  and sensitive entries. The measured route counts and quality stay tied to
-  the run that produced them; the rebuilt graph has not been re-measured.
-  General work is CPU-first. The
-  GPU-termination alternative measured 0.508 GPU-s/doc (archived at
-  `cfc52cc`) and the earlier classifier-in-path run (0.036 vs 1.974) is a
-  different policy; neither is the current record
-  (FINDINGS §15.8-§15.9). GPU-s/doc counts the shared `gpumoe-vllm`
-  backend once. At the illustrative $1.10/GPU-hour that is ≈ $0.013 vs
-  ≈ $0.062 of GPU time for the batch.
+- **Routing and quality (ROSA, rebuilt graph, 200 synthetic docs, 2026-11-10)**:
+  the hybrid config ran in 839.9 s with 0 errors, 0 fallback and **0 sensitive
+  violations**. Route counts are the rebuilt table: `vllm-cpu` 400,
+  `cuad-specialist` 600, `vllm-gpu` 159 (non-sensitive risk) and
+  `vllm-gpu-approved` 42 (41 sensitive risk + 1 portfolio report). Quality:
+  extract F1 1.000, risk 1.000, report 0.750, **200/200 documents fully
+  correct**. 247/247 sensitive steps stayed on the approved set. See
+  `runs/rosa-200-2026-11-10-praxis-routes/report.md` and FINDINGS §15.10.
+- **Cost caveat**: the rebuilt hybrid arm's per-pool device time is **`n/a`**,
+  not zero — the relays did not expose vLLM's in-flight gauges. Do not price
+  it from the old 0.22 GPU-s/doc figure. That figure (hybrid 0.22 vs all-gpu
+  1.013, ≈4.6×) remains valid only for the pre-rebuild 2026-11-09 graph
+  with the composite `vllm-cpu` route (FINDINGS §15.9); the classifier-in-path
+  run (0.036 vs 1.974) and the GPU-termination alternative (0.508, archived at
+  `cfc52cc`) are different policies, not the current record.
 - **Retrieval (single runs)**: regime decides the winner. Within-document
   (the retrieve-then-extract regime) the MTEB(Law) ordering inverts — the
   0.6B litil beats the top-scoring 8B by ~10 points on R@1/MRR

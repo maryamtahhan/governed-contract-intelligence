@@ -1054,9 +1054,9 @@ listeners are now **CPU-first for batch work** (general fails over to the
 general GPU with the visible degraded flag; sensitive keeps the
 approved-only failover set, preserving fail-closed). The 2026-11-10 rebuild
 keeps the two-entry containment boundary and moves per-step pool choice to
-the router table (§15.10). This is a config change past the
-recorded runs: built and tested, **not measured** — every number in §15
-came from the classifier-in-path config. The classifier-routed arm B
+the router table (§15.10). The rebuilt graph is measured in §15.10; the
+numbers in §15.5-§15.9 came from the earlier classifier-in-path config.
+The classifier-routed arm B
 config and the llm-d-sc Deployment are preserved in git history
 (`manifests/base/praxis/arm-b.yaml`, `manifests/base/llm-d-sc.yaml` at
 commit `aa080e9`); the contract-step taxonomy remains the measured path
@@ -1180,8 +1180,9 @@ stack; treat them as the earlier comparison until that run is repeated.
 
 ### 15.9 CPU termination with the conditional cause follow-up (2026-11-09)
 
-`runs/rosa-200-2026-11-09-cpu-term-rerun` is the current classifier-free
-record and the current policy. Termination extraction is back on the CPU specialist: the
+`runs/rosa-200-2026-11-09-cpu-term-rerun` is the pre-rebuild classifier-free
+record; its conditional-cause termination policy is carried into the rebuilt
+graph measured in §15.10. Termination extraction is back on the CPU specialist: the
 specialist asks CUAD's canonical convenience question first and, only when that
 returns no span and the contract contains explicit cause language
 (`material breach`, `uncured`, `termination for cause`, `for cause`), a focused
@@ -1250,7 +1251,7 @@ scored 200/200 with risk 1.000.
   tree at first-run time, and the design-doc table edit was uncommitted at
   rerun time.
 
-### 15.10 Route-graph rebuild: work-to-pool in Praxis (2026-11-10, not yet measured)
+### 15.10 Route-graph rebuild: work-to-pool in Praxis (2026-11-10, measured)
 
 The 2026-11-09 runs measured a four-entry policy (general, sensitive, judgment,
 sensitive-judgment) with a composite `vllm-cpu` route. On 2026-11-10 the stack
@@ -1273,15 +1274,40 @@ was rebuilt around **two entries and a declarative work-to-pool table**:
   is preserved, and `vllm-gpu` can carry non-sensitive GPU work without
   becoming an approved route.
 
-The quoted 200-document result
+The pre-rebuild 200-document result
 (`runs/rosa-200-2026-11-09-cpu-term-rerun/hybrid`) belongs to the old graph:
 its `vllm-cpu` count was 600 RoBERTa encoder passes plus 400 forwarded Qwen
-calls. It is not evidence for the rebuilt graph. The rebuilt graph has **not
-been re-measured** because the ROSA footprint is torn down; the next
-measurement must write a new `runs/` directory and verify, per trace:
-`cuad-specialist` for CUAD clauses, `vllm-cpu` for classify/data-protection,
-`vllm-gpu` for non-sensitive risk/report, and `vllm-gpu-approved` for
-sensitive work. Do not edit or reinterpret the recorded runs.
+calls. It is not evidence for the rebuilt graph.
+
+**Measured 2026-11-10** in
+`runs/rosa-200-2026-11-10-praxis-routes/hybrid` (ROSA `<redacted-cluster>`,
+200 synthetic documents, 41 sensitive, concurrency 12, `environment: rosa`):
+839.9 s, 1,201 steps, 0 errors, 0 fallback, extract F1 1.000, risk 1.000,
+report 0.750, 200/200 documents fully correct. The route counts show the
+rebuilt table directly:
+
+| stage | route counts |
+|---|---|
+| classify | `vllm-cpu` 200 |
+| extract | `cuad-specialist` 600 (`vllm-cpu` 200 for data protection) |
+| risk | `vllm-gpu` 159 (non-sensitive) / `vllm-gpu-approved` 41 (sensitive) |
+| report | `vllm-gpu-approved` 1 |
+
+That is 400 `vllm-cpu`, 600 `cuad-specialist`, 159 `vllm-gpu` and 42
+`vllm-gpu-approved`; 247/247 sensitive steps were served by the approved set
+(`cuad-specialist`, `vllm-cpu`, `vllm-gpu-approved`) and the score reports
+**0 sensitive violations**. The app made no pool choice: the pipeline sent
+`X-Demo-Step` and the entry only. The same run's controls: all-gpu 601.2 s
+with 11 transport timeouts and 245 violations; gpu-small 457.6 s with 247
+violations; round-robin 938.4 s with 117 violations.
+
+Caveat: device time for the rebuilt hybrid arm is **`n/a`**, not zero. The
+per-pool relays did not expose vLLM's in-flight gauges, so the 0.22 GPU-s/doc
+figure from the pre-rebuild graph is not a measured claim for this graph. The
+run records wall time and route counts; do not price the new arm from the old
+cost number. The all-GPU arm's device time was measured (0.043 GPU-s/doc) but
+that arm also hit 11 transport timeouts, so it is a control, not a clean
+latency baseline. Do not edit or reinterpret the recorded runs.
 
 ## 16. Open-source reuse audit and adapters (2026-11-05)
 

@@ -1,0 +1,22 @@
+{
+ "cuad-specialist": {
+  "samples": 0,
+  "scrape_errors": 419
+ },
+ "vllm-cpu": {
+  "samples": 0,
+  "scrape_errors": 419
+ },
+ "vllm-gpu": {
+  "samples": 0,
+  "scrape_errors": 419
+ },
+ "vllm-gpu-approved": {
+  "samples": 0,
+  "scrape_errors": 419
+ },
+ "vllm-gpu-small": {
+  "samples": 0,
+  "scrape_errors": 419
+ }
+}

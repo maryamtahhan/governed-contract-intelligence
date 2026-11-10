@@ -10,18 +10,23 @@ the working tree.
 
 | directory | routing config | what it is |
 |---|---|---|
-| `rosa-200-2026-11-09-cpu-term-rerun/hybrid` | `hybrid` | **current quoted record** — CPU termination policy, 200 docs, default dashboard A |
-| `rosa-200-2026-11-09/all-gpu` | `all-gpu` | same-day all-GPU control, default dashboard B |
-| `rosa-200-2026-11-09/gpu-small` | `gpu-small` | same-day matrix row |
-| `rosa-200-2026-11-09/round-robin` | `round-robin` | same-day matrix row |
+| `rosa-200-2026-11-10-praxis-routes/hybrid` | `hybrid` | **current quoted record** — rebuilt two-entry / `X-Demo-Step` graph, 200 docs, default dashboard A |
+| `rosa-200-2026-11-10-praxis-routes/all-gpu` | `all-gpu` | same-run all-GPU control, default dashboard B (11 transport timeouts) |
+| `rosa-200-2026-11-10-praxis-routes/gpu-small` | `gpu-small` | same-run matrix row |
+| `rosa-200-2026-11-10-praxis-routes/round-robin` | `round-robin` | same-run matrix row |
+| `rosa-200-2026-11-09-cpu-term-rerun/hybrid` | `hybrid` | pre-rebuild record — four-entry policy with composite `vllm-cpu`; keep for comparison |
+| `rosa-200-2026-11-09/all-gpu` | `all-gpu` | pre-rebuild all-GPU control |
+| `rosa-200-2026-11-09/gpu-small` | `gpu-small` | pre-rebuild matrix row |
+| `rosa-200-2026-11-09/round-robin` | `round-robin` | pre-rebuild matrix row |
 | `cuad-test/` | direct + gateway | CUAD example and appendix used by the guide |
 | `retrieval/` | local direct | specialist quality evidence |
 
-**These runs predate the 2026-11-10 route-graph rebuild.** They measured the
-old four-entry policy with a composite `vllm-cpu` route (CUAD extraction plus
-forwarding). Their quality, route counts and cost stay tied to that graph.
-The rebuilt two-entry / `X-Demo-Step` graph has no recorded run yet; the next
-measurement must create a new directory here rather than edit these.
+The `2026-11-09` runs measured the old four-entry policy with a composite
+`vllm-cpu` route (CUAD extraction plus forwarding). Their quality, route
+counts and cost stay tied to that graph. The `2026-11-10-praxis-routes` run is
+the rebuilt two-entry / `X-Demo-Step` graph: `cuad-specialist` is a separate
+route and no app-side forwarder exists. Do not edit or reinterpret a recorded
+run; create a new directory for the next measurement.
 
 ## Removed historical runs
 
