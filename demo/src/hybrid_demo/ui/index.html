@@ -683,7 +683,8 @@ function renderPath() {
   if (m.gateway) {
     add("Batch runner", "hybrid-run --target gateway · shared prompts · CPU-side");
     add("trace-ui relays", "ingress + per-pool · audit trail");
-    add("praxis", "entry → label → pool per call", "praxis");
+    add("praxis", "API key → entry + step → pool, every call", "praxis",
+        "Every model call passes through Praxis. The pipeline picks the entry per step; the pinned routing config picks the pool.");
     const routes = Object.keys(r.routes || {});
     const configured = Object.keys(m.pools || {});
     const pools = routes.length ? routes : configured;
@@ -781,7 +782,7 @@ function renderMeta() {
   const routedModels = Object.entries(S.data.routing?.models || {});
   if (m.gateway && routedModels.length > 1) {
     const list = routedModels.map(([name, n]) => `${name} ×${n}`).join(" · ");
-    parts.push(`<span class="chip" title="${esc(`Per-call models: ${list}`)}">models <b>${routedModels.length}</b> per call</span>`);
+    parts.push(`<span class="chip" title="${esc(`Per-call models: ${list}`)}">served models <b>${routedModels.length}</b></span>`);
   } else if (m.model) {
     // The checkpoint is what makes a run the run: the endpoint only ever
     // reports its served alias, so both are shown and the alias is named.
@@ -1066,7 +1067,7 @@ function routeClass(route) {
 function routeChip(route, trace) {
   if (!route) return "";
   return `<span class="chip route ${routeClass(route)}"
-    title="${trace ? `trace ${esc(trace)}` : "no trace id"}">${esc(route)}</span>`;
+    title="Praxis route name — not the model and not the hardware${trace ? ` · trace ${esc(trace)}` : " · no trace id"}">route <b>${esc(route)}</b></span>`;
 }
 
 // The rest of the praxis path, each part read from a response header or the
@@ -1127,20 +1128,31 @@ function classifyCard(doc) {
     </div>
     ${requestBlock(c)}`;
   return stage(1, "Classify", "reads the document text only", c.latency_ms, body,
-               c.latency_ms, "classify", routeChip(c.route, c.trace_id));
+               c.latency_ms, "classify", routeChip(c.route, c.trace_id) + modelChip(c.model));
 }
 
 function extractsCard(doc) {
   const sum = doc.extracts.reduce((a, e) => a + (e.latency_ms || 0), 0);
   const cards = doc.extracts.map((e) => extractCard(e, doc.scored !== false)).join("");
+  // The route is a policy name, not the model that answered. On the measured
+  // stack every extract routes to vllm-cpu, but that route fronts the CUAD
+  // specialist: three clauses are answered there and the data-protection
+  // follow-up is forwarded to the CPU vLLM. Show the served models first, then
+  // the route they arrived through, so the header does not read as hardware.
+  const served = Object.entries(doc.extract_models || {})
+    .sort((a, b) => b[1] - a[1])
+    .map(([m, n]) => `<b>${esc(m)}</b> ×${n}`).join(" · ");
+  const servedChip = served
+    ? `<span class="chip" title="Served model, as the response named it">served by ${served}</span>` : "";
   const routes = Object.entries(doc.extract_routes || {})
-    .map(([r, n]) => `<span class="chip route ${routeClass(r)}">${esc(r)} ×${n}</span>`).join("");
+    .sort((a, b) => b[1] - a[1])
+    .map(([r, n]) => `<span class="chip route ${routeClass(r)}" title="Praxis route name — not the model and not the hardware">route <b>${esc(r)}</b> ×${n}</span>`).join("");
   return `<section class="stage" data-node="extract">
     <div class="stage-head">
       <span class="num">02</span>
       <h3>Extract clauses</h3>
       <span class="dep">each reads the document text + its clause name only → independent of the others</span>
-      ${routes}
+      ${servedChip}${routes}
       <span class="lat">${ms(sum)} · ${doc.extracts.length} requests</span>
     </div>
     <div class="extracts">${cards}</div>
@@ -1231,7 +1243,7 @@ function riskCard(doc) {
     </div>
     ${requestBlock(r)}`;
   return stage(3, "Assess risk", "reads the extracted clauses — the only stage that waits",
-               r.latency_ms, body, r.latency_ms, "risk", routeChip(r.route, r.trace_id));
+               r.latency_ms, body, r.latency_ms, "risk", routeChip(r.route, r.trace_id) + modelChip(r.model));
 }
 
 function stage(num, title, dep, latency, body, msVal = latency, nodeKey = "", head = "") {

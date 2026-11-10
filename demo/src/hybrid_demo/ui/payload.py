@@ -230,6 +230,12 @@ def build_document(doc_id: str, doc_text: str, records: list[dict],
     # sits above the extraction cards (e.g. "vllm-cpu x5, vllm-gpu x1" for a
     # document with four CPU extracts, one CPU classify and one GPU risk).
     extract_routes = Counter(e["route"] for e in extracts if e["route"])
+    # What actually answered each extraction. The route is a policy name: on
+    # the measured stack ``vllm-cpu`` fronts a composite whose extraction
+    # calls are answered by the CUAD specialist (and whose data-protection
+    # follow-up is forwarded to the CPU vLLM). Counting only routes here hid
+    # the specialist behind a pool label.
+    extract_models = Counter(e["model"] for e in extracts if e["model"])
     return {
         "doc_id": doc_id,
         "chars": len(doc_text),
@@ -244,6 +250,8 @@ def build_document(doc_id: str, doc_text: str, records: list[dict],
         "routes": dict(routes),
         # The same count, scoped to the cards rendered under "Extract clauses".
         "extract_routes": dict(extract_routes),
+        # And what served them: route names are not models.
+        "extract_models": dict(extract_models),
         "sensitive": any(r.get("true_sensitive") for r in by_step.values()),
         "correct_fields": sum(checks),
         "fields_total": len(checks),

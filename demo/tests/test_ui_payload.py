@@ -105,20 +105,25 @@ def test_extract_stage_counts_only_extract_routes():
     document with four CPU extracts, one CPU classify and one GPU risk, while
     every card underneath correctly said ``vllm-cpu``.
     """
-    def routed(step: str, route: str, content: dict) -> dict:
+    def routed(step: str, route: str, content: dict, model: str | None = None) -> dict:
         rec = _rec(step, content=content)
         rec["headers"] = {"x-demo-route": route}
+        if model:
+            rec["response_model"] = model
         return rec
 
     doc = _doc([
-        routed("classify", "vllm-cpu", {"type": "MSA"}),
-        routed("extract:termination", "vllm-cpu", {"found": False}),
+        routed("classify", "vllm-cpu", {"type": "MSA"}, "Semantic-Qwen"),
+        routed("extract:termination", "vllm-cpu", {"found": False}, "cuad-specialist"),
         routed("extract:governing_law", "vllm-cpu",
-               {"found": True, "text": "laws of England"}),
-        routed("risk", "vllm-gpu-approved", {"risk": "low"}),
+               {"found": True, "text": "laws of England"}, "cuad-specialist"),
+        routed("risk", "vllm-gpu-approved", {"risk": "low"}, "Semantic-Qwen"),
     ])
 
     assert doc["extract_routes"] == {"vllm-cpu": 2}
+    # The route is a policy name; the specialist answered both extracts even
+    # though the cards say "vllm-cpu". The header must show what served them.
+    assert doc["extract_models"] == {"cuad-specialist": 2}
     assert doc["routes"] == {"vllm-cpu": 3, "vllm-gpu-approved": 1}
 
 
