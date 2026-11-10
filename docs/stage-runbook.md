@@ -5,7 +5,7 @@ three beats below are the same in replay and live; only beat 2 needs a live
 cluster (or the recording fallback).
 
 Read the header run line before every beat: in the default dashboard **A is
-the classifier-free ROSA hybrid run** (`runs/rosa-200-2026-11-09-cpu-term/hybrid`)
+the classifier-free ROSA hybrid run** (`runs/rosa-200-2026-11-09-cpu-term-rerun/hybrid`)
 and **B is the same-day all-GPU control** (`runs/rosa-200-2026-11-09/all-gpu`).
 Both cross Praxis; A is governed, B is not. The CUAD appendix instead uses a
 direct run for A and a failed gateway run for B.
@@ -82,7 +82,7 @@ Stay on **A**. Quote the measured run, not a model estimate:
   `gpumoe-vllm` backend once. Do not use the old **0.036 / 1.974 / 54×**
   figures: that was the classifier-in-path policy and it double-counted the
   shared backend. The GPU-termination alternative
-  (`runs/rosa-200-2026-11-09-gpu-term`) measured **0.508** GPU-s/doc — a
+  (`runs/rosa-200-2026-11-09-gpu-term`, archived at `cfc52cc`) measured **0.508** GPU-s/doc — a
   measured route, not the current policy.
 
 Say: *“The saving is the GPU capacity you did not have to buy or queue for.”*

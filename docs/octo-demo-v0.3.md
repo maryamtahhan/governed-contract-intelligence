@@ -10,10 +10,12 @@ Demo plan and business case · **Draft v0.3 · measured on the ROSA demo stack**
 > all-gpu 1.013 GPU-s/doc (~4.6×)**, 0 sensitive violations, 247/247 sensitive
 > steps approved, 201/201 judgment steps on GPU, extract F1 1.000, risk 1.000,
 > 200/200 fully correct. The GPU-termination alternative
-> (`runs/rosa-200-2026-11-09-gpu-term`, 0.508 GPU-s/doc) is a measured route,
-> not the policy. The **0.036 / 1.974 / 54×** figures in this document are the
-> earlier classifier-in-path record and double-count the shared `gpumoe-vllm`
-> backend; do not quote them as current. See FINDINGS §15.8-§15.9.
+> (`runs/rosa-200-2026-11-09-gpu-term`, archived at `cfc52cc`) measured 0.508 GPU-s/doc; it is a
+> measured route, not the policy. The **0.036 / 1.974 / 54×** figures in this
+> document are the earlier classifier-in-path record and double-count the
+> shared `gpumoe-vllm` backend; do not quote them as current. See FINDINGS
+> §15.8-§15.9. Older run directories referenced below were pruned from the
+> working tree and are recoverable from git at `cfc52cc` (see `runs/README.md`).
 
 Every number in this document comes from our own measurements; evidence packs
 and protocols live in the source repository (`FINDINGS.md` + `runs*/`). Claims
@@ -671,7 +673,7 @@ Reading:
   **600 were answered by `cuad-specialist`** (governing law, liability
   cap, termination) and 200 (data protection) by the CPU MoE. All routed
   through the composite (`x-demo-route=vllm-cpu`). Derivation:
-  `runs/rosa-200/specialist-metrics-2026-11-04.txt`. That is the
+  `runs/rosa-200/specialist-metrics-2026-11-04.txt` (archived at `cfc52cc`). That is the
   through-stack evidence the earlier 0.800 local run lacked.
 - **Cost.** 54× less GPU time: 0.036 vs 1.974 GPU-s/doc, 7.3 vs 394.8
   GPU-seconds total. At the illustrative $1.10/GPU-hour that is ≈ $0.002 of
@@ -716,8 +718,8 @@ Reading:
 Same 200 documents and the same scorer, with no router: each arm sends its
 1,201 requests (classify + six extractions + risk per document, plus one
 portfolio report) to a single pool. Raw records:
-`runs/direct/{cpu-moe,gpu-moe,cpu-small}`; combined report:
-`runs/rosa-direct-vs-stacked/report.md`.
+`runs/direct/{cpu-moe,gpu-moe,cpu-small}` (archived at `cfc52cc`); combined
+report: `runs/rosa-direct-vs-stacked/report.md` (archived at `cfc52cc`).
 
 | arm | pool | wall | extract F1 | risk acc | report acc | fully correct | errors |
 |---|---|---|---|---|---|---|---|

@@ -8,8 +8,8 @@
 # proxy to the endpoint (the page asks each visitor for it once):
 #   make dashboard-live HOST=0.0.0.0 LIVE_TOKEN=sesame
 #
-# Inputs can be overridden, e.g. show a direct run instead of the hybrid config:
-#   make dashboard-up RUN=../runs/direct/cpu-moe COMPARE=
+# Inputs can be overridden, e.g. show another measured run:
+#   make dashboard-up RUN=../runs/rosa-200-2026-11-09/all-gpu COMPARE=
 #   make dashboard-live ENDPOINT=http://127.0.0.1:9000/v1
 #   make dashboard-up PORT=8100
 

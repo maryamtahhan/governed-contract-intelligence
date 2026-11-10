@@ -1,42 +1,42 @@
 # Run directory map
 
-For the route/model/hardware distinction and the open naming decisions, see
-[`../HANDOFF.md`](../HANDOFF.md).
+For the route/model/hardware distinction, see
+[`../docs/design.md`](../docs/design.md).
 
-## `runs/rosa-200/` — through-stack, 200 synthetic documents
+Only the current record and the evidence used by the stage guide are kept in
+the working tree.
 
-These are **governed** runs: the batch runner went through the trace-ui relays
-and praxis. They are configs, not hardware claims.
+## Kept
 
-| directory | routing config | what it does |
+| directory | routing config | what it is |
 |---|---|---|
-| `all-gpu/` | `all-gpu` | every request to the GPU pool |
-| `gpu-small/` | `gpu-small` | simple work to the small GPU pool |
-| `round-robin/` | `round-robin` | no classifier; rotate across pools |
-| `hybrid/` | `hybrid` | classifier picks CPU or GPU; sensitive work stays on approved pools |
+| `rosa-200-2026-11-09-cpu-term-rerun/hybrid` | `hybrid` | **current quoted record** — CPU termination policy, 200 docs, default dashboard A |
+| `rosa-200-2026-11-09/all-gpu` | `all-gpu` | same-day all-GPU control, default dashboard B |
+| `rosa-200-2026-11-09/gpu-small` | `gpu-small` | same-day matrix row |
+| `rosa-200-2026-11-09/round-robin` | `round-robin` | same-day matrix row |
+| `cuad-test/` | direct + gateway | CUAD example and appendix used by the guide |
+| `retrieval/` | local direct | specialist quality evidence |
 
-The old names were `arm-A` through `arm-D`; the letters remain internal keys in
-`summary.json`, but the directories now use the policy name.
+## Removed historical runs
 
-## `runs/direct/` — direct, no gateway
+These directories were pruned from the working tree to keep the checkout
+focused on the current record. They are still recoverable from git history at
+commit `cfc52cc` (the commit immediately before the cleanup):
 
-These are **ungoverned** runs: the batch runner talked to one bare vLLM
-endpoint. There is no relay, praxis, label, pool choice or trace.
+- `runs/rosa-200/`
+- `runs/direct/`
+- `runs/simulated/`
+- `runs/gpu-measured/`
+- `runs/cuad-mixed/`
+- `runs/cuad-test-hybrid-2026-11-09/`
+- `runs/rosa-direct-vs-stacked/`
+- `runs/rosa-200-2026-11-09-cpu-term/` (first measurement of the same policy)
+- `runs/rosa-200-2026-11-09-gpu-term/` (measured GPU-termination alternative)
+- `runs/live-2026-11-09/`
+- `runs/flightpath-functional/`
 
-| directory | target |
-|---|---|
-| `gpu-moe/` | one GPU endpoint (4× A10G), all stages |
-| `cpu-moe/` | one CPU endpoint, all stages |
-| `cpu-small/` | one small-model CPU endpoint, all stages |
+Recover one directory with:
 
-## Historical groups — keep the recorded names
-
-`runs/simulated/`, `runs/gpu-measured/`, `runs/cuad-mixed/` and
-`runs/cuad-test/` are earlier evidence. Their directory names are preserved
-as recorded run ids. `arm-D-*` means the old internal key D, now called
-**`hybrid`**; `arm-direct-*` means a direct run. The old root `runs/arm-D/`
-2-document smoke run and its `runs/report.*` were removed — superseded by
-`rosa-200/`. The current CLI and new directories use policy names.
-
-If you remember one thing: **`rosa-200/hybrid` is through-stack; `direct/gpu-moe`
-is direct GPU.**
+```bash
+git checkout cfc52cc -- runs/rosa-200-2026-11-09-gpu-term
+```

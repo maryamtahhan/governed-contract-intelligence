@@ -14,6 +14,11 @@ qualitative), or **[external]** (cited, not ours).
 letters remain internal keys in `summary.json` and in historical run ids;
 the CLI and new run directories use the policy names.
 
+**Run archive:** the working tree keeps the current quoted run, the same-day
+control, and the CUAD/retrieval evidence. Older run directories named below
+were pruned from the checkout; recover any of them from git history at
+`cfc52cc` with `git checkout cfc52cc -- <path>`. See `runs/README.md`.
+
 ## 1. What was built
 
 Three runnable instances of the same demo, byte-identical praxis routing
@@ -940,7 +945,7 @@ Environment: ROSA HCP `<redacted-cluster>` (us-east-1a; cluster
 `<redacted-ocm-cluster-id>`), namespace `openshell-demo`. CPU node
 `x8i.24xlarge` (48 cores, 1.5 TiB) and GPU node `g5.12xlarge` (4x A10G,
 TP=4) in the same AZ; pools `<redacted-gpu-pool>` and `<redacted-cpu-pool>`. Raw
-records and reports: `runs/rosa-200/`.
+records and reports: `runs/rosa-200/` (archived at `cfc52cc`).
 
 This section replaces the SNO numbers for every demo-facing claim. The SNO
 runs remain the validation record; they are not the demo environment.
@@ -1083,8 +1088,8 @@ back to semantic routing (`docs/design.md` §5).
 
 Each direct arm sends all 1,201 requests to one bare pool; there is no
 classifier, no screen and no approved-pool check. Raw records:
-`runs/direct/{cpu-moe,gpu-moe,cpu-small}`; combined report:
-`runs/rosa-direct-vs-stacked/report.md`.
+`runs/direct/{cpu-moe,gpu-moe,cpu-small}` (archived at `cfc52cc`); combined
+report: `runs/rosa-direct-vs-stacked/report.md` (archived at `cfc52cc`).
 
 | arm | pool | wall | extract F1 | risk acc | report acc | fully correct |
 |---|---|---|---|---|---|---|
@@ -1117,8 +1122,8 @@ classifier, no screen and no approved-pool check. Raw records:
 
 ### 15.8 Classifier-free re-measurement, GPU termination route (2026-11-09)
 
-`runs/rosa-200-2026-11-09-gpu-term` is a **measured alternative route, not the
-current policy** (§15.9 supersedes it). The hybrid arm was rerun with
+`runs/rosa-200-2026-11-09-gpu-term` (archived at `cfc52cc`) is a **measured
+alternative route, not the current policy** (§15.9 supersedes it). The hybrid arm was rerun with
 termination extraction on the GPU-bound entry; the all-gpu, gpu-small and
 round-robin arms were copied from the same-day run because the routing change
 only applies to the governed hybrid. §15.1-§15.7 are the earlier
@@ -1163,7 +1168,7 @@ Hybrid judgment steps were 201/201 on GPU.
   The new run scores extraction F1 **1.000**, **200/200 fully correct**, and
   precision 1.000. Another CUAD expert inherits the same question; the route or
   the label is the fix, not a different specialist.
-- `runs/rosa-200-2026-11-09-gpu-term/report.md` carries the corrected cost
+- `runs/rosa-200-2026-11-09-gpu-term/report.md` (archived at `cfc52cc`) carries the corrected cost
   notes; the run recorded `git_dirty: true` because the routing change was in
   the working tree at run time.
 
@@ -1195,7 +1200,7 @@ GPU; termination extraction 200/200 on `vllm-cpu`. GPU device time is 44.0 s
 route at the baseline hybrid's GPU cost, and wall time is 816.59 s.
 
 The policy was measured twice on the same commit and the same pools. The
-first run (`runs/rosa-200-2026-11-09-cpu-term`, wall 823.84 s, 43.4 GPU-s)
+first run (`runs/rosa-200-2026-11-09-cpu-term`, archived at `cfc52cc`; wall 823.84 s, 43.4 GPU-s)
 scored 198/200 with risk 0.990; the quoted rerun, on a stack rebuilt from
 the identical tree (fresh model caches, fresh specialist image build),
 scored 200/200 with risk 1.000.
@@ -1490,7 +1495,7 @@ it is not measured today.
 ### 17.3 The through-stack CUAD path is timeout-bound (finding)
 
 The first attempt to measure this end-to-end through the ROSA stack
-(`runs/cuad-test-hybrid-2026-11-09`) hit a structural limit and **must not be
+(`runs/cuad-test-hybrid-2026-11-09`, archived at `cfc52cc`) hit a structural limit and **must not be
 quoted as a policy result**:
 
 - The specialist pod (2 pinned cores, `--concurrency 4`) answers a
