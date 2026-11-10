@@ -435,10 +435,11 @@ def routing_scores(records: list[dict], docs_in_run: int, cores_per_cpu_replica:
     elif gpu_busy_ms or cpu_busy_ms:
         cost_method = "simulated (X-Busy-Ms headers from the fake pools)"
 
+    cpu_routes = by_route.get("vllm-cpu", 0) + by_route.get("cuad-specialist", 0)
     return {
         "routes": by_route,
-        "cpu_served_share": round(by_route.get("vllm-cpu", 0) / served, 3),
-        "needs_cpu": by_route.get("vllm-cpu", 0) > 0,
+        "cpu_served_share": round(cpu_routes / served, 3),
+        "needs_cpu": cpu_routes > 0,
         "needs_gpu": any(by_route.get(p, 0) for p in GPU_ROUTES),
         "gpu_seconds": round(gpu_seconds, 1),
         "cpu_core_seconds": round(cpu_core_seconds, 1),
@@ -720,11 +721,11 @@ def build_report(run_dirs: list[str], data_dir: str, cores_per_cpu_replica: int,
                      f"{r['sensitive_on_approved']} | {r['sensitive_violations']} |")
     lines.append("")
     lines.append("Violations count sensitive-document steps served by a pool outside the approved "
-                 "set (vllm-cpu, vllm-gpu-approved). Target for the governed arm: zero.")
+                 "set (cuad-specialist, vllm-cpu, vllm-gpu-approved). Target for the governed arm: zero.")
     judgment = [s for s in scored if s["routing"].get("judgment_steps")]
     if judgment:
         lines.append("")
-        lines.append("Judgment split (risk + report through dedicated entries): "
+        lines.append("Judgment routing (risk + report through GPU routes): "
                      + ", ".join(f"config {s['config']} {s['routing']['judgment_on_gpu']}/"
                                  f"{s['routing']['judgment_steps']} on GPU" for s in judgment)
                      + ".")

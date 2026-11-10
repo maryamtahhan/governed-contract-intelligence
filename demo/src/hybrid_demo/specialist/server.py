@@ -27,7 +27,7 @@ from ..common import new_id
 from .cache import create_cache
 from .qa import best_spans, cause_question_for, clause_from_prompt, question_for
 
-POOL = "vllm-cpu-specialist"
+POOL = "cuad-specialist"
 
 
 def create_app(args: argparse.Namespace) -> FastAPI:

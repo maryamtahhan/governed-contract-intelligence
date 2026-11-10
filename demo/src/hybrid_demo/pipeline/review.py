@@ -350,9 +350,8 @@ class ReviewRun:
             record.update(
                 {
                     "outcome": "fallback" if fallback else "served",
-                    # What answered, as the server named it. A specialist pool
-                    # returns its own id ("cuad-specialist") while a forwarded
-                    # prompt returns the served alias, so this is the only
+                    # What answered, as the server named it. Each route names
+                    # one endpoint now, but response_model remains the only
                     # per-stage evidence of which checkpoint did the work.
                     "response_model": data.get("model"),
                     "content": parse_content(

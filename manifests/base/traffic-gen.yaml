@@ -88,8 +88,10 @@ spec:
                 # gateway's observe line agrees with the entry. Sending a
                 # sensitive label with clean content would misrepresent the
                 # sensitive share in the UI.
-                SENSITIVE_EXTRACT = [
+                SENSITIVE_TERMINATION = [
                     "Extract the termination clause from the contract whose data controller is aoife@example.com (EMP-123456).",
+                ]
+                SENSITIVE_GOVERNING_LAW = [
                     "Extract the governing law clause from the agreement listing the data processor at aoife@example.com.",
                 ]
                 SENSITIVE_RISK = [
@@ -107,7 +109,8 @@ spec:
                     ("general", 8080, "extract:data_protection", GENERAL_DATA_PROTECTION),
                     ("general", 8080, "risk", RISK),
                     ("general", 8080, "report", REPORT),
-                    ("sensitive", 8083, "extract:termination", SENSITIVE_EXTRACT),
+                    ("sensitive", 8083, "extract:termination", SENSITIVE_TERMINATION),
+                    ("sensitive", 8083, "extract:governing_law", SENSITIVE_GOVERNING_LAW),
                     ("sensitive", 8083, "risk", SENSITIVE_RISK),
                 ]
                 n = 0

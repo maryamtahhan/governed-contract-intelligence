@@ -94,7 +94,19 @@ def test_termination_on_a_judgment_entry_is_not_scored_as_judgment():
     assert scores["termination_routes"] == {"vllm-gpu": 1}
 
 
+def test_cpu_share_includes_the_specialist_route():
+    records = [
+        record("extract:termination", "d1", True, "x", route="cuad-specialist"),
+        record("classify", "d1", True, "x", route="vllm-cpu"),
+        record("risk", "d1", True, "x", route="vllm-gpu"),
+    ]
+    scores = routing_scores(records, docs_in_run=1, cores_per_cpu_replica=8)
+    assert scores["cpu_served_share"] == round(2 / 3, 3)
+    assert scores["needs_cpu"] is True
+
+
 def test_approved_routes_definition():
+    assert "cuad-specialist" in APPROVED_ROUTES
     assert "vllm-cpu" in APPROVED_ROUTES
     assert "vllm-gpu-approved" in APPROVED_ROUTES
     assert "vllm-gpu" not in APPROVED_ROUTES
