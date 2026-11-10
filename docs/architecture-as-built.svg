@@ -86,7 +86,7 @@
   <text x="177" y="658" font-size="12" font-weight="700" fill="#e9f2ff" text-anchor="middle">vllm-cpu</text>
   <text x="177" y="680" font-size="10" fill="#c9d8ea" text-anchor="middle">CUAD specialist + vLLM</text>
   <text x="177" y="698" font-size="10" fill="#c9d8ea" text-anchor="middle">x8i.24xlarge · 48 cores</text>
-  <text x="177" y="724" font-size="9.5" fill="#6f8298" text-anchor="middle">composite: extraction stays here</text>
+  <text x="177" y="724" font-size="9" fill="#6f8298" text-anchor="middle">forwards non-CUAD prompts to CPU vLLM</text>
 
   <rect x="305" y="632" width="235" height="112" rx="8" fill="#0d1b2d" stroke="#55e6a0" stroke-width="1.2"/>
   <text x="422" y="658" font-size="12" font-weight="700" fill="#e9f2ff" text-anchor="middle">vllm-gpu-approved</text>
