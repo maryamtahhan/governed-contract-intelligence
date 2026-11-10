@@ -437,7 +437,7 @@ the event stream, so the presenter can say what was ignored.
 
 ## 3. Architecture (as built)
 
-![As-built architecture: clients (pipeline, sandboxed agent) → trace-ui / praxis gateway → pools; the dashed green boundary marks the approved set, inside which sensitive data is processed](architecture-as-built.svg)
+![As-built architecture: clients (review pipeline, OpenShell sandbox) → trace-ui recorders and the Praxis policy gate → one relay per pool → pools; the green dashed boundary marks the approved set where sensitive data may run](architecture-as-built.svg)
 
 *(Editable source: `docs/architecture-as-built.svg`.)*
 
@@ -558,7 +558,7 @@ gateway does to a request, and their records are the governance evidence.
 
 ![Direct run: the batch runner calls a vLLM endpoint directly — no relay, gateway, label routing or trace](pipeline-direct.svg)
 
-![Through-stack run: batch runner → trace-ui relay → praxis gateway → pool → model; the approved set is where sensitive steps are served](pipeline-through-stack.svg)
+![Through-stack run: one request, six stops — batch runner → ingress relay → Praxis → pool relay → pool → model; the approved set is where sensitive steps are served](pipeline-through-stack.svg)
 
 Cost discipline held: device-time measured exactly (simulated counters +
 live /metrics integration), priced only as a sweep (cloud list vs owned at

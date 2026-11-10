@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="520" viewBox="0 0 1280 520" font-family="Inter, ui-sans-serif, system-ui, sans-serif" role="img" aria-labelledby="t d">
-  <title id="t">Through-stack run — one request, six stops</title>
-  <desc id="d">The batch runner is the Python command that reads documents and builds prompts. It screens each document, chooses the general or sensitive entry, and sends the request to a trace-ui ingress relay, which records it and forwards it to praxis. Praxis's policy gate authenticates the per-step API key and fails closed on an unknown key; the pinned routing config chooses the pool, and a sensitive entry taints the document session. A second trace-ui relay records the actual model call and forwards it to that pool. The pool's server runs the model. The response returns with headers naming the entry, route and trace id.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="620" viewBox="0 0 1280 620" font-family="Inter, ui-sans-serif, system-ui, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">Through-stack run — one request, six stops, three kinds of work</title>
+  <desc id="d">Three grouped stages. The client stage is the batch runner: a CPU-side CLI that reads documents, builds prompts and scores answers. The record-and-decide stage has three stops: a trace-ui ingress relay that writes an audit row and forwards to praxis; praxis, which authenticates the per-step API key, fails closed on an unknown key, and uses the active routing config to pick a pool (a sensitive entry also taints the document session); and a trace-ui pool relay that writes the model-call row and forwards to the chosen pool. The inference stage is the pool, which is only a route name in the config, and the model inside it, the only stop that runs inference. The response returns through the same hops and carries headers naming the entry, route and trace id. A green lane explains the sensitive path: PII-positive documents enter at the sensitive door, may route only to the CPU or approved GPU pool, and fail closed if that pool is down.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#9db1c8"/>
@@ -8,91 +8,109 @@
     <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#55e6a0"/>
     </marker>
+    <marker id="arrow-dim" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6f8298"/>
+    </marker>
   </defs>
 
-  <rect width="1280" height="520" fill="#07111f"/>
+  <rect width="1280" height="620" fill="#07111f"/>
 
   <text x="40" y="44" font-size="20" font-weight="700" fill="#e9f2ff">Through-stack run — one request, six stops</text>
-  <text x="40" y="68" font-size="12" fill="#9db1c8">two recorders write the audit trail · praxis decides · the pool runs the model</text>
+  <text x="40" y="68" font-size="12" fill="#9db1c8">three kinds of stop: your CLI · two recorders · a policy gate · a route name · one model</text>
 
-  <!-- 1. batch runner -->
-  <rect x="30" y="116" width="170" height="154" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
-  <text x="115" y="144" font-size="12.5" font-weight="700" fill="#e9f2ff" text-anchor="middle">1 · BATCH RUNNER</text>
-  <text x="115" y="166" font-size="10" fill="#9db1c8" text-anchor="middle">hybrid-run --target gateway</text>
-  <text x="115" y="188" font-size="10.5" fill="#c9d8ea" text-anchor="middle">reads documents</text>
-  <text x="115" y="206" font-size="10.5" fill="#c9d8ea" text-anchor="middle">builds all prompts</text>
-  <text x="115" y="224" font-size="10.5" fill="#c9d8ea" text-anchor="middle">scores the answers</text>
-  <text x="115" y="250" font-size="10" fill="#6f8298" text-anchor="middle">CPU-side CLI you start</text>
+  <!-- response path, above the stages -->
+  <path d="M 1164 141 L 1164 92 L 140 92 L 140 139" fill="none" stroke="#6f8298" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#arrow-dim)"/>
+  <text x="650" y="84" font-size="10.5" fill="#6f8298" text-anchor="middle">the response returns through the same hops — the runner gets the answer and the recorded headers</text>
 
-  <line x1="200" y1="192" x2="230" y2="192" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- stage 1: client -->
+  <rect x="40" y="105" width="200" height="270" rx="10" fill="#0a1626" stroke="#2b4865" stroke-width="1.2" stroke-dasharray="5 4"/>
+  <text x="140" y="128" font-size="9.5" font-weight="700" letter-spacing="1.1" fill="#7fb2e5" text-anchor="middle">CLIENT · CPU</text>
 
-  <!-- 2. ingress relay -->
-  <rect x="230" y="116" width="170" height="154" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
-  <text x="315" y="144" font-size="12.5" font-weight="700" fill="#e9f2ff" text-anchor="middle">2 · INGRESS RELAY</text>
-  <text x="315" y="166" font-size="10" fill="#9db1c8" text-anchor="middle">trace-ui general / sensitive</text>
-  <text x="315" y="188" font-size="10.5" fill="#c9d8ea" text-anchor="middle">writes an audit row</text>
-  <text x="315" y="206" font-size="10.5" fill="#c9d8ea" text-anchor="middle">forwards to praxis</text>
-  <text x="315" y="250" font-size="10" fill="#6f8298" text-anchor="middle">no model here</text>
+  <rect x="55" y="145" width="170" height="190" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
+  <text x="140" y="172" font-size="12.5" font-weight="700" fill="#e9f2ff" text-anchor="middle">1 · BATCH RUNNER</text>
+  <text x="140" y="192" font-size="9.5" fill="#9db1c8" text-anchor="middle">hybrid-run</text>
+  <text x="140" y="207" font-size="9.5" fill="#9db1c8" text-anchor="middle">--target gateway</text>
+  <text x="140" y="234" font-size="10.5" fill="#c9d8ea" text-anchor="middle">reads documents</text>
+  <text x="140" y="252" font-size="10.5" fill="#c9d8ea" text-anchor="middle">builds prompts</text>
+  <text x="140" y="270" font-size="10.5" fill="#c9d8ea" text-anchor="middle">scores answers</text>
+  <text x="140" y="298" font-size="9.5" fill="#6f8298" text-anchor="middle">classify · extract ×4 · risk</text>
+  <text x="140" y="315" font-size="9.5" fill="#6f8298" text-anchor="middle">CPU-side · no model</text>
 
-  <line x1="400" y1="192" x2="430" y2="192" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- stage 2: record + decide -->
+  <rect x="270" y="105" width="640" height="270" rx="10" fill="#0a1626" stroke="#2b4865" stroke-width="1.2" stroke-dasharray="5 4"/>
+  <text x="590" y="128" font-size="9.5" font-weight="700" letter-spacing="1.1" fill="#7fb2e5" text-anchor="middle">RECORD + DECIDE · NO MODEL RUNS HERE</text>
 
-  <!-- 3. praxis policy + route gate -->
-  <rect x="430" y="116" width="180" height="154" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
-  <text x="520" y="144" font-size="12.5" font-weight="700" fill="#e9f2ff" text-anchor="middle">3 · POLICY + ROUTE</text>
-  <text x="520" y="166" font-size="10" fill="#9db1c8" text-anchor="middle">praxis · PPE</text>
-  <text x="520" y="188" font-size="10.5" fill="#c9d8ea" text-anchor="middle">verifies X-API-Key (fail closed)</text>
-  <text x="520" y="206" font-size="10.5" fill="#c9d8ea" text-anchor="middle">pinned config chooses a pool</text>
-  <text x="520" y="224" font-size="10.5" fill="#c9d8ea" text-anchor="middle">sensitive entry taints session</text>
-  <text x="520" y="250" font-size="10" fill="#6f8298" text-anchor="middle">no model here</text>
+  <rect x="285" y="145" width="186" height="190" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
+  <text x="378" y="172" font-size="12.5" font-weight="700" fill="#e9f2ff" text-anchor="middle">2 · INGRESS RELAY</text>
+  <text x="378" y="192" font-size="9.5" fill="#9db1c8" text-anchor="middle">trace-ui</text>
+  <text x="378" y="222" font-size="10.5" fill="#c9d8ea" text-anchor="middle">writes an audit row</text>
+  <text x="378" y="240" font-size="10.5" fill="#c9d8ea" text-anchor="middle">forwards to praxis</text>
+  <text x="378" y="274" font-size="9.5" fill="#6f8298" text-anchor="middle">the four doors:</text>
+  <text x="378" y="291" font-size="9" fill="#6f8298" text-anchor="middle">:8080 general · :8083 sensitive</text>
+  <text x="378" y="306" font-size="9" fill="#6f8298" text-anchor="middle">:8086 judgment · :8087 sens.-judgment</text>
 
-  <line x1="610" y1="192" x2="640" y2="192" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="496" y="145" width="186" height="190" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
+  <text x="589" y="172" font-size="12.5" font-weight="700" fill="#e9f2ff" text-anchor="middle">3 · POLICY + ROUTE</text>
+  <text x="589" y="192" font-size="9.5" fill="#9db1c8" text-anchor="middle">praxis · PPE</text>
+  <text x="589" y="222" font-size="10.5" fill="#c9d8ea" text-anchor="middle">authenticates every step</text>
+  <text x="589" y="240" font-size="10.5" fill="#c9d8ea" text-anchor="middle">unknown key → fail closed</text>
+  <text x="589" y="258" font-size="10.5" fill="#c9d8ea" text-anchor="middle">active config picks a pool</text>
+  <text x="589" y="276" font-size="10.5" fill="#c9d8ea" text-anchor="middle">sensitive → taint session</text>
+  <text x="589" y="315" font-size="9.5" fill="#6f8298" text-anchor="middle">judgment (risk, report) → GPU</text>
 
-  <!-- 4. per-pool relay -->
-  <rect x="640" y="116" width="170" height="154" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
-  <text x="725" y="144" font-size="12.5" font-weight="700" fill="#e9f2ff" text-anchor="middle">4 · POOL RELAY</text>
-  <text x="725" y="166" font-size="10" fill="#9db1c8" text-anchor="middle">trace-ui :8081 / :8082 / …</text>
-  <text x="725" y="188" font-size="10.5" fill="#c9d8ea" text-anchor="middle">writes the model-call row</text>
-  <text x="725" y="206" font-size="10.5" fill="#c9d8ea" text-anchor="middle">forwards to chosen pool</text>
-  <text x="725" y="250" font-size="10" fill="#6f8298" text-anchor="middle">no model here</text>
+  <rect x="707" y="145" width="186" height="190" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
+  <text x="800" y="172" font-size="12.5" font-weight="700" fill="#e9f2ff" text-anchor="middle">4 · POOL RELAY</text>
+  <text x="800" y="192" font-size="9.5" fill="#9db1c8" text-anchor="middle">trace-ui</text>
+  <text x="800" y="222" font-size="10.5" fill="#c9d8ea" text-anchor="middle">writes model-call row</text>
+  <text x="800" y="240" font-size="10.5" fill="#c9d8ea" text-anchor="middle">forwards to the pool</text>
+  <text x="800" y="274" font-size="9.5" fill="#6f8298" text-anchor="middle">one per pool:</text>
+  <text x="800" y="291" font-size="9.5" fill="#6f8298" text-anchor="middle">:8081 · :8082 · :8084 · :8085</text>
+  <text x="800" y="315" font-size="9.5" fill="#6f8298" text-anchor="middle">praxis never calls a pool directly</text>
 
-  <line x1="810" y1="192" x2="840" y2="192" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- stage 3: inference -->
+  <rect x="940" y="105" width="305" height="270" rx="10" fill="#0a1626" stroke="#2b4865" stroke-width="1.2" stroke-dasharray="5 4"/>
+  <text x="1092" y="128" font-size="9.5" font-weight="700" letter-spacing="1.1" fill="#7fb2e5" text-anchor="middle">INFERENCE · THE ONLY MODEL WORK</text>
 
-  <!-- 5. pool destination -->
-  <rect x="840" y="116" width="170" height="154" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
-  <text x="925" y="144" font-size="12.5" font-weight="700" fill="#e9f2ff" text-anchor="middle">5 · POOL (ROUTE)</text>
-  <text x="925" y="166" font-size="10" fill="#9db1c8" text-anchor="middle">a name in praxis config</text>
-  <text x="925" y="188" font-size="10.5" fill="#c9d8ea" text-anchor="middle">vllm-cpu</text>
-  <text x="925" y="206" font-size="10.5" fill="#c9d8ea" text-anchor="middle">vllm-gpu · vllm-gpu-approved</text>
-  <text x="925" y="250" font-size="10" fill="#6f8298" text-anchor="middle">CPU or GPU deployment</text>
+  <rect x="955" y="145" width="127" height="190" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
+  <text x="1018" y="172" font-size="12.5" font-weight="700" fill="#e9f2ff" text-anchor="middle">5 · POOL</text>
+  <text x="1018" y="192" font-size="9.5" fill="#9db1c8" text-anchor="middle">a route name</text>
+  <text x="1018" y="222" font-size="10" fill="#c9d8ea" text-anchor="middle">vllm-cpu</text>
+  <text x="1018" y="240" font-size="10" fill="#c9d8ea" text-anchor="middle">vllm-gpu</text>
+  <text x="1018" y="258" font-size="9.5" fill="#c9d8ea" text-anchor="middle">vllm-gpu-approved</text>
+  <text x="1018" y="276" font-size="9.5" fill="#c9d8ea" text-anchor="middle">vllm-gpu-small</text>
+  <text x="1018" y="306" font-size="9.5" fill="#6f8298" text-anchor="middle">a label,</text>
+  <text x="1018" y="321" font-size="9.5" fill="#6f8298" text-anchor="middle">not hardware</text>
 
-  <line x1="1010" y1="192" x2="1040" y2="192" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="1100" y="145" width="128" height="190" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
+  <text x="1164" y="172" font-size="12.5" font-weight="700" fill="#e9f2ff" text-anchor="middle">6 · MODEL</text>
+  <text x="1164" y="192" font-size="9.5" fill="#9db1c8" text-anchor="middle">inside a pool</text>
+  <text x="1164" y="222" font-size="10.5" fill="#c9d8ea" text-anchor="middle">vLLM runs</text>
+  <text x="1164" y="240" font-size="10.5" fill="#c9d8ea" text-anchor="middle">inference</text>
+  <text x="1164" y="274" font-size="9.5" fill="#6f8298" text-anchor="middle">one model</text>
+  <text x="1164" y="289" font-size="9.5" fill="#6f8298" text-anchor="middle">answers the call</text>
 
-  <!-- 6. model -->
-  <rect x="1040" y="116" width="190" height="154" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
-  <text x="1135" y="144" font-size="12.5" font-weight="700" fill="#e9f2ff" text-anchor="middle">6 · MODEL</text>
-  <text x="1135" y="166" font-size="10" fill="#9db1c8" text-anchor="middle">inside the pool</text>
-  <text x="1135" y="188" font-size="10.5" fill="#c9d8ea" text-anchor="middle">vLLM runs inference</text>
-  <text x="1135" y="206" font-size="10.5" fill="#c9d8ea" text-anchor="middle">one model answers</text>
-  <text x="1135" y="224" font-size="10.5" fill="#c9d8ea" text-anchor="middle">the call</text>
-  <text x="1135" y="250" font-size="10" fill="#6f8298" text-anchor="middle">only model work here</text>
+  <!-- request arrows -->
+  <line x1="229" y1="240" x2="281" y2="240" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="475" y1="240" x2="492" y2="240" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="686" y1="240" x2="703" y2="240" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="897" y1="240" x2="951" y2="240" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="1086" y1="240" x2="1096" y2="240" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
 
-  <!-- sensitive boundary -->
-  <rect x="430" y="300" width="800" height="100" rx="8" fill="none" stroke="#55e6a0" stroke-width="1.5" stroke-dasharray="6 4"/>
-  <text x="446" y="324" font-size="11" font-weight="700" fill="#55e6a0">SENSITIVE PATH — the pipeline's PII screen sends these documents to the sensitive ingress (:8083)</text>
-  <text x="446" y="347" font-size="11" fill="#9db1c8">Praxis may route them only to vllm-cpu or vllm-gpu-approved. It may not spill to the general GPU pool.</text>
-  <text x="446" y="369" font-size="11" fill="#9db1c8">If the approved pool is down, the call fails closed with an explicit 502 — a policy decision, not a model error.</text>
-  <text x="446" y="390" font-size="10.5" fill="#6f8298">Judgment steps (risk, report) use :8086 / :8087; a sensitive judgment step still uses only the approved GPU.</text>
+  <!-- sensitive lane -->
+  <rect x="270" y="405" width="975" height="115" rx="8" fill="#0a1f18" stroke="#55e6a0" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="288" y="430" font-size="11.5" font-weight="700" fill="#55e6a0">SENSITIVE PATH — PII-positive documents use :8083 (:8087 for judgment), not :8080</text>
+  <text x="288" y="454" font-size="11" fill="#c9d8ea">Praxis may route them only to vllm-cpu or vllm-gpu-approved. The general GPU pool is forbidden.</text>
+  <text x="288" y="476" font-size="11" fill="#c9d8ea">If the approved pool is down, the call fails closed with an explicit 502 — a policy decision, not a model error.</text>
+  <text x="288" y="500" font-size="10.5" fill="#6f8298">The sensitive entry also taints the document session at the gateway, so a later step cannot silently move to a general pool.</text>
+  <line x1="589" y1="337" x2="589" y2="401" stroke="#55e6a0" stroke-width="1.3" stroke-dasharray="4 4" marker-end="url(#arrow-green)"/>
 
-  <!-- response headers -->
-  <text x="30" y="322" font-size="11" fill="#9db1c8">The answer comes back with</text>
-  <text x="30" y="344" font-size="11" fill="#e9f2ff">x-demo-entry</text>
-  <text x="30" y="362" font-size="11" fill="#e9f2ff">x-demo-route</text>
-  <text x="30" y="380" font-size="11" fill="#e9f2ff">x-praxis-trace-id</text>
-  <text x="30" y="398" font-size="10" fill="#6f8298">x-demo-classification — historical runs only</text>
+  <!-- legend -->
+  <line x1="40" y1="552" x2="70" y2="552" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="78" y="556" font-size="10.5" fill="#9db1c8">request</text>
+  <line x1="150" y1="552" x2="180" y2="552" stroke="#6f8298" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#arrow-dim)"/>
+  <text x="188" y="556" font-size="10.5" fill="#9db1c8">response</text>
+  <rect x="270" y="544" width="26" height="14" rx="3" fill="#0a1f18" stroke="#55e6a0" stroke-width="1.2" stroke-dasharray="4 3"/>
+  <text x="304" y="556" font-size="10.5" fill="#9db1c8">sensitive / approved only</text>
 
-  <!-- plain-language definitions -->
-  <text x="40" y="438" font-size="11.5" fill="#9db1c8">Batch runner = the Python CLI you launch. It builds prompts and scores results; it never serves the model.</text>
-  <text x="40" y="458" font-size="11.5" fill="#9db1c8">Pool = a named destination in the routing config. It is a routing tier; the deployment behind it may be CPU or GPU.</text>
-  <text x="40" y="478" font-size="11.5" fill="#9db1c8">Configs = named routing policies: all-gpu, gpu-small, round-robin, hybrid. Praxis hot-reloads them without a restart.</text>
-  <text x="40" y="502" font-size="10.5" fill="#6f8298">The real deployment has four ingress relays (:8080/:8083/:8086/:8087) and one relay per pool. Both layers write trace rows.</text>
+  <text x="40" y="594" font-size="11" fill="#6f8298">Six stops, three kinds of work: the CLI builds and scores, the two relays record, praxis decides — only stop 6 runs a model. Port numbers repeat between trace-ui and praxis because they are separate pods.</text>
 </svg>

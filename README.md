@@ -92,7 +92,7 @@ Qwen3.5-35B-A3B synthesis: risk judgment, cross-doc report        [built]
 Every hop goes through the same governed request path — the part that is
 built, governed and measured end-to-end today:
 
-![As-built architecture: clients (pipeline, sandboxed agent) → trace-ui / praxis gateway → pools; the dashed green boundary marks the approved set, inside which sensitive data is processed](docs/architecture-as-built.svg)
+![As-built architecture: clients (review pipeline, OpenShell sandbox) → trace-ui recorders and the Praxis policy gate → one relay per pool → pools; the green dashed boundary marks the approved set where sensitive data may run](docs/architecture-as-built.svg)
 
 The two run shapes are deliberately different, and the diagrams make the
 difference explicit:
@@ -107,6 +107,9 @@ difference explicit:
   governance, audit and cost.
 
   ![Through-stack run: one request, six stops — two trace-ui relays, the Praxis policy/route gate, the pool and the model](docs/pipeline-through-stack.svg)
+
+  The six stops are three kinds of work: the CLI builds and scores, the two
+  trace-ui relays record, and Praxis decides. Only the last stop runs a model.
 
 Key properties of the governed path:
 
