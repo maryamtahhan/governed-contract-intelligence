@@ -17,7 +17,7 @@
       "name": "gpu-small",
       "mode": "gpu-split",
       "aliases": ["gpu-split"],
-      "behavior": "Classifier: SIMPLE/MEDIUM go to the small route; COMPLEX/REASONING go to the large route. Either route can take over on failure.",
+      "behavior": "Every request pins to the small route (the classifier labelled effectively everything MEDIUM, so the pin reproduces the recorded routing). Either GPU route can take over on failure.",
       "routes": ["vllm-gpu-small", "vllm-gpu"],
       "manifest": "manifests/base/praxis/arm-b.yaml",
       "governance": false
@@ -37,7 +37,7 @@
       "name": "hybrid",
       "mode": "matrix",
       "aliases": ["matrix"],
-      "behavior": "General entry: SIMPLE/MEDIUM to CPU, COMPLEX/REASONING to GPU. Sensitive entry: CPU or approved GPU only; fail closed.",
+      "behavior": "General and sensitive entries pin to CPU; the general entry degrades to any pool, the sensitive entry only to the approved GPU (fail closed). Judgment entries pin risk/report to the GPU.",
       "routes": ["vllm-cpu", "vllm-gpu", "vllm-gpu-approved"],
       "manifest": "manifests/base/praxis/config.yaml",
       "governance": true

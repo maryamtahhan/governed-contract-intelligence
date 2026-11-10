@@ -11,7 +11,7 @@
   <rect width="1280" height="664" fill="#07111f"/>
 
   <text x="40" y="48" font-size="20" font-weight="700" fill="#e9f2ff">As-built architecture — private, governed agents on hybrid CPU + GPU inference</text>
-  <text x="40" y="72" font-size="12" fill="#9db1c8">clients → trace-ui / praxis (pinned policy → pool) → pool · trace-ui SQLite is the audit trail · v0.4, updated 2026-11-05 · demo target: ROSA HCP</text>
+  <text x="40" y="72" font-size="12" fill="#9db1c8">clients → trace-ui relays → praxis (PPE identity gate → pinned policy) → pool · SQLite is the audit trail · gateway image v0.9.1 · updated 2026-11-10 · demo target: ROSA HCP</text>
 
   <!-- clients (left column) -->
   <rect x="40" y="104" width="250" height="76" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
@@ -27,19 +27,21 @@
   <rect x="330" y="104" width="280" height="88" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
   <text x="470" y="130" font-size="14" font-weight="600" fill="#e9f2ff" text-anchor="middle">TRACE-UI</text>
   <text x="470" y="150" font-size="11" fill="#9db1c8" text-anchor="middle">recording relays · SQLite audit trail</text>
-  <text x="470" y="168" font-size="11" fill="#9db1c8" text-anchor="middle">:8080/:8083 general+ sensitive · :8086/:8087 judgment</text>
+  <text x="470" y="168" font-size="11" fill="#9db1c8" text-anchor="middle">:8080/:8083 general + sensitive · :8086/:8087 judgment</text>
 
   <!-- praxis -->
   <rect x="650" y="100" width="300" height="96" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
   <text x="800" y="128" font-size="14" font-weight="600" fill="#e9f2ff" text-anchor="middle">PRAXIS GATEWAY</text>
-  <text x="800" y="148" font-size="11" fill="#9db1c8" text-anchor="middle">pinned routing matrix (named configs)</text>
-  <text x="800" y="166" font-size="11" fill="#9db1c8" text-anchor="middle">config hot-swap · failover · no classifier</text>
+  <text x="800" y="148" font-size="11" fill="#9db1c8" text-anchor="middle">PPE: per-step API-key gate · audit records</text>
+  <text x="800" y="166" font-size="11" fill="#9db1c8" text-anchor="middle">pinned routing matrix · config hot-swap · failover</text>
+  <text x="800" y="184" font-size="11" fill="#9db1c8" text-anchor="middle">shadow PII screen (observe-only) · no classifier</text>
 
   <!-- stage-aware judgment entries (praxis listeners) -->
-  <rect x="990" y="110" width="250" height="76" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <rect x="990" y="110" width="250" height="86" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5" stroke-dasharray="5 3"/>
   <text x="1115" y="134" font-size="14" font-weight="600" fill="#e9f2ff" text-anchor="middle">JUDGMENT ENTRIES</text>
   <text x="1115" y="152" font-size="11" fill="#9db1c8" text-anchor="middle">risk + report pinned to GPU</text>
   <text x="1115" y="168" font-size="11" fill="#9db1c8" text-anchor="middle">:8086 judgment · :8087 sensitive-judgment</text>
+  <text x="1115" y="184" font-size="11" fill="#55e6a0" text-anchor="middle">sensitive judgment: approved-only, fail closed</text>
 
   <!-- pools -->
   <!-- the approved set: the zone where sensitive data may be processed -->
@@ -105,5 +107,5 @@
   <text x="56" y="614" font-size="10" fill="#9db1c8">g5: 4× A10G, TP=4. Pools are tainted; per-node gp3 caches seeded offline (HF_HUB_OFFLINE=1) before the pools start. SNO numbers are historical.</text>
 
   <!-- footer -->
-  <text x="40" y="652" font-size="11" fill="#9db1c8">Configs are routing policies over the same pools: all-gpu · gpu-small · round-robin · hybrid (0 sensitive violations, measured). Sensitivity is a constraint; batch is CPU-first.</text>
+  <text x="40" y="652" font-size="11" fill="#9db1c8">Configs are routing policies over the same pools: all-gpu · gpu-small · round-robin · hybrid (0 sensitive violations, measured). Sensitivity is a constraint; batch is CPU-first. PPE authenticates every step.</text>
 </svg>

@@ -2,12 +2,13 @@
 
 This is the design document: how the system is put together, why it is built
 this way, the rules it follows, and where it is going. It consolidates
-(2026-11-05) three documents whose content belonged here — `HANDOFF.md`
-(names, routes, models, hardware), `docs/OPENSOURCE-REUSE.md` (the
-upstream-composition policy) and `docs/contract-step-routing.md` (the
+(2026-11-05) three documents whose content belonged here — an earlier
+`HANDOFF.md` (names, routes, models, hardware), `docs/OPENSOURCE-REUSE.md`
+(the upstream-composition policy) and `docs/contract-step-routing.md` (the
 semantic-routing path); those files are preserved in git history at commit
 `b76645b`, and the older decision log they absorbed lives at commit
-`8798da3` (`DECISIONS.md`).
+`8798da3` (`DECISIONS.md`). A later, dated handoff may exist at the repo root;
+this document is the durable design, not a handoff.
 
 The companions: [README.md](../README.md) is the runbook (how to run it),
 [FINDINGS.md](../FINDINGS.md) is the measurement record (what was measured),
@@ -48,7 +49,8 @@ different things**, and the same word can appear in more than one layer.
    `vllm-gpu`, was CPU-served.
 3. **`all-gpu` is not a direct run.** It still goes through trace-ui and
    praxis. Direct means one bare endpoint with no relay, praxis, label, pool
-   choice, or trace. Direct GPU is `runs/direct/gpu-moe`.
+   choice, or trace. Direct GPU is `runs/direct/gpu-moe` (archived at
+   `cfc52cc`; recover with `git checkout cfc52cc -- runs/direct/gpu-moe`).
 4. **Always read the pool map for hardware.** For a run, that is
    `results.json` → `summary.pools`; for ROSA deploy metadata, that is
    `deploy/openshift/rosa/pools.json`. Do not infer hardware from a route
@@ -56,10 +58,10 @@ different things**, and the same word can appear in more than one layer.
 5. **The current run directory is
    `runs/rosa-200-2026-11-09-cpu-term-rerun/hybrid`** (old `arm-D`). The default
    dashboard uses A = that run, B = the same-run all-gpu control.
-   `runs/rosa-200-2026-11-09-gpu-term/hybrid` is the measured GPU-termination
-   alternative, not the current policy; `runs/rosa-200-2026-11-09-cpu-term`
-   is the same policy's first measurement (its two risk misses did not
-   reproduce in the rerun).
+   The GPU-termination alternative (`runs/rosa-200-2026-11-09-gpu-term/hybrid`)
+   and the same policy's first measurement (`runs/rosa-200-2026-11-09-cpu-term`)
+   are archived at `cfc52cc`; the first run's two risk misses did not reproduce
+   in the rerun.
 
 ### 2.2 Five layers that look like names
 
@@ -153,8 +155,9 @@ CPU-served."
 (`--endpoint http://host:port/v1`). The batch runner does the CPU-side work
 (reads documents, screens PII, builds prompts, sends HTTP, parses, scores);
 the endpoint does all model inference. No relay, praxis, label, pool choice
-or trace id. Current runs: `runs/direct/gpu-moe` (35B-A3B, 4×A10G),
-`runs/direct/cpu-moe` (35B-A3B, CPU), `runs/direct/cpu-small` (1.5B, CPU).
+or trace id. Archived direct runs (recover from `cfc52cc`): `runs/direct/gpu-moe`
+(35B-A3B, 4×A10G), `runs/direct/cpu-moe` (35B-A3B, CPU), `runs/direct/cpu-small`
+(1.5B, CPU).
 The direct path is one endpoint per run, not "one hardware target" in the
 abstract: GPU runs are all-GPU, CPU runs are all-CPU, no mixing.
 
@@ -174,12 +177,15 @@ through-stack.
 | `runs/rosa-200-2026-11-09/gpu-small` | through-stack config `gpu-small`, 200 docs (same-day §15.9 copy) |
 | `runs/rosa-200-2026-11-09/round-robin` | through-stack config `round-robin`, 200 docs (same-day §15.9 copy) |
 | `runs/rosa-200-2026-11-09-cpu-term-rerun/hybrid` | current through-stack `hybrid`, 200 docs (old `arm-D`), CPU termination policy — the quoted record |
-| `runs/rosa-200-2026-11-09-cpu-term/hybrid` | same policy, first measurement (198/200; two risk flips documented as serving variance) |
-| `runs/rosa-200-2026-11-09-gpu-term/hybrid` | measured GPU-termination alternative, 200 docs (not the current policy) |
-| `runs/direct/gpu-moe` | direct, one GPU endpoint, 35B-A3B |
-| `runs/direct/cpu-moe` | direct, one CPU endpoint, 35B-A3B |
-| `runs/direct/cpu-small` | direct, one CPU endpoint, 1.5B |
+| `runs/rosa-200-2026-11-09-cpu-term/hybrid` | archived at `cfc52cc` — same policy, first measurement (198/200; two risk flips documented as serving variance) |
+| `runs/rosa-200-2026-11-09-gpu-term/hybrid` | archived at `cfc52cc` — measured GPU-termination alternative, 200 docs (not the current policy) |
+| `runs/direct/gpu-moe` | archived at `cfc52cc` — direct, one GPU endpoint, 35B-A3B |
+| `runs/direct/cpu-moe` | archived at `cfc52cc` — direct, one CPU endpoint, 35B-A3B |
+| `runs/direct/cpu-small` | archived at `cfc52cc` — direct, one CPU endpoint, 1.5B |
 | `runs/cuad-test/arm-*` | CUAD appendix evidence; ids preserved |
+
+Archived paths are not in the working tree; recover one with
+`git checkout cfc52cc -- <path>`.
 
 See `runs/README.md` for the short version.
 
@@ -213,9 +219,10 @@ uv run hybrid-run --target gateway \
   and Python cannot disagree.
 - Linux routing swap: `scripts/linux/set_config.sh hybrid` (preferred) or
   `scripts/linux/set_arm.sh hybrid` (legacy filename).
-- A/B orientation: the default dashboard uses A = `runs/rosa-200/hybrid`
-  (through-stack), B = `runs/direct/gpu-moe` (direct); the guide's CUAD
-  example uses the opposite order. Do not say "A is direct" without naming
+- A/B orientation: the default dashboard uses A =
+  `runs/rosa-200-2026-11-09-cpu-term-rerun/hybrid` (through-stack), B =
+  `runs/rosa-200-2026-11-09/all-gpu` (through-stack); the guide's CUAD
+  example uses a direct/gateway pair. Do not say "A is direct" without naming
   the run.
 
 ## 3. Routing and governance design
@@ -318,8 +325,8 @@ in the registry for §5's experiment.
 
 ### 3.3 The measured justification (ROSA 200-document matrix)
 
-From `runs/rosa-200/report.json` (classifier-in-path; historical — FINDINGS §15
-has the full analysis):
+From `runs/rosa-200/report.json` (archived at `cfc52cc`; classifier-in-path;
+historical — FINDINGS §15 has the full analysis):
 
 | Config | Calls by route | Extract F1 | Risk acc | Wall s | Recorded GPU-s/doc | Note |
 |---|---|---:|---:|---:|---:|---|
@@ -375,18 +382,19 @@ documents flipping on rubric priority at the GPU judgment stage (FINDINGS
 §15.9), and the flips did not reproduce on the rerun — temperature-0 serving
 variance, not a routing regression — against all-gpu's 0.995 on the same
 corpus. The GPU termination route (`runs/rosa-200-2026-11-09-gpu-term`,
-726.77 s, 0.508 GPU-s/doc, 200/200) remains a measured alternative: it closes
-the same extraction gap on the GPU at 2.3x the GPU cost. The old
-`runs/rosa-200` numbers remain the classifier-in-path record and must not be
-mixed with this table.
+archived at `cfc52cc`; 726.77 s, 0.508 GPU-s/doc, 200/200) remains a measured
+alternative: it closes the same extraction gap on the GPU at 2.3x the GPU cost.
+The old `runs/rosa-200` numbers (archived at `cfc52cc`) remain the
+classifier-in-path record and must not be mixed with this table.
 
 ### 3.4 Do not break
 
 - Do **not** change `summary.arm` values (A/B/C/D); they are recorded evidence.
-- Do not rename historical run directories under `runs/cuad-test`,
-  `runs/simulated`, `runs/gpu-measured`, or `runs/cuad-mixed`.
+- Do not rename historical run directories under `runs/cuad-test`, or any
+  archived path restored from `cfc52cc`.
 - Do not infer hardware from `vllm-gpu`, `vllm-gpu-small`, or `all-gpu`.
-- Do not call `all-gpu` a direct run. Direct runs live under `runs/direct`.
+- Do not call `all-gpu` a direct run. Direct runs are a separate mode; their
+  archived examples live under `runs/direct` at `cfc52cc`.
 - Keep `--arm`, letter aliases, `gpu-split`, and `matrix` working.
 - Keep `set_arm.sh` working even if `set_config.sh` is the documented name.
 - Do not just repoint the specialist composite's `--forward-to` at another
@@ -689,9 +697,11 @@ length/quality; A/B it.
 
 ### 4.6 Verification status
 
-- 206 tests pass; the adapter tests cover defaults, opt-in wire formats,
+- 216 tests pass; the adapter tests cover defaults, opt-in wire formats,
   offset relocation, JSONL export, mock batch transport, metric definitions
-  and the cache factory.
+  and the cache factory. The suite runs without a GPU, model download or
+  network: the e2e tests drive the real routing configs against a praxis stub
+  and fake pools.
 - Base environment: `presidio`, `docling`, `ranx`, `redisvl`, `statsmodels`
   and the OTel SDK are **not** installed; the adapters raise explicit
   install/URL errors and the defaults still run.
@@ -825,11 +835,12 @@ longer in the base stack (§3.2) — re-adding it is the first step:
 
 The classifier instance serves one signal — if both complexity and
 contract-step are needed, run two instances, not one multi-signal instance.
-The gateway is `quay.io/mtahhan/gci-praxis:v0.9.0` (Praxis 0.7.5 /
-ai-gateway 0.9.0), a custom build carrying the out-of-tree `llm_d_sc`
-filter upstream `ai` does not have — unused by the default configs but in
-the image for this experiment. The rebuild path is
-`deploy/images/praxis-llm-d-sc/`.
+The gateway is `quay.io/mtahhan/gci-praxis:v0.9.1` (Praxis 0.7.5 /
+ai-gateway 0.9.0, PPE 0.4.1 host plugins), a custom build carrying the
+out-of-tree `llm_d_sc` filter and the PPE policy host that upstream `ai`
+does not have. The filter is unused by the default configs but stays in the
+image for this experiment; the policy host is used by every entry. The
+rebuild path is `deploy/images/praxis-llm-d-sc/`.
 
 ### 5.6 Claim boundary
 
@@ -841,23 +852,24 @@ are not contract-step results.
 
 ## 6. Reproducibility
 
-Published images (2026-11-05, `publish-images` workflow run `42043729532`,
-an amd64 Actions runner because the dev machines are arm64):
+Published images (all from the `publish-images` workflow on amd64 Actions
+runners because the dev machines are arm64):
 
-| Image | Digest | Consumed by the default stack |
-| --- | --- | --- |
-| `quay.io/mtahhan/gci-praxis:v0.9.0` | `sha256:2187ab818efab9a8f3d1f911190d47fad960888bada7d3db8a973d3ad70ac992` | yes — the gateway |
-| `quay.io/mtahhan/gci-llm-d-sc:main-e660fff` | `sha256:d94c1f7226bfbaeb5a300f0efdbab0e8a8988fc16af7fd80cff0e008a11fa3e1` | no — §5 experiment only |
-| `quay.io/mtahhan/gci-llm-d-sc-modelcar:complexity` | `sha256:299874af83c565d8435c8e061b87da1754cdd918ca15e977a7fecbf3aa17f491` (mirror, byte-identical) | no — §5 experiment only |
+| Image | Published | Digest | Consumed by the default stack |
+| --- | --- | --- | --- |
+| `quay.io/mtahhan/gci-praxis:v0.9.1` | 2026-11-06, run `42202721911` | `sha256:9def8e14befedeef75a088266630386dc4506004dd43fd6962212dcb122f375a` | **yes** — the gateway, plus the PPE policy host (audit observer + shadow PII scanner) |
+| `quay.io/mtahhan/gci-praxis:v0.9.0` | 2026-11-05, run `42043729532` | `sha256:2187ab818efab9a8f3d1f911190d47fad960888bada7d3db8a973d3ad70ac992` | superseded by v0.9.1 |
+| `quay.io/mtahhan/gci-llm-d-sc:main-e660fff` | 2026-11-05 | `sha256:d94c1f7226bfbaeb5a300f0efdbab0e8a8988fc16af7fd80cff0e008a11fa3e1` | no — §5 experiment only |
+| `quay.io/mtahhan/gci-llm-d-sc-modelcar:complexity` | 2026-11-05 | `sha256:299874af83c565d8435c8e061b87da1754cdd918ca15e977a7fecbf3aa17f491` (mirror, byte-identical) | no — §5 experiment only |
 
 The digests are the reproducibility boundary for measured runs; record the
-digest, not the tag. The base manifests point at the gateway image (the
-opt-in praxis-0.9.0 overlay is retired — base is the 0.9.0 stack), and
-`oc apply -k manifests` on a live cluster lands the image switch together
-with the classifier removal. Treat the rebuilt stack as new and re-run the
-measurement arms (FINDINGS §12). What is real vs simulated per environment
-is tabulated in README ("What is measured vs simulated"); quote test-split
-numbers only (FINDINGS §3, §13).
+digest, not the tag. The base manifests and the Linux compose stack point at
+`v0.9.1` (the opt-in praxis-0.9.0 overlay is retired — base is the 0.9.1
+stack), and `oc apply -k manifests` on a live cluster lands the image switch
+together with the classifier removal and the PPE policy documents. Treat the
+rebuilt stack as new and re-run the measurement arms (FINDINGS §12). What is
+real vs simulated per environment is tabulated in README ("What is measured
+vs simulated"); quote test-split numbers only (FINDINGS §3, §13).
 
 ## 7. Design history
 
@@ -896,8 +908,27 @@ CPU-model test plan in §9.
   parses pin+failover chains without inventing labels, the e2e fallback
   tests assert the new contract, and the publish workflow lost the
   classifier/modelcar jobs. Built and tested — **not measured**; every
-  §15 number came from the classifier-in-path config. This document, the
-  DECISIONS.md deletion and the FINDINGS transfers landed with it.
+  §15 number before §15.8 came from the classifier-in-path config. This
+  document, the DECISIONS.md deletion and the FINDINGS transfers landed with
+  it.
+- **2026-11-06 — PPE policy layer in the gateway image.** Image `v0.9.1`
+  host-registers the reference `audit/logger` (observer mode on PPE 0.4.1)
+  and `validator/gci-pii-observe`, an observe-only PII scanner whose pattern
+  catalog mirrors `pii.py`. Every entry gained a per-step `X-API-Key` identity
+  gate (fail closed); the sensitive entries taint the document session with a
+  gateway-owned `sensitive` label. The layer attributes and audits; it does
+  not steer pools (§3.1). The gateway image and its validation job are in
+  `.github/workflows/`, the build in `deploy/images/praxis-llm-d-sc/`.
+- **2026-11-09 — the classifier-free policy is measured, twice.** The
+  200-document ROSA matrix was re-run without the classifier and with the
+  conditional CPU termination follow-up (§3.3). The first measurement scored
+  198/200 with risk 0.990; the quoted rerun on a rebuilt stack scored
+  200/200, risk 1.000, 816.59 s and 0.22 GPU-s/doc. The two risk flips did
+  not reproduce — temperature-0 serving variance, not a routing regression
+  (FINDINGS §15.9). The GPU-termination alternative is measured but is not
+  the policy. Historical runs from the classifier-in-path and earlier
+  stacks are archived at commit `cfc52cc`; the working tree keeps the quoted
+  record and the guide evidence (`runs/README.md`).
 
 ## 8. Open decisions and next actions
 
@@ -930,14 +961,16 @@ reports, the regenerated ROSA report, and the alias regression tests —
    storage + seeders, `oc apply -k deploy/openshift/rosa`, specialist
    image rebuild, then the 2-document smoke run (1 sensitive + 1
    non-sensitive, config hybrid).
-2. **Rerun the 200-document matrix** (`DOCS=200 scripts/cluster/arms.sh`)
-   plus the three direct baselines — this turns the judgment-routing ~6×
-   GPU-saving estimate into a measured number and re-measures the
-   classifier-free configs. Do not claim the numbers until it is done.
-3. **Contract-step taxonomy eval** on the same cluster
+2. **The 200-document matrix and direct baselines are done (2026-11-09).**
+   The quoted classifier-free record is §3.3 / FINDINGS §15.9
+   (`runs/rosa-200-2026-11-09-cpu-term-rerun`). Re-run
+   (`DOCS=200 scripts/cluster/arms.sh` plus the direct baselines) only after a
+   routing, model or pool change; give it a new run directory and do not
+   overwrite the quoted one.
+3. **Contract-step taxonomy eval** once a stack is up
    (`hybrid-eval-contract-steps`; pass = same-document control 4/4, §5),
    then the CUAD test-split specialist through-stack rerun at lower
-   concurrency (FINDINGS §9).
+   concurrency (FINDINGS §9). `--check` runs locally without a stack.
 4. **Local, no cluster needed:** the Presidio A/B on a labelled sample and
    the docling-offsets A/B on the D11 regression set (§4.6's open list),
    and the embedder-tier call (FINDINGS §9/§11).
@@ -949,6 +982,12 @@ reports, the regenerated ROSA report, and the alias regression tests —
    scripted and agent-driven. Keep the agent path labelled **functional, not
    measured** until it has its own run record; the measured reference path is
    unchanged.
+6. **Parked: decision-model experiment (Jev/Laya-style).** The best fit is
+   the PII screen (no CUAD PII labels, which is exactly the zero-shot case),
+   with the cause-language trigger as a second candidate. Benchmark offline
+   first against the fixed corpus; a replacement must beat the regex baseline
+   under the §4.4 protocol before it earns a measured arm. Not a fit for
+   stage routing (already measured and removed) or wholesale risk judgment.
 
 Quick verification of the whole surface:
 

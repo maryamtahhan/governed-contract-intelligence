@@ -6,50 +6,71 @@ milliseconds per clause, **cannot hallucinate — it returns spans of the
 source document**), risk judgment and cross-document synthesis escalate to a
 Qwen3.5-35B-A3B MoE, and **every request is routed and audited by
 [Praxis](https://github.com/praxis-proxy/ai)** — no classifier in the
-request path (removed 2026-11-05; FINDINGS §15.5). Documents
-containing personal data are pinned to approved in-cluster pools only and
-**fail closed** rather than spill. Batch volume runs on CPU; GPU is for
-governed work, interactive drill-down and burst. Quality is scored against
-expert ground truth ([CUAD](https://www.atticusprojectai.org/cuad)), routes
-and device-time are recorded per request, and the gateway's own database is
-the audit trail.
+request path (removed 2026-11-05; FINDINGS §15.5). Documents containing
+personal data are pinned to approved in-cluster pools only and **fail closed**
+rather than spill. Batch volume runs on CPU; GPU is for governed work,
+interactive drill-down and burst. Quality is scored against expert ground
+truth ([CUAD](https://www.atticusprojectai.org/cuad)), routes and device-time
+are recorded per request, and the gateway's own database is the audit trail.
 
 The product direction is **portfolio intelligence**: retrieval-first,
 evidence-first — docling ingestion on CPU, legal embedders tiered by
-measured regime (within-doc 0.6B on CPU, cross-doc portfolio queries on
-the 8B — FINDINGS §11), specialist span extraction, MoE
-synthesis over the
-retrieved evidence, governance at every hop. See
-[FINDINGS.md](FINDINGS.md) §11 for the design and §3/§10 for the measured
-results that justify it.
+measured regime (within-doc 0.6B on CPU, cross-doc portfolio queries on the
+8B — FINDINGS §11), specialist span extraction, MoE synthesis over the
+retrieved evidence, governance at every hop. See [FINDINGS.md](FINDINGS.md)
+§11 for the design and §3/§10 for the measured results that justify it.
 
 Built on [RMalone8/llm-d-sc-demo](https://github.com/RMalone8/llm-d-sc-demo)
 (Praxis gateway + trace UI), extended with the specialist pool, the CUAD
-pipeline, the measurement harness and the OpenShell sandbox. **Read
-"What is measured vs simulated" before quoting any number.**
+pipeline, the measurement harness and the OpenShell sandbox.
 
-**New to the repo?** Read [docs/design.md](docs/design.md): the system map
-and naming model (routing-policy names, route names, models, and actual
-hardware are five different things), the routing/governance design and why
-there is no classifier, the upstream-composition policy, the
-semantic-routing path, and the open decisions.
+> **New to the repo?** Read [docs/design.md](docs/design.md) first: the system
+> map and naming model (routing-policy names, route names, models, and actual
+> hardware are five different things), the routing/governance design and why
+> there is no classifier, the upstream-composition policy, the semantic-routing
+> path, and the open decisions. Then use this README as the runbook and
+> [FINDINGS.md](FINDINGS.md) as the measurement record.
+>
+> **Read [What is measured vs simulated](#what-is-measured-vs-simulated)
+> before quoting any number.**
+
+## Contents
+
+- [Status: built vs designed](#status-built-vs-designed)
+- [How it fits together](#how-it-fits-together)
+- [What runs where](#what-runs-where)
+- [Repository layout](#repository-layout)
+- [The naming model in one minute](#the-naming-model-in-one-minute)
+- [Linux runbook](#linux-runbook)
+- [OpenShift runbook](#openshift-runbook)
+- [Dashboard and replay](#dashboard-and-replay)
+- [Tests and checks](#tests-and-checks)
+- [Experiments and measurements](#experiments-and-measurements)
+- [Optional open-source integrations](#optional-open-source-integrations)
+- [Measurement design](#measurement-design)
+- [Headline results](#headline-results)
+- [What is measured vs simulated](#what-is-measured-vs-simulated)
+- [Manage the sandbox](#manage-the-sandbox)
+- [Tear down](#tear-down)
+- [Known gaps](#known-gaps)
 
 ## Status: built vs designed
 
 | capability | state |
 |---|---|
 | Praxis routing, governance, fail-closed, audit export | **built, verified on 3 stacks** |
+| PPE policy layer: per-step API keys, audit records, shadow PII screen | **built; observe-only** — deny-on-PII is an open measured decision (design §3.1) |
 | CUAD review pipeline (extraction → risk → report), scored vs ground truth | **built** |
 | CUAD specialist pool (RoBERTa-large QA, composite with forwarding) | **built** |
 | Semantic cache in the specialist (V5 ordering rules, zero-FP threshold) | **built, measured** |
 | Four-arm measurement (A/B/C/D) + model-variant comparison on OCP | **built** |
 | Trace UI (waterfall, arms panel, dashboard, audit) | **built** |
-| Test suite | **206 tests green** (`cd demo && uv run pytest`) |
+| Test suite | **216 tests green** (`cd demo && uv run pytest`) |
 | Contract-step taxonomy + evaluation harness | **candidate, not measured** — evaluate before routing ([design §5](docs/design.md)) |
-| Praxis 0.9.0 / ai-gateway 0.9.0 gateway rebuild | **built and published** — `quay.io/mtahhan/gci-praxis:v0.9.0`, base manifests switched ([docs](deploy/images/praxis-llm-d-sc/README.md)) |
+| Gateway image `v0.9.1` (Praxis 0.7.5 / ai-gateway 0.9.0 + PPE host plugins) | **built and published** — `quay.io/mtahhan/gci-praxis:v0.9.1`, base manifests switched ([docs](deploy/images/praxis-llm-d-sc/README.md)) |
 | Retrieval evaluation (chunking + recall@k/MRR vs annotation spans) | **run, both regimes — ordering inverts within-doc, restores cross-doc (FINDINGS §11)** |
 | OSS adapters (Presidio, nervaluate, ranx, docling, RedisVL, OTel, RAGAS, llm-d sim/batch/bench) | **built as opt-in swaps, default path unchanged** ([design §4](docs/design.md)) |
-| docling ingestion + PII screen at ingest | adapter built; default remains builtin/regex, not yet measured on the corpus (§11, FINDINGS §16) |
+| docling ingestion + PII screen at ingest | adapter built; default remains builtin/regex, not yet measured on the corpus (FINDINGS §16) |
 | hybrid-bench concurrency sweep, thinking-mode A/B, V2 tool-calling | wrapper built; sweep open (FINDINGS §9) |
 
 ## How it fits together
@@ -73,6 +94,22 @@ built, governed and measured end-to-end today:
 
 ![As-built architecture: clients (pipeline, sandboxed agent) → trace-ui / praxis gateway → pools; the dashed green boundary marks the approved set, inside which sensitive data is processed](docs/architecture-as-built.svg)
 
+The two run shapes are deliberately different, and the diagrams make the
+difference explicit:
+
+- **Direct run** — one endpoint for the whole run, no relay, gateway, label,
+  pool choice or trace. It measures model quality only.
+
+  ![Direct run: the batch runner does CPU-side orchestration; one endpoint runs every model call](docs/pipeline-direct.svg)
+
+- **Through-stack run** — batch runner → ingress relay → Praxis (PPE policy
+  gate + pinned routing) → pool relay → pool → model. It measures routing,
+  governance, audit and cost.
+
+  ![Through-stack run: one request, six stops — two trace-ui relays, the Praxis policy/route gate, the pool and the model](docs/pipeline-through-stack.svg)
+
+Key properties of the governed path:
+
 - **Sensitivity is a constraint; batch is CPU-first.** The general listener
   pins single-document work to the CPU pool (the measured behaviour: the
   classifier used to label 1,200 of 1,201 steps MEDIUM, FINDINGS §15.5, so
@@ -82,9 +119,17 @@ built, governed and measured end-to-end today:
   **fails closed** (explicit 502, verified in the traces). General work
   degrades to any pool with a visible signal (the trace's "fell back"
   badge).
+- **Judgment is worth a GPU.** Risk and report use dedicated judgment
+  listeners pinned to GPU; sensitive judgment pins to the approved GPU only
+  and fails closed. Extraction, including the termination follow-up, stays
+  on the CPU specialist.
 - **Praxis reaches the pools only through the trace-ui relays** — every
-  request recorded with route, per-hop timings; SQLite is the audit
-  trail, exported as `audit.jsonl`.
+  request recorded with route, per-hop timings; SQLite is the audit trail,
+  exported as `audit.jsonl`.
+- **Every request is authenticated at the gateway.** Each pipeline step
+  presents a per-step `X-API-Key` to the PPE policy filter; unknown or missing
+  keys fail closed. The same policy layer emits request records and runs the
+  observe-only PII scanner.
 - **The same praxis configs** (`manifests/base/praxis/`) drive the Linux
   stack and OpenShift, so routing is byte-identical on both.
 - **Arms** (measurement baselines, swapped live): **A** all-GPU large model,
@@ -99,9 +144,9 @@ built, governed and measured end-to-end today:
 | Environment | What runs | How |
 |---|---|---|
 | **Linux host (podman/docker)** | Real Praxis + trace-ui, simulated vLLM backends | `scripts/linux/up.sh` |
-| **g5.12xlarge (stopped, AMI kept)** | Real vLLM: 1.5B CPU, 7B/1.5B GPU — the measured GPU-vs-CPU story | warm-restart the AMI |
-| **OpenShift (rhgaudi3s2 SNO)** — validation | Real vLLM pools, all CPU-served (1.5B / 7B / 9B / 35B-A3B MoE / specialist), full platform validation | `deploy/openshift/*` overlays |
-| **ROSA HCP — demo target (measured, torn down 2026-11-04)** | x8i.24xlarge CPU (48 cores, AMX) + g5.12xlarge (4× A10G, TP=4) in one AZ, explicit OMP binding, per-node gp3 caches | `deploy/openshift/rosa` |
+| **g5.12xlarge (stopped, AMI kept)** | Real vLLM: 1.5B CPU, 7B/1.5B GPU — the measured GPU-vs-CPU story | warm-restart the AMI; `scripts/linux/up.sh --real` |
+| **OpenShift (rhgaudi3s2 SNO)** — validation | Real vLLM pools, all CPU-served (1.5B / 7B / 9B / 35B-A3B MoE / specialist), full platform validation | `deploy/openshift/*` overlays; `deploy/openshift/cpu-isolation/` |
+| **ROSA HCP — demo target (measured 2026-11-09, torn down the same night)** | x8i.24xlarge CPU (48 cores, AMX) + g5.12xlarge (4× A10G, TP=4) in one AZ, explicit taskset pinning, per-node gp3 caches | `deploy/openshift/rosa/` — rebuild from its README |
 | **Dev machine (tests)** | Fake pools + trace-ui + a praxis stub that parses the real configs | `cd demo && uv run pytest` |
 
 The simulated backends speak the OpenAI subset, report device-time, simulate
@@ -111,43 +156,103 @@ governance, failover and measurement run on a CPU-only instance and in CI.
 real vLLM pools (Linux compose profile `real`, the g5, or OpenShift) for
 measured numbers.
 
-## Optional open-source integrations
+## Repository layout
 
-The measured default path is unchanged: the built-in regex screen, built-in
-chunker, containment scoring, SQLite trace store and dependency-free exact
-McNemar all still run with the base install. Each item below is an **opt-in
-swap**, because a component swap changes a number and must be A/B tested, not
-silently adopted. The full audit, licences and measurement caveats are in
-[docs/design.md §4](docs/design.md).
+Everything measurable lives in `demo/`; everything deployable lives in
+`manifests/`, `deploy/`, `scripts/` and `sandbox/`; the current recorded
+evidence lives in `runs/`. Historical run directories referenced in
+[FINDINGS.md](FINDINGS.md) and in the results below are archived at commit
+`cfc52cc` — [`runs/README.md`](runs/README.md) lists them and shows how to
+restore one.
 
-| upstream | module / flag | default | why it is a swap |
-|---|---|---|---|
-| Presidio | `hybrid_demo.pii`, `HYBRID_PII_DETECTOR=presidio` | regex | NER raises the sensitive share; no CUAD PII labels to score it |
-| nervaluate | `hybrid_demo.evalkit.spans` | containment | adds SemEval offset metrics; paraphrases still fail offsets |
-| statsmodels | `hybrid_demo.evalkit.stats` | exact binomial | same test, standard implementation/backend label |
-| ranx | `hybrid_demo.retrieval.metrics`, `--metrics-backend` | internal | NDCG/MAP implementation can differ at ties |
-| docling `HybridChunker` | `hybrid_demo.retrieval.docling_chunking`, `--chunk-backend docling` | builtin | chunk boundaries move; offsets are regression-checked |
-| LanceDB + BM25 | `hybrid_demo.retrieval.index`, `hybrid-index` | memory | cross-doc ranking changes with the backend |
-| RedisVL + Redis | `--cache-backend redis` | in-memory | cache hits change cost/latency; policy stays ours |
-| OpenTelemetry | `TRACE_OTEL=jsonl` or `otlp` | SQLite only | export is additive; no content for sensitive entries |
-| RAGAS | `hybrid_demo.evalkit.rag` | lexical screen | judge-dependent numbers are not comparable across judges |
-| llm-d-inference-sim | `hybrid-pool-sim` | `hybrid-pool` | simulator covers transport/latency, not tiered answer corruption or device time |
-| llm-d-batch-gateway | `hybrid-batch` | Python runner | batch must target the praxis ingress, never a pool directly |
-| vLLM bench / GuideLLM | `hybrid-bench` | `tools/gpu_bench.py` | load generator CLI churns; pin versions in a measured run |
-
-Quick checks that need no model or GPU:
-
-```bash
-cd demo
-uv run python -m hybrid_demo.pii                      # detector availability
-uv run python tools/compare_pii.py --data data/synthetic --detectors regex
-uv run python -m hybrid_demo.bench --backend vllm \
-  --base-url http://localhost:8080 --model Semantic-Qwen --dry-run
-uv run python -m hybrid_demo.fakepool.llmd_sim \
-  --upstream http://localhost:8001 --pool vllm-cpu --port 8000 --print-simulator-cmd
+```
+.
+├── README.md                     this runbook
+├── FINDINGS.md                   the measurement record — read before quoting numbers
+├── demo/                         Python package, tests and experiment tools
+│   ├── src/hybrid_demo/
+│   │   ├── pipeline/           generator, review pipeline, direct runner, batch, CUAD converter, risk, schemas
+│   │   ├── specialist/         CUAD RoBERTa QA server, questions, semantic cache
+│   │   ├── retrieval/          chunking, docling adapter, index, retrieval eval + e2e
+│   │   ├── evalkit/            scorer, span/stats/rag checks, cost, live sampler, contract-step + PII-agreement evals
+│   │   ├── fakepool/           simulated backends + llm-d-inference-sim adapter
+│   │   ├── traceui/            recording relays, dashboard backend, audit, OTel export
+│   │   ├── ui/                 stage dashboard (replay + live modes)
+│   │   ├── mcp/                MCP facade: review + stage tools, ingress only
+│   │   ├── pii.py              pluggable PII detectors (regex default)
+│   │   ├── configs.json        single source of routing-config metadata
+│   │   └── common.py, routes.py, bench.py, classifier.py
+│   ├── tests/                    216-test suite, incl. e2e against a praxis stub
+│   ├── tools/                    probes, validators, paired significance, PII compare, bench helpers
+│   ├── Dockerfile                trace-ui / package image
+│   └── Dockerfile.specialist     specialist image (bakes the CUAD checkpoint)
+├── manifests/
+│   ├── base/                     non-KServe platform: praxis, trace-ui, traffic-gen, netpols
+│   │   └── praxis/               the four routing configs + PPE policies + API-key digests
+│   └── overlays/                 opt-in overlays (e.g. trace-ui route)
+├── deploy/
+│   ├── linux/                    docker-compose / podman-compose stack (fake and real profiles)
+│   ├── openshift/                cpu-real* model-pool overlays, fake-all/fake-gpu, gpu-moe,
+│   │                             rosa, cpu-isolation
+│   └── images/praxis-llm-d-sc/   reproducible gateway image build (filter + PPE host)
+├── scripts/
+│   ├── linux/                    up, down, smoke, arms, set_config, demo choreography
+│   ├── cluster/                  OpenShift arms, direct, smoke, model-comparison, cpu-topology
+│   ├── demo/                     pull-the-plug, blocked-action
+│   └── data/                     CUAD fetch
+├── runs/                         current evidence (quoted record, guide appendix); archive map: runs/README.md
+├── docs/
+│   ├── design.md                     the design document (system map, decisions, open items)
+│   ├── architecture-as-built.svg     through-stack architecture
+│   ├── pipeline-direct.svg           direct-run shape
+│   ├── pipeline-through-stack.svg    one request, six stops
+│   ├── stage-runbook.md              one-page stage script
+│   ├── stage-review-walkthrough.html presenter guide
+│   └── octo-demo-v0.3.md             business case / OCTO framing
+├── mcp/                          root launcher for the MCP facade
+├── classifiers/                  contract-step taxonomy + evaluation anchors (candidate)
+├── sandbox/policy.yaml           OpenShell sandbox egress policy (praxis + GitHub read-only)
+├── values/                       OpenShift Helm overrides
+└── .github/workflows/            CI + gateway image publish
 ```
 
-## Linux runbook (podman or docker)
+Where to look for what:
+
+| I want to… | Read / run |
+|---|---|
+| understand why the system is built this way | [`docs/design.md`](docs/design.md) |
+| run the demo locally | [Linux runbook](#linux-runbook) |
+| run it on OpenShift / rebuild ROSA | [OpenShift runbook](#openshift-runbook), [`deploy/openshift/rosa/README.md`](deploy/openshift/rosa/README.md) |
+| see what was measured, and how | [`FINDINGS.md`](FINDINGS.md), [`runs/README.md`](runs/README.md) |
+| run or extend the test suite | [Tests and checks](#tests-and-checks) |
+| reproduce a measurement | [Experiments and measurements](#experiments-and-measurements), [design §4.4](docs/design.md) |
+| give the stage demo | [`docs/stage-runbook.md`](docs/stage-runbook.md), [`docs/stage-review-walkthrough.html`](docs/stage-review-walkthrough.html) |
+| understand a run directory or config name | [`runs/README.md`](runs/README.md), [design §2](docs/design.md) |
+
+## The naming model in one minute
+
+A run directory, a config name, a route name, a model name and actual
+hardware are **five different things** (full treatment: [design §2](docs/design.md)):
+
+| Layer | Example | Where to read it |
+|---|---|---|
+| Run directory | `runs/rosa-200-2026-11-09-cpu-term-rerun/hybrid` | the path; maps to one recorded run |
+| Routing policy / config | `hybrid` (old D) | `summary.config`; legacy `summary.arm` |
+| Route / cluster | `vllm-cpu`, `vllm-gpu-approved` | `x-demo-route` response header; `summary.routes` |
+| Served model | `Qwen3.5-35B-A3B`, `cuad-specialist` | response `model`; `summary.stage_models` |
+| Actual hardware | `4× A10G`, `CPU x8i.24xlarge` | `summary.pools[route].hardware` |
+
+Two rules follow from this:
+
+1. **Never infer hardware from a route or config name.** On ROSA,
+   `vllm-gpu-small` is served by Qwen2.5-1.5B **on CPU**; `all-gpu` is a
+   routing policy, not a hardware promise.
+2. **`vllm-cpu` is a composite route.** On the measured ROSA stack it
+   reaches the CUAD specialist pod, which answers extraction prompts with a
+   RoBERTa encoder and forwards everything else to the vLLM CPU server. A
+   route count is not a model count; read `summary.stage_models`.
+
+## Linux runbook
 
 Prerequisites: podman or docker with a compose provider, `uv`, `curl`. On a
 podman host without compose:
@@ -156,6 +261,8 @@ podman host without compose:
 python3 -m venv ~/pv && ~/pv/bin/pip install podman-compose
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
+
+Start the simulated stack (no GPU, no model downloads):
 
 ```bash
 export COMPOSE="$HOME/pv/bin/podman-compose"    # or "docker compose"
@@ -170,65 +277,82 @@ scripts/linux/down.sh      # stop (-v also deletes the trace database)
 ```
 
 Outputs: `runs/report.md` (+ `.json`, `.html`), per-config directories such as
-`runs/hybrid/`, and the live dashboard on http://127.0.0.1:8080. Pull the plug
-yourself: `podman stop hybrid-demo_fake-gpu_1`.
+`runs/hybrid/`, and the live dashboard on <http://127.0.0.1:8080>. Pull the
+plug yourself: `podman stop hybrid-demo_fake-gpu_1`.
+
+Real models instead of simulated ones (needs an NVIDIA GPU, the container
+toolkit, and ~40 GB for weights):
+
+```bash
+scripts/linux/up.sh --real
+```
 
 Real contracts instead of synthetic: `scripts/data/fetch-cuad.sh`, convert
 with `hybrid_demo.pipeline.cuad` (CUAD v1, CC BY 4.0 — verify before use;
 use `--split test` for specialist comparisons, contamination discipline).
 CUAD runs need the real-model stack. Then:
-`DOCS=40 DATA=data/cuad-test scripts/linux/arms.sh`.
+
+```bash
+DOCS=40 DATA=data/cuad-test scripts/linux/arms.sh
+```
 
 ## OpenShift runbook
 
-Prerequisites: OpenShift ≥ 4.19 (Landlock) with RHOAI/KServe optional, a GPU
-node if you want one, cluster-admin, `oc`, `helm`, the `openshell` CLI.
+Prerequisites: OpenShift ≥ 4.19 (Landlock) with cluster-admin, `oc`, `helm`,
+the `openshell` CLI, and RHOAI/KServe only if you use the KServe base. The
+ROSA overlay uses plain Deployments and needs no KServe.
 
-```bash
-oc login ...
-./scripts/00-prereqs.sh            # checks + Agent Sandbox CRD/controller
-./scripts/01-install-openshell.sh  # OpenShell gateway (Helm)
-./scripts/02-apply.sh              # praxis, trace-ui, netpols
-./scripts/03-create-sandbox.sh     # OpenClaw sandbox, egress: praxis only
-```
+Two deployment shapes:
+
+- **KServe base** (`manifests/` + the InferenceService objects):
+  ```bash
+  oc login ...
+  ./scripts/00-prereqs.sh            # checks + Agent Sandbox CRD/controller
+  ./scripts/01-install-openshell.sh  # OpenShell gateway (Helm)
+  ./scripts/02-apply.sh              # praxis, trace-ui, netpols, KServe pools
+  ./scripts/03-create-sandbox.sh     # OpenClaw sandbox, egress: praxis only
+  ```
+- **ROSA / plain-Deployment stack** (`manifests/base` + `deploy/openshift/rosa`):
+  follow [`deploy/openshift/rosa/README.md`](deploy/openshift/rosa/README.md).
+  It covers machine pools (both in one AZ), the GPU operator, `taskset` core
+  lists from the real node, cache seeders, the specialist build and the
+  bring-up order. The overlay is deliberately non-KServe.
 
 Model pools are plain Deployments applied by CPU-model overlays — swap
-variants with `scripts/cluster/model-comparison.sh {base|moe|9b|specialist|specialist-moe}`
+variants with
+`scripts/cluster/model-comparison.sh {base|moe|moe-thinking|9b|specialist|specialist-moe}`
 (each applies `deploy/openshift/cpu-real-*`, warms praxis, runs config hybrid
-on the CUAD test split into `runs/cuad-test/hybrid-<variant>` with metrics
-sampling). The overlays carry the platform fixes from FINDINGS §7 (cpu
+on a CUAD document set — set `DATA=data/cuad-test` for the held-out split —
+into `runs/cuad-mixed/hybrid-<variant>` with metrics sampling; that is the
+historical default output path, so set `RUNS=` for a new series). The
+overlays carry the platform fixes from FINDINGS §7 (cpu
 limits, writable cache volumes, /dev/shm sizing, model-cache PVC for small
 models, emptyDir for the MoE — read it before changing anything).
 
-The measured pools are Guaranteed QoS and assume the NTO CPU-isolation
-profile in [`deploy/openshift/cpu-isolation/`](deploy/openshift/cpu-isolation/):
+**CPU pinning is environment-specific.** The SNO validation pools assume the
+NTO CPU-isolation profile in [`deploy/openshift/cpu-isolation/`](deploy/openshift/cpu-isolation/):
 SMT siblings offlined so one CPU request is one physical core, and
 `single-numa-node` placement. That profile is **generated for the node it
-runs on**, not portable: the SNO here is a Xeon 6960P with six 24-core NUMA
-nodes, so each 24-core 7B pool needs a whole node. On any other node the CPU
-numbering, NUMA boundaries and pool-to-node fit differ — read `lscpu` first
-and regenerate the three lists (commands in that README). The Linux stack and
-the g5 run no NTO profile at all: use their numbers for routing and quality,
-and on the g5 for device-time, never for CPU-latency comparisons against the
-isolated OpenShift runs.
-
-Apply and verify it before a measurement series — the README there has the
-numbering check, the per-node CPU budget, the server-side dry-run command,
-and the opt-in transparent-hugepages experiment. Without the profile the
-pods still run, but their cpuset is not deterministic and their latency is
-not comparable with the recorded runs.
+runs on**, not portable (the SNO is a Xeon 6960P with six 24-core NUMA
+nodes). ROSA managed nodes cannot use it: the ROSA overlay pins each pool
+with `taskset` instead and documents why in
+[`deploy/openshift/rosa/kustomization.yaml`](deploy/openshift/rosa/kustomization.yaml).
+On any new node, read `lscpu` first and regenerate the core lists.
 
 The gateway image is published by this repo: upstream `ai` has no
-`llm_d_sc` filter, so the repo publishes its own build of the fork —
-`quay.io/mtahhan/gci-praxis:v0.9.0` (Praxis 0.7.5 / ai-gateway 0.9.0,
-FINDINGS §12) — via the `publish-images` workflow
+`llm_d_sc` filter and no PPE policy host, so the repo publishes its own
+build — `quay.io/mtahhan/gci-praxis:v0.9.1` (Praxis 0.7.5 / ai-gateway 0.9.0,
+PPE 0.4.1 host plugins; digest
+`sha256:9def8e14befedeef75a088266630386dc4506004dd43fd6962212dcb122f375a`)
+— via the `publish-images` workflow
 ([deploy/images/praxis-llm-d-sc/](deploy/images/praxis-llm-d-sc/README.md)).
-The filter is unused by the shipped configs (no classifier in the request
-path) but stays in the image for the contract-step taxonomy experiment. The
-classifier (`quay.io/mtahhan/gci-llm-d-sc:main-e660fff`) and its mirrored
-modelcar were published once (2026-11-05) and stay in the registry for that
-experiment, but nothing in the default stack deploys them; the workflow
-jobs were removed with the classifier. The llm-d-sc Deployment and the
+The `llm_d_sc` filter is unused by the shipped configs (no classifier in the
+request path) but stays in the image for the contract-step taxonomy
+experiment. The policy layer is used by every entry: per-step API keys,
+request records and the observe-only PII scanner. The classifier
+(`quay.io/mtahhan/gci-llm-d-sc:main-e660fff`) and its mirrored modelcar were
+published once (2026-11-05) and stay in the registry for that experiment;
+nothing in the default stack deploys them. The llm-d-sc Deployment and the
 classifier-routed arm B config are preserved in git history (commit
 `aa080e9`).
 
@@ -269,6 +393,174 @@ are a rolling window of 250 (`TRACE_MAX_TRACES`), so a governance check is
 only complete when the window covers the run — per-run summaries in the
 `runs` table are the durable record. Treat the PVC and exports as sensitive,
 and apply your own retention beyond the demo's.
+
+## Dashboard and replay
+
+The stage dashboard runs from the checkout with no cluster and no model:
+
+```bash
+cd demo
+make dashboard-up          # replay only, 127.0.0.1:8099
+open http://127.0.0.1:8099/
+```
+
+It defaults to the quoted CPU-termination rerun
+(`runs/rosa-200-2026-11-09-cpu-term-rerun/hybrid`) with the same-day all-GPU
+control as B. Useful variants:
+
+```bash
+make dashboard-up RUN=../runs/rosa-200-2026-11-09/all-gpu COMPARE=   # show the all-GPU control
+make dashboard-live ENDPOINT=http://127.0.0.1:8000/v1   # one-document live runs
+make dashboard-live HOST=0.0.0.0 LIVE_TOKEN=sesame      # token-gated, non-loopback
+make dashboard-down
+```
+
+The pages are `/` (waterfall and arm comparison), `/guide` (presenter guide)
+and `/monitor` (live mode). The dashboard is a replay/presentation layer; the
+measured evidence remains the run directories and the trace-ui SQLite store.
+
+## Tests and checks
+
+The test suite is dependency-light by design: it runs the real routing
+configs against a praxis stub and fake pools, and needs no GPU, model
+download or network.
+
+```bash
+cd demo
+uv sync --locked --dev
+uv run pytest -q                  # 216 passed on a clean checkout
+uv run ruff check src tests tools
+```
+
+What the suite covers:
+
+| Area | Representative tests |
+|---|---|
+| Routing configs, aliases, CLI compatibility | `test_configs.py`, `test_run_cli.py`, `test_shared.py` |
+| End-to-end through the praxis stub: routing, fallback, fail-closed, entry choice, API-key auth | `test_e2e.py`, `test_stub_config.py`, `test_policy_identity.py`, `test_review_entry.py` |
+| Fake pools, scoring, cost, spans/stats, telemetry, OTel export | `test_fakepool.py`, `test_score.py`, `test_spans_stats.py`, `test_schemas_otel.py`, `test_telemetry.py` |
+| PII screen and gateway/pipeline agreement | `test_pii.py`, `test_pii_agreement.py` |
+| CUAD conversion, document ids, direct runner, generated data | `test_cuad.py`, `test_cuad_doc_ids.py`, `test_direct.py`, `test_generate.py` |
+| Retrieval chunking, index and OSS adapters | `test_chunking.py`, `test_retrieval_oss.py`, `test_oss_adapters.py` |
+| Dashboard payload/corpus/auth, MCP facade | `test_ui_payload.py`, `test_ui_corpus.py`, `test_ui_live_auth.py`, `test_mcp_server.py` |
+
+Optional extras add tests and tools for the corresponding adapters:
+
+```bash
+uv sync --extra mcp          # MCP server tests
+uv sync --extra pii --extra spans --extra stats --extra ranking \
+        --extra ingest --extra cache --extra otel --extra rag
+uv sync --extra specialist   # torch/transformers; needed by the local specialist tools
+uv sync --extra retrieval    # sentence-transformers; needed by retrieval eval
+```
+
+CUAD-backed tests skip cleanly when `data/cuad` is absent. The same checks run
+in CI (`.github/workflows/ci.yml`), plus a **gateway-configs** job that boots
+the real image and validates every praxis config:
+
+```bash
+# What CI runs for each of config.yaml / arm-a / arm-b / arm-c:
+podman run --rm -v "$PWD/manifests/base/praxis:/etc/praxis:ro" \
+  quay.io/mtahhan/gci-praxis:v0.9.1 --validate -c /etc/praxis/config.yaml
+```
+
+Cheap structural checks before a doc or script change:
+
+```bash
+cd demo && uv run hybrid-run --target gateway --help   # shows --config, not --arm
+cd .. && for f in scripts/configs.sh scripts/linux/set_arm.sh \
+         scripts/linux/set_config.sh scripts/linux/arms.sh \
+         scripts/linux/demo.sh scripts/cluster/arms.sh \
+         scripts/cluster/model-comparison.sh; do bash -n "$f" || exit 1; done
+xmllint --noout docs/pipeline-direct.svg docs/pipeline-through-stack.svg \
+                 docs/architecture-as-built.svg
+```
+
+## Experiments and measurements
+
+A measurement is not a log line: it is a run directory under `runs/` with
+`results.json` (and usually `report.md` / `.json` / `.html`), produced by one
+pinned stack and one document set. Never overwrite a run directory; give a new
+policy or model variant its own directory. The comparison protocol for any
+component swap is [design §4.4](docs/design.md).
+
+| Experiment | Command | Output / what it measures |
+|---|---|---|
+| Four-config matrix, simulated | `scripts/linux/up.sh` then `DOCS=40 scripts/linux/arms.sh` | `runs/<config>/`, `runs/report.*`; routing, governance, cost plumbing (simulated quality) |
+| Four-config matrix, real pools on Linux/g5 | `scripts/linux/up.sh --real` then `DOCS=200 scripts/linux/arms.sh` | measured quality and device time |
+| Four-config matrix, OpenShift/ROSA | `DOCS=200 scripts/cluster/arms.sh` | same, through the real cluster pools; `ENVIRONMENT`, `CLUSTER`, `POOLS_JSON` record provenance |
+| Direct baseline (one endpoint) | `scripts/cluster/direct.sh` | `runs/direct/<pool>`; model quality without routing |
+| CPU-pool model comparison | `scripts/cluster/model-comparison.sh {base|moe|moe-thinking|9b|specialist|specialist-moe}` | `runs/cuad-mixed/hybrid-<variant>`; same documents, swapped CPU pool |
+| Within-doc / cross-doc retrieval | `uv run --extra retrieval hybrid-retrieval-eval --model ... --mode within|cross` | `runs/retrieval/*.json`; recall@k, MRR, NDCG/MAP |
+| Retrieval end-to-end | `uv run hybrid-retrieval-e2e --baseline-run ...` | extraction F1 with retrieval in front of the specialist |
+| Contract-step taxonomy | `uv run hybrid-eval-contract-steps --check` / `--base-url ...` | `runs/contract-step/eval.json`; candidate taxonomy, not a measured routing result |
+| PII detector comparison | `uv run python tools/compare_pii.py --data ... --detectors regex,presidio` | sensitive share and labelled TP/FP/TN/FN |
+| Gateway vs pipeline PII screen | `uv run hybrid-pii-agreement --run <run> --logs <praxis logs>` | V19 groundwork; agreement only, observe-only scanner |
+| Specialist quality | `uv run python tools/validate_specialist.py --docs 12` | CUAD test-split F1 for the local checkpoint |
+| Semantic-cache threshold | `uv run python tools/validate_cache.py --docs 12` | hit rate and false positives per threshold; pick zero-FP point |
+| Paired significance | `uv run python tools/mcnemar.py <run_a> <run_b> --k 5` | exact McNemar (statsmodels backend when installed) |
+| Serving / concurrency sweep | `uv run python tools/gpu_bench.py --url ... --data ... --levels 1,4,16` | TTFT and end-to-end latency; no gateway in the path |
+| Benchmark command builder | `uv run hybrid-bench --backend vllm|guidellm ... --dry-run` | the command it would run; no result parsing |
+| Batch transport | `uv run hybrid-batch --gateway <praxis ingress> ...` | `/v1/files` + `/v1/batches`; must target praxis, never a pool |
+
+Useful specifics:
+
+- **Four-config matrix.** `CONFIGS` (or legacy `ARMS`) selects configs;
+  `DOCS`, `DATA`, `CONCURRENCY` and `RUNS` override the defaults. A full
+  200-document ROSA run is the measured record in FINDINGS §15.9. The
+  Linux stack runs the same configs against simulated pools unless you pass
+  `--real`.
+- **Direct vs stacked.** `scripts/cluster/direct.sh` bypasses Praxis on
+  purpose and writes to `runs/direct/<pool>`; `scripts/cluster/arms.sh` is
+  the governed composite. Score both together so the report puts them in one
+  table (see `deploy/openshift/rosa/README.md`).
+- **Retrieval.** Commands and file naming are documented in
+  [`runs/retrieval/README.md`](runs/retrieval/README.md); findings and
+  caveats in FINDINGS §11.
+- **Contract-step taxonomy.** The harness is 33 cases across real prompts,
+  paraphrases, same-document controls, long documents and agent-shaped
+  requests. Pass criteria are listed in [design §5](docs/design.md); do not
+  present it as a measured routing result until the same-document control is
+  4/4.
+- **Sanity checks without a stack.** `uv run python -m hybrid_demo.pii`,
+  `uv run python tools/compare_pii.py --data data/synthetic --detectors regex`,
+  and `uv run hybrid-bench ... --dry-run` all run locally.
+
+## Optional open-source integrations
+
+The measured default path is unchanged: the built-in regex screen, built-in
+chunker, containment scoring, SQLite trace store and dependency-free exact
+McNemar all still run with the base install. Each item below is an **opt-in
+swap**, because a component swap changes a number and must be A/B tested, not
+silently adopted. The full audit, licences and measurement caveats are in
+[docs/design.md §4](docs/design.md).
+
+| upstream | module / flag | default | why it is a swap |
+|---|---|---|---|
+| Presidio | `hybrid_demo.pii`, `HYBRID_PII_DETECTOR=presidio` | regex | NER raises the sensitive share; no CUAD PII labels to score it |
+| nervaluate | `hybrid_demo.evalkit.spans` | containment | adds SemEval offset metrics; paraphrases still fail offsets |
+| statsmodels | `hybrid_demo.evalkit.stats` | exact binomial | same test, standard implementation/backend label |
+| ranx | `hybrid_demo.retrieval.metrics`, `--metrics-backend` | internal | NDCG/MAP implementation can differ at ties |
+| docling `HybridChunker` | `hybrid_demo.retrieval.docling_chunking`, `--chunk-backend docling` | builtin | chunk boundaries move; offsets are regression-checked |
+| LanceDB + BM25 | `hybrid_demo.retrieval.index`, `hybrid-index` | memory | cross-doc ranking changes with the backend |
+| RedisVL + Redis | `--cache-backend redis` | in-memory | cache hits change cost/latency; policy stays ours |
+| OpenTelemetry | `TRACE_OTEL=jsonl` or `otlp` | SQLite only | export is additive; no content for sensitive entries |
+| RAGAS | `hybrid_demo.evalkit.rag` | lexical screen | judge-dependent numbers are not comparable across judges |
+| llm-d-inference-sim | `hybrid-pool-sim` | `hybrid-pool` | simulator covers transport/latency, not tiered answer corruption or device time |
+| llm-d-batch-gateway | `hybrid-batch` | Python runner | batch must target the praxis ingress, never a pool directly |
+| vLLM bench / GuideLLM | `hybrid-bench` | `tools/gpu_bench.py` | load generator CLI churns; pin versions in a measured run |
+
+Quick checks that need no model or GPU:
+
+```bash
+cd demo
+uv run python -m hybrid_demo.pii                      # detector availability
+uv run python tools/compare_pii.py --data data/synthetic --detectors regex
+uv run python -m hybrid_demo.bench --backend vllm \
+  --base-url http://localhost:8080 --model Semantic-Qwen --dry-run
+uv run python -m hybrid_demo.fakepool.llmd_sim \
+  --upstream http://localhost:8001 --pool vllm-cpu --port 8000 --print-simulator-cmd
+```
 
 ## Measurement design
 
@@ -335,9 +627,9 @@ before quoting any of these:
   first run's two risk misses did not reproduce in the quoted rerun,
   FINDINGS §15.9). GPU time is the 201 judgment steps
   (risk + report) on the judgment entries; general work is CPU-first. The
-  GPU-termination alternative measured 0.508 GPU-s/doc
-  (`runs/rosa-200-2026-11-09-gpu-term`) and the earlier classifier-in-path
-  run (0.036 vs 1.974) is a different policy; neither is the current record
+  GPU-termination alternative measured 0.508 GPU-s/doc (archived at
+  `cfc52cc`) and the earlier classifier-in-path run (0.036 vs 1.974) is a
+  different policy; neither is the current record
   (FINDINGS §15.8-§15.9). GPU-s/doc counts the shared `gpumoe-vllm`
   backend once. At the illustrative $1.10/GPU-hour that is ≈ $0.013 vs
   ≈ $0.062 of GPU time for the batch.
@@ -359,45 +651,6 @@ before quoting any of these:
 | trace UI / audit trail | real | real |
 | Model pools | simulated (`hybrid-pool`) | real vLLM |
 | Quality, device-time, dollars | simulated, labelled as such | measured (dollars an illustrative-rate sweep until V17) |
-
-## Repository map
-
-```
-demo/src/hybrid_demo/
-    pipeline/            generator, review pipeline, CUAD converter, batch client
-    specialist/          composite specialist pool + semantic cache (V5)
-    retrieval/           chunking, docling adapter, index, retrieval eval (§11)
-    evalkit/             scorer, span/stats/RAG checks, live sampler, cost sweep
-    fakepool/            simulated backends + llm-d-inference-sim adapter
-    traceui/             recording relays, dashboard, audit, OTel export
-    pii.py               pluggable PII detectors (regex default)
-    mcp/                 MCP facade: review + stage tools, ingress only
-    bench.py             vLLM bench / GuideLLM command builder
-demo/tools/              classifier probes, prompt calibration, validators,
-                         paired-significance tests (mcnemar.py), PII compare
-demo/tests/             212 tests incl. e2e against a praxis stub
-manifests/               OpenShift base (pools, praxis, trace-ui, netpols)
-manifests/base/          non-KServe base; base/praxis/ holds the four routing
-                         configs, shared with the Linux stack
-deploy/linux/            docker-compose / podman-compose stack
-deploy/openshift/        cpu-real model-pool overlays: base | moe | moe-thinking |
-                         9b | specialist | specialist-moe
-scripts/linux/           up, down, smoke, arms, set_config, demo choreography
-scripts/cluster/         model-comparison series (routes + port-forward fallback)
-scripts/demo/            pull-the-plug, blocked-action
-scripts/data/            CUAD fetch
-runs/simulated/          simulated-stack evidence (four routing configs + reports)
-runs/cuad-mixed/         mixed-split evidence (historical; quote test-split only)
-runs/cuad-test/          held-out test-split evidence (hybrid variants) + comparisons/
-runs/gpu-measured/       g5 measured-GPU evidence
-runs/retrieval/          embedder evals, corrections, e2e runs (FINDINGS §11)
-docs/                    design.md (the design doc), architecture + pipeline
-                         diagrams (SVG), OCTO business-case doc (v0.3),
-                         review guide, stage-runbook.md (one-page talk)
-mcp/                     launcher for the MCP facade (design §3.5)
-sandbox/policy.yaml      OpenShell sandbox egress policy (praxis + github RO)
-FINDINGS.md              the measurement record — read before quoting numbers
-```
 
 ## Manage the sandbox
 
@@ -424,10 +677,14 @@ Re-run `./scripts/03-create-sandbox.sh` after a delete (no-op if it exists).
 scripts/linux/down.sh -v             # Linux stack, -v deletes traces too
 ```
 
+Ask before tearing down a shared or re-creatable cluster; do not delete
+recorded run directories.
+
 ## Known gaps
 
-- docling ingestion, portfolio-scale retrieval and the hybrid-bench
-  concurrency sweep are designed but not built (FINDINGS §9, §11).
+- docling ingestion and portfolio-scale retrieval are **built as opt-in
+  adapters but not measured on the corpus**; the hybrid-bench concurrency
+  sweep is open (FINDINGS §9, §11).
 - OpenShell's chart is experimental upstream; Kata is untested.
 - The gateway runs plaintext HTTP behind port-forwards (add OIDC/mTLS
   before sharing). The trace UI can be published with an opt-in Route plus
@@ -437,7 +694,7 @@ scripts/linux/down.sh -v             # Linux stack, -v deletes traces too
   not access control.
 - The external llm-d-batch-gateway dispatches carry no `X-API-Key`, so the
   batch path through the gateway entries is denied by the policy layer
-  until that component can present a key (docs/design.md §3.1).
+  until that component can present a key ([design §3.1](docs/design.md)).
 - The sensitive entry is chosen by the pipeline's PII screen (a DLP-style
   gate). Since the PPE integration the gateway also runs an observe-only
   PII scanner over every request (`validator/gci-pii-observe`, pattern
@@ -451,3 +708,7 @@ scripts/linux/down.sh -v             # Linux stack, -v deletes traces too
   the enforcement layer either way (V15).
 - rhgaudi3s2 was found emptied of our workloads on 2026-10-31 (FINDINGS
   §7); redeploy from the runbooks above before any cluster-dependent demo.
+- The ROSA demo footprint is torn down (2026-11-09, after the quoted rerun);
+  every recorded run is in git. Rebuild from
+  [`deploy/openshift/rosa/README.md`](deploy/openshift/rosa/README.md)
+  before claiming a new cluster measurement.

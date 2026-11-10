@@ -20,7 +20,7 @@ Also decomposes errors: for fields with ground truth, a miss is either a
 retrieval miss (no top-k chunk overlaps any expert-annotated span) or a
 specialist miss (the span was in the window and not returned).
 
-    cd demo && uv run --group retrieval hybrid-retrieval-e2e \
+    cd demo && uv run --extra retrieval hybrid-retrieval-e2e \
         --baseline-run ../runs/cuad-test/arm-D-moe/results.json
 """
 from __future__ import annotations

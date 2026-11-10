@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       praxis:
-        description: Build and push quay.io/mtahhan/gci-praxis:v0.9.0
+        description: Build and push quay.io/mtahhan/gci-praxis:v0.9.1
         type: boolean
         default: true
 

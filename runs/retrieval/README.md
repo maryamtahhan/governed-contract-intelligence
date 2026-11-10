@@ -20,7 +20,7 @@ Files (the parenthetical is the query-side instruction):
 
 Reproduce (embedders cached in the local HF cache):
 
-    cd demo && uv run --group retrieval hybrid-retrieval-eval \
+    cd demo && uv run --extra retrieval hybrid-retrieval-eval \
         --model litillabs/litil-embed-0.6b --query-prompt clause
 
 The prompt-A/B runs persist the first-hit rank per pair
@@ -44,7 +44,7 @@ Files: `<model>--crossdoc.json` (each model's own query prompt).
 
 Reproduce:
 
-    cd demo && uv run --group retrieval hybrid-retrieval-eval \
+    cd demo && uv run --extra retrieval hybrid-retrieval-eval \
         --model litillabs/litil-embed-0.6b --mode cross --max-chars 1000000
 
 Results and caveats: FINDINGS.md §11.

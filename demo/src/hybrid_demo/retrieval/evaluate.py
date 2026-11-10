@@ -27,9 +27,9 @@ clause-finding instruction applied verbatim to every model, or any named
 prompt the model ships (e.g. litil's LegalQuAD-query). Passage-side prompts
 are always the model's own.
 
-    cd demo && uv run --group retrieval hybrid-retrieval-eval \
+    cd demo && uv run --extra retrieval hybrid-retrieval-eval \
         --model litillabs/litil-embed-0.6b --query-prompt clause
-    cd demo && uv run --group retrieval hybrid-retrieval-eval \
+    cd demo && uv run --extra retrieval hybrid-retrieval-eval \
         --model litillabs/litil-embed-0.6b --mode cross
 """
 from __future__ import annotations

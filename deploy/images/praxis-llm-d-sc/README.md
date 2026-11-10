@@ -108,12 +108,12 @@ is that builder.
 The amd64 images are published from a GitHub Actions runner (native amd64,
 unlike this repo's arm64 dev machines, where the default `--platform
 linux/amd64` build runs emulated and slow).
-[`publish-images.yml`](../../.github/workflows/publish-images.yml) runs on
+[`publish-images.yml`](../../../.github/workflows/publish-images.yml) runs on
 manual dispatch only:
 
 | Job | Image |
 | --- | --- |
-| gateway | `quay.io/mtahhan/gci-praxis:v0.9.0` — this directory's `build.sh --push` |
+| gateway | `quay.io/mtahhan/gci-praxis:v0.9.1` — this directory's `build.sh --push` |
 
 The workflow needs the `QUAY_USERNAME` / `QUAY_PASSWORD` repository secrets: a
 quay robot account with push access to the `quay.io/mtahhan/gci-*`
@@ -145,15 +145,16 @@ not main's 0.5.0 — and the RPITIT trait shape; see the build-commit messages):
 
 ## Switching the manifests
 
-The base manifests point at this image (since 2026-11-05) and the opt-in
-`deploy/openshift/praxis-0.9.0/` overlay is retired — base is the 0.9.0
-stack now. A live cluster still running the v0.7.0 pair rolls with
-`oc apply -k manifests` (or its own overlay); since the classifier removal
-that apply also drops the llm-d-sc Deployment. To move only the gateway:
+The base manifests and the Linux compose stack point at this image (v0.9.1,
+since 2026-11-06) and the opt-in `deploy/openshift/praxis-0.9.0/` overlay is
+retired — base is the 0.9.1 stack now. A live cluster still running the
+v0.7.0 pair rolls with `oc apply -k manifests` (or its own overlay); since the
+classifier removal that apply also drops the llm-d-sc Deployment. To move only
+the gateway:
 
 ```bash
 oc -n openshell-demo set image deploy/praxis \
-  praxis=quay.io/mtahhan/gci-praxis:v0.9.0
+  praxis=quay.io/mtahhan/gci-praxis:v0.9.1
 oc -n openshell-demo rollout status deploy/praxis
 ```
 
