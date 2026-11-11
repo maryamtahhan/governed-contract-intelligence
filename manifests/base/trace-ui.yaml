@@ -1,10 +1,11 @@
 # The trace UI / recording relay. server.py is the extended copy in
 # demo/src/hybrid_demo/traceui/server.py, mounted from a generated ConfigMap
 # so no image build is needed. It relays praxis -> pools
-# (:8088 specialist, :8081 CPU, :8082 GPU, :8084 approved, :8085 small),
-# serves the general ingress (:8080) and the sensitive ingress (:8083),
-# records every request into SQLite on a PVC, and renders the live dashboard.
-# Praxis picks the pool from X-Demo-Step; the relay only records the hop.
+# (:8088 specialist, :8081 CPU, :8082 GPU, :8084 approved, :8085 small,
+# :8089 jev-cpu), serves the general ingress (:8080), the sensitive ingress
+# (:8083) and the pre-entry screen ingress (:8086), records every request
+# into SQLite on a PVC, and renders the live dashboard. Praxis picks the
+# pool from X-Demo-Step; the relay only records the hop.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -76,8 +77,16 @@ spec:
               value: http://praxis:8080
             - name: SENSITIVE_UPSTREAM
               value: http://praxis:8083
+            # The pre-entry screen has its own listener; it is not a review
+            # entry. The trace UI records it with entry=screen.
+            - name: SCREEN_UPSTREAM
+              value: http://praxis:8086
+            - name: SCREEN_INGRESS_PORT
+              value: "8086"
             - name: TRACE_POOLS
-              value: cuad-specialist,vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small
+              value: cuad-specialist,vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small,jev-cpu
+            - name: JEV_CPU_UPSTREAM
+              value: http://jev-cpu:8000
             # The base has no RoBERTa service. Overlays with a real specialist
             # (rosa, cpu-real-specialist*) override this; the default keeps the
             # route resolvable on the simulated and CPU-only stacks.
@@ -100,6 +109,8 @@ spec:
               containerPort: 8080
             - name: sensitive
               containerPort: 8083
+            - name: screen
+              containerPort: 8086
             - name: cpu-backend
               containerPort: 8081
             - name: gpu-backend
@@ -110,6 +121,8 @@ spec:
               containerPort: 8085
             - name: spec-backend
               containerPort: 8088
+            - name: jev-backend
+              containerPort: 8089
           readinessProbe:
             httpGet:
               path: /_trace/healthz
@@ -143,6 +156,9 @@ spec:
     - name: sensitive
       port: 8083
       targetPort: sensitive
+    - name: screen
+      port: 8086
+      targetPort: screen
     - name: cpu-backend
       port: 8081
       targetPort: cpu-backend
@@ -158,6 +174,9 @@ spec:
     - name: spec-backend
       port: 8088
       targetPort: spec-backend
+    - name: jev-backend
+      port: 8089
+      targetPort: jev-backend
 # No Route here: the trace UI holds contract text and an unauthenticated
 # dashboard on a public hostname is a disclosure path. Reach it with
 # `oc port-forward svc/trace-ui 8080:8080`, or opt in explicitly with

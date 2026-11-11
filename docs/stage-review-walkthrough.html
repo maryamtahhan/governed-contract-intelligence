@@ -515,7 +515,7 @@ footer .mono { font-size: 11.5px; }
   <h1>Stage Review Walkthrough</h1>
   <p class="deck">What the page at <span class="mono">127.0.0.1:8099</span> is showing, what each number means, and what to say about it to a technical audience.</p>
   <div class="meta">
-    <span class="chip"><b>measured</b> · ROSA · 2026-11-09</span>
+    <span class="chip"><b>measured</b> · ROSA · 2026-11-10</span>
     <span class="chip"><b>200</b> synthetic contracts</span>
     <span class="chip"><b>4</b> clause categories</span>
     <span class="chip">A: <b>hybrid</b> · B: <b>all-gpu</b></span>
@@ -739,14 +739,16 @@ footer .mono { font-size: 11.5px; }
 </section>
 
 <section id="rosa-current">
-  <div class="sec-head"><h2>ROSA 200-document run</h2><span class="kicker">measured · synthetic corpus · 2026-11-09 · classifier-free · termination on CPU with conditional cause follow-up</span></div>
+  <div class="sec-head"><h2>ROSA 200-document run</h2><span class="kicker">measured · synthetic corpus · 2026-11-10 · rebuilt two-entry graph · no classifier in the request path</span></div>
   <p>The current 200-document matrix ran on the ROSA cluster (<span class="mono"><redacted-cluster></span>) on
-    2026-11-09 with native Praxis routing and no classifier. It is <b>measured operational evidence</b>:
-    real vLLM pools, real routing, real wall-clock. It is <b>not</b> a CUAD quality baseline — the corpus is
-    synthetic, so its extraction and risk scores cannot be compared with the 19-contract CUAD example on this
-    page. The hybrid arm keeps every extraction clause on the CPU specialist; termination asks CUAD's canonical
+    2026-11-10 through the rebuilt two-entry graph: the pipeline chooses only the general or sensitive entry,
+    and Praxis maps each declarative <span class="mono">X-Demo-Step</span> to a route. It is <b>measured
+    operational evidence</b>: real vLLM pools, real routing, real wall-clock. It is <b>not</b> a CUAD quality
+    baseline — the corpus is synthetic, so its extraction and risk scores cannot be compared with the
+    19-contract CUAD example on this page. The hybrid arm keeps every extraction on CPU: the three CUAD clause
+    extractions run on the CPU specialist, data protection on the CPU MoE. Termination asks CUAD's canonical
     convenience question first and a focused cause follow-up only when that finds nothing and the contract has
-    cause language. Judgment (risk/report) stays on the GPU-bound entries.</p>
+    cause language. Judgment (risk/report) stays on the GPU routes.</p>
   <div class="table-wrap">
     <table>
       <thead><tr><th>Config</th><th>Mode</th><th class="num">Wall s</th><th class="num">Extract F1</th><th class="num">Risk acc</th><th class="num">Fully correct</th><th class="num">Sensitive violations</th><th class="num">GPU-s/doc</th></tr></thead>
@@ -766,6 +768,18 @@ footer .mono { font-size: 11.5px; }
     the old <b>0.22 vs 1.013 GPU-s/doc</b> figure belongs to the pre-rebuild graph and must not be quoted for
     this one. Config A also hit <b>11 transport timeouts</b>. Full report:
     <span class="mono">runs/rosa-200-2026-11-10-praxis-routes/report.md</span>.</p>
+  <div class="callout warn">
+    <div class="label">Do not read the report check as a per-document score</div>
+    <p>The report tile is <b>0.75</b> — two of five checks exact — while the per-document fields are all
+    correct. The report is <b>one synthesis call</b> over the 200 per-document records. In this run it received
+    the correct risk labels (<b>97 high / 24 medium / 79 low</b>) and counted them as
+    <b>82 / 27 / 91</b>; it also reported <b>32</b> contracts missing a data-protection clause when <b>52</b>
+    were missing. Those are the report call's own counting errors, not extraction or risk misses: the
+    risk-count and governing-law rows are partial-credit closeness scores (<b>85%</b> and <b>90%</b>), and the
+    missing-data-protection check is exact-match, so a 32-vs-52 answer scores <b>0%</b>. Blended:
+    (1 + 0.85 + 1 + 0.90 + 0) / 5 = <b>0.75</b>. The scoreboard's <b>risk 1.000</b> and
+    <b>200/200 fully correct</b> are still true — they score each document's own fields, not this tally.</p>
+  </div>
   <div class="callout">
     <div class="label">How termination came back to the CPU</div>
     <p>The previous hybrid result was <b>173/200</b> for one field: all 27 incomplete documents were the same
@@ -776,8 +790,9 @@ footer .mono { font-size: 11.5px; }
     (<span class="mono">archived at cfc52cc</span>, a measured alternative, not the policy). The
     current fix keeps it on the CPU specialist: ask the canonical question first, and only when it returns no
     span <i>and</i> the contract contains explicit cause language, ask a focused termination-for-cause
-    follow-up. The 200-document run scores <b>extraction F1 1.000</b> (all 48 cause clauses recovered, zero
-    false positives) at <b>0.22 GPU-s/doc</b>, and CUAD held-out termination F1 stays at the canonical
+    follow-up. The current 2026-11-10 run scores <b>extraction F1 1.000</b> (all 48 cause clauses recovered,
+    zero false positives); its device time is <b>n/a</b> for this rebuilt graph, not zero, so the older
+    <b>0.22 GPU-s/doc</b> must not be attached to it. CUAD held-out termination F1 stays at the canonical
     <b>0.714</b> because the follow-up only fires where the canonical question already found nothing.</p>
   </div>
   <div class="callout warn">
@@ -786,10 +801,26 @@ footer .mono { font-size: 11.5px; }
     classify and all four extraction clauses stay on the CPU, while risk/report use the GPU entries; sensitive
     documents use only approved pools. Its <b>83.3% CPU-served</b> share is the policy, not a learned
     separation of simple from complex work. The honest claim is governance and GPU economics, not that a
-    classifier decided difficulty. Risk 1.000 in the quoted rerun: the first same-day run scored 0.990 with
-    two sensitive documents flipping on rubric priority at the GPU judgment stage — one on inputs
-    byte-identical to a run where it scored correctly — and the flips did not reproduce on the rerun,
-    within the temperature-0 divergence already recorded between runs; all-GPU scores 0.995 on the same corpus.</p>
+    classifier decided difficulty. Risk 1.000 in the current run. For comparison, the pre-rebuild
+    2026-11-09 pair scored 0.990 and 0.995: two sensitive documents flipped on rubric priority at the GPU
+    judgment stage — one on inputs byte-identical to a run where it scored correctly — and the flips did not
+    reproduce on that day's rerun, within the temperature-0 divergence already recorded between runs. The
+    2026-11-10 all-GPU control scores 0.975, with 11 transport timeouts and 189/200 documents fully correct;
+    do not read that as a model-quality drop.</p>
+  </div>
+  <div class="callout">
+    <div class="label">Where the PII screen sits — opt-in, not in this run</div>
+    <p>The recorded run screens with the <b>regex</b> before it chooses an entry (41/0/159/0), so every
+    number above comes from the two review entries and does not include a model-based screen. The working
+    tree now implements a served alternative: <span class="mono">HYBRID_PII_DETECTOR=screen</span> sends
+    <span class="mono">screen:pii</span> to a separate Praxis control-plane listener
+    (<span class="mono">:8086</span>), which routes only to the CPU <span class="mono">jev-cpu</span> pool
+    through the trace-ui relay (<span class="mono">:8089</span>). It has no failover, records
+    <span class="mono">entry=screen</span> with the body hidden by default, and fails closed to the
+    sensitive review entry. That route is <b>not</b> in the 2026-11-10 measurement and changes no
+    number on this page. The termination cause
+    trigger is likewise the regex: the opt-in Jev trigger scored <b>0.625</b> against the
+    <b>0.714</b> CUAD guardrail and was not adopted.</p>
   </div>
 </section>
 
@@ -946,8 +977,8 @@ footer .mono { font-size: 11.5px; }
   <ul class="checklist">
     <li><span class="sev must">Decide</span><b>Live or replay.</b> Live is off right now. The default replay is the classifier-free ROSA 200-document run; <span class="mono">make dashboard-up</span> starts it. To replay the CUAD 19-contract example instead:<br><code>uv run hybrid-ui --run ../runs/cuad-test/arm-direct-moe-gpu-v2 --compare ../runs/cuad-test/arm-D-specialist --data data/cuad-test --port 8099</code><br>Live mode is a <b>direct</b> path — same prompts and scorer shape, sent straight to the endpoint with no PII routing, labels or sensitive pool — so present it as the model path, not the governance path; governance is what the replayed through-stack runs (or a fresh <span class="mono">hybrid-run --target gateway</span>) show. The server binds 127.0.0.1 by default; pass <span class="mono">--live-token</span> before binding a wider <span class="mono">--host</span>.</li>
     <li><span class="sev must">Decide</span><b>Which A/B pair.</b> The default <span class="mono">make dashboard-up</span> compares the governed hybrid run with the same-run all-GPU control; both are measured and both cross Praxis, so the difference is policy, not gateway versus direct. If you present the CUAD appendix instead, A is the direct model run and B is the failed gateway run; 76 of that page's 115 steps have no answer (82 of the run's 121 executed steps; the page folds one repeated doc_id). Use it only to show entry → label → pool → trace, and quote the specialist's quality from <span class="mono">runs/retrieval/e2e-specialist.json</span> (0.780 full document, 0.800 top-5), not from that view.</li>
-    <li><span class="sev know">Know</span><b>The report was re-scored.</b> This applies to the CUAD example: its page and stored <span class="mono">metrics.json</span> both read 64.5% with the current scorer; the run-time value was 26.3%. The default ROSA run's report accuracy is 0.752 on the synthetic corpus and is not comparable to CUAD. If you present from an older CUAD copy, re-score it or disclose that 26.3% predates the checker fixes.</li>
-    <li><span class="sev know">Know</span><b>The model.</b> The default ROSA run uses Qwen/Qwen3.5-35B-A3B. On the hybrid view most calls run on the CPU pool; the GPU control runs all 1,201 calls on 4× A10G with TP=4. Both are served under the alias <span class="mono">Semantic-Qwen</span>. The header chip shows both; the runners record the checkpoint label from <span class="mono">--model</span> because the OpenAI API only reports the served alias.</li>
+    <li><span class="sev know">Know</span><b>The report was re-scored.</b> This applies to the CUAD example: its page and stored <span class="mono">metrics.json</span> both read 64.5% with the current scorer; the run-time value was 26.3%. The default ROSA run's report accuracy is 0.75 on the synthetic corpus and is not comparable to CUAD. If you present from an older CUAD copy, re-score it or disclose that 26.3% predates the checker fixes.</li>
+    <li><span class="sev know">Know</span><b>The model.</b> The default ROSA run uses Qwen/Qwen3.5-35B-A3B. On the hybrid view most calls run on CPU (400 on the CPU MoE, 600 on the CPU specialist); the GPU control attempts all 1,201 calls on 4× A10G with TP=4 and 11 of them time out, leaving 189/200 fully correct. Both are served under the alias <span class="mono">Semantic-Qwen</span>. The header chip shows both; the runners record the checkpoint label from <span class="mono">--model</span> because the OpenAI API only reports the served alias.</li>
     <li><span class="sev know">Know</span><b>Pool vs hardware.</b> A <span class="mono">vllm-gpu</span> chip is a tier name, not proof of a GPU. In the default ROSA run the recorded pool map says <span class="mono">vllm-gpu</span> and <span class="mono">vllm-gpu-approved</span> are the same 4× A10G deployment, <span class="mono">vllm-cpu</span> is CPU, and <span class="mono">vllm-gpu-small</span> is CPU despite its name. In the CUAD appendix every pool was CPU-served. Read the header hardware chip and the run's pool map before making a silicon claim.</li>
     <li><span class="sev should">Set</span><b>Provenance flags on any run you will present.</b> Both runners now record <span class="mono">--environment</span> and <span class="mono">--cluster</span> (or <span class="mono">HYBRID_ENVIRONMENT</span>/<span class="mono">HYBRID_CLUSTER</span>), the git commit and whether the tree was dirty, concurrency, timeout, and a <span class="mono">--pools</span> map of route → model/hardware/deployment. Without the pool map a later reader can see which pool answered but not what was in it. Neither CUAD run on this page records an environment, so the page shows amber <b>example data</b> — that default is deliberate, and a run is never promoted to <b>measured</b> just because it exists. The <span class="mono">runs/rosa-200-2026-11-10-praxis-routes</span> configurations record <span class="mono">environment: rosa</span> and <span class="mono">cluster: <redacted-cluster></span>, so they show green <b>measured</b>. A ROSA run recorded with <span class="mono">--environment rosa</span> (or an explicit measured provenance field) flips the chip.</li>
     <li><span class="sev should">Pick</span><b>Two example documents.</b> For the CUAD example: CENTRACK for a fully-correct document with real quotes; PAXMEDICA or FEDERATED for a mixed failure. For the default ROSA run, pick one fully-correct document and one mixed failure from the left rail and open them once before the talk so the clicks are warm.</li>

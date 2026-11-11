@@ -72,3 +72,95 @@ def test_taxonomy_bridge_contract(monkeypatch):
     findings = pii.taxonomy_detect("text", url="http://taxonomy")
     assert findings[0].entity == "REGULATED"
     assert seen["body"] == {"text": "text"}
+
+
+def test_jev_http_contract_and_threshold(monkeypatch):
+    import httpx
+
+    seen = {}
+
+    def fake_post(url, **kwargs):
+        seen["url"] = url
+        seen["body"] = kwargs["json"]
+        return httpx.Response(
+            200,
+            json={"answers": {"sensitive": {"type": "noul", "noul": 0.82}}},
+            request=httpx.Request("POST", url),
+        )
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+    findings = pii.jev_detect("sensitive text", url="http://jev", threshold=0.5)
+    assert len(findings) == 1
+    assert findings[0].entity == "PII"
+    assert findings[0].detector == "jev"
+    assert findings[0].score == 0.82
+    assert findings[0].start == 0
+    assert findings[0].end == len("sensitive text")
+    assert seen["body"]["state"] == "sensitive text"
+    assert seen["body"]["questions"]["sensitive"]["type"] == "noul"
+
+    # A probability under the cutoff is not a finding, but the same score
+    # passes a lower cutoff.  Thresholding is the only difference.
+    monkeypatch.setattr(httpx, "post", lambda url, **kwargs: httpx.Response(
+        200, json={"answers": {"sensitive": {"noul": 0.4}}},
+        request=httpx.Request("POST", url)))
+    assert pii.jev_detect("text", url="http://jev", threshold=0.5) == []
+    assert pii.jev_detect("text", url="http://jev", threshold=0.3)
+
+
+def test_jev_chunks_long_text_and_takes_the_maximum(monkeypatch):
+    chunks = []
+
+    def fake_local(chunk, model, *args, **kwargs):
+        chunks.append(chunk)
+        return 0.1 if len(chunks) == 1 else 0.9
+
+    monkeypatch.setattr(pii, "_jev_local", fake_local)
+    long_text = ("A" * 1200 + ". ") * 4
+    assert pii.jev_score(long_text) == 0.9
+    assert len(chunks) > 1
+    assert all(len(chunk) <= pii.JEV_CHUNK_CHARS for chunk in chunks)
+
+
+def test_screen_detector_uses_the_praxis_screen_route(monkeypatch):
+    import httpx
+
+    seen = {}
+
+    def fake_post(url, **kwargs):
+        seen["url"] = url
+        seen["headers"] = kwargs["headers"]
+        seen["body"] = kwargs["json"]
+        return httpx.Response(
+            200,
+            json={"answers": {"sensitive": {"type": "noul", "noul": 0.91}}},
+            request=httpx.Request("POST", url),
+        )
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+    monkeypatch.setenv("HYBRID_PII_SCREEN_URL", "http://screen/v1/systemone")
+    monkeypatch.setenv("HYBRID_PII_SCREEN_KEY", "screen-key")
+    monkeypatch.delenv("HYBRID_JEV_API_KEY", raising=False)
+    findings = pii.detect("a@b.com", "screen")
+    assert findings[0].detector == "screen"
+    assert findings[0].score == 0.91
+    assert seen["url"] == "http://screen/v1/systemone"
+    assert seen["headers"]["X-Demo-Step"] == "screen:pii"
+    assert seen["headers"]["X-API-Key"] == "screen-key"
+    assert seen["body"]["model"] == "Semantic-Qwen"
+    assert seen["body"]["questions"]["sensitive"]["type"] == "noul"
+    assert pii.available()["screen"] is True
+
+
+def test_screen_without_a_listener_fails_closed(monkeypatch):
+    monkeypatch.delenv("HYBRID_PII_SCREEN_URL", raising=False)
+    assert pii.available()["screen"] is False
+    assert pii.is_sensitive("a@b.com", "screen") is True
+
+
+def test_jev_failure_fails_closed(monkeypatch):
+    def broken(chunk, model, *args, **kwargs):
+        raise RuntimeError("model failed")
+
+    monkeypatch.setattr(pii, "_jev_local", broken)
+    assert pii.is_sensitive("a@b.com", "jev") is True

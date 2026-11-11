@@ -26,3 +26,10 @@ keys:
   - hash: "sha256:5583f39c9b0e1afaa7035091dd2d4b6cb2b6c03283b1186690f928da612965c9"
     user: gci-eval
     groups: [eval]
+  # The pre-entry PII screen (screen:pii) and the optional cause-language
+  # trigger (decide:cause). Neither is a review step: this key lets the
+  # screen listener authenticate the caller and the audit sink attribute
+  # the decision before a general/sensitive entry is chosen.
+  - hash: "sha256:54bc78fbe3aa0276cc6d6eba7bbdb12043dbe3bc7a821e07e5ad816e75c1811e"
+    user: gci-screen
+    groups: [pipeline]

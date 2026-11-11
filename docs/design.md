@@ -94,6 +94,11 @@ a router.
 | `risk` | `vllm-gpu` (general) / `vllm-gpu-approved` (sensitive) | vLLM GPU (`gpumoe-vllm`, 4×A10G, TP=4) | `Semantic-Qwen` |
 | `report` (once per run) | `vllm-gpu` / `vllm-gpu-approved` | same GPU backend | `Semantic-Qwen` |
 
+The PII screen is **not** a row in this table: it runs before the entry is
+chosen. The opt-in served shape calls `screen:pii` on the control-plane
+listener (`:8086`), which routes only to `jev-cpu`; the 2026-11-10 run used
+the regex screen and does not include that hop (see §3.1 and FINDINGS §16.9).
+
 **The quoted 200-doc measurement is the rebuilt graph.** In
 `runs/rosa-200-2026-11-10-praxis-routes/hybrid`, `stage_routes` shows
 `cuad-specialist: 600` and `vllm-cpu: 400` as separate routes; the old
@@ -121,6 +126,11 @@ Config manifests: `manifests/base/praxis/arm-a.yaml`, `arm-b.yaml`,
 because they are both the internal config files and historical names. Do not
 rename them without a migration plan.
 
+`config.yaml` also carries the `screen-gateway` control-plane listener and
+the `jev-cpu` cluster described in §3.1. The A/B/C configs do not have that
+listener, so the screen route is a property of the hybrid stack only; the
+trace-ui screen ingress is therefore useful only with `config.yaml`.
+
 ### 2.4 Actual hardware is deployment-specific
 
 | Route / cluster | ROSA (`<redacted-cluster>`) | Linux/g5 `real` profile | Earlier SNO |
@@ -130,6 +140,7 @@ rename them without a migration plan.
 | `vllm-gpu` | Qwen3.5-35B-A3B, 4×A10G (g5.12xlarge, TP=4) | Qwen2.5-7B, GPU | CPU-served |
 | `vllm-gpu-approved` | Qwen3.5-35B-A3B, same 4×A10G | Qwen2.5-7B, GPU | CPU-served |
 | `vllm-gpu-small` | **Qwen2.5-1.5B, CPU x8i.24xlarge** | **Qwen2.5-1.5B, GPU** | CPU-served |
+| `jev-cpu` | Laya English (Jev-compatible), CPU x8i.24xlarge (2 cores, opt-in screen) | baked Jev/Laya image, CPU | not part |
 
 Sources: `deploy/openshift/rosa/pools.json` and each run's `summary.pools`;
 the ROSA all-CPU variant (`deploy/openshift/rosa/pools-cpu.yaml`); the
@@ -226,12 +237,31 @@ uv run hybrid-run --target gateway \
 
 ## 3. Routing and governance design
 
-### 3.1 Two entries, one work-to-pool table
+### 3.1 Two review entries, one work-to-pool table, plus a screen control plane
 
-Praxis exposes two listeners. The pipeline chooses only the data
+Praxis exposes **two review listeners**. The pipeline chooses only the data
 classification: the PII screen sends personal-data documents to the sensitive
 entry, everything else to general. Pool choice happens inside praxis and
-nowhere else.
+nowhere else. The screen is pluggable (`pii.py`); the measured default is the
+regex. A Jev-compatible zero-shot adapter (`HYBRID_PII_DETECTOR=jev`, local
+Laya or `HYBRID_JEV_URL`) was added on 2026-11-11 and benchmarked offline; it
+is opt-in and not on the measured path (FINDINGS §16.7).
+
+The screen itself runs *before* the pipeline can choose either review entry,
+so `config.yaml` also has a third, **control-plane** listener on `:8086`.
+It accepts `screen:pii` (and the optional `decide:cause`) and pins both to
+the CPU-only `jev-cpu` cluster; it has no failover. It is not a review entry
+and does not relax the two-entry rule: a failed screen is a hard error, and
+`pii.is_sensitive()` fails closed to the sensitive review entry. The screen
+request carries its own `screen` API key and the served model name only so
+the model-scoped PPE policy route matches; the Jev service ignores the model
+field. The `screen` detector's `HYBRID_PII_SCREEN_URL` points at the
+trace-ui screen ingress (`:8086`), which records `entry=screen` and forwards
+to the Praxis listener. Because the screen body is the document text,
+`entry=screen` is treated like a sensitive entry for trace content storage:
+the default database keeps the routing metadata but not the body. The
+measured 2026-11-10 run used the regex screen and does not include this path
+(FINDINGS §16.9).
 
 Inside each entry, the `router` filter matches `X-Demo-Step` and sets the
 cluster (exact values, case-sensitive; more header constraints win over the
@@ -244,6 +274,14 @@ bare path prefix):
 | `classify` | `vllm-cpu` | `vllm-cpu` |
 | `risk`, `report` | `vllm-gpu` | `vllm-gpu-approved` |
 | anything else | `vllm-cpu` | `vllm-cpu` |
+
+The screen control plane has its own, narrower table:
+
+| `X-Demo-Step` | Screen listener `:8086` |
+|---|---|
+| `screen:pii` | `jev-cpu` |
+| `decide:cause` | `jev-cpu` |
+| anything else (screen-only fallback) | `jev-cpu` |
 
 The general entry fails over to `vllm-gpu`; a judgment request that was
 already on `vllm-gpu` retries the same cluster and then fails rather than
@@ -500,7 +538,7 @@ default. A component was rejected as a *replacement* if it would:
 
 | area | hand-rolled before | upstream candidate | disposition |
 |---|---|---|---|
-| PII screen | 12 regexes in `classifier.py` | Presidio; llm-d-sc taxonomy | adapter; regex default |
+| PII screen | 12 regexes in `classifier.py` | Presidio; llm-d-sc taxonomy; Jev/Laya | adapter; regex default |
 | span scoring | containment in `score.py` | nervaluate | additive views; containment primary |
 | significance | exact McNemar in `tools/mcnemar.py` | statsmodels | backend switch; exact fallback |
 | ranking metrics | recall@k/MRR in `retrieval/evaluate.py` | ranx | NDCG/MAP backend; internal fallback |
@@ -516,7 +554,7 @@ default. A component was rejected as a *replacement* if it would:
 
 ### 4.3 Defaults and activation
 
-#### PII: Presidio and the llm-d-sc taxonomy
+#### PII: Presidio, the llm-d-sc taxonomy and Jev/Laya
 
 `src/hybrid_demo/pii.py` keeps the original regex list and returns
 character-offset `Finding`s. `classifier.detect_sensitivity` delegates to
@@ -539,10 +577,34 @@ HYBRID_PII_DETECTOR=presidio uv run hybrid-review ...
   `{"findings": [{start,end,entity}]}`; set `HYBRID_PII_TAXONOMY_URL`.
   (llm-d-sc is no longer in the base stack — §3.2 — so this mode needs the
   experiment deployment from §5.5.)
-- `composite`: OR of the above, skipping unavailable backends.
+- `jev`: one zero-shot System One question about actual identifiers, returned
+  as a document-level probability (`noul`) and thresholded at 0.5. It uses a
+  served endpoint (`HYBRID_JEV_URL`, optional `HYBRID_JEV_API_KEY`) or the
+  open-source Laya runtime (`uv sync --extra jev`,
+  `HYBRID_JEV_MODEL=auto|english|multilingual`). Long text is scanned in
+  ~1400-character chunks and the maximum probability is used; a failure fails
+  closed. It is **not** in `composite` and not the measured default. Offline
+  result: regex 41/0/159/0; English Laya 40/0/159/1 at 0.5 on the 200-document
+  synthetic corpus (41/0/159/0 at the corpus-tuned 0.4). See FINDINGS §16.7.
+- `screen`: the same Jev decision through the served shape. It sends the
+  System One body to `HYBRID_PII_SCREEN_URL` with `X-Demo-Step: screen:pii`,
+  the `screen` API key, and the policy model name; the Praxis control-plane
+  listener (`:8086`) routes it to `jev-cpu` and never to a review pool. The
+  trace UI records `entry=screen`. Unset URL or any serving failure raises,
+  so the caller fails closed to the sensitive review entry. It is opt-in and
+  not in a measured run (FINDINGS §16.9).
+- `composite`: OR of regex, Presidio and taxonomy, skipping unavailable
+  backends. Jev and the served screen are deliberately excluded because they
+  may load a checkpoint or call a service.
 
-Comparison tool: `tools/compare_pii.py` (`--detectors regex,presidio`,
-`--cuad ... --limit 20`).
+Comparison tool: `tools/compare_pii.py` (`--detectors regex,presidio`, add
+`,jev` explicitly; `--cuad ... --limit 20`). `hybrid-jev-bench` sweeps the
+Jev threshold offline, and `hybrid-cause-bench` measures the termination
+cause trigger against the CUAD guardrail. The cause trigger is also opt-in:
+`HYBRID_CAUSE_DECIDER=jev` asks the same System One client whether the
+contract has termination-for-cause language, falls back to the regex on any
+error, and is not adopted because it scores F1 0.625 against the recorded
+0.714 on the 19-document CUAD subset (FINDINGS §16.8).
 
 #### Span scoring: exact, containment, partial, nervaluate
 
@@ -700,18 +762,21 @@ length/quality; A/B it.
 
 ### 4.6 Verification status
 
-- 216 tests pass; the adapter tests cover defaults, opt-in wire formats,
+- 230 tests pass; the adapter tests cover defaults, opt-in wire formats,
   offset relocation, JSONL export, mock batch transport, metric definitions
-  and the cache factory. The suite runs without a GPU, model download or
-  network: the e2e tests drive the real routing configs against a praxis stub
+  and the cache factory. The Jev adapter test mocks the System One HTTP
+  contract, the service test exercises `/v1/systemone` in fake mode, and the
+  fake-stack e2e test posts `screen:pii` through the screen ingress to
+  `jev-cpu`, so the suite still runs without a GPU, model download or
+  network. The e2e tests drive the real routing configs against a praxis stub
   and fake pools.
 - Base environment: `presidio`, `docling`, `ranx`, `redisvl`, `statsmodels`
   and the OTel SDK are **not** installed; the adapters raise explicit
   install/URL errors and the defaults still run.
-- Not yet measured: Presidio on a labelled sample, docling offset parity on
-  the D11 regression set, ranx NDCG/MAP on CUAD, multi-replica Redis hit
-  rate, RAGAS with the demo judge, live OTLP, GPU throughput from the new
-  wrappers.
+- Not yet measured: Presidio on a labelled sample, Jev/Laya on real contracts
+  (the only labelled corpus is synthetic), docling offset parity on the D11
+  regression set, ranx NDCG/MAP on CUAD, multi-replica Redis hit rate, RAGAS
+  with the demo judge, live OTLP, GPU throughput from the new wrappers.
 
 ## 5. The path back to semantic routing
 
@@ -985,12 +1050,22 @@ reports, the regenerated ROSA report, and the alias regression tests —
    scripted and agent-driven. Keep the agent path labelled **functional, not
    measured** until it has its own run record; the measured reference path is
    unchanged.
-6. **Parked: decision-model experiment (Jev/Laya-style).** The best fit is
-   the PII screen (no CUAD PII labels, which is exactly the zero-shot case),
-   with the cause-language trigger as a second candidate. Benchmark offline
-   first against the fixed corpus; a replacement must beat the regex baseline
-   under the §4.4 protocol before it earns a measured arm. Not a fit for
-   stage routing (already measured and removed) or wholesale risk judgment.
+6. **Decision-model experiment (Jev/Laya-style): implemented, opt-in, not
+   adopted.** The best fit is the PII screen (no CUAD PII labels, which is
+   exactly the zero-shot case), with the cause-language trigger as a second
+   candidate. `pii.py` has `jev` (local Laya or `HYBRID_JEV_URL`), `screen`
+   (the served `screen:pii` control-plane route), and the specialist has
+   `HYBRID_CAUSE_DECIDER=jev`. `hybrid-jev-bench` and `hybrid-cause-bench`
+   record the offline results; the regex screen and regex trigger remain the
+   measured defaults and no run directory exists for Jev. On the 200-document
+   synthetic corpus the English Laya checkpoint is 40/0/159/1 at 0.5 and
+   41/0/159/0 at 0.4; regex is 41/0/159/0, so this is a no-label option, not
+   a measured improvement (FINDINGS §16.7). The cause trigger is worse on the
+   CUAD guardrail (F1 0.625 vs 0.714) and is rejected (§16.8). The served
+   `jev-cpu` pool/relay and screen listener are implemented and exercised on
+   the fake stack, but the cluster has not been rebuilt (§16.9). Not a fit
+   for stage routing (already measured and removed) or wholesale risk
+   judgment.
 
 Quick verification of the whole surface:
 

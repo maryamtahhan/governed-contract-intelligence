@@ -39,6 +39,18 @@ def test_pool_parsing(traceui):
     assert traceui.POOLS["vllm-gpu"][1] == 8082
 
 
+def test_screen_entry_content_is_redacted_by_default(traceui_redacted):
+    # The screen request body is the document text. It is not a review entry,
+    # but it must be treated like one for content storage.
+    assert traceui_redacted._is_sensitive_entry("screen") is True
+    traceui_redacted.create_trace(
+        "t-screen", "POST", "/v1/systemone", "r-screen",
+        "Escalate to a@b.com", "screen")
+    row = traceui_redacted.traces()[0]
+    assert row["entry"] == "screen"
+    assert row["question"] is None
+
+
 def test_trace_roundtrip_and_summary(traceui):
     traceui.create_trace("t1", "POST", "/v1/chat/completions", "r1", "question?", "sensitive")
     traceui.record_hop("t1", "vllm-gpu-approved", "REASONING")

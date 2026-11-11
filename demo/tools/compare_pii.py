@@ -9,6 +9,8 @@ number.  Run this on the corpus you actually route and read both views:
     cd demo && uv run python tools/compare_pii.py \
         --data data/synthetic --detectors regex,presidio
     cd demo && uv run python tools/compare_pii.py \
+        --data data/synthetic --detectors regex,jev   # loads a checkpoint
+    cd demo && uv run python tools/compare_pii.py \
         --cuad data/cuad/cuad-main/data.zip --limit 20 --detectors regex,presidio
 
 If Presidio's NER flags company names/addresses, the sensitive share will
@@ -60,7 +62,8 @@ def main() -> None:
     parser.add_argument("--cuad", default=None, help="CUAD data.zip")
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--detectors", default=None,
-                        help="comma-separated subset; default: every available one")
+                        help="comma-separated subset; default: regex, presidio and "
+                             "taxonomy. Add jev explicitly: it may load a model.")
     parser.add_argument("--out", default=None)
     args = parser.parse_args()
     if not args.data and not args.cuad:

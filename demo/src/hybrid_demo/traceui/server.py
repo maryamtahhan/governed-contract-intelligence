@@ -41,6 +41,10 @@ DATABASE = Path(os.environ.get("TRACE_DB_PATH", "/data/traces.db"))
 UPSTREAM = os.environ.get("PRAXIS_UPSTREAM", "http://praxis:8080").rstrip("/")
 SENSITIVE_UPSTREAM = os.environ.get("SENSITIVE_UPSTREAM", "").rstrip("/")
 SENSITIVE_INGRESS_PORT = int(os.environ.get("SENSITIVE_INGRESS_PORT", "8083"))
+# The pre-entry screen has its own ingress: it runs before the pipeline knows
+# whether the document is sensitive, so it cannot use either review entry.
+SCREEN_UPSTREAM = os.environ.get("SCREEN_UPSTREAM", "").rstrip("/")
+SCREEN_INGRESS_PORT = int(os.environ.get("SCREEN_INGRESS_PORT", "8086"))
 INGRESS_PORT = int(os.environ.get("TRACE_INGRESS_PORT", "8080"))
 CONTEXT_PROBE_MARKER = os.environ.get("TRACE_CONTEXT_PROBE_MARKER", "")
 MAX_TRACES = int(os.environ.get("TRACE_MAX_TRACES", "250"))
@@ -80,6 +84,9 @@ POOL_DEFAULTS = {
                           "vllm-gpu-approved-predictor", "vllm-gpu-approved"),
     "vllm-gpu-small": ("http://vllm-gpu-small-predictor:80", 8085,
                        "vllm-gpu-small-predictor", "vllm-gpu-small"),
+    # The pre-entry screen pool. It is not part of the document-review flow;
+    # it has its own Praxis listener and trace ingress.
+    "jev-cpu": ("http://jev-cpu:8000", 8089, "jev-cpu", "jev-cpu"),
 }
 
 
@@ -216,8 +223,14 @@ def extract_question(path: str, body: bytes) -> str | None:
 
 
 def _is_sensitive_entry(entry: str | None) -> bool:
-    """The sensitive entry carries PII (legacy traces may say sensitive-judgment)."""
-    return (entry or "").startswith("sensitive")
+    """Entries whose content must not be stored by default.
+
+    ``sensitive`` is the review entry for PII-positive documents;
+    ``screen`` is the pre-entry PII decision, whose request body *is* the
+    document text. Both are treated as sensitive for storage even though the
+    screen is not a review entry.
+    """
+    return (entry or "").startswith(("sensitive", "screen"))
 
 
 def create_trace(trace_id: str, method: str, path: str, request_id: str, question: str | None,
@@ -904,9 +917,9 @@ PAGE = r'''<!doctype html>
 </style>
 </head>
 <body><main>
-<header><div><h1>Hybrid routing request traces</h1><p>Live routing across the specialist, CPU, GPU, approved-GPU and small-GPU pools. Praxis reads X-Demo-Step; the sensitive entry is badged.</p></div><span class="live">LIVE</span></header>
+<header><div><h1>Hybrid routing request traces</h1><p>Live routing across the specialist, CPU, GPU, approved-GPU and small-GPU pools. Praxis reads X-Demo-Step; the sensitive entry is badged. The pre-entry PII screen has its own screen listener and jev-cpu pool; those calls are badged SCREEN and are not part of the document-review flow.</p></div><span class="live">LIVE</span></header>
 <section class="graphic"><div class="canvas"><svg viewBox="0 0 980 660" role="img" aria-labelledby="diagram-title diagram-desc">
-<title id="diagram-title">Live Praxis request routing</title><desc id="diagram-desc">The pipeline chooses only the data-classification entry, general or sensitive. Praxis matches X-Demo-Step against a work-to-pool table: CUAD clauses to the specialist, data protection and classification to the CPU MoE, judgment to the GPU. Sensitive judgment uses the approved GPU route.</desc>
+<title id="diagram-title">Live Praxis request routing</title><desc id="diagram-desc">The pipeline chooses only the data-classification entry, general or sensitive. Praxis matches X-Demo-Step against a work-to-pool table: CUAD clauses to the specialist, data protection and classification to the CPU MoE, judgment to the GPU. Sensitive judgment uses the approved GPU route. Before choosing an entry, the screen:pii call uses a separate screen listener and the jev-cpu pool; it is shown in the trace table, not this review-flow diagram.</desc>
 <defs><marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 z" fill="#64b5ff"/></marker><marker id="arrow-cyan" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 z" fill="#55e6d0"/></marker><marker id="arrow-red" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 z" fill="#ff4d5e"/></marker><marker id="arrow-green" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 z" fill="#55e6a0"/></marker><marker id="arrow-violet" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 z" fill="#ad9cff"/></marker><marker id="arrow-amber" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 z" fill="#ffc76a"/></marker></defs>
 <path id="packet-source" class="packet-path" d="M490 114 V150"/><path id="packet-classify" class="packet-path" d="M694 190 H724"/><path id="packet-result" class="packet-path" d="M724 214 H694"/><path id="packet-specialist" class="packet-path" d="M365 280 V306 H165 V330"/><path id="packet-cpu" class="packet-path" d="M420 280 V306 H405 V330"/><path id="packet-gpu" class="packet-path" d="M565 280 V306 H730 V330"/><path id="packet-approved" class="packet-path" d="M490 280 V486 H257 V510"/><path id="packet-small" class="packet-path" d="M490 280 V486 H722 V510"/><circle id="request-dot" class="packet" r="7" fill="#64b5ff"/>
 
@@ -933,15 +946,15 @@ const questionDrawer=$('question-drawer'),drawerBackdrop=$('drawer-backdrop');
 function esc(x){return String(x??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 function isGpu(t){return t.route?t.route.toLowerCase().includes('gpu'):['COMPLEX','REASONING'].includes((t.classification||'').toUpperCase())}
-const POOL_LABEL={'cuad-specialist':'CUAD specialist','vllm-cpu':'CPU MoE','vllm-gpu':'GPU pool','vllm-gpu-approved':'approved-GPU pool','vllm-gpu-small':'small-GPU pool'},ROUTE_COLOR={specialist:'#ad9cff',cpu:'#ad9cff',gpu:'#ffc76a',approved:'#55e6a0',small:'#55e6d0'};
-function flowKey(t){const r=(t.route||'').toLowerCase();return r.includes('approved')?'approved':r.includes('small')?'small':r.includes('specialist')?'specialist':isGpu(t)?'gpu':'cpu'}
+const POOL_LABEL={'cuad-specialist':'CUAD specialist','vllm-cpu':'CPU MoE','vllm-gpu':'GPU pool','vllm-gpu-approved':'approved-GPU pool','vllm-gpu-small':'small-GPU pool','jev-cpu':'Jev CPU (screen)'},ROUTE_COLOR={specialist:'#ad9cff',cpu:'#ad9cff',gpu:'#ffc76a',approved:'#55e6a0',small:'#55e6d0'};
+function flowKey(t){const r=(t.route||'').toLowerCase();if(r==='jev-cpu')return null;return r.includes('approved')?'approved':r.includes('small')?'small':r.includes('specialist')?'specialist':isGpu(t)?'gpu':'cpu'}
 function timelineHtml(t){const hops=t.hops||[];if(!hops.length||!t.duration_ms)return'';const segs=[];let cursor=0;hops.forEach((h,i)=>{const gap=Math.max(0,h.offset_ms-cursor);if(i===0){const c=h.classifier_ms!=null?Math.min(h.classifier_ms,gap):0;if(c)segs.push({k:'classify',l:'classifier (legacy)',ms:c});segs.push({k:'praxis',l:'Praxis',ms:gap-c})}else segs.push({k:'gap',l:'failover gap',ms:gap});const bad=h.status==null||h.status>=500||h.status===429;segs.push({k:bad?'fail':'backend',l:h.route+(bad?' (failed)':''),ms:h.total_ms||0,note:h.ttfb_ms!=null?'first byte '+h.ttfb_ms+' ms':(h.error||'no response')});cursor=h.offset_ms+(h.total_ms||0)});segs.push({k:'praxis',l:'Praxis return',ms:Math.max(0,t.duration_ms-cursor)});return`<div class="tl">${segs.map(x=>`<i class="k-${x.k}" style="flex:${Math.max(x.ms,0)}" title="${esc(x.l)} ${x.ms} ms"></i>`).join('')}</div>${segs.map(x=>`<span class="tl-line"><i class="sw k-${x.k}"></i>${esc(x.l)} <b>${x.ms} ms</b>${x.note?' · '+esc(x.note):''}</span>`).join('')}`}
-function entryNote(e){return e==='sensitive'?' (sensitive entry)':''}
+function entryNote(e){return e==='sensitive'?' (sensitive entry)':e==='screen'?' (pre-entry screen)':''}
 function pathText(t){if(!(t.route||t.classification))return'Client → Praxis (routing metadata unavailable)';return`Client → Praxis${entryNote(t.entry)} → ${POOL_LABEL[t.route]||esc(t.route||'pool')}`}
-function highlight(t){Object.values(flows).flat().forEach(path=>path.classList.remove('selected'));if(!t)return;flows.source.forEach(path=>path.classList.add('selected'));if(t.route||t.classification){flows.classify.forEach(path=>path.classList.add('selected'));flows[flowKey(t)].forEach(path=>path.classList.add('selected'))}}
+function highlight(t){Object.values(flows).flat().forEach(path=>path.classList.remove('selected'));if(!t)return;flows.source.forEach(path=>path.classList.add('selected'));if(t.route||t.classification){if(t.route!=='jev-cpu')flows.classify.forEach(path=>path.classList.add('selected'));const key=flowKey(t);if(key)flows[key].forEach(path=>path.classList.add('selected'))}}
 async function travel(path,color,duration){const length=path.getTotalLength(),started=performance.now();dot.style.display='block';dot.setAttribute('fill',color);dot.style.color=color;return new Promise(resolve=>{function frame(now){const progress=Math.min((now-started)/duration,1),point=path.getPointAtLength(length*progress);dot.setAttribute('cx',point.x);dot.setAttribute('cy',point.y);if(progress<1)requestAnimationFrame(frame);else resolve()}requestAnimationFrame(frame)})}
-async function animate(t){if(!t||animating||matchMedia('(prefers-reduced-motion: reduce)').matches)return;const generation=animationGeneration;animating=true;await travel(paths.source,'#64b5ff',450);if(generation!==animationGeneration){animating=false;return}if(t.route||t.classification){await travel(paths.classify,'#55e6d0',450);if(generation!==animationGeneration){animating=false;return}await travel(paths.result,'#55e6d0',450);if(generation!==animationGeneration){animating=false;return}const key=flowKey(t);await travel(paths[key],ROUTE_COLOR[key],900)}await sleep(300);dot.style.display='none';animating=false}
-function entryBadge(t){return (t.entry==='sensitive'||t.entry==='sensitive-judgment')?'<span class="entry-badge" title="sent through the sensitive entry (approved pools only)">SENS</span>':''}
+async function animate(t){if(!t||animating||matchMedia('(prefers-reduced-motion: reduce)').matches)return;const generation=animationGeneration;animating=true;await travel(paths.source,'#64b5ff',450);if(generation!==animationGeneration){animating=false;return}if(t.route||t.classification){if(t.route!=='jev-cpu'){await travel(paths.classify,'#55e6d0',450);if(generation!==animationGeneration){animating=false;return}await travel(paths.result,'#55e6d0',450);if(generation!==animationGeneration){animating=false;return}}const key=flowKey(t);if(key)await travel(paths[key],ROUTE_COLOR[key],900)}await sleep(300);dot.style.display='none';animating=false}
+function entryBadge(t){if(t.entry==='screen')return'<span class="entry-badge" title="pre-entry PII screen; not a review entry">SCREEN</span>';return (t.entry==='sensitive'||t.entry==='sensitive-judgment')?'<span class="entry-badge" title="sent through the sensitive entry (approved pools only)">SENS</span>':''}
 function render(){const items=traceItems;$('count').textContent=`(${items.length} saved)`;$('traces').innerHTML=items.length?items.map(t=>`<tr data-trace-id="${esc(t.id)}" tabindex="0" class="${t.id===selectedId?'selected-row':''}"><td>${new Date(t.started_at*1000).toLocaleTimeString()}</td><td><span class="tag">${esc(t.method)}</span> ${esc(t.path)}${t.question?`<button class="question-button" type="button" data-question-id="${esc(t.id)}">View question</button>`:'<span class="no-question">question unavailable</span>'}<details${openTraces.has(t.id)?' data-r="1" open':''}><summary>trace ${esc(t.request_id.slice(0,8))}</summary><div class="trace-detail"><span><b>Path:</b> ${esc(pathText(t))}</span><span><b>Request ID:</b> ${esc(t.request_id)}</span><span><b>Legacy label (classifier):</b> ${esc(t.classification||'—')}</span><span><b>Destination:</b> ${esc(t.route||'not emitted')}</span><span><b>Entry:</b> ${esc(t.entry||'general')}</span><span><b>Result:</b> ${esc(t.status||'in flight')} · ${t.duration_ms?esc(t.duration_ms+' ms'):'in progress'}${t.fallback?' · fallback':''}</span>${timelineHtml(t)}${t.error?`<span><b>Error:</b> ${esc(t.error)}</span>`:''}</div></details></td><td>${entryBadge(t)||'<span class="small">general</span>'}</td><td class="${t.route?(isGpu(t)?'gpu':'cpu'):'unknown'}">${esc(t.route||'unavailable')}${t.fallback?'<small class="fellback">fell back</small>':''}</td><td>${esc(t.status||'in flight')}</td><td>${t.duration_ms?esc(t.duration_ms+' ms'):'—'}</td><td>${t.response?`<button class="question-button" type="button" data-response-id="${esc(t.id)}">${t.response_tokens?(t.response_tokens_est?'~':'')+esc(t.response_tokens)+' tokens':'View'}</button>`:'<span class="no-question">—</span>'}</td></tr>`).join(''):'<tr><td colspan="7">Waiting for a request…</td></tr>'}
 function syncSelection(){document.querySelectorAll('tr[data-trace-id]').forEach(row=>row.dataset.traceId&&row.classList.toggle('selected-row',row.dataset.traceId===selectedId))}
 function clearSelection(){selectedId='';dismissedThroughId=(traceItems.find(t=>t.status&&(t.route||t.classification))||{}).id||'';animationGeneration++;dot.style.display='none';highlight(null);syncSelection();unpinState()}
@@ -980,7 +993,7 @@ function renderPool(key,state,y){const cfg=POOLS[key];if(!cfg)return;const{pods,
 const el=$('pool-'+key+'-count');if(!el)return;el.textContent=count;
 $('pods-'+key).innerHTML=shown.map((p,i)=>{const x=cfg.x+i*(w+gap),up=p.kind==='up',dot=up?'#55e6a0':p.kind==='down'?'#ff4d5e':p.kind==='pending'?'#ffc76a':'#6b7c90',dashed=['zero','pending','unknown'].includes(p.kind)?' dashed':'';
 return`<g><rect x="${x}" y="${y}" width="${w}" height="50" rx="12" class="${up?cfg.cls:'box-grey'}${dashed}"/><circle cx="${x+16}" cy="${y+25}" r="5" fill="${dot}"/><text x="${x+30}" y="${y+21}" class="pod-title${up?'':' dim'}">${w>=170?esc(p.title):'pod'}</text><text x="${x+30}" y="${y+39}" class="pod-sub">${esc(p.sub)}</text></g>`}).join('')+(more>0?`<text x="${cfg.x+W}" y="${y+64}" text-anchor="end" class="small">+${more} more</text>`:'')}
-function renderState(state,note){renderPool('cuad-specialist',state,378);renderPool('vllm-cpu',state,378);renderPool('vllm-gpu',state,378);const routes=state&&state.routes?state.routes:Object.keys(POOLS);for(const key of routes){if(key==='cuad-specialist'||key==='vllm-cpu'||key==='vllm-gpu')continue;if(POOLS[key]){ensureExtraPool(key);renderPool(key,state,558)}}$('state-note').textContent=note||''}
+function renderState(state,note){renderPool('cuad-specialist',state,378);renderPool('vllm-cpu',state,378);renderPool('vllm-gpu',state,378);const routes=state&&state.routes?state.routes:Object.keys(POOLS);for(const key of routes){if(key==='cuad-specialist'||key==='vllm-cpu'||key==='vllm-gpu'||key==='jev-cpu')continue;if(POOLS[key]){ensureExtraPool(key);renderPool(key,state,558)}}$('state-note').textContent=note||''}
 async function loadState(){try{const d=await fetch('/_trace/api/state',{cache:'no-store'}).then(r=>r.json());liveState=d.state;if(!pinned)renderState(d.state,'')}catch(e){}}
 async function pinState(t){const seq=++pinSeq;try{const d=await fetch('/_trace/api/state?at='+t.started_at,{cache:'no-store'}).then(r=>r.json());if(seq!==pinSeq)return;pinned=true;const at=ts=>new Date(ts*1000).toLocaleTimeString();renderState(d.state,d.state?'cluster state when sent · '+at(t.started_at):'no state recorded for '+at(t.started_at)+' · history starts '+(d.history_starts?at(d.history_starts):'—'))}catch(e){}}
 function unpinState(){pinSeq++;pinned=false;renderState(liveState,'')}
@@ -1002,6 +1015,7 @@ def main() -> None:
         ).start()
     for upstream, port, entry in (
         (SENSITIVE_UPSTREAM, SENSITIVE_INGRESS_PORT, "sensitive"),
+        (SCREEN_UPSTREAM, SCREEN_INGRESS_PORT, "screen"),
     ):
         if upstream:
             threading.Thread(
@@ -1010,6 +1024,7 @@ def main() -> None:
             ).start()
     print(json.dumps({"event": "trace-ui-start", "ingress": INGRESS_PORT,
                       "sensitive_ingress": SENSITIVE_INGRESS_PORT if SENSITIVE_UPSTREAM else None,
+                      "screen_ingress": SCREEN_INGRESS_PORT if SCREEN_UPSTREAM else None,
                       "pools": {r: p[1] for r, p in POOLS.items()}}), flush=True)
     RelayServer(("0.0.0.0", INGRESS_PORT), UPSTREAM).serve_forever()
 

@@ -1,6 +1,8 @@
 """The routing sets and risk rubric have one definition, not one per caller."""
 from __future__ import annotations
 
+import pytest
+
 from hybrid_demo import routes
 from hybrid_demo.evalkit import score
 from hybrid_demo.pipeline import cuad, generate, review, risk
@@ -74,3 +76,32 @@ def test_cause_question_is_a_narrow_termination_fallback():
     assert questions.cause_question_for(
         "termination", "The Supplier warrants no breach of any representation.") is None
     assert questions.cause_question_for("governing_law", cause) is None
+
+
+def test_cause_decider_is_regex_by_default_and_jev_opt_in(monkeypatch):
+    monkeypatch.delenv("HYBRID_CAUSE_DECIDER", raising=False)
+    assert questions.cause_language_present("material breach") is True
+    assert questions.cause_language_present("plain contract") is False
+
+    monkeypatch.setenv("HYBRID_CAUSE_DECIDER", "jev")
+    monkeypatch.setenv("HYBRID_CAUSE_JEV_THRESHOLD", "0.5")
+    monkeypatch.setattr(questions, "cause_jev_score", lambda text: 0.8)
+    assert questions.cause_language_present("anything") is True
+    monkeypatch.setattr(questions, "cause_jev_score", lambda text: 0.2)
+    assert questions.cause_language_present("anything") is False
+
+    def broken(text):
+        raise RuntimeError("screen unavailable")
+
+    # A broken decision model must not silently change the measured trigger:
+    # it falls back to the same regex the default path uses.
+    monkeypatch.setattr(questions, "cause_jev_score", broken)
+    assert questions.cause_language_present("material breach") is True
+    assert questions.cause_language_present("plain contract") is False
+
+    # A typo in the threshold config is also a Jev failure, not a crash.
+    monkeypatch.setenv("HYBRID_CAUSE_JEV_THRESHOLD", "not-a-number")
+    assert questions.cause_language_present("material breach") is True
+
+    with pytest.raises(ValueError):
+        questions.cause_language_present("material breach", "not-a-decider")

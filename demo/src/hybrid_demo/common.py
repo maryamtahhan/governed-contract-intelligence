@@ -26,6 +26,9 @@ DEMO_API_KEYS = {
     "risk": os.environ.get("HYBRID_API_KEY_RISK", "gci-demo-key-risk"),
     "report": os.environ.get("HYBRID_API_KEY_REPORT", "gci-demo-key-report"),
     "eval": os.environ.get("HYBRID_API_KEY_EVAL", "gci-demo-key-eval"),
+    # The pre-entry PII screen. It is not a review step; the key exists so
+    # the screen call is authenticated and auditable like every other hop.
+    "screen": os.environ.get("HYBRID_API_KEY_SCREEN", "gci-demo-key-screen"),
 }
 
 

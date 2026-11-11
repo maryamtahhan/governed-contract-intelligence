@@ -1479,6 +1479,154 @@ collector, and any GPU throughput from the new bench wrappers.
 - Treating `common.embed` as a production embedder: the 256-dim char-trigram
   hash is a stand-in; `litil-embed-0.6b` remains the measured candidate.
 
+### 16.7 Jev/Laya PII screen, offline (2026-11-11) **[measured offline only, not a serving arm]**
+
+The `jev` detector in `pii.py` speaks the System One request/answer shape and
+asks one document-level `noul` question. It can call a served TypeSafe Jev
+endpoint (`HYBRID_JEV_URL`) or run the open-source Laya checkpoint locally
+(`jev` extra, `HYBRID_JEV_MODEL=auto|english|multilingual`). The question is
+deliberately about **actual identifiers**, not about the presence of a
+data-protection clause:
+
+> Does this text contain PII such as an email address, phone number, employee
+> ID, or a named individual's contact details?
+
+Command:
+
+```bash
+cd demo
+uv run hybrid-jev-bench --data data/synthetic --json /tmp/jev-bench.json
+```
+
+This is a **weights** measurement on the 200-document synthetic corpus
+(41 sensitive), local CPU, `laya==0.4.31`, one document at a time. It does
+not exercise Praxis, the gateway, the pools or the trace UI, and it is not a
+throughput or cost claim.
+
+| screen | threshold | tp | fp | tn | fn | precision | recall | accuracy |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| regex (measured default) | — | 41 | 0 | 159 | 0 | 1.000 | 1.000 | 1.000 |
+| Laya English | 0.5 | 40 | 0 | 159 | 1 | 1.000 | 0.976 | 0.995 |
+| Laya English | 0.4 | 41 | 0 | 159 | 0 | 1.000 | 1.000 | 1.000 |
+| Laya English | 0.6 | 30 | 0 | 159 | 11 | 1.000 | 0.732 | 0.945 |
+| Laya English | 0.7 | 9 | 0 | 159 | 32 | 1.000 | 0.220 | 0.840 |
+
+The one miss at 0.5 is `C-2026-0139`, at 0.422; the highest non-sensitive
+score is 0.094. The 0.4 threshold recovers it with no false positives, but
+0.4 was chosen after seeing this corpus, so it is not evidence of a better
+calibrated threshold. 0.5 is the adapter default; a deployment would calibrate
+on a held-out real sample.
+
+Three findings:
+
+1. **The regex wins on the only labelled corpus.** It is 41/0/159/0 on the
+   synthetic set, so Jev does not beat it there. The claim for Jev is the
+   no-labels case — real contracts and CUAD have no PII labels — and that is
+   still unmeasured. This is why the default did not change and no run
+   directory was created.
+2. **Question wording dominates the result.** Asking "does this text contain
+   a data-protection clause?" produced **72 false positives**: 148/200
+   synthetic contracts carry a generic data-protection clause but only 41 are
+   labelled sensitive. Asking for actual identifiers produced zero false
+   positives. A zero-shot model needs the decision defined, not just a topic.
+3. **The checkpoint matters more than the threshold.** The multilingual
+   checkpoint on the same identifier question flagged 141/159 non-sensitive
+   documents at 0.5. The English checkpoint is the right default for English
+   text, and `auto` selects it via `laya.is_english`. Non-English contracts
+   remain unmeasured; the multilingual path is available but should not be
+   quoted as validated.
+
+The adapter is opt-in: `HYBRID_PII_DETECTOR=jev`. A failure raises and
+`is_sensitive()` fails closed to the sensitive entry, the same invariant as
+the other detectors. One operational caveat: `detect_sensitivity` is also
+called by the specialist cache, so a Jev screen is a model call per screened
+context, not once per document. A served deployment should cache the
+document-level verdict or screen once at ingest; this adapter does neither. `composite` still means regex OR Presidio OR taxonomy;
+Jev is deliberately not included, because selecting it may download and load
+a checkpoint. The served `jev-cpu` pool and the `screen:pii` route are
+implemented and exercised on the fake stack (§16.9); they are opt-in and have
+not been measured as a serving arm, so this section does not change any
+recorded number.
+
+### 16.8 The cause-language trigger: Jev fails the CUAD guardrail (2026-11-11) **[measured offline only]**
+
+The specialist's conditional termination follow-up is gated by
+`cause_language_present()` in `specialist/questions.py`. The measured
+default remains the narrow regex (`material breach`, `uncured`, `termination
+for cause`, `for cause`). An opt-in Jev decision (`HYBRID_CAUSE_DECIDER=jev`)
+asks whether the contract allows termination for cause and uses the same
+chunked System One client; a serving/model failure falls back to the regex
+with a one-time warning.
+
+The adoption gate is the recorded CUAD termination F1 of **0.714** on the
+19-document test subset. Command:
+
+```bash
+cd demo
+uv run hybrid-cause-bench --deciders regex jev --thresholds 0.4 0.5 0.6 \
+    --json /tmp/cause-bench.json
+```
+
+| trigger | threshold | tp | fp | fn | precision | recall | F1 | passes |
+|---|---:|---:|---:|---:|---:|---:|---:|---|
+| regex (measured default) | — | 5 | 4 | 0 | 0.556 | 1.000 | **0.714** | yes |
+| Jev | 0.4 | 5 | 6 | 0 | 0.455 | 1.000 | 0.625 | no |
+| Jev | 0.5 | 5 | 6 | 0 | 0.455 | 1.000 | 0.625 | no |
+| Jev | 0.6 | 5 | 6 | 0 | 0.455 | 1.000 | 0.625 | no |
+
+The Jev trigger finds all five cause clauses but fires on two annotated-negative
+contracts the regex leaves alone (the max-over-chunks score is high on
+non-cause termination language). It therefore **fails the guardrail and is
+not adopted**; the regex stays the default. The opt-in code remains so the
+decision can be re-measured on a larger or real sample. This is a deliberately
+conservative outcome: the trigger changes the specialist's answer only where
+the canonical convenience question found nothing, and the guardrail forbids
+trading real-data precision for a synthetic-corpus gain.
+
+### 16.9 Pre-entry PII screen through Praxis (`screen:pii` -> `jev-cpu`) (2026-11-11)
+
+The PII screen runs **before** the pipeline can choose the general or
+sensitive review entry, so it cannot use either review listener. The stack now
+has a third, control-plane listener:
+
+```
+pipeline -> trace-ui screen ingress :8086 -> Praxis screen listener :8086
+         -> trace-ui jev-cpu relay :8089 -> jev-cpu (Jev/Laya System One)
+         -> Decode -> pipeline chooses general :8080 or sensitive :8083
+```
+
+- `manifests/base/praxis/config.yaml` adds the `screen-gateway` listener,
+  the `screen-routing` chain, and the `jev-cpu` cluster. The chain accepts
+  `X-Demo-Step: screen:pii` (and the optional `decide:cause`) and pins both to
+  `jev-cpu`; there is no failover. An unavailable screen is a hard error, and
+  `is_sensitive()` fails closed to the sensitive entry.
+- `pii.screen_detect` / `HYBRID_PII_DETECTOR=screen` sends the System One body
+  with `X-Demo-Step: screen:pii`, the new `screen` API key, and the served
+  model name (only so the gateway's model-scoped policy route matches). The
+  service ignores the model field. Set `HYBRID_PII_SCREEN_URL` to the screen
+  ingress's `/v1/systemone`.
+- `demo/src/hybrid_demo/jev/server.py` is the `jev-cpu` endpoint: `/health`,
+  `/v1/models`, `/metrics`, and `/v1/systemone` for `noul` questions. It
+  serialises Laya calls, returns `X-Busy-Ms`, and rejects unsupported shapes
+  with 400. `Dockerfile.jev` bakes the English checkpoint.
+- The trace UI records screen calls with `entry=screen` and route `jev-cpu`;
+  they are badged `SCREEN` in the table and deliberately omitted from the
+  document-review flow diagram, because they are not a review entry. The
+  static diagrams carry a control-plane note. The screen body is the
+  document text, so `entry=screen` is treated like a sensitive entry for
+  content storage: the default trace DB keeps the routing metadata but not
+  the body.
+- `deploy/linux/docker-compose.yml` has `fake-jev` for the fake profile and
+  `jev-cpu-real` (the baked image) for `up.sh --real`; the ROSA overlay adds
+  `deploy/openshift/rosa/jev-cpu.yaml` and the trace-ui ports/env.
+
+Verification: `230 passed` (the new tests cover the detector's headers/body,
+fail-closed behavior, the service contract, the cause guardrail's scoring, the
+config's third listener, and a fake-stack `screen:pii` end-to-end call). The
+screen route is **not** in a recorded run and changes no measured number:
+the default screen remains regex and no run directory was created. A cluster
+deployment still requires rebuilding the stack and the `hybrid-jev` image.
+
 ## 17. The CUAD risk gap is an input gap (2026-11-09)
 
 The question (§4 of the 2026-11-09 handoff): the CUAD test-split risk accuracy

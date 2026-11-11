@@ -95,6 +95,7 @@ resources:
   # pools and platform pieces (this directory)
   - pools-cpu.yaml
   - specialist.yaml
+  - jev-cpu.yaml
   - gpu-moe-pool.yaml
   - storage.yaml
   - seeders.yaml
@@ -117,7 +118,10 @@ patches:
           - {name: TRACE_DB_PATH, value: /data/traces.db}
           - {name: PRAXIS_UPSTREAM, value: "http://praxis:80"}
           - {name: SENSITIVE_UPSTREAM, value: "http://praxis:8083"}
-          - {name: TRACE_POOLS, value: "cuad-specialist,vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small"}
+          - {name: SCREEN_UPSTREAM, value: "http://praxis:8086"}
+          - {name: SCREEN_INGRESS_PORT, value: "8086"}
+          - {name: TRACE_POOLS, value: "cuad-specialist,vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small,jev-cpu"}
+          - {name: JEV_CPU_UPSTREAM, value: "http://jev-cpu:8000"}
           - {name: CUAD_SPECIALIST_UPSTREAM, value: "http://cpureal-specialist:8000"}
           - {name: VLLM_CPU_UPSTREAM, value: "http://cpureal-vllm-cpu:8000"}
           - {name: VLLM_GPU_UPSTREAM, value: "http://gpumoe-vllm:8000"}

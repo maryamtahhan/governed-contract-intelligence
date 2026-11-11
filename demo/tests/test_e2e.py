@@ -59,6 +59,30 @@ async def send(stack, entry: str, prompt: str, step: str = "classify") -> httpx.
 
 
 @pytest.mark.asyncio
+async def test_screen_pii_is_a_control_plane_route(stack):
+    stack.start_stub("config.yaml")
+    async with httpx.AsyncClient(timeout=120) as client:
+        resp = await client.post(
+            f"{stack.screen_gateway}/v1/systemone",
+            headers={"X-Demo-Step": "screen:pii", "X-API-Key": "gci-demo-key-screen"},
+            json={"model": "Semantic-Qwen",
+                  "state": "Escalate to a@b.com about the renewal.",
+                  "questions": {"sensitive": {
+                      "type": "noul",
+                      "instructions": "Does this text contain PII?"}}},
+        )
+    assert resp.status_code == 200
+    assert resp.json()["answers"]["sensitive"]["noul"] >= 0.5
+    assert resp.headers["x-demo-route"] == "jev-cpu"
+
+    traces = httpx.get(f"{stack.gateway}/_trace/api/traces", timeout=10).json()["traces"]
+    screen = [t for t in traces if t["entry"] == "screen"]
+    assert screen and screen[0]["route"] == "jev-cpu"
+    # The screen is not a review entry: no general/sensitive label is invented.
+    assert screen[0]["entry"] == "screen"
+
+
+@pytest.mark.asyncio
 async def test_arm_d_full_matrix(stack, tmp_path):
     stack.start_stub("config.yaml")
     summary = await run(stack, "D", str(tmp_path / "d"))

@@ -5,7 +5,9 @@ tested (and reused by tooling) without the specialist image installed.
 """
 from __future__ import annotations
 
+import os
 import re
+import sys
 
 QUESTION_RE = re.compile(r"[Ee]xtract the ([a-z_ -]+?) clause")
 
@@ -44,6 +46,84 @@ CAUSE_TERMINATION_QUESTION = (
     "for cause, for example because the other party committed a material breach that was "
     "not cured within the notice period?"
 )
+
+# Optional decision-model trigger. The regex is the measured default; the Jev
+# candidate is opt-in because a broader trigger can add false positives on
+# contracts whose only "breach" language sits in a representation or warranty.
+# Adoption is gated on CUAD test-split termination F1 >= 0.714 (the regex
+# baseline); run `hybrid-cause-bench` before flipping HYBRID_CAUSE_DECIDER.
+CAUSE_JEV_QUESTION = (
+    "Does this contract contain language that allows a party to terminate the "
+    "contract for cause, such as a material breach, default, or failure to "
+    "perform?"
+)
+CAUSE_DEFAULT_THRESHOLD = 0.5
+_CAUSE_WARNED = False
+
+
+def cause_jev_score(context: str) -> float:
+    """Ask Jev whether the contract has termination-for-cause language.
+
+    The endpoint can be a direct System One service (HYBRID_CAUSE_JEV_URL) or
+    the Praxis screen listener. In the latter case HYBRID_CAUSE_JEV_STEP adds
+    the routing header and the screen API key, and the body carries the
+    stack's model name only so the gateway's model-scoped policy route
+    matches; the Jev service ignores it.
+    """
+    from .. import pii
+    from ..common import api_key_for_step
+
+    url = (os.environ.get("HYBRID_CAUSE_JEV_URL")
+           or os.environ.get("HYBRID_JEV_URL") or "").strip()
+    # No URL means the local Laya runtime (if installed); the offline
+    # benchmark uses this path. A production specialist image does not install
+    # Laya, so it should set HYBRID_CAUSE_JEV_URL (or HYBRID_JEV_URL).
+    step = os.environ.get("HYBRID_CAUSE_JEV_STEP", "decide:cause").strip()
+    headers: dict[str, str] = {}
+    body: dict = {}
+    if step:
+        headers["X-Demo-Step"] = step
+        headers["X-API-Key"] = (os.environ.get("HYBRID_CAUSE_JEV_KEY")
+                                or api_key_for_step("screen"))
+        body["model"] = os.environ.get(
+            "HYBRID_CAUSE_JEV_POLICY_MODEL", "Semantic-Qwen")
+    return pii.jev_question_score(
+        context,
+        CAUSE_JEV_QUESTION,
+        url=url,
+        model=os.environ.get("HYBRID_CAUSE_JEV_MODEL") or None,
+        question="cause",
+        extra_headers=headers or None,
+        extra_body=body or None,
+        timeout=float(os.environ.get("HYBRID_CAUSE_JEV_TIMEOUT", "30")),
+    )
+
+
+def cause_language_present(context: str | None, decider: str | None = None) -> bool:
+    """Whether to ask the termination-for-cause follow-up.
+
+    ``regex`` (default) is the narrow, measured trigger.  ``jev`` is the
+    opt-in decision-model candidate; any model/serving failure falls back to
+    the regex so a broken screen cannot silently change the specialist's
+    answer.  The fallback is visible on stderr once per process.
+    """
+    text = context or ""
+    name = (decider or os.environ.get("HYBRID_CAUSE_DECIDER", "regex")).strip().lower()
+    if name == "regex":
+        return bool(CAUSE_TERMINATION_RE.search(text))
+    if name != "jev":
+        raise ValueError(f"unknown cause decider {name!r}; choose regex or jev")
+    try:
+        threshold = float(os.environ.get(
+            "HYBRID_CAUSE_JEV_THRESHOLD", str(CAUSE_DEFAULT_THRESHOLD)))
+        return cause_jev_score(text) >= threshold
+    except Exception as error:  # noqa: BLE001 - fall back to the measured trigger
+        global _CAUSE_WARNED
+        if not _CAUSE_WARNED:
+            print(f"specialist: cause decider 'jev' failed ({error}); using "
+                  "the regex trigger", file=sys.stderr)
+            _CAUSE_WARNED = True
+        return bool(CAUSE_TERMINATION_RE.search(text))
 
 # CUAD has no data-protection category. Do NOT alias "data protection" to
 # audit rights: that silently answers a different question.
@@ -87,6 +167,6 @@ def cause_question_for(clause: str | None, context: str | None) -> str | None:
     key = CLAUSE_ALIASES.get(key, key)
     if key != "termination" or not context:
         return None
-    if not CAUSE_TERMINATION_RE.search(context):
+    if not cause_language_present(context):
         return None
     return CAUSE_TERMINATION_QUESTION

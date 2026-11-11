@@ -15,7 +15,7 @@ direct run for A and a failed gateway run for B.
 
 ```bash
 cd demo
-uv run --extra mcp pytest -q     # 216 passed (MCP tests skip without the extra)
+uv run --extra mcp pytest -q     # all green (MCP tests skip without the extra)
 make dashboard-up                # 127.0.0.1:8099, replay only
 open http://127.0.0.1:8099/
 curl -s http://127.0.0.1:8099/api/health   # {"ok":true,...,"live_enabled":false}
@@ -105,6 +105,11 @@ high-volume clause work on CPU; the governance boundary held.”*
   and the re-scored `metrics.json` both read **64.5%**.
 - Do not claim the **200-document run** was live today. It was recorded on
   2026-11-10 in replay; a live run is a separate, smaller run.
+- Do not claim **Jev or the served screen** from this run. The recorded
+  screen is the regex (41/0/159/0); `HYBRID_PII_DETECTOR=screen` and the
+  `jev-cpu` control-plane route are implemented but not in the 2026-11-10
+  record. The cause trigger is the regex; the opt-in Jev trigger failed its
+  CUAD F1 guardrail (0.625 vs 0.714) and is not adopted.
 
 ## Live cluster quick reference
 

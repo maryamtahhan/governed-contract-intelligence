@@ -1,0 +1,58 @@
+# The pre-entry PII screen pool for ROSA: a Jev/Laya System One endpoint,
+# not a router and not a review pool. The pipeline calls the Praxis screen
+# listener (:8086) before it chooses a review entry; Praxis routes screen:pii
+# here through the trace-ui relay (:8089).
+#
+# It is CPU-only by design: the screen decision is small, the document text
+# must be contained before the general/sensitive choice, and a screen failure
+# must fail closed to the sensitive entry. It is pinned to the two cores
+# beside the specialist (18-19 on NUMA 0); regenerate the lists with
+# scripts/cluster/cpu-topology.sh after a node change.
+#
+# The image is built in-cluster (BuildConfig hybrid-jev in this namespace)
+# from demo/Dockerfile.jev; the English checkpoint is baked into the image.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jev-cpu
+  labels: {app: jev-cpu, demo.openshell.ai/pool: jev-cpu}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: jev-cpu}}
+  template:
+    metadata:
+      labels: {app: jev-cpu, demo.openshell.ai/pool: jev-cpu}
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        demo.openshell.ai/node: cpu-infer
+      tolerations:
+        - {key: demo.openshell.ai/cpu-infer, operator: Exists, effect: NoSchedule}
+      containers:
+        - name: jev
+          image: image-registry.openshift-image-registry.svc:5000/openshell-demo/hybrid-jev:latest
+          command: ["taskset", "-c", "18-19"]
+          args: ["hybrid-jev", "--host", "0.0.0.0", "--port", "8000",
+                 "--model", "english", "--concurrency", "2", "--warmup"]
+          env:
+            - {name: OMP_NUM_THREADS, value: "2"}
+            - {name: HF_HOME, value: /opt/hf-cache}
+          ports: [{containerPort: 8000}]
+          readinessProbe: {httpGet: {path: /health, port: 8000}, initialDelaySeconds: 20}
+          livenessProbe: {httpGet: {path: /health, port: 8000}, initialDelaySeconds: 60, periodSeconds: 30}
+          resources:
+            requests: {cpu: "2", memory: 6Gi}
+            limits: {cpu: "2", memory: 6Gi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jev-cpu
+spec:
+  selector: {app: jev-cpu}
+  ports: [{name: http, port: 8000, targetPort: 8000}]

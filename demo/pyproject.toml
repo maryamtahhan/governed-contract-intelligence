@@ -30,6 +30,12 @@ retrieval = [
 pii = [
     "presidio-analyzer>=2.2,<3",
 ]
+# Zero-shot decision-model screen, Jev-compatible (Laya is the open-source
+# implementation). Off-path and opt-in: the regex screen stays the default.
+# Serve TypeSafe Jev behind HYBRID_JEV_URL instead of installing this extra.
+jev = [
+    "laya>=0.4,<0.5",
+]
 spans = [
     "nervaluate>=0.2,<2",
 ]
@@ -76,6 +82,7 @@ hybrid-pool = "hybrid_demo.fakepool.server:main"
 hybrid-traceui = "hybrid_demo.traceui.server:main"
 hybrid-ui = "hybrid_demo.ui.server:main"
 hybrid-specialist = "hybrid_demo.specialist.server:main"
+hybrid-jev = "hybrid_demo.jev.server:main"
 hybrid-retrieval-eval = "hybrid_demo.retrieval.evaluate:main"
 hybrid-retrieval-e2e = "hybrid_demo.retrieval.endtoend:main"
 hybrid-pool-sim = "hybrid_demo.fakepool.llmd_sim:main"
@@ -83,6 +90,8 @@ hybrid-index = "hybrid_demo.retrieval.index:main"
 hybrid-bench = "hybrid_demo.bench:main"
 hybrid-batch = "hybrid_demo.pipeline.batch:main"
 hybrid-pii = "hybrid_demo.pii:main"
+hybrid-jev-bench = "hybrid_demo.evalkit.jev_bench:main"
+hybrid-cause-bench = "hybrid_demo.evalkit.cause_bench:main"
 hybrid-eval-contract-steps = "hybrid_demo.evalkit.contract_steps:main"
 hybrid-mcp = "hybrid_demo.mcp.server:main"
 

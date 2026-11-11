@@ -5,22 +5,29 @@ screen is *load-bearing*: it decides which gateway entry a document takes, so
 a false negative is a containment failure and a false positive is unnecessary
 GPU/sensitive-pool usage.  This module keeps the regex screen as the default
 (zero new dependencies, byte-identical routing for the recorded arms) and adds
-two adapters that can be measured against it:
+adapters that can be measured against it:
 
 * ``presidio`` - Microsoft/community Presidio's analyser (NER + checksums +
   context), the industry default for PII detection.
 * ``taxonomy`` - an HTTP bridge to llm-d-sc's built-in sensitivity taxonomy
   (PUBLIC/INTERNAL/CONFIDENTIAL/REGULATED/NEVER_EGRESS).  llm-d-sc speaks gRPC;
   the bridge is expected to expose a tiny JSON contract, documented below.
+* ``jev`` - a zero-shot System One decision model (TypeSafe Jev, or the
+  open-source Laya checkpoint) asked one document-level question.  It returns
+  a calibrated probability, not spans, so its finding covers the whole text.
+  No labels are used: this is the fit for real contracts, where the demo's
+  regex has never been measured.
+* ``screen`` - the same Jev decision served through the Praxis ``screen:pii``
+  listener and the ``jev-cpu`` pool.  The pipeline calls the gateway before
+  it chooses a review entry, so the screen request carries its own step
+  header and API key; a gateway/serving failure fails closed to the sensitive
+  entry.  Set ``HYBRID_PII_SCREEN_URL`` to the listener's System One path.
 
 Selection is by argument or ``HYBRID_PII_DETECTOR`` (``regex`` default,
-``presidio``, ``taxonomy``, or ``composite`` to OR them).  Every detector
-returns character-offset findings, so a comparison can report per-entity
-agreement rather than just document-level flags.
-
-This is deliberately *not* wired into the request path by default.  Swapping
-the screen changes the sensitive share, the CPU-served share, and therefore
-the arm numbers; run the comparison tool and re-measure before adopting.
+``presidio``, ``taxonomy``, ``jev``, ``screen``, or ``composite`` to OR the
+first three).  The regex detector remains the measured default: swapping the
+screen changes the sensitive share, the CPU-served share, and therefore the
+arm numbers.  Run the comparison tool and re-measure before adopting.
 """
 from __future__ import annotations
 
@@ -69,8 +76,28 @@ _REGEX_ENTITIES = [
 _REGEX_COMPILED = [(name, re.compile(pattern)) for name, pattern in _REGEX_ENTITIES]
 
 DEFAULT_DETECTOR = "regex"
-KNOWN_DETECTORS = ("regex", "presidio", "taxonomy", "composite")
+KNOWN_DETECTORS = ("regex", "presidio", "taxonomy", "jev", "screen", "composite")
 _FAILED_WARNED: set[str] = set()
+
+# The question is deliberately about actual identifiers, not about the
+# presence of a data-protection clause.  The demo's `sensitive` label is an
+# actual PII schedule; 148/200 synthetic contracts carry a generic
+# data-protection clause without being labelled sensitive.  Asking the model
+# "is there a data-protection clause?" produced 72 false positives on that
+# corpus; this wording produced none at the 0.5 threshold (FINDINGS §16.7).
+JEV_PII_QUESTION = (
+    "Does this text contain PII (personally identifiable information) such as "
+    "an email address, phone number, employee ID, or a named individual's "
+    "contact details?"
+)
+JEV_DEFAULT_THRESHOLD = 0.5
+# ~350 English tokens per chunk: safe under the English checkpoint's 512-token
+# window and cheap enough to scan a normal contract in a handful of calls.
+JEV_CHUNK_CHARS = 1400
+# A document longer than this is failed closed rather than silently sampled.
+# 32 chunks is ~45k characters, far beyond the demo corpus.
+JEV_MAX_CHUNKS = 32
+_LAYA_ROUTER: object | None = None
 
 
 @dataclass(frozen=True)
@@ -180,6 +207,230 @@ def taxonomy_detect(text: str, url: str | None = None,
     return findings
 
 
+def _jev_threshold(threshold: float | None = None) -> float:
+    value = threshold if threshold is not None else os.environ.get(
+        "HYBRID_JEV_THRESHOLD", str(JEV_DEFAULT_THRESHOLD))
+    try:
+        return float(value)
+    except (TypeError, ValueError) as error:
+        raise DetectorUnavailable(f"invalid JEV threshold {value!r}") from error
+
+
+def _jev_chunks(text: str) -> list[str]:
+    """Split into bounded chunks, preferring a paragraph or sentence edge.
+
+    The English checkpoint reads 512 tokens; long contracts must be scanned in
+    pieces so the screen does not silently ignore the tail.  A small overlap
+    keeps a sentence that straddles a boundary visible to both calls.
+    """
+    text = text or ""
+    if len(text) <= JEV_CHUNK_CHARS:
+        return [text] if text.strip() else []
+    chunks: list[str] = []
+    start = 0
+    while start < len(text):
+        end = min(start + JEV_CHUNK_CHARS, len(text))
+        if end < len(text):
+            floor = start + JEV_CHUNK_CHARS // 2
+            boundary = max(text.rfind("\n", floor, end), text.rfind(". ", floor, end))
+            if boundary != -1:
+                end = boundary + 1
+        chunk = text[start:end].strip()
+        if chunk:
+            chunks.append(chunk)
+        if end >= len(text):
+            break
+        start = max(end - 100, start + 1)
+    if len(chunks) > JEV_MAX_CHUNKS:
+        raise RuntimeError(
+            f"text is {len(text)} chars, over the {JEV_MAX_CHUNKS}-chunk JEV "
+            "limit; failing closed instead of sampling it"
+        )
+    return chunks
+
+
+def _jev_probability(data: dict, question: str = "sensitive") -> float:
+    """Read the ``noul`` probability from a System One answer."""
+    answer = (data.get("answers") or {}).get(question) or {}
+    for key in ("noul", "probability", "score"):
+        if answer.get(key) is not None:
+            return float(answer[key])
+    for key in ("noul", "probability", "score"):
+        if data.get(key) is not None:
+            return float(data[key])
+    raise ValueError(
+        f"JEV response has no noul/probability for the {question!r} question: "
+        f"{data!r}"
+    )
+
+
+def _laya_router():
+    global _LAYA_ROUTER
+    if _LAYA_ROUTER is not None:
+        return _LAYA_ROUTER
+    try:
+        from laya import Router
+    except ImportError as error:
+        raise DetectorUnavailable(
+            "laya is not installed; install the 'jev' extra "
+            "(uv sync --extra jev) or set HYBRID_JEV_URL to a System One "
+            "endpoint"
+        ) from error
+    _LAYA_ROUTER = Router(device=os.environ.get("HYBRID_JEV_DEVICE", "cpu"))
+    return _LAYA_ROUTER
+
+
+def _jev_http(chunk: str, url: str, timeout: float,
+              instructions: str = JEV_PII_QUESTION,
+              question: str = "sensitive",
+              extra_headers: dict[str, str] | None = None,
+              extra_body: dict | None = None) -> float:
+    import httpx
+
+    headers = dict(extra_headers or {})
+    key = os.environ.get("HYBRID_JEV_API_KEY", "")
+    if key:
+        headers.setdefault("Authorization", f"Bearer {key}")
+    body = {"state": chunk, "questions": {
+        question: {"type": "noul", "instructions": instructions}}}
+    body.update(extra_body or {})
+    response = httpx.post(
+        url,
+        json=body,
+        headers=headers or None,
+        timeout=timeout,
+    )
+    response.raise_for_status()
+    return _jev_probability(response.json(), question=question)
+
+
+def _jev_local(chunk: str, model: str | None,
+               instructions: str = JEV_PII_QUESTION,
+               question: str = "sensitive") -> float:
+    import laya
+
+    router = _laya_router()
+    model = model or os.environ.get("HYBRID_JEV_MODEL", "auto")
+    if model == "auto":
+        model = "english" if laya.is_english(chunk) else "multilingual"
+    max_len = 8192 if model == "multilingual" else 512
+    result = router.predict(
+        chunk,
+        {question: {"type": "noul", "instructions": instructions}},
+        model=model,
+        max_len=max_len,
+    )
+    return _jev_probability(result, question=question)
+
+
+def jev_question_score(text: str, instructions: str, url: str | None = None,
+                       model: str | None = None, timeout: float = 30.0,
+                       question: str = "sensitive",
+                       extra_headers: dict[str, str] | None = None,
+                       extra_body: dict | None = None) -> float:
+    """The maximum ``noul`` probability for an arbitrary System One question.
+
+    ``jev_score`` is the PII convenience wrapper.  The cause-language trigger
+    uses this function with a different question; keeping the chunking,
+    endpoint selection and parsing in one place means both decisions observe
+    exactly the same text boundaries.
+    """
+    endpoint = (url or os.environ.get("HYBRID_JEV_URL", "")).strip()
+    best = 0.0
+    for chunk in _jev_chunks(text):
+        probability = (_jev_http(chunk, endpoint, timeout, instructions,
+                                 question, extra_headers, extra_body)
+                       if endpoint
+                       else _jev_local(chunk, model, instructions, question))
+        best = max(best, probability)
+    return best
+
+
+def jev_score(text: str, url: str | None = None, model: str | None = None,
+              timeout: float = 30.0) -> float:
+    """The maximum PII ``noul`` probability over the text's chunks.
+
+    Exposed separately so an offline benchmark can sweep thresholds without
+    re-running the model once per threshold.
+    """
+    return jev_question_score(text, JEV_PII_QUESTION, url=url, model=model,
+                              timeout=timeout)
+
+
+def jev_detect(text: str, url: str | None = None, threshold: float | None = None,
+               model: str | None = None, timeout: float = 30.0) -> list[Finding]:
+    """Zero-shot decision screen, in the System One request/answer shape.
+
+    ``url`` (or ``HYBRID_JEV_URL``) selects a served endpoint; otherwise the
+    open-source ``laya`` runtime is used locally.  The model answers one
+    document-level question with a calibrated ``noul`` probability, so the
+    returned finding covers the whole text and its ``score`` is that
+    probability.  Any failure propagates to ``is_sensitive``, which fails
+    closed.
+
+    This is an A/B candidate, not the measured default.  On the 200-document
+    synthetic corpus the regex screen is 41/0/159/0; the English Laya
+    checkpoint at 0.5 is 40/0/159/1 (FINDINGS §16.7).  The synthetic corpus is
+    the only labelled one; real contracts and CUAD have no PII labels.
+    """
+    cutoff = _jev_threshold(threshold)
+    best = jev_score(text, url=url, model=model, timeout=timeout)
+    if best < cutoff:
+        return []
+    return [Finding(0, len(text or ""), "PII", "jev", round(best, 4))]
+
+
+SCREEN_DEFAULT_STEP = "screen:pii"
+SCREEN_POLICY_MODEL = "Semantic-Qwen"
+
+
+def screen_score(text: str, url: str | None = None, model: str | None = None,
+                 timeout: float = 30.0) -> float:
+    """Jev's PII probability served through the Praxis screen listener.
+
+    The request is a normal System One body plus the two routing headers the
+    gateway authenticates and routes on.  ``model`` is included only because
+    the gateway's PPE policy routes are model-scoped; the Jev service ignores
+    it.  An unconfigured or failing endpoint raises, so ``is_sensitive`` fails
+    closed to the sensitive entry.
+    """
+    endpoint = (url or os.environ.get("HYBRID_PII_SCREEN_URL", "")).strip()
+    if not endpoint:
+        raise DetectorUnavailable(
+            "no screen listener configured; set HYBRID_PII_SCREEN_URL to "
+            "the Praxis screen listener's /v1/systemone path"
+        )
+    from .common import api_key_for_step
+
+    step = os.environ.get("HYBRID_PII_SCREEN_STEP", SCREEN_DEFAULT_STEP)
+    key = (os.environ.get("HYBRID_PII_SCREEN_KEY")
+           or api_key_for_step("screen"))
+    headers = {"X-Demo-Step": step, "X-API-Key": key}
+    body = {"model": os.environ.get(
+        "HYBRID_PII_SCREEN_POLICY_MODEL", SCREEN_POLICY_MODEL)}
+    return jev_question_score(
+        text, JEV_PII_QUESTION, url=endpoint, model=model, timeout=timeout,
+        question="sensitive", extra_headers=headers, extra_body=body)
+
+
+def screen_detect(text: str, url: str | None = None,
+                  threshold: float | None = None, model: str | None = None,
+                  timeout: float = 30.0) -> list[Finding]:
+    """The ``screen`` detector: Jev behind Praxis, in the Finding shape.
+
+    This is a serving-path adapter, not a different model.  The offline
+    ``jev`` detector talks to a System One endpoint directly; ``screen`` adds
+    the gateway step header, API key and policy model, so the call is
+    authenticated, audited and routed to the ``jev-cpu`` pool before the
+    pipeline chooses a review entry.
+    """
+    cutoff = _jev_threshold(threshold)
+    best = screen_score(text, url=url, model=model, timeout=timeout)
+    if best < cutoff:
+        return []
+    return [Finding(0, len(text or ""), "PII", "screen", round(best, 4))]
+
+
 def resolve_detector(detector: str | None = None) -> str:
     name = (detector or os.environ.get("HYBRID_PII_DETECTOR") or DEFAULT_DETECTOR).strip().lower()
     if name not in KNOWN_DETECTORS:
@@ -196,6 +447,10 @@ def detect(text: str, detector: str | None = None) -> list[Finding]:
         return presidio_detect(text)
     if name == "taxonomy":
         return taxonomy_detect(text)
+    if name == "jev":
+        return jev_detect(text)
+    if name == "screen":
+        return screen_detect(text)
     # composite: OR the detectors, tolerating an unavailable optional one.
     findings: list[Finding] = list(regex_detect(text))
     for optional in (presidio_detect, taxonomy_detect):
@@ -237,7 +492,16 @@ def available() -> dict[str, bool]:
     except Exception:  # noqa: BLE001 - import/model errors are all "unavailable"
         presidio = False
     taxonomy = bool(os.environ.get("HYBRID_PII_TAXONOMY_URL"))
-    return {"regex": True, "presidio": presidio, "taxonomy": taxonomy}
+    try:
+        import importlib.util
+
+        laya = importlib.util.find_spec("laya") is not None
+    except Exception:  # noqa: BLE001 - a broken install is "unavailable"
+        laya = False
+    jev = bool(os.environ.get("HYBRID_JEV_URL")) or laya
+    screen = bool(os.environ.get("HYBRID_PII_SCREEN_URL"))
+    return {"regex": True, "presidio": presidio, "taxonomy": taxonomy,
+            "jev": jev, "screen": screen}
 
 
 def compare(texts: Iterable[tuple[str, str | None]], detectors: Sequence[str] | None = None,
@@ -249,7 +513,10 @@ def compare(texts: Iterable[tuple[str, str | None]], detectors: Sequence[str] | 
     ships no PII labels; the tool reports both views so a reviewer can see
     what is measurable and what is not.
     """
-    names = list(detectors or [d for d, ok in available().items() if ok])
+    # Jev is excluded from the implicit set: selecting it may download and
+    # load a checkpoint, so a comparison must opt in with detectors=["jev"].
+    names = list(detectors or [d for d in ("regex", "presidio", "taxonomy")
+                               if available()[d]])
     rows: dict[str, dict] = {name: {"documents_flagged": 0, "findings": 0,
                                     "per_doc": {}, "errors": 0} for name in names}
     truth = truth or {}

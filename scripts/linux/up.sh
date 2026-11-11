@@ -33,7 +33,8 @@ if [ "$PROFILE" = "real" ]; then
   export VLLM_GPU_UPSTREAM="http://vllm-gpu-real:8000"
   export VLLM_GPU_APPROVED_UPSTREAM="http://vllm-gpu-approved-real:8000"
   export VLLM_GPU_SMALL_UPSTREAM="http://vllm-gpu-small-real:8000"
-  echo "starting with REAL vLLM pools (model downloads on first start)"
+  export JEV_CPU_UPSTREAM="http://jev-cpu-real:8000"
+  echo "starting with REAL vLLM pools and the real Jev CPU screen (model downloads on first start)"
 fi
 
 $COMPOSE --profile "$PROFILE" -f "$STACK/docker-compose.yml" up -d --build

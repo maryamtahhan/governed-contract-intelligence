@@ -52,7 +52,11 @@ services:
       TRACE_DB_PATH: /data/traces.db
       PRAXIS_UPSTREAM: http://praxis:8080
       SENSITIVE_UPSTREAM: http://praxis:8083
-      TRACE_POOLS: cuad-specialist,vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small
+      # The pre-entry PII screen has its own ingress and pool; it is not a
+      # review entry. Point HYBRID_PII_SCREEN_URL at this ingress.
+      SCREEN_UPSTREAM: http://praxis:8086
+      SCREEN_INGRESS_PORT: "8086"
+      TRACE_POOLS: cuad-specialist,vllm-cpu,vllm-gpu,vllm-gpu-approved,vllm-gpu-small,jev-cpu
       # Point at the real vLLM services when running --profile real
       # (scripts/linux/up.sh --real exports these).
       CUAD_SPECIALIST_UPSTREAM: ${CUAD_SPECIALIST_UPSTREAM:-http://fake-specialist:8000}
@@ -60,6 +64,7 @@ services:
       VLLM_GPU_UPSTREAM: ${VLLM_GPU_UPSTREAM:-http://fake-gpu:8000}
       VLLM_GPU_APPROVED_UPSTREAM: ${VLLM_GPU_APPROVED_UPSTREAM:-http://fake-approved:8000}
       VLLM_GPU_SMALL_UPSTREAM: ${VLLM_GPU_SMALL_UPSTREAM:-http://fake-gpu-small:8000}
+      JEV_CPU_UPSTREAM: ${JEV_CPU_UPSTREAM:-http://fake-jev:8000}
       TRACE_INGRESS_PORT: "8080"
       SENSITIVE_INGRESS_PORT: "8083"
     volumes:
@@ -67,12 +72,14 @@ services:
     ports:
       - "8080:8080"
       - "8083:8083"
+      - "8086:8086"
       # Pool relays and praxis metrics, for the runner's scrapes and debugging.
       - "18088:8088"
       - "18081:8081"
       - "18082:8082"
       - "18084:8084"
       - "18085:8085"
+      - "18089:8089"
 
   # ---- simulated backends: OpenAI-compatible, deterministic tiered error
   # ---- rates, device-time headers. For CI and CPU-only hosts.
@@ -111,6 +118,12 @@ services:
               "--host", "0.0.0.0", "--port", "8000",
               "--prefill-ms-per-ktok", "30", "--decode-ms-per-tok", "5", "--concurrency", "8",
               "--error-rates", "simple=0.04,complex=0.30,reasoning=0.50"]
+  # Deterministic stand-in for the Jev pool, so the screen:pii path runs on a
+  # CPU-only host without downloading Laya. It is not a measurement.
+  fake-jev:
+    build: ../../demo
+    profiles: ["fake"]
+    command: ["hybrid-jev", "--host", "0.0.0.0", "--port", "8000", "--fake"]
 
   # ---- real vLLM backends (GPU instance with nvidia CDI configured).
   # ---- One GPU each: general 7B, approved 7B, small 1.5B; CPU pool on cores.
@@ -159,6 +172,14 @@ services:
     security_opt: ["label=disable"]
     volumes:
       - hf-cache:/root/.cache/huggingface
+  # Real Jev/Laya CPU service. The image bakes the English checkpoint; the
+  # first build downloads it. up.sh --real points the relay here.
+  jev-cpu-real:
+    build:
+      context: ../../demo
+      dockerfile: Dockerfile.jev
+    profiles: ["real"]
+    cpus: 4
 
 volumes:
   trace-data:

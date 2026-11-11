@@ -112,6 +112,28 @@ model caches, digest-pinned vLLM image).
    ("must be a zip, tar, or gzipped tar"); use `--from-dir` on the small
    staging directory.
 
+6. Build the Jev image **only if you are enabling the opt-in `screen:pii`
+   route**. `jev-cpu` is in the kustomization, but the 2026-11-10 measured run
+   used the regex screen and did not need it. The English checkpoint is baked
+   into the image at build time:
+
+   ```bash
+   oc -n openshell-demo new-build --binary --strategy docker --name hybrid-jev
+   oc -n openshell-demo patch bc hybrid-jev --type merge \
+     -p '{"spec":{"strategy":{"dockerStrategy":{"dockerfilePath":"Dockerfile.jev"}}}}'
+   STAGE=$(mktemp -d)
+   cp demo/Dockerfile.jev demo/pyproject.toml "$STAGE/"
+   cp -R demo/src "$STAGE/src"
+   oc -n openshell-demo start-build hybrid-jev --from-dir="$STAGE" --follow
+   ```
+
+   The service starts with `--warmup`, so the readiness probe only passes
+   after the baked checkpoint loads. Point the runner at the screen ingress,
+   not at `jev-cpu` directly:
+   `HYBRID_PII_DETECTOR=screen HYBRID_PII_SCREEN_URL=http://<trace-ui>:8086/v1/systemone`.
+   The trace UI records these calls with `entry=screen`; they are not review
+   steps.
+
 ## Recording runs
 
 Pass the ROSA provenance so records cannot be confused with SNO runs:

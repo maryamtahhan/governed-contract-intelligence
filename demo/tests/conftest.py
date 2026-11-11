@@ -33,8 +33,9 @@ RELAY_PORTS = {
     "vllm-gpu": 8082,
     "vllm-gpu-approved": 8084,
     "vllm-gpu-small": 8085,
+    "jev-cpu": 8089,
 }
-STUB_LISTENER_PORTS = {8080: "general", 8083: "sensitive"}
+STUB_LISTENER_PORTS = {8080: "general", 8083: "sensitive", 8086: "screen"}
 
 
 def free_port() -> int:
@@ -82,8 +83,12 @@ class LocalStack:
         self.stub: subprocess.Popen | None = None
         self.stub_general_port = free_port()
         self.stub_sensitive_port = free_port()
+        self.stub_screen_port = free_port()
         self.ingress_port = free_port()
         self.sensitive_ingress_port = free_port()
+        self.screen_ingress_port = free_port()
+        self.jev_port = free_port()
+        self.relay_ports["jev-cpu"] = free_port()
 
         for name, profile in POOLS.items():
             port = free_port()
@@ -105,12 +110,25 @@ class LocalStack:
             )
             wait_http(f"http://127.0.0.1:{port}/healthz")
 
+        # A deterministic System One endpoint for the screen path. --fake
+        # answers with the demo regex, so no Laya checkpoint is needed in CI.
+        self.jev: subprocess.Popen | None = subprocess.Popen(
+            [sys.executable, "-m", "hybrid_demo.jev.server",
+             "--host", "127.0.0.1", "--port", str(self.jev_port), "--fake"],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+        wait_http(f"http://127.0.0.1:{self.jev_port}/health")
+
         env = dict(os.environ)
         env.update({
             "TRACE_DB_PATH": str(tmpdir / "traces.db"),
             "PRAXIS_UPSTREAM": f"http://127.0.0.1:{self.stub_general_port}",
             "SENSITIVE_UPSTREAM": f"http://127.0.0.1:{self.stub_sensitive_port}",
-            "TRACE_POOLS": ",".join(POOLS),
+            "SCREEN_UPSTREAM": f"http://127.0.0.1:{self.stub_screen_port}",
+            "SCREEN_INGRESS_PORT": str(self.screen_ingress_port),
+            "TRACE_POOLS": ",".join([*POOLS, "jev-cpu"]),
+            "JEV_CPU_UPSTREAM": f"http://127.0.0.1:{self.jev_port}",
+            "JEV_CPU_RELAY_PORT": str(self.relay_ports["jev-cpu"]),
             "TRACE_INGRESS_PORT": str(self.ingress_port),
             "SENSITIVE_INGRESS_PORT": str(self.sensitive_ingress_port),
         })
@@ -123,16 +141,18 @@ class LocalStack:
         )
         wait_http(f"http://127.0.0.1:{self.ingress_port}/_trace/healthz")
         wait_http(f"http://127.0.0.1:{self.sensitive_ingress_port}/_trace/healthz")
+        wait_http(f"http://127.0.0.1:{self.screen_ingress_port}/_trace/healthz")
         self.start_stub("config.yaml")
 
     def start_stub(self, config_name: str) -> None:
         self.stop_stub()
         endpoint_map = ",".join(
             f"trace-ui:{RELAY_PORTS[name]}=http://127.0.0.1:{self.relay_ports[name]}"
-            for name in POOLS
+            for name in [*POOLS, "jev-cpu"]
         )
         port_map = (f"8080={self.stub_general_port},"
-                    f"8083={self.stub_sensitive_port}")
+                    f"8083={self.stub_sensitive_port},"
+                    f"8086={self.stub_screen_port}")
         self.stub = subprocess.Popen(
             [
                 sys.executable, str(STUB),
@@ -153,7 +173,7 @@ class LocalStack:
         if 8083 in ports:
             wait_http(f"http://127.0.0.1:{self.stub_sensitive_port}/v1/models")
         if 8086 in ports:
-            wait_http(f"http://127.0.0.1:{self.stub_general_port}/v1/models")
+            wait_http(f"http://127.0.0.1:{self.stub_screen_port}/v1/models")
         if 8087 in ports:
             wait_http(f"http://127.0.0.1:{self.stub_general_port}/v1/models")
 
@@ -206,10 +226,17 @@ class LocalStack:
     def sensitive_gateway(self) -> str:
         return f"http://127.0.0.1:{self.sensitive_ingress_port}"
 
+    @property
+    def screen_gateway(self) -> str:
+        return f"http://127.0.0.1:{self.screen_ingress_port}"
+
     def teardown(self) -> None:
         self.stop_stub()
         self.trace_ui.terminate()
         self.trace_ui.wait(timeout=10)
+        if self.jev is not None and self.jev.poll() is None:
+            self.jev.terminate()
+            self.jev.wait(timeout=10)
         for proc in self.pools.values():
             if proc.poll() is None:
                 proc.terminate()

@@ -65,11 +65,11 @@ pipeline, the measurement harness and the OpenShell sandbox.
 | Semantic cache in the specialist (V5 ordering rules, zero-FP threshold) | **built, measured** |
 | Four-arm measurement (A/B/C/D) + model-variant comparison on OCP | **built** |
 | Trace UI (waterfall, arms panel, dashboard, audit) | **built** |
-| Test suite | **213 tests green** (`cd demo && uv run pytest`) |
+| Test suite | **230 tests green** (`cd demo && uv run pytest`) |
 | Contract-step taxonomy + evaluation harness | **candidate, not measured** — evaluate before routing ([design §5](docs/design.md)) |
 | Gateway image `v0.9.1` (Praxis 0.7.5 / ai-gateway 0.9.0 + PPE host plugins) | **built and published** — `quay.io/mtahhan/gci-praxis:v0.9.1`, base manifests switched ([docs](deploy/images/praxis-llm-d-sc/README.md)) |
 | Retrieval evaluation (chunking + recall@k/MRR vs annotation spans) | **run, both regimes — ordering inverts within-doc, restores cross-doc (FINDINGS §11)** |
-| OSS adapters (Presidio, nervaluate, ranx, docling, RedisVL, OTel, RAGAS, llm-d sim/batch/bench) | **built as opt-in swaps, default path unchanged** ([design §4](docs/design.md)) |
+| OSS adapters (Presidio, Jev/Laya, nervaluate, ranx, docling, RedisVL, OTel, RAGAS, llm-d sim/batch/bench) | **built as opt-in swaps, default path unchanged** ([design §4](docs/design.md)) |
 | docling ingestion + PII screen at ingest | adapter built; default remains builtin/regex, not yet measured on the corpus (FINDINGS §16) |
 | hybrid-bench concurrency sweep, thinking-mode A/B, V2 tool-calling | wrapper built; sweep open (FINDINGS §9) |
 
@@ -186,10 +186,11 @@ restore one.
 │   │   ├── traceui/            recording relays, dashboard backend, audit, OTel export
 │   │   ├── ui/                 stage dashboard (replay + live modes)
 │   │   ├── mcp/                MCP facade: review + stage tools, ingress only
+│   │   ├── jev/                System One endpoint for the opt-in jev-cpu pool
 │   │   ├── pii.py              pluggable PII detectors (regex default)
 │   │   ├── configs.json        single source of routing-config metadata
 │   │   └── common.py, routes.py, bench.py, classifier.py
-│   ├── tests/                    216-test suite, incl. e2e against a praxis stub
+│   ├── tests/                    230-test suite, incl. e2e against a praxis stub
 │   ├── tools/                    probes, validators, paired significance, PII compare, bench helpers
 │   ├── Dockerfile                trace-ui / package image
 │   └── Dockerfile.specialist     specialist image (bakes the CUAD checkpoint)
@@ -436,7 +437,7 @@ download or network.
 ```bash
 cd demo
 uv sync --locked --dev
-uv run pytest -q                  # 216 passed on a clean checkout
+uv run pytest -q                  # 230 passed on a clean checkout
 uv run ruff check src tests tools
 ```
 
@@ -447,8 +448,9 @@ What the suite covers:
 | Routing configs, aliases, CLI compatibility | `test_configs.py`, `test_run_cli.py`, `test_shared.py` |
 | End-to-end through the praxis stub: routing, fallback, fail-closed, entry choice, API-key auth | `test_e2e.py`, `test_stub_config.py`, `test_policy_identity.py`, `test_review_entry.py` |
 | Fake pools, scoring, cost, spans/stats, telemetry, OTel export | `test_fakepool.py`, `test_score.py`, `test_spans_stats.py`, `test_schemas_otel.py`, `test_telemetry.py` |
-| PII screen and gateway/pipeline agreement | `test_pii.py`, `test_pii_agreement.py` |
+| PII screen, Jev/screen adapters, Jev service and gateway/pipeline agreement | `test_pii.py`, `test_jev_bench.py`, `test_jev_server.py`, `test_pii_agreement.py` |
 | CUAD conversion, document ids, direct runner, generated data | `test_cuad.py`, `test_cuad_doc_ids.py`, `test_direct.py`, `test_generate.py` |
+| Cause-trigger guardrail (regex vs Jev) | `test_cause_bench.py` |
 | Retrieval chunking, index and OSS adapters | `test_chunking.py`, `test_retrieval_oss.py`, `test_oss_adapters.py` |
 | Dashboard payload/corpus/auth, MCP facade | `test_ui_payload.py`, `test_ui_corpus.py`, `test_ui_live_auth.py`, `test_mcp_server.py` |
 
@@ -458,6 +460,7 @@ Optional extras add tests and tools for the corresponding adapters:
 uv sync --extra mcp          # MCP server tests
 uv sync --extra pii --extra spans --extra stats --extra ranking \
         --extra ingest --extra cache --extra otel --extra rag
+uv sync --extra jev          # Jev/Laya PII screen; downloads a checkpoint on first use
 uv sync --extra specialist   # torch/transformers; needed by the local specialist tools
 uv sync --extra retrieval    # sentence-transformers; needed by retrieval eval
 ```
@@ -503,6 +506,9 @@ component swap is [design §4.4](docs/design.md).
 | Retrieval end-to-end | `uv run hybrid-retrieval-e2e --baseline-run ...` | extraction F1 with retrieval in front of the specialist |
 | Contract-step taxonomy | `uv run hybrid-eval-contract-steps --check` / `--base-url ...` | `runs/contract-step/eval.json`; candidate taxonomy, not a measured routing result |
 | PII detector comparison | `uv run python tools/compare_pii.py --data ... --detectors regex,presidio` | sensitive share and labelled TP/FP/TN/FN |
+| Jev/Laya PII screen (offline) | `uv run hybrid-jev-bench --data data/synthetic` | weights-only precision/recall vs regex; no serving claim |
+| Pre-entry screen through Praxis (served shape) | `HYBRID_PII_DETECTOR=screen HYBRID_PII_SCREEN_URL=http://127.0.0.1:8086/v1/systemone uv run hybrid-review ...` | exercises the `screen:pii` control-plane route on the fake stack; not a measured arm |
+| Cause-trigger guardrail | `uv run hybrid-cause-bench --deciders regex jev` | CUAD test-split termination F1; regex 0.714, Jev 0.625, so Jev is not adopted |
 | Gateway vs pipeline PII screen | `uv run hybrid-pii-agreement --run <run> --logs <praxis logs>` | V19 groundwork; agreement only, observe-only scanner |
 | Specialist quality | `uv run python tools/validate_specialist.py --docs 12` | CUAD test-split F1 for the local checkpoint |
 | Semantic-cache threshold | `uv run python tools/validate_cache.py --docs 12` | hit rate and false positives per threshold; pick zero-FP point |
@@ -546,6 +552,8 @@ silently adopted. The full audit, licences and measurement caveats are in
 | upstream | module / flag | default | why it is a swap |
 |---|---|---|---|
 | Presidio | `hybrid_demo.pii`, `HYBRID_PII_DETECTOR=presidio` | regex | NER raises the sensitive share; no CUAD PII labels to score it |
+| Jev / Laya | `hybrid_demo.pii`, `HYBRID_PII_DETECTOR=jev` | regex | zero-shot, no labels; only the synthetic set is labelled, and regex is already 41/0/159/0 |
+| Jev served screen | `hybrid_demo.pii`, `HYBRID_PII_DETECTOR=screen`; `jev-cpu` | regex | control-plane `screen:pii` listener; removes sensitive text from the general entry, but has no measured arm yet |
 | nervaluate | `hybrid_demo.evalkit.spans` | containment | adds SemEval offset metrics; paraphrases still fail offsets |
 | statsmodels | `hybrid_demo.evalkit.stats` | exact binomial | same test, standard implementation/backend label |
 | ranx | `hybrid_demo.retrieval.metrics`, `--metrics-backend` | internal | NDCG/MAP implementation can differ at ties |
@@ -557,6 +565,17 @@ silently adopted. The full audit, licences and measurement caveats are in
 | llm-d-inference-sim | `hybrid-pool-sim` | `hybrid-pool` | simulator covers transport/latency, not tiered answer corruption or device time |
 | llm-d-batch-gateway | `hybrid-batch` | Python runner | batch must target the praxis ingress, never a pool directly |
 | vLLM bench / GuideLLM | `hybrid-bench` | `tools/gpu_bench.py` | load generator CLI churns; pin versions in a measured run |
+
+**Jev is a decision layer, not a replacement for Praxis or `vllm-cpu`.** The
+offline `jev` adapter answers a System One `noul` question; the served
+`screen` adapter sends `screen:pii` to a separate Praxis listener (`:8086`)
+and the `jev-cpu` pool, so sensitive text never travels through the general
+review entry. (The screen listener is a control plane, not a third review
+entry.) Both are opt-in and fail closed; the regex screen remains the measured
+default (41/0/159/0 on the only labelled corpus). The cause-language trigger
+has the same treatment: `HYBRID_CAUSE_DECIDER=jev` is opt-in, falls back to
+regex on error, and was rejected by the CUAD guardrail (F1 0.625 vs the
+recorded 0.714). See FINDINGS §16.7–§16.9.
 
 Quick checks that need no model or GPU:
 

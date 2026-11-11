@@ -1326,6 +1326,12 @@ function routingBlock() {
         Pool names are routing tiers — <span class="mono">vllm-cpu</span> and
         <span class="mono">vllm-gpu</span> — not a hardware claim; the deployment's
         <span class="mono">*_UPSTREAM</span> config is what binds a tier to a process.</p>
+      <p class="note" style="margin-top:8px">This recorded run screens with the <b>regex</b> before
+        choosing an entry, so the screen is not one of the pools above. The opt-in served screen
+        sends <span class="mono">screen:pii</span> to a separate Praxis control-plane listener and
+        the <span class="mono">jev-cpu</span> pool (trace entry <span class="mono">screen</span>);
+        it is not part of this run. The opt-in Jev cause trigger failed its CUAD F1 guardrail
+        (0.625 vs 0.714) and is not adopted; the regex trigger is the default.</p>
     </div>
   </details>`;
 }
@@ -1403,7 +1409,9 @@ function renderSide() {
         `predicted ${esc(report.predicted?.missing_data_protection ?? "—")} · expected ${esc(report.expected?.missing_data_protection ?? "—")}`));
     }
     reportBlock = `<div class="check-list">${rows.join("")}</div>
-      <p class="note">The report is built from the model's own extracts, so an error here can be an upstream error surfacing late.</p>`;
+      <p class="note">These checks score the one report call's own aggregate tally. They are separate
+        from the per-document tiles: a counting error here does not change extraction F1, risk
+        accuracy or the fully-correct count above.</p>`;
   }
 
   $("#side").innerHTML = `
@@ -1491,7 +1499,7 @@ function checkRow(label, value, detail) {
   const cls = ok === null ? "" : ok ? "ok" : "bad";
   return `<div class="check">
     <div class="check-top"><span class="ico ${cls}">${ico}</span><span>${esc(label)}</span>
-      <span class="val">${value == null ? "—" : Math.round(value * 100) + "%"}</span></div>
+      <span class="val">${value == null ? "—" : value >= 0.999 ? "exact" : "mismatch"}</span></div>
     <div class="detail">${detail}</div>
   </div>`;
 }
@@ -1513,7 +1521,7 @@ function countsRow(label, value, predicted, expected, order) {
   const extra = keys.length > 8 ? `<span class="count">+${keys.length - 8}</span>` : "";
   return `<div class="check">
     <div class="check-top"><span class="ico ${cls}">${ico}</span><span>${esc(label)}</span>
-      <span class="val">${value == null ? "—" : Math.round(value * 100) + "%"}</span></div>
+      <span class="val">${value == null ? "—" : Math.round(value * 100) + "% count match"}</span></div>
     <div class="counts">${chips}${extra}</div>
   </div>`;
 }

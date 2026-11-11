@@ -24,5 +24,10 @@
     "model": "CUAD RoBERTa-large QA (fine-tuned 2021 checkpoint)",
     "hardware": "cpu (ROSA x8i.24xlarge, 2 cores, taskset-pinned; model endpoint only)",
     "deployment": "cpureal-specialist"
+  },
+  "jev-cpu": {
+    "model": "Laya English checkpoint (Jev-compatible System One decision service)",
+    "hardware": "cpu (ROSA x8i.24xlarge, 2 cores, taskset-pinned; pre-entry screen only)",
+    "deployment": "jev-cpu"
   }
 }

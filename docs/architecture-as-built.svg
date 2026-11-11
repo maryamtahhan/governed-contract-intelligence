@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="830" viewBox="0 0 1280 830" font-family="Inter, ui-sans-serif, system-ui, sans-serif" role="img" aria-labelledby="t d">
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="860" viewBox="0 0 1280 860" font-family="Inter, ui-sans-serif, system-ui, sans-serif" role="img" aria-labelledby="t d">
   <title id="t">As-built architecture — clients, recorders, policy gate and pools</title>
-  <desc id="d">Four layers. Clients: the review pipeline and the OpenShell sandbox. The pipeline sends each request to one of two trace-ui ingress relays, general or sensitive, chosen only by the PII screen; the sandbox may reach only praxis, enforced by its egress policy. Record and decide: trace-ui records the entry and forwards to praxis, while praxis authenticates each step's API key, records the request, runs an observe-only PII scan, and matches the declarative X-Demo-Step header against the work-to-pool table to pick a pool. Pool relays: one trace-ui relay per pool records the model call and its timing; praxis never calls a pool directly. Pools: cuad-specialist, vllm-cpu and vllm-gpu-approved sit inside the approved set where sensitive data may run; vllm-gpu and vllm-gpu-small are the general pools. The gateway audit trail, not a log line, is the evidence.</desc>
+  <desc id="d">Four layers. Clients: the review pipeline and the OpenShell sandbox. The pipeline sends each request to one of two trace-ui ingress relays, general or sensitive, chosen only by the PII screen; the sandbox may reach only praxis, enforced by its egress policy. Record and decide: trace-ui records the entry and forwards to praxis, while praxis authenticates each step's API key, records the request, runs an observe-only PII scan, and matches the declarative X-Demo-Step header against the work-to-pool table to pick a pool: CUAD clause extraction goes to cuad-specialist, classify and data protection to vllm-cpu, and risk/report to vllm-gpu (general) or vllm-gpu-approved (sensitive). Pool relays: one trace-ui relay per pool records the model call and its timing; praxis never calls a pool directly. Pools: cuad-specialist, vllm-cpu and vllm-gpu-approved sit inside the approved set where sensitive data may run; vllm-gpu and vllm-gpu-small are the general pools. The gateway audit trail, not a log line, is the evidence. A fifth, control-plane path (opt-in, not part of the recorded run) is the pre-entry PII screen: trace-ui screen ingress 8086 to the Praxis screen listener, then the jev-cpu relay 8089 to the CPU Jev pool; it is not a review entry and has no failover.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#9db1c8"/>
@@ -13,7 +13,7 @@
     </marker>
   </defs>
 
-  <rect width="1280" height="830" fill="#07111f"/>
+  <rect width="1280" height="860" fill="#07111f"/>
 
   <text x="40" y="44" font-size="20" font-weight="700" fill="#e9f2ff">As-built architecture — clients, recorders, policy gate and pools</text>
   <text x="40" y="68" font-size="12" fill="#9db1c8">every request is recorded and authenticated · the gateway database is the audit trail · gateway image v0.9.1 · demo target: ROSA HCP</text>
@@ -59,8 +59,8 @@
   <text x="640" y="332" font-size="10.5" fill="#c9d8ea">audit record for every request</text>
   <text x="640" y="354" font-size="10.5" fill="#c9d8ea">shadow PII scan — observe-only, never routes</text>
   <text x="640" y="376" font-size="10.5" fill="#c9d8ea">router matches X-Demo-Step → work-to-pool table</text>
-  <text x="640" y="398" font-size="10.5" fill="#c9d8ea">hybrid: risk/report use the GPU route</text>
-  <text x="640" y="420" font-size="9.5" fill="#6f8298">the sensitive route may only use approved pools</text>
+  <text x="640" y="398" font-size="10.5" fill="#c9d8ea">hybrid: CUAD clauses → cuad-specialist</text>
+  <text x="640" y="418" font-size="9.5" fill="#c9d8ea">classify/data protection → vllm-cpu · risk/report → GPU · sensitive: approved pools only</text>
 
   <!-- layer 3: pool relays -->
   <text x="40" y="466" font-size="9.5" font-weight="700" letter-spacing="1.1" fill="#7fb2e5">POOL RELAYS · ONE PER POOL</text>
@@ -98,7 +98,7 @@
   <rect x="460" y="632" width="205" height="112" rx="8" fill="#0d1b2d" stroke="#55e6a0" stroke-width="1.2"/>
   <text x="562" y="656" font-size="11.5" font-weight="700" fill="#e9f2ff" text-anchor="middle">vllm-gpu-approved</text>
   <text x="562" y="678" font-size="10" fill="#c9d8ea" text-anchor="middle">4× A10G · TP=4</text>
-  <text x="562" y="696" font-size="10" fill="#c9d8ea" text-anchor="middle">sensitive-only route</text>
+  <text x="562" y="696" font-size="10" fill="#c9d8ea" text-anchor="middle">sensitive risk + report</text>
   <text x="562" y="722" font-size="9" fill="#6f8298" text-anchor="middle">fails closed if it is down</text>
 
   <text x="365" y="768" font-size="10" font-weight="700" fill="#55e6a0" text-anchor="middle">APPROVED SET — sensitive data may run only here</text>
@@ -121,4 +121,5 @@
   <text x="955" y="768" font-size="10" font-weight="700" fill="#9db1c8" text-anchor="middle">GENERAL POOLS — never receive sensitive data</text>
 
   <text x="40" y="806" font-size="11" fill="#6f8298">Route names are policies, not hardware: vllm-gpu-small is CPU-served, and vllm-cpu is a plain CPU MoE endpoint; the CUAD specialist is its own route. Read the pool map before quoting a device.</text>
+  <text x="40" y="828" font-size="10.5" fill="#6f8298">Control plane (opt-in, not in this run): screen:pii → trace-ui :8086 → Praxis :8086 → trace-ui :8089 → jev-cpu. The measured screen stays regex; the opt-in Jev cause trigger failed its 0.714 F1 guardrail.</text>
 </svg>

@@ -1,13 +1,21 @@
 # Arm D - the full hybrid stack (default config).
 #
-# Two listeners, and every pool decision below them is made here, not in the
-# pipeline. The pipeline declares what it is doing with two request headers:
+# Two *review* listeners, and every pool decision below them is made here,
+# not in the pipeline. The pipeline declares what it is doing with two
+# request headers:
 #   X-Demo-Step   classify | extract:<clause> | risk | report
 #   X-API-Key     the per-step identity the policy layer authenticates
-# and chooses a listener only to state the data classification:
+# and chooses a review listener only to state the data classification:
 #   - general (:8080):   non-sensitive documents.
 #   - sensitive (:8083): the pipeline's PII screen flagged personal data.
 #                        The policy layer also taints the session.
+#
+# A third, control-plane listener (:8086) exists because the PII screen runs
+# *before* the pipeline can choose either review entry:
+#   - screen (:8086):    screen:pii (and the optional decide:cause trigger)
+#                        -> jev-cpu only. It is not a review entry; the
+#                        response is a probability, and the pipeline then
+#                        chooses general or sensitive as usual.
 #
 # Within each listener the router matches X-Demo-Step and picks the pool:
 #   - CUAD clause extraction (termination, governing law, liability cap,
@@ -88,6 +96,19 @@ clusters:
       timeout_ms: 2000
       healthy_threshold: 2
       unhealthy_threshold: 2
+  # The pre-entry decision model. It is deliberately a single, CPU-only
+  # cluster with no failover: if the screen cannot run, the pipeline fails
+  # closed to the sensitive entry rather than guessing.
+  - name: jev-cpu
+    endpoints: ["trace-ui:8089"]
+    health_check:
+      type: http
+      path: /health
+      expected_status: 200
+      interval_ms: 5000
+      timeout_ms: 2000
+      healthy_threshold: 2
+      unhealthy_threshold: 2
   - name: vllm-any
     endpoints: ["trace-ui:8081", "trace-ui:8082"]
     health_check:
@@ -114,6 +135,10 @@ listeners:
     address: "0.0.0.0:8083"
     filter_chains:
       - sensitive-routing
+  - name: screen-gateway
+    address: "0.0.0.0:8086"
+    filter_chains:
+      - screen-routing
 
 filter_chains:
   - name: inference-routing
@@ -214,6 +239,59 @@ filter_chains:
                 clusters:
                   - name: vllm-gpu
                     endpoints: ["trace-ui:8082"]
+            on_result:
+              - default: true
+                done: true
+
+  # Control-plane chain for the pre-entry PII screen. There is no failover:
+  # an unavailable screen is a hard error and the pipeline fails closed to
+  # the sensitive review entry. The policy is the same authentication/audit
+  # policy as the general entry; the body carries the served model name only
+  # so the model-scoped policy route matches.
+  - name: screen-routing
+    filters:
+      - filter: request_id
+      - filter: access_log
+      - filter: static_response
+        conditions:
+          - when:
+              path: "/v1/models"
+              methods: ["GET"]
+        status: 200
+        headers:
+          - name: Content-Type
+            value: application/json
+        body: >-
+          {"object":"list","data":[{"id":"Semantic-Qwen","object":"model","created":0,"owned_by":"praxis"}]}
+      - filter: policy
+        config_path: /etc/praxis/policy.yaml
+        body_access: read_only
+        llm:
+          max_request_bytes: 4194304
+      - filter: iterative_request_router
+        initial_step: route
+        max_iterations: 2
+        timeout_ms: 60000
+        step_timeout_ms: 60000
+        steps:
+          - name: route
+            filters:
+              - filter: router
+                routes:
+                  - path_prefix: "/"
+                    headers: {X-Demo-Step: "screen:pii"}
+                    cluster: jev-cpu
+                  - path_prefix: "/"
+                    headers: {X-Demo-Step: "decide:cause"}
+                    cluster: jev-cpu
+                  # This listener is screen-only; an unlabelled request still
+                  # reaches the CPU decision model, never a review pool.
+                  - path_prefix: "/"
+                    cluster: jev-cpu
+              - filter: load_balancer
+                clusters:
+                  - name: jev-cpu
+                    endpoints: ["trace-ui:8089"]
             on_result:
               - default: true
                 done: true

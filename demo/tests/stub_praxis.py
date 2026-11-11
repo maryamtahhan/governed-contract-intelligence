@@ -141,8 +141,7 @@ def create_stub_app(state: StubState, chain: dict) -> FastAPI:
                                "owned_by": "praxis"}]}
         )
 
-    @app.post("/v1/chat/completions")
-    async def completions(request: Request, body: dict = Body(...)):
+    async def forward(request: Request, body: dict):
         attempts = [a for a in (_route_cluster(chain, request.headers),
                                 chain["failover"]) if a]
         forward_headers = {
@@ -187,6 +186,16 @@ def create_stub_app(state: StubState, chain: dict) -> FastAPI:
             content={"error": {"message": f"fail-closed: no available upstream ({last_error})",
                                "type": "upstream_unavailable"}},
         )
+
+    @app.post("/v1/chat/completions")
+    async def completions(request: Request, body: dict = Body(...)):
+        return await forward(request, body)
+
+    # The pre-entry screen uses the System One shape, not OpenAI chat. It is
+    # the same routing skeleton: screen:pii -> jev-cpu, with no failover.
+    @app.post("/v1/systemone")
+    async def systemone(request: Request, body: dict = Body(...)):
+        return await forward(request, body)
 
     return app
 
