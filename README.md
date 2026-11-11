@@ -435,6 +435,13 @@ The pages are `/` (waterfall and arm comparison), `/guide` (presenter guide)
 and `/monitor` (live mode). The dashboard is a replay/presentation layer; the
 measured evidence remains the run directories and the trace-ui SQLite store.
 
+The trace UI is the other half and is **live-only**: it is the recording relay
+plus its rolling SQLite window, so `oc -n openshell-demo port-forward
+svc/trace-ui 8080:8080` is only for viewing (or apply the opt-in Route plus
+`TRACE_API_TOKEN`); replay never needs it. OTel export is off by default —
+set `TRACE_OTEL=jsonl` or `otlp` on `trace-ui`; see
+[design §4.3](docs/design.md).
+
 ## Tests and checks
 
 The test suite is dependency-light by design: it runs the real routing

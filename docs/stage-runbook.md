@@ -25,6 +25,12 @@ curl -s http://127.0.0.1:8099/api/health   # {"ok":true,...,"live_enabled":false
 Stop it with `make dashboard-down` when finished. Do not leave the dashboard
 running overnight.
 
+Beats 1 and 3 need no cluster and no port-forward: the replay above is the
+whole surface. Only beat 2 (live failover) needs the cluster and
+`oc -n openshell-demo port-forward svc/trace-ui 8080:8080` (or the recorded
+clip fallback). The trace UI is live-only; it does not replay a run
+directory.
+
 ## Beat 1 — containment (replay A)
 
 Leave the A/B toggle on **A**. On the ROSA run the header reads

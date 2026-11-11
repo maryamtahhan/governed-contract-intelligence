@@ -701,17 +701,53 @@ answers. RedisVL supplies the vector index/eviction. Redis 7.4 is
 RSALv2/SSPL and Redis 8 adds an AGPLv3 option; RedisVL is Apache-2.0. If
 the server licence is unacceptable, Valkey is the drop-in.
 
-#### Observability: OTel beside SQLite
+#### Observability: replay vs live, and OTel beside SQLite
 
-`src/hybrid_demo/traceui/otel.py` — `TRACE_OTEL=jsonl` (dependency-free,
-what tests use) or `TRACE_OTEL=otlp` (`uv sync --extra otel`). SQLite stays
-the audit trail; export happens after the row is written and cannot break
-the relay. Attributes follow `gen_ai.*` where the convention exists, plus
-`app.routing.*`, `app.governance.*`, `app.hops.*`. Sensitive content is not
-exported; prompt tokens come from `x-prompt-tokens` when present, otherwise
-an estimate flagged `gen_ai.usage.input_tokens_estimated`. Langfuse (MIT)
-is the preferred dashboard if one is published; Phoenix is ELv2, a
-licensing caveat. Neither replaces the relay.
+Two dashboards answer different questions and are not interchangeable.
+
+- **Replay** — `src/hybrid_demo/ui` (`make dashboard-up`,
+  `127.0.0.1:8099`) renders a finished run from `runs/<run>/results.json`
+  plus `metrics.json`. It needs no cluster, model or relay; the per-step
+  entry/route/label/trace chips come from the recorded response headers.
+  This is the default stage path, and `/monitor` adds optional
+  one-document live calls.
+- **Live** — `src/hybrid_demo/traceui/server.py` is the recording relay, not
+  a replay tool. Its page reads the rolling SQLite trace window, cluster
+  state and the traffic generator; `TRACE_MAX_TRACES` (default 250) bounds
+  the window, and per-run summaries in the `runs` table are the durable
+  record. It has no "load this run directory" mode. The relays reach it
+  through the Service, so `oc port-forward svc/trace-ui 8080:8080` is only
+  for a human opening the page; `manifests/overlays/trace-ui-route` plus
+  `TRACE_API_TOKEN` is the opt-in alternative. Neither changes the request
+  path.
+
+`src/hybrid_demo/traceui/otel.py` exports a span alongside SQLite, off by
+default:
+
+| mode | set | needs |
+| --- | --- | --- |
+| `jsonl` | `TRACE_OTEL=jsonl`, `TRACE_OTEL_JSONL=<path>` | nothing (stdlib) |
+| `otlp` | `TRACE_OTEL=otlp`, `OTEL_EXPORTER_OTLP_ENDPOINT=<url>`, optional `OTEL_SERVICE_NAME` | `uv sync --extra otel` |
+
+Set these on the `trace-ui` service: `deploy/linux/docker-compose.yml`
+(`environment:`) or `oc -n openshell-demo set env deploy/trace-ui ...`.
+Nothing enables them by default.
+
+SQLite stays the audit trail; the span is written after the row, inside a
+try/except, so export failure cannot break the relay. Attributes follow
+`gen_ai.*` where the convention exists, plus `app.routing.*`,
+`app.governance.*`, `app.hops.*`. Sensitive content is not exported; prompt
+tokens come from `x-prompt-tokens` when present, otherwise an estimate
+flagged `gen_ai.usage.input_tokens_estimated`.
+
+The gateway does not contribute spans today. The image is built with
+`--features full`, and at ai-gateway `a716baae` that excludes the
+`opentelemetry` feature; no `telemetry:` block is configured either.
+Enabling Praxis spans needs a rebuild with `opentelemetry` and an OTLP
+endpoint, not just an env var. Langfuse (MIT core) is the preferred
+dashboard if one is published; Phoenix is ELv2, a licensing caveat;
+Jaeger/Tempo is the neutral OTLP viewer. None replaces the relay or the
+SQLite record.
 
 #### RAG quality: lexical screen + RAGAS
 
