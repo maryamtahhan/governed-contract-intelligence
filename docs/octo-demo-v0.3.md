@@ -1,23 +1,32 @@
 # OCTO Demo: Private, Governed Agents on Hybrid CPU + GPU Inference
 
 Demo plan and business case · **Draft v0.3 · measured on the ROSA demo stack**
-(2026-10-29 → 2026-11-04)
+(2026-10-29 → 2026-11-11)
 
-> **Update 2026-11-10 — rebuilt two-entry graph measured.** The current ROSA
-> matrix (`runs/rosa-200-2026-11-10-praxis-routes`) runs all four configs
-> without the classifier and with per-step Praxis routing: hybrid 839.9 s,
-> 0 errors, 0 sensitive violations, 247/247 sensitive steps approved,
+> **Update 2026-11-11 — current record re-run.** The current ROSA matrix
+> (`runs/rosa-200-2026-11-11-praxis-routes`) re-ran the rebuilt two-entry
+> graph after the sandbox egress fix: hybrid 806.59 s, 0 errors, 0 sensitive
+> violations, 247/247 sensitive steps approved, 201/201 judgment steps on
+> GPU, extract F1 1.000, risk 1.000, report 1.000, 200/200 fully correct.
+> Device time is now measured: **0.265 GPU-s/doc** and 32.555 CPU core-s/doc.
+> The 2026-11-10 matrix below is the previous record; its hybrid device time
+> remains **`n/a`**. The **0.22 vs 1.013 GPU-s/doc (~4.6×)** figure belongs to
+> the pre-rebuild 2026-11-09 graph (recoverable at `25bfa4d`) and must not be
+> quoted as the rebuilt graph's cost. See FINDINGS §15.11.
+>
+> **Previous update 2026-11-10 — rebuilt two-entry graph measured.** The
+> previous ROSA matrix (`runs/rosa-200-2026-11-10-praxis-routes`) ran all four
+> configs without the classifier and with per-step Praxis routing: hybrid
+> 839.9 s, 0 errors, 0 sensitive violations, 247/247 sensitive steps approved,
 > 201/201 judgment steps on GPU, extract F1 1.000, risk 1.000, 200/200 fully
 > correct. Route counts: `vllm-cpu` 400, `cuad-specialist` 600, `vllm-gpu` 159,
-> `vllm-gpu-approved` 42. Device time for the rebuilt hybrid is **`n/a`**, so
-> the **0.22 vs 1.013 GPU-s/doc (~4.6×)** figure remains tied to the
-> pre-rebuild 2026-11-09 graph; do not quote it as the rebuilt graph's cost.
-> The GPU-termination alternative (`runs/rosa-200-2026-11-09-gpu-term`,
-> archived at `cfc52cc`) measured 0.508 GPU-s/doc; it is a measured route, not
-> the current policy. The **0.036 / 1.974 / 54×** classifier-in-path figures
-> are superseded and double-count the shared `gpumoe-vllm` backend. See
-> FINDINGS §15.10. Older run directories referenced below were pruned from the
-> working tree and are recoverable from git at `cfc52cc` (see `runs/README.md`).
+> `vllm-gpu-approved` 42. The GPU-termination alternative
+> (`runs/rosa-200-2026-11-09-gpu-term`, archived at `cfc52cc`) measured 0.508
+> GPU-s/doc; it is a measured route, not the current policy. The
+> **0.036 / 1.974 / 54×** classifier-in-path figures are superseded and
+> double-count the shared `gpumoe-vllm` backend. Older run directories
+> referenced below were pruned from the working tree and are recoverable from
+> git at `cfc52cc` (see `runs/README.md`).
 
 Every number in this document comes from our own measurements; evidence packs
 and protocols live in the source repository (`FINDINGS.md` + `runs*/`). Claims
@@ -580,7 +589,7 @@ summary of what these checks mean is in "Results in plain language" above.
 | V3 | CPU model loads and runs on our hardware | **Validated** — 1.5B/7B/9B/35B-A3B served by vLLM on Xeon; plain builds, no vendor tuning needed |
 | V4 | Routing by model name; prefix caching on CPU | **Validated** via Praxis label routing (architecture evolved past plain EPP); prefix-cache engagement not separately isolated |
 | V5 | Semantic cache hit/FP rates; threshold | **Validated** — threshold sweep: zero-FP operating point 0.98 with 41.7% hits; similarity layer awaits a real embedder (litil is the measured swap-in) |
-| V6 | Fan-out limits; 200-document visual | **Validated** — concurrency 12 stable; the 2026-11-10 ROSA matrix ran 200 synthetic documents (41 sensitive, arms A–D) with 0 errors on the governed arm and 0 sensitive violations |
+| V6 | Fan-out limits; 200-document visual | **Validated** — concurrency 12 stable; the 2026-11-11 ROSA matrix ran 200 synthetic documents (41 sensitive, arms A–D) with 0 errors on the governed arm and 0 sensitive violations |
 | V7 | Failover: kill the GPU pool mid-run | **Validated** — degradation, fail-closed, isolation, recovery, all stacks |
 | V8 | Quality harness + acceptance threshold | **Validated** — evalkit scorer vs CUAD ground truth; every arm compared to Arm A on identical fields |
 | V9 | OpenShell on OpenShift | **Validated** — Helm install, SCC and CRDs handled; runbook scripted |

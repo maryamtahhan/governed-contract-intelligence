@@ -9,15 +9,15 @@
 #   make dashboard-live HOST=0.0.0.0 LIVE_TOKEN=sesame
 #
 # Inputs can be overridden, e.g. show another measured run:
-#   make dashboard-up RUN=../runs/rosa-200-2026-11-10-praxis-routes/all-gpu COMPARE=   # one-pool control
+#   make dashboard-up RUN=../runs/rosa-200-2026-11-11-praxis-routes/one-pool COMPARE=   # one-pool control
 #   make dashboard-live ENDPOINT=http://127.0.0.1:9000/v1
 #   make dashboard-up PORT=8100
 
 PORT     ?= 8099
 HOST     ?= 127.0.0.1
-RUN      ?= ../runs/rosa-200-2026-11-10-praxis-routes/hybrid
+RUN      ?= ../runs/rosa-200-2026-11-11-praxis-routes/hybrid
 DATA     ?= data/synthetic
-COMPARE  ?= ../runs/rosa-200-2026-11-10-praxis-routes/all-gpu
+COMPARE  ?= ../runs/rosa-200-2026-11-11-praxis-routes/one-pool
 RUNS_DIR ?= ../runs
 # Live mode: the OpenAI-compatible base URL the live routes proxy to, and the
 # token that gates them (X-Live-Token / Authorization: Bearer; also read from

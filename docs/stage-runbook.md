@@ -6,9 +6,8 @@ cluster (or the recording fallback).
 
 Read the header run line before every beat: in the default dashboard **A is
 the rebuilt-graph ROSA hybrid run**
-(`runs/rosa-200-2026-11-10-praxis-routes/hybrid`) and **B is the same-run
-one-pool control** (`runs/rosa-200-2026-11-10-praxis-routes/all-gpu`; run
-directory keeps the historical `all-gpu` label). Both
+(`runs/rosa-200-2026-11-11-praxis-routes/hybrid`) and **B is the same-run
+one-pool control** (`runs/rosa-200-2026-11-11-praxis-routes/one-pool`). Both
 cross Praxis; A is governed, B is not. The CUAD appendix instead uses a
 direct run for A and a failed gateway run for B.
 
@@ -45,8 +44,9 @@ Say: *“This is the recorded routing evidence. The sensitive entry never
 reached a non-approved pool; when the approved pool was unavailable it failed
 closed instead of spilling.”*
 
-Do **not** toggle to B for this beat. B is the direct run and has no gateway,
-entry, pool or trace records.
+Do **not** toggle to B for this beat. B is the one-pool control: it still
+crosses Praxis, but it has no sensitivity policy and records 247 expected
+sensitive-pool violations. Neither view is a direct run.
 
 ## Beat 2 — pull the plug (live only, or the recording)
 
@@ -74,25 +74,27 @@ never spills to a non-approved pool.
 
 **Fallback:** play the pre-recorded clip (record it once in prep; keep it at
 `docs/media/pull-the-plug.mp4`). Say plainly: *“This is a recording of the
-2026-11-10 ROSA run; the live cluster is not required for the talk.”* If the
+2026-11-11 ROSA run; the live cluster is not required for the talk.”* If the
 clip is missing, skip the outage claim and show the recorded trace rows from
 the last live run instead.
 
 ## Beat 3 — GPU economics (replay A)
 
-Stay on **A**. The rebuilt 2026-11-10 run records routing and quality, but
-its per-pool device time is **`n/a`**, not zero. Do not present a GPU-cost
-number for the rebuilt graph.
+Stay on **A**. The rebuilt 2026-11-11 run records routing, quality and
+per-pool device time.
 
 - Routing: **400 `vllm-cpu` + 600 `cuad-specialist`** CPU-served, **159
   `vllm-gpu` + 42 `vllm-gpu-approved`** judgment steps.
-- Quality: extraction F1 **1.000**, risk **1.000**, report **0.750**,
+- Quality: extraction F1 **1.000**, risk **1.000**, report **1.000**,
   **200/200 documents fully correct**, **0 sensitive violations**.
-- Source: `runs/rosa-200-2026-11-10-praxis-routes/report.md`.
-- The **0.22 vs 1.013 GPU-s/doc** (≈4.6×) figure belongs to the pre-rebuild
-  2026-11-09 graph with the composite `vllm-cpu` route. If you use it, say
-  that explicitly; it is not a measurement of the rebuilt graph. Do not use
-  the old **0.036 / 1.974 / 54×** classifier-in-path figures at all.
+- Cost: **0.265 GPU-s/doc** and **32.555 CPU core-s/doc** for the governed
+  hybrid arm; the one-pool control records 0.981 GPU-s/doc and small-first
+  2.429 GPU-s/doc.
+- Source: `runs/rosa-200-2026-11-11-praxis-routes/report.md`.
+- The **0.22 vs 1.013 GPU-s/doc** figure belongs to the pre-rebuild
+  2026-11-09 graph (recoverable at `25bfa4d`) and is not a measurement of
+  the rebuilt graph. Do not use the old **0.036 / 1.974 / 54×**
+  classifier-in-path figures at all.
 
 Say: *“The routing moved the expensive judgment work to GPU and kept the
 high-volume clause work on CPU; the governance boundary held.”*
@@ -111,10 +113,10 @@ high-volume clause work on CPU; the governance boundary held.”*
 - Do not quote **26.3%** for the report. That is the pre-fix value; the page
   and the re-scored `metrics.json` both read **64.5%**.
 - Do not claim the **200-document run** was live today. It was recorded on
-  2026-11-10 in replay; a live run is a separate, smaller run.
+  2026-11-11 in replay; a live run is a separate, smaller run.
 - Do not claim **Jev or the served screen** from this run. The recorded
   screen is the regex (41/0/159/0); `HYBRID_PII_DETECTOR=screen` and the
-  `jev-cpu` control-plane route are implemented but not in the 2026-11-10
+  `jev-cpu` control-plane route are implemented but not in the 2026-11-11
   record. The cause trigger is the regex; the opt-in Jev trigger failed its
   CUAD F1 guardrail (0.625 vs 0.714) and is not adopted.
 

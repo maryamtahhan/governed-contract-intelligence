@@ -1190,6 +1190,11 @@ stack; treat them as the earlier comparison until that run is repeated.
 
 ### 15.9 CPU termination with the conditional cause follow-up (2026-11-09)
 
+> Directory note: the 2026-11-09 matrix and rerun were pruned from the working
+> tree after the 2026-11-11 promotion. Recover them with
+> `git checkout 25bfa4d -- runs/rosa-200-2026-11-09`. The measurements below
+> remain valid for the graph that produced them.
+
 `runs/rosa-200-2026-11-09-cpu-term-rerun` is the pre-rebuild classifier-free
 record; its conditional-cause termination policy is carried into the rebuilt
 graph measured in §15.10. Termination extraction is back on the CPU specialist: the
@@ -1264,7 +1269,7 @@ scored 200/200 with risk 1.000.
   tree at first-run time, and the design-doc table edit was uncommitted at
   rerun time.
 
-### 15.10 Route-graph rebuild: work-to-pool in Praxis (2026-11-10, measured)
+### 15.10 Route-graph rebuild: work-to-pool in Praxis (2026-11-10, previous record, measured)
 
 The 2026-11-09 runs measured a four-entry policy (general, sensitive, judgment,
 sensitive-judgment) with a composite `vllm-cpu` route. On 2026-11-10 the stack
@@ -1322,6 +1327,37 @@ run records wall time and route counts; do not price the new arm from the old
 cost number. The all-GPU arm's device time was measured (0.043 GPU-s/doc) but
 that arm also hit 11 transport timeouts, so it is a control, not a clean
 latency baseline. Do not edit or reinterpret the recorded runs.
+
+### 15.11 2026-11-11 re-run: current record (measured)
+
+The rebuilt graph was re-measured after the OpenShell sandbox egress fix and
+the deterministic report rollup. The current record is
+`runs/rosa-200-2026-11-11-praxis-routes` (ROSA `<redacted-cluster>`, 200
+synthetic documents, 41 sensitive, concurrency 12, `environment: rosa`,
+regex screen 41/0/159/0):
+
+| config | wall s | extract F1 | risk | report | fully correct | sensitive approved | violations | errors | GPU-s/doc |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| one-pool | 201.89 | 1.000 | 1.000 | 1.000 | 200/200 | 0/247 | 247 | 0 | 0.981 |
+| small-first | 489.92 | 1.000 | 0.395 | 0.600 | 77/200 | 0/247 | 247 | 0 | 2.429 |
+| round-robin | 935.56 | 1.000 | 1.000 | 0.750 | 200/200 | 137/247 | 110 | 0 | 1.862 |
+| **hybrid** | **806.59** | **1.000** | **1.000** | **1.000** | **200/200** | **247/247** | **0** | **0** | **0.265** |
+
+The hybrid arm records 32.555 CPU core-s/doc; round-robin records 36.797.
+Routes are unchanged from the rebuilt table: `vllm-cpu` 400,
+`cuad-specialist` 600, `vllm-gpu` 159 and `vllm-gpu-approved` 42. Judgment
+ran 201/201 on GPU. The report rollup is computed from per-document rows now;
+that is why report accuracy is 1.000 here versus 0.750 in the 2026-11-10
+record. The one-pool and small-first arms intentionally violate the
+sensitive-pool boundary; round-robin has one degraded fallback. All arms have
+0 errors.
+
+The 2026-11-11 direct baselines are in `runs/rosa-200-2026-11-11-direct`:
+`cpu-moe` 2949.5 s (extract F1 1.000, risk 1.000, report 0.746),
+`gpu-moe` 301.6 s (1.000, 1.000, 0.760) and `cpu-small` 1144.4 s (1.000,
+0.395, 0.212). The 1.5B CPU pool is not a judgment substitute. The 2026-11-10
+matrix remains the previous record; the 2026-11-09 matrix and rerun are
+recoverable at `25bfa4d` but are no longer in the working tree.
 
 ## 16. Open-source reuse audit and adapters (2026-11-05)
 

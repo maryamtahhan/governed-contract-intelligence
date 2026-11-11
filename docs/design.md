@@ -57,18 +57,18 @@ different things**, and the same word can appear in more than one layer.
    `deploy/openshift/rosa/pools.json`. Do not infer hardware from a route
    name.
 5. **The current run directory is
-   `runs/rosa-200-2026-11-10-praxis-routes/hybrid`** (rebuilt two-entry graph,
+   `runs/rosa-200-2026-11-11-praxis-routes/hybrid`** (rebuilt two-entry graph,
    old config key `D`). The default dashboard uses A = that run, B = the
-   same-run one-pool control (historical run directory and record label:
-   `all-gpu`). The pre-rebuild 2026-11-09 record
-   (`runs/rosa-200-2026-11-09-cpu-term-rerun/hybrid`) and its controls remain
-   in the tree for comparison; they measured the composite `vllm-cpu` route.
+   same-run `one-pool` control. The 2026-11-10 matrix remains in the tree as
+   the previous measured record. The pre-rebuild 2026-11-09 record and its
+   controls measured the composite `vllm-cpu` route and were pruned from the
+   working tree; recover them at commit `25bfa4d`.
 
 ### 2.2 Five layers that look like names
 
 | Layer | Example | Where to read it |
 |---|---|---|
-| Run directory | `runs/rosa-200-2026-11-10-praxis-routes/hybrid` | the path; maps to one recorded run |
+| Run directory | `runs/rosa-200-2026-11-11-praxis-routes/hybrid` | the path; maps to one recorded run |
 | Routing policy / config | `hybrid` (old D) | `summary.config`; legacy `summary.arm` |
 | Route / cluster | `vllm-cpu`, `vllm-gpu-approved` | `x-demo-route` response header; `summary.routes` |
 | Served model | `Qwen3.5-35B-A3B`, `cuad-specialist` | response `model`; `summary.stage_models` |
@@ -98,16 +98,16 @@ a router.
 
 The PII screen is **not** a row in this table: it runs before the entry is
 chosen. The opt-in served shape calls `screen:pii` on the control-plane
-listener (`:8086`), which routes only to `jev-cpu`; the 2026-11-10 run used
+listener (`:8086`), which routes only to `jev-cpu`; the 2026-11-11 run used
 the regex screen and does not include that hop (see §3.1 and FINDINGS §16.9).
 
 **The quoted 200-doc measurement is the rebuilt graph.** In
-`runs/rosa-200-2026-11-10-praxis-routes/hybrid`, `stage_routes` shows
-`cuad-specialist: 600` and `vllm-cpu: 400` as separate routes; the old
-`runs/rosa-200-2026-11-09-cpu-term-rerun/hybrid` remains in the tree as the
-pre-rebuild comparison, where `vllm-cpu: 1000` was 600 RoBERTa passes plus
-400 forwarded Qwen calls. Both records stay valid for the routing that
-produced them. Evidence per run is `summary.stage_routes` and
+`runs/rosa-200-2026-11-11-praxis-routes/hybrid`, `stage_routes` shows
+`cuad-specialist: 600` and `vllm-cpu: 400` as separate routes. The
+2026-11-10 matrix remains as the previous record; the pre-rebuild 2026-11-09
+record was pruned and is recoverable at `25bfa4d`, where `vllm-cpu: 1000` was
+600 RoBERTa passes plus 400 forwarded Qwen calls. Each record stays valid for
+the routing that produced it. Evidence per run is `summary.stage_routes` and
 `summary.stage_models`; the specialist `/health` reports only
 `{"model": "/opt/cuad-model/roberta-large"}`.
 
@@ -182,14 +182,17 @@ through-stack.
 
 | Path | Meaning |
 |---|---|
-| `runs/rosa-200-2026-11-10-praxis-routes/hybrid` | current through-stack `hybrid`, 200 docs — rebuilt two-entry / `X-Demo-Step` graph, 0 violations |
-| `runs/rosa-200-2026-11-10-praxis-routes/all-gpu` | same-run `one-pool` control (run dir keeps old `all-gpu`), 200 docs (11 transport timeouts) |
-| `runs/rosa-200-2026-11-10-praxis-routes/gpu-small` | same-run `small-first` matrix row (run dir keeps old `gpu-small`) |
-| `runs/rosa-200-2026-11-10-praxis-routes/round-robin` | same-run `round-robin` matrix row |
-| `runs/rosa-200-2026-11-09/all-gpu` | pre-rebuild through-stack `one-pool` (run dir keeps old `all-gpu`), 200 docs (same-day §15.9 copy) |
-| `runs/rosa-200-2026-11-09/gpu-small` | through-stack config `small-first` (run dir keeps old `gpu-small`), 200 docs (same-day §15.9 copy) |
-| `runs/rosa-200-2026-11-09/round-robin` | through-stack config `round-robin`, 200 docs (same-day §15.9 copy) |
-| `runs/rosa-200-2026-11-09-cpu-term-rerun/hybrid` | pre-rebuild through-stack `hybrid`, 200 docs (old `arm-D`), composite `vllm-cpu` route |
+| `runs/rosa-200-2026-11-11-praxis-routes/hybrid` | current through-stack `hybrid`, 200 docs — rebuilt two-entry / `X-Demo-Step` graph, 0 violations |
+| `runs/rosa-200-2026-11-11-praxis-routes/one-pool` | same-run `one-pool` control, 200 docs; 247 sensitive-pool violations expected |
+| `runs/rosa-200-2026-11-11-praxis-routes/small-first` | same-run `small-first` matrix row |
+| `runs/rosa-200-2026-11-11-praxis-routes/round-robin` | same-run `round-robin` matrix row |
+| `runs/rosa-200-2026-11-11-direct/cpu-moe` | direct, one CPU endpoint, 35B-A3B |
+| `runs/rosa-200-2026-11-11-direct/gpu-moe` | direct, one GPU endpoint, 35B-A3B |
+| `runs/rosa-200-2026-11-11-direct/cpu-small` | direct, one CPU endpoint, 1.5B |
+| `runs/rosa-200-2026-11-10-praxis-routes/hybrid` | previous through-stack `hybrid`, 200 docs — rebuilt two-entry / `X-Demo-Step` graph, 0 violations |
+| `runs/rosa-200-2026-11-10-praxis-routes/all-gpu` | previous same-run `one-pool` control (run dir keeps old `all-gpu`), 200 docs (11 transport timeouts) |
+| `runs/rosa-200-2026-11-10-praxis-routes/gpu-small` | previous same-run `small-first` matrix row (run dir keeps old `gpu-small`) |
+| `runs/rosa-200-2026-11-10-praxis-routes/round-robin` | previous same-run `round-robin` matrix row |
 | `runs/rosa-200-2026-11-09-cpu-term/hybrid` | archived at `cfc52cc` — same policy, first measurement (198/200; two risk flips documented as serving variance) |
 | `runs/rosa-200-2026-11-09-gpu-term/hybrid` | archived at `cfc52cc` — measured GPU-termination alternative, 200 docs (not the current policy) |
 | `runs/direct/gpu-moe` | archived at `cfc52cc` — direct, one GPU endpoint, 35B-A3B |
@@ -198,7 +201,9 @@ through-stack.
 | `runs/cuad-test/arm-*` | CUAD appendix evidence; ids preserved |
 
 Archived paths are not in the working tree; recover one with
-`git checkout cfc52cc -- <path>`.
+`git checkout cfc52cc -- <path>`. The 2026-11-09 matrix and rerun were
+pruned in the 2026-11-11 cleanup; recover them with
+`git checkout 25bfa4d -- runs/rosa-200-2026-11-09`.
 
 See `runs/README.md` for the short version.
 
@@ -234,10 +239,9 @@ uv run hybrid-run --target gateway \
 - Linux routing swap: `scripts/linux/set_config.sh hybrid` (preferred) or
   `scripts/linux/set_arm.sh hybrid` (legacy filename).
 - A/B orientation: the default dashboard uses A =
-  `runs/rosa-200-2026-11-10-praxis-routes/hybrid` (through-stack), B =
-  `runs/rosa-200-2026-11-10-praxis-routes/all-gpu` (one-pool control; the run
-  directory keeps the historical label); the guide's CUAD example uses a
-  direct/gateway pair. Do not say "A is direct"
+  `runs/rosa-200-2026-11-11-praxis-routes/hybrid` (through-stack), B =
+  `runs/rosa-200-2026-11-11-praxis-routes/one-pool` (same-run control); the
+  guide's CUAD example uses a direct/gateway pair. Do not say "A is direct"
   without naming the run.
 
 ## 3. Routing and governance design
@@ -265,7 +269,7 @@ trace-ui screen ingress (`:8086`), which records `entry=screen` and forwards
 to the Praxis listener. Because the screen body is the document text,
 `entry=screen` is treated like a sensitive entry for trace content storage:
 the default database keeps the routing metadata but not the body. The
-measured 2026-11-10 run used the regex screen and does not include this path
+measured 2026-11-11 run used the regex screen and does not include this path
 (FINDINGS §16.9).
 
 Inside each entry, the `router` filter matches `X-Demo-Step` and sets the
@@ -401,9 +405,29 @@ the cost of wall-clock (1112 s vs 202 s). Those recorded figures sum both
 routes that front the same `gpumoe-vllm` pod; the rebuilt table below is the
 current policy.
 
-#### 2026-11-10 rebuilt-graph measurement
+#### 2026-11-11 rebuilt-graph re-run (current record)
 
-`runs/rosa-200-2026-11-10-praxis-routes` is the current through-stack record.
+`runs/rosa-200-2026-11-11-praxis-routes` is the current through-stack record.
+It re-ran the same two-entry graph after the OpenShell sandbox egress fix,
+with the report rollup now deterministic from the per-document rows. All
+arms: 200 documents, 1,201 steps, regex screen 41/0/159/0.
+
+| config | wall | extract F1 | risk | report | fully correct | CPU share | sensitive approved | violations | errors | GPU-s/doc |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| one-pool | 201.89 | 1.000 | 1.000 | 1.000 | 200/200 | 0.0 | 0/247 | 247 | 0 | 0.981 |
+| small-first | 489.92 | 1.000 | 0.395 | 0.600 | 77/200 | 0.0 | 0/247 | 247 | 0 | 2.429 |
+| round-robin | 935.56 | 1.000 | 1.000 | 0.750 | 200/200 | 0.5 | 137/247 | 110 | 0 | 1.862 |
+| **hybrid** | **806.59** | **1.000** | **1.000** | **1.000** | **200/200** | **0.833** | **247/247** | **0** | **0** | **0.265** |
+
+The hybrid arm also records **32.555 CPU core-s/doc**; round-robin records
+36.797. The GPU figure counts the shared `gpumoe-vllm` backend once. The
+one-pool and small-first controls intentionally violate the sensitive-pool
+boundary; the hybrid arm is the governed result. `round-robin` has one
+degraded fallback; every arm has 0 errors.
+
+#### 2026-11-10 rebuilt-graph measurement (previous record)
+
+`runs/rosa-200-2026-11-10-praxis-routes` is the previous through-stack record.
 The hybrid arm runs termination extraction on the CPU specialist with a
 conditional cause follow-up (canonical CUAD convenience question first; a
 focused termination-for-cause question only when that returns no span and the
@@ -423,16 +447,16 @@ canonical names are used in the table so the current policy is unambiguous.
 
 GPU-s/doc counts a shared physical backend once:
 `gpumoe-vllm-approved` and `gpumoe-vllm` are the same pod, so the scorer maxes
-the group instead of summing it. The rebuilt hybrid arm's device time is
-**`n/a`**, not zero: the per-pool relays did not expose vLLM's in-flight
-gauges. The pre-rebuild 2026-11-09 table (0.22 GPU-s/doc hybrid vs 1.013
-one-pool, recorded as `all-gpu`) remains valid for that graph and must not be
-quoted for this one. Judgment steps: 201/201 on GPU (159 `vllm-gpu`, 42
-approved). Termination extraction (200 steps) is on `cuad-specialist`;
-classify and data-protection stay on `vllm-cpu`, so the route split is visible
-in `summary.stage_routes` without a composite route. The one-pool control's
-11 transport timeouts are part of the record; it is not a clean latency
-baseline.
+the group instead of summing it. In the 2026-11-10 record the rebuilt hybrid
+arm's device time is **`n/a`**, not zero: the per-pool relays did not expose
+vLLM's in-flight gauges. The pre-rebuild 2026-11-09 table (0.22 GPU-s/doc
+hybrid vs 1.013 one-pool, recorded as `all-gpu`) remains valid for that graph
+only; those run directories are recoverable at `25bfa4d`. Judgment steps:
+201/201 on GPU (159 `vllm-gpu`, 42 approved). Termination extraction (200
+steps) is on `cuad-specialist`; classify and data-protection stay on
+`vllm-cpu`, so the route split is visible in `summary.stage_routes` without a
+composite route. The one-pool control's 11 transport timeouts are part of the
+record; it is not a clean latency baseline.
 
 ### 3.4 Do not break
 
@@ -1067,8 +1091,10 @@ CPU-model test plan in §9.
   not reproduce — temperature-0 serving variance, not a routing regression
   (FINDINGS §15.9). The GPU-termination alternative is measured but is not
   the policy. Historical runs from the classifier-in-path and earlier
-  stacks are archived at commit `cfc52cc`; the working tree keeps the quoted
-  record and the guide evidence (`runs/README.md`).
+  stacks are archived at commit `cfc52cc`; the 2026-11-09 matrix and rerun
+  were pruned in the 2026-11-11 cleanup and are recoverable at `25bfa4d`.
+  The working tree keeps the current record, the previous 2026-11-10 record
+  and the guide evidence (`runs/README.md`).
 - **2026-11-11 — config names become behavior names.** Renamed the two
   hardware-implying policies: `all-gpu` → `one-pool`, `gpu-small` →
   `small-first`. Every old name and letter remains an alias; the recorded
@@ -1086,6 +1112,13 @@ CPU-model test plan in §9.
   the eval demo key plus an explicit `X-API-Key` header (Praxis does not
   authenticate the OpenAI-style `Authorization` header) and OpenClaw's
   `minimal` tool profile so its prompt fits the canonical 16k pool context.
+- **2026-11-11 — the rebuilt graph is re-measured on the cleaned stack.**
+  The 200-document matrix ran again after the sandbox fix. The governed
+  hybrid arm completed in 806.59 s with 0 errors, 0 fallback, 247/247
+  sensitive steps approved, 0 violations, extract F1 1.000, risk 1.000 and
+  report 1.000 (the deterministic rollup), with **0.265 GPU-s/doc** and
+  32.555 CPU core-s/doc. This is the current quoted record; the 2026-11-10
+  matrix remains the previous record (FINDINGS §15.11).
 
 ## 8. Open decisions and next actions
 
@@ -1116,12 +1149,12 @@ regression tests — §2.7 and §7 record them.)
    storage + seeders, `oc apply -k deploy/openshift/rosa`, specialist
    image rebuild, then the 2-document smoke run (1 sensitive + 1
    non-sensitive, config hybrid).
-2. **The 200-document matrix is done (2026-11-10); direct baselines are from
-   2026-11-09.** The quoted through-stack record is §3.3 / FINDINGS §15.10
-   (`runs/rosa-200-2026-11-10-praxis-routes`). Re-run
-   (`DOCS=200 scripts/cluster/arms.sh` plus the direct baselines) only after a
-   routing, model or pool change; give it a new run directory and do not
-   overwrite the quoted one.
+2. **The 200-document matrix and direct baselines are done (2026-11-11).**
+   The quoted through-stack record is §3.3 / FINDINGS §15.11
+   (`runs/rosa-200-2026-11-11-praxis-routes`); the 2026-11-10 matrix is the
+   previous record. Re-run (`DOCS=200 scripts/cluster/arms.sh` plus the
+   direct baselines) only after a routing, model or pool change; give it a
+   new run directory and do not overwrite the quoted one.
 3. **Contract-step taxonomy eval** once a stack is up
    (`hybrid-eval-contract-steps`; pass = same-document control 4/4, §5),
    then the CUAD test-split specialist through-stack rerun at lower

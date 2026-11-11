@@ -153,7 +153,7 @@ Key properties of the governed path:
 | **Linux host (podman/docker)** | Real Praxis + trace-ui, simulated vLLM backends | `scripts/linux/up.sh` |
 | **g5.12xlarge (stopped, AMI kept)** | Real vLLM: 1.5B CPU, 7B/1.5B GPU — the measured GPU-vs-CPU story | warm-restart the AMI; `scripts/linux/up.sh --real` |
 | **OpenShift (rhgaudi3s2 SNO)** — validation | Real vLLM pools, all CPU-served (1.5B / 7B / 9B / 35B-A3B MoE / specialist), full platform validation | `deploy/openshift/*` overlays; `deploy/openshift/cpu-isolation/` |
-| **ROSA HCP — demo target (measured 2026-11-09, torn down the same night)** | x8i.24xlarge CPU (48 cores, AMX) + g5.12xlarge (4× A10G, TP=4) in one AZ, explicit taskset pinning, per-node gp3 caches | `deploy/openshift/rosa/` — rebuild from its README |
+| **ROSA HCP — demo target (measured 2026-11-11, torn down the same day)** | x8i.24xlarge CPU (48 cores, AMX) + g5.12xlarge (4× A10G, TP=4) in one AZ, explicit taskset pinning, per-node gp3 caches | `deploy/openshift/rosa/` — rebuild from its README |
 | **Dev machine (tests)** | Fake pools + trace-ui + a praxis stub that parses the real configs | `cd demo && uv run pytest` |
 
 The simulated backends speak the OpenAI subset, report device-time, simulate
@@ -244,7 +244,7 @@ hardware are **five different things** (full treatment: [design §2](docs/design
 
 | Layer | Example | Where to read it |
 |---|---|---|
-| Run directory | `runs/rosa-200-2026-11-10-praxis-routes/hybrid` | the path; maps to one recorded run |
+| Run directory | `runs/rosa-200-2026-11-11-praxis-routes/hybrid` | the path; maps to one recorded run |
 | Routing policy / config | `hybrid` (old D) | `summary.config`; legacy `summary.arm` |
 | Route / cluster | `vllm-cpu`, `vllm-gpu-approved` | `x-demo-route` response header; `summary.routes` |
 | Served model | `Qwen3.5-35B-A3B`, `cuad-specialist` | response `model`; `summary.stage_models` |
@@ -257,9 +257,10 @@ Two rules follow from this:
    `all-gpu`) is a routing policy, not a hardware promise.
 2. **Routes name one endpoint since the 2026-11-10 rebuild.**
    `cuad-specialist` is the RoBERTa service and `vllm-cpu` is the CPU MoE;
-   there is no forwarding inside the specialist. The quoted 2026-11-09
-   measurement predates the split, when `vllm-cpu` was composite — read
-   `summary.stage_models` for that run rather than assuming the new graph.
+   there is no forwarding inside the specialist. The pre-rebuild 2026-11-09
+   runs predate the split, when `vllm-cpu` was composite; they were pruned
+   from the working tree and are recoverable at commit `25bfa4d` — read
+   `summary.stage_models` for those runs rather than assuming the new graph.
 
 ## Linux runbook
 
@@ -419,13 +420,12 @@ make dashboard-up          # replay only, 127.0.0.1:8099
 open http://127.0.0.1:8099/
 ```
 
-It defaults to the current rebuilt-graph run
-(`runs/rosa-200-2026-11-10-praxis-routes/hybrid`) with the same-run one-pool
-control as B. The run directory keeps the historical `all-gpu` label. Useful
-variants:
+It defaults to the current 2026-11-11 rebuilt-graph run
+(`runs/rosa-200-2026-11-11-praxis-routes/hybrid`) with the same-run one-pool
+control as B. Useful variants:
 
 ```bash
-make dashboard-up RUN=../runs/rosa-200-2026-11-10-praxis-routes/all-gpu COMPARE=   # show the one-pool control
+make dashboard-up RUN=../runs/rosa-200-2026-11-11-praxis-routes/one-pool COMPARE=   # show the one-pool control
 make dashboard-live ENDPOINT=http://127.0.0.1:8000/v1   # one-document live runs
 make dashboard-live HOST=0.0.0.0 LIVE_TOKEN=sesame      # token-gated, non-loopback
 make dashboard-down
@@ -629,9 +629,9 @@ before quoting any of these:
 
 - **Governance**: the hybrid config = 0 sensitive violations on every stack,
   every dataset — including 0/247 sensitive steps on the 200-document ROSA
-  run. Ungoverned controls leak: classifier-free ROSA one-pool/small-first
-  (recorded as all-gpu/gpu-small) 247/247, round-robin 118/247 (the earlier
-  classifier-in-path run leaked 122); earlier SNO/CUAD one-pool/small-first
+  run. Ungoverned controls leak: 2026-11-11 ROSA one-pool/small-first
+  247/247, round-robin 110/247 (the previous 2026-11-10 run leaked 117; the
+  earlier classifier-in-path run leaked 122); earlier SNO/CUAD one-pool/small-first
   25, round-robin 12–24. This is a
   containment result — routing, not PII ground truth (FINDINGS §2).
 - **Quality (CUAD held-out test split, 19 unique contracts)**: 1.5B F1 0.242
@@ -649,34 +649,37 @@ before quoting any of these:
   majority-class baseline; the specialist is perfect on governing law and
   audit rights, and weak on CUAD's hardest category, caps on liability
   (F1 0.308) — a clause-level routing split is the unmeasured next step.
-- **Direct parity (ROSA, 200 docs)**: the same 35B-A3B weights score
-  identically on a bare CPU and a bare GPU (extract F1 1.0, risk 1.0; report
-  0.746 vs 0.768), and all-CPU is 9.2× slower (2095 s vs 228 s). The
-  specialist's `termination` field used to be the one quality loss in the
-  governed path (F1 0.982; 173/200 fully correct): all 27 misses were
-  synthetic termination-for-cause clauses scored against CUAD's **Termination
-  For Convenience** question, with precision still 1.000 — a taxonomy
-  mismatch, not the device. The conditional cause follow-up (canonical
-  question first, cause question only on no-span + cause language) closes it:
-  extraction F1 1.000, zero false positives, 200/200 fully correct, with CUAD
-  held-out termination F1 unchanged at 0.714. Direct runs are ungoverned by
-  construction (all 247 sensitive steps on one endpoint).
-- **Routing and quality (ROSA, rebuilt graph, 200 synthetic docs, 2026-11-10)**:
-  the hybrid config ran in 839.9 s with 0 errors, 0 fallback and **0 sensitive
+- **Direct parity (ROSA, 200 docs, 2026-11-11)**: the same 35B-A3B weights
+  score identically on a bare CPU and a bare GPU (extract F1 1.0, risk 1.0;
+  report 0.746 vs 0.760), and all-CPU is 9.8× slower (2949.5 s vs 301.6 s).
+  The 1.5B CPU baseline is not a judgment substitute: extract F1 stays 1.0,
+  but risk falls to 0.395 and report to 0.212. The specialist's `termination`
+  field used to be the one quality loss in the governed path (F1 0.982;
+  173/200 fully correct): all 27 misses were synthetic termination-for-cause
+  clauses scored against CUAD's **Termination For Convenience** question,
+  with precision still 1.000 — a taxonomy mismatch, not the device. The
+  conditional cause follow-up (canonical question first, cause question only
+  on no-span + cause language) closes it: extraction F1 1.000, zero false
+  positives, 200/200 fully correct, with CUAD held-out termination F1
+  unchanged at 0.714. Direct runs are ungoverned by construction (all 247
+  sensitive steps on one endpoint).
+- **Routing and quality (ROSA, rebuilt graph, 200 synthetic docs, 2026-11-11)**:
+  the hybrid config ran in 806.59 s with 0 errors, 0 fallback and **0 sensitive
   violations**. Route counts are the rebuilt table: `vllm-cpu` 400,
   `cuad-specialist` 600, `vllm-gpu` 159 (non-sensitive risk) and
   `vllm-gpu-approved` 42 (41 sensitive risk + 1 portfolio report). Quality:
-  extract F1 1.000, risk 1.000, report 0.750, **200/200 documents fully
-  correct**. 247/247 sensitive steps stayed on the approved set. See
-  `runs/rosa-200-2026-11-10-praxis-routes/report.md` and FINDINGS §15.10.
-- **Cost caveat**: the rebuilt hybrid arm's per-pool device time is **`n/a`**,
-  not zero — the relays did not expose vLLM's in-flight gauges. Do not price
-  it from the old 0.22 GPU-s/doc figure. That figure (hybrid 0.22 vs one-pool
-  1.013, ≈4.6×; recorded as all-gpu) remains valid only for the pre-rebuild
-  2026-11-09 graph
-  with the composite `vllm-cpu` route (FINDINGS §15.9); the classifier-in-path
-  run (0.036 vs 1.974) and the GPU-termination alternative (0.508, archived at
-  `cfc52cc`) are different policies, not the current record.
+  extract F1 1.000, risk 1.000, report 1.000, **200/200 documents fully
+  correct**. 247/247 sensitive steps stayed on the approved set. The same-run
+  controls behaved as expected: one-pool 201.89 s with 247 violations;
+  small-first 489.92 s with risk 0.395, report 0.600 and 247 violations;
+  round-robin 935.56 s with 110 violations. See
+  `runs/rosa-200-2026-11-11-praxis-routes/report.md` and FINDINGS §15.11.
+- **Cost (2026-11-11)**: device time is measured for the rebuilt graph:
+  hybrid **0.265 GPU-s/doc** and 32.555 CPU core-s/doc, versus one-pool
+  0.981 GPU-s/doc and small-first 2.429 GPU-s/doc. The 2026-11-10 hybrid run's
+  per-pool device time remains **`n/a`**, not zero; the older 0.22 GPU-s/doc
+  figure belongs to the pre-rebuild 2026-11-09 graph (recoverable at
+  `25bfa4d`) and must not be quoted for the rebuilt graph.
 - **Retrieval (single runs)**: regime decides the winner. Within-document
   (the retrieve-then-extract regime) the MTEB(Law) ordering inverts — the
   0.6B litil beats the top-scoring 8B by ~10 points on R@1/MRR
@@ -764,7 +767,7 @@ recorded run directories.
   the enforcement layer either way (V15).
 - rhgaudi3s2 was found emptied of our workloads on 2026-10-31 (FINDINGS
   §7); redeploy from the runbooks above before any cluster-dependent demo.
-- The ROSA demo footprint is torn down (2026-11-09, after the quoted rerun);
+- The ROSA demo footprint is torn down (2026-11-11, after the quoted re-run);
   every recorded run is in git. Rebuild from
   [`deploy/openshift/rosa/README.md`](deploy/openshift/rosa/README.md)
   before claiming a new cluster measurement.
