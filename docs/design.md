@@ -1081,8 +1081,11 @@ CPU-model test plan in §9.
   the existing read-only GitHub exception); OpenClaw's base URL points at the
   general ingress, and Praxis/pools are no longer reachable directly. This
   gives agent calls the same ingress trace row and `_trace` id as pipeline
-  calls. Cluster re-verification of the blocked-action moment is still
-  pending.
+  calls. The 2026-11-11 ROSA rebuild re-verified the blocked-action moment
+  and completed an OpenClaw agent turn through trace-ui. The sandbox uses
+  the eval demo key plus an explicit `X-API-Key` header (Praxis does not
+  authenticate the OpenAI-style `Authorization` header) and OpenClaw's
+  `minimal` tool profile so its prompt fits the canonical 16k pool context.
 
 ## 8. Open decisions and next actions
 

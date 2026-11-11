@@ -700,9 +700,15 @@ before quoting any of these:
 
 `03-create-sandbox.sh` registers the gateway as plaintext at port 8080 and
 points OpenClaw at the trace-ui general ingress, which forwards to Praxis.
-`SANDBOX_BASE_URL` overrides that URL; keep it on trace-ui, not Praxis, or the
-sandbox policy will deny the call. Port forward the gateway to manage your
-sandboxes:
+It authenticates with the eval demo key (`HYBRID_API_KEY_EVAL`, default
+`gci-demo-key-eval`) and patches OpenClaw to send that value as `X-API-Key`
+because Praxis authenticates on that header, not the OpenAI-style
+`Authorization` header. It also sets OpenClaw's tool profile to `minimal`;
+the full profile's agent prompt is ~16.9k tokens and does not fit the
+canonical 16k pool context. `SANDBOX_API_KEY`, `OPENCLAW_CONTEXT_WINDOW`, and
+`OPENCLAW_MAX_TOKENS` override those defaults. `SANDBOX_BASE_URL` overrides
+the ingress URL; keep it on trace-ui, not Praxis, or the sandbox policy will
+deny the call. Port forward the gateway to manage your sandboxes:
 
 ```bash
 oc -n openshell-demo port-forward svc/openshell 8080:8080

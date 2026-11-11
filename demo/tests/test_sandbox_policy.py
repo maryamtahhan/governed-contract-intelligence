@@ -27,3 +27,13 @@ def test_sandbox_base_url_uses_trace_ui_not_praxis():
     script = SCRIPT.read_text()
     assert "trace-ui.${NS}.svc.cluster.local:8080/v1" in script
     assert "praxis.${NS}.svc.cluster.local:80/v1" not in script
+
+
+def test_sandbox_uses_a_policy_key_and_sends_x_api_key():
+    script = SCRIPT.read_text()
+    assert "vllm-local" not in script
+    assert "HYBRID_API_KEY_EVAL:-gci-demo-key-eval" in script
+    assert "X-API-Key" in script
+    assert "tools.profile minimal" in script
+    assert "contextWindow" in script
+    assert "maxTokens" in script
