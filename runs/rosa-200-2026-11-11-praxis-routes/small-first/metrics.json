@@ -1,0 +1,50 @@
+{
+ "cuad-specialist": {
+  "samples": 57,
+  "elapsed_s": 485.8,
+  "scrape_errors": 0,
+  "method": "exact (pool_busy_seconds_total counter)",
+  "device_active_s": null,
+  "request_seconds": null
+ },
+ "vllm-cpu": {
+  "samples": 57,
+  "elapsed_s": 485.8,
+  "scrape_errors": 0,
+  "method": "integrated (in-flight gauges; batching means the device serves several requests while occupied)",
+  "device_active_s": 0.0,
+  "request_seconds": 0.0,
+  "prompt_tokens": null,
+  "generation_tokens": null
+ },
+ "vllm-gpu": {
+  "samples": 57,
+  "elapsed_s": 485.8,
+  "scrape_errors": 0,
+  "method": "integrated (in-flight gauges; batching means the device serves several requests while occupied)",
+  "device_active_s": 0.0,
+  "request_seconds": 0.0,
+  "prompt_tokens": null,
+  "generation_tokens": null
+ },
+ "vllm-gpu-approved": {
+  "samples": 57,
+  "elapsed_s": 485.8,
+  "scrape_errors": 0,
+  "method": "integrated (in-flight gauges; batching means the device serves several requests while occupied)",
+  "device_active_s": 0.0,
+  "request_seconds": 0.0,
+  "prompt_tokens": null,
+  "generation_tokens": null
+ },
+ "vllm-gpu-small": {
+  "samples": 57,
+  "elapsed_s": 485.8,
+  "scrape_errors": 0,
+  "method": "integrated (in-flight gauges; batching means the device serves several requests while occupied)",
+  "device_active_s": 485.82,
+  "request_seconds": 5103.16,
+  "prompt_tokens": 308387.0,
+  "generation_tokens": 59541.0
+ }
+}

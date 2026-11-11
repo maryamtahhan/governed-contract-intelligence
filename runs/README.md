@@ -21,6 +21,22 @@ the working tree.
 | `cuad-test/` | direct + gateway | CUAD example and appendix used by the guide |
 | `retrieval/` | local direct | specialist quality evidence |
 
+## 2026-11-11 verification runs
+
+Produced after the OpenShell sandbox fix (`feea584`) on the rebuilt ROSA
+stack. They are verification evidence, not a replacement for the quoted
+`2026-11-10` record.
+
+| directory | routing config | what it is |
+|---|---|---|
+| `rosa-200-2026-11-11-praxis-routes/hybrid` | `hybrid` | governed 200-doc arm: 0 violations, 0 errors |
+| `rosa-200-2026-11-11-praxis-routes/one-pool` | `one-pool` | same-run control; sensitive-pool violations expected |
+| `rosa-200-2026-11-11-praxis-routes/small-first` | `small-first` | same-run control; sensitive-pool violations expected |
+| `rosa-200-2026-11-11-praxis-routes/round-robin` | `round-robin` | same-run control |
+| `rosa-200-2026-11-11-direct/cpu-moe` | direct | CPU MoE quality baseline |
+| `rosa-200-2026-11-11-direct/gpu-moe` | direct | GPU MoE quality baseline |
+| `rosa-200-2026-11-11-direct/cpu-small` | direct | 1.5B CPU quality baseline |
+
 The `2026-11-09` runs measured the old four-entry policy with a composite
 `vllm-cpu` route (CUAD extraction plus forwarding). Their quality, route
 counts and cost stay tied to that graph. The `2026-11-10-praxis-routes` run is
