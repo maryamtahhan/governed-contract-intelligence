@@ -488,6 +488,11 @@ def build_payload(run_dir: str | Path, data_dir: str | Path,
     # comes only from the run's pool map, never from the config.
     config = summary.get("config") or name_for_key(summary.get("arm"))
     config_meta = meta_for(config or summary.get("arm"))
+    # Historical summaries recorded the old names (all-gpu, gpu-small);
+    # present the canonical policy name while leaving the run directory and
+    # the recorded summary untouched.
+    if config_meta:
+        config = config_meta["name"]
     pool_hardware = _pool_hardware(summary)
 
     return {

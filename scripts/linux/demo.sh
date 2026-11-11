@@ -96,11 +96,11 @@ echo "spilled to a non-approved pool; extraction continued. Traces show the erro
 pool_start vllm-gpu-approved
 sleep 12
 
-pause "ACT 5 - kill switch: route everything to GPU (all-gpu config) and compare"
-set_config all-gpu
+pause "ACT 5 - kill switch: route everything to GPU (one-pool config) and compare"
+set_config one-pool
 (cd demo && uv run hybrid-run --target gateway --gateway "$GW" --sensitive-gateway "$SGW" \
-  --data data/synthetic --out "../$RUNS/demo-all-gpu" --config all-gpu --docs "$DOCS" --concurrency 12 >/dev/null)
-echo "all-gpu config done: $(counts)"
+  --data data/synthetic --out "../$RUNS/demo-one-pool" --config one-pool --docs "$DOCS" --concurrency 12 >/dev/null)
+echo "one-pool config done: $(counts)"
 echo "Note the GPU-seconds per document difference in the configs table (simulated"
 echo "device-time on this stack; real pools measure the same way from /metrics)."
 

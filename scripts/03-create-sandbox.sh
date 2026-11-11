@@ -9,8 +9,10 @@ NAME="${SANDBOX_NAME:-openclaw}"
 LOCAL_PORT="${LOCAL_PORT:-8080}"
 PORT="${OPENCLAW_PORT:-18789}"
 IMAGE="${OPENCLAW_IMAGE:-ghcr.io/openclaw/openclaw:latest}"
-BASE_URL="${VLLM_BASE_URL:-http://praxis.${NS}.svc.cluster.local:80/v1}"
-MODEL="${VLLM_MODEL_ID:-Semantic-Qwen}"   # name the gateway serves (praxis static /v1/models)
+# The sandbox's egress policy allows trace-ui only. Do not default this to
+# praxis: a direct gateway URL would bypass the ingress trace row.
+BASE_URL="${SANDBOX_BASE_URL:-http://trace-ui.${NS}.svc.cluster.local:8080/v1}"
+MODEL="${VLLM_MODEL_ID:-Semantic-Qwen}"   # name trace-ui forwards to Praxis /v1/models
 command -v openshell >/dev/null || { echo "missing: openshell CLI (https://github.com/NVIDIA/OpenShell/releases)" >&2; exit 1; }
 
 oc -n "$NS" port-forward svc/openshell "$LOCAL_PORT:8080" >/dev/null &

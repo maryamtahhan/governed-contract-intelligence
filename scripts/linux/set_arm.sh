@@ -3,7 +3,8 @@
 # (Legacy filename; prefer set_config.sh. Both accept policy names.)
 # praxis watches the config file and hot-reloads, so this is a live flip: no
 # container restart, no dropped trace database.
-# Usage: set_arm.sh all-gpu|gpu-small|round-robin|hybrid (legacy A-D accepted)
+# Usage: set_arm.sh one-pool|small-first|round-robin|hybrid
+# Legacy all-gpu, gpu-small, gpu-split and A-D are still accepted.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 source scripts/configs.sh
@@ -28,7 +29,7 @@ probe_route() {
   tr -d '\r' < /tmp/setarm-h | grep -i "^x-demo-route:" | head -1 | cut -d' ' -f2- || true
 }
 
-requested="${1:?usage: set_arm.sh all-gpu|gpu-small|round-robin|hybrid}"
+requested="${1:?usage: set_arm.sh one-pool|small-first|round-robin|hybrid}"
 config=$(config_name "$requested")
 cp "$PRAXIS_DIR/$(config_file "$requested")" "$PRAXIS_DIR/live.yaml"
 

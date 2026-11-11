@@ -15,7 +15,7 @@ DOCS="${DOCS:-40}"
 DOC_IDS="${DOC_IDS:-}"
 DATA="${DATA:-data/synthetic}"
 CONCURRENCY="${CONCURRENCY:-12}"
-CONFIGS="${CONFIGS:-${ARMS:-all-gpu gpu-small round-robin hybrid}}"
+CONFIGS="${CONFIGS:-${ARMS:-one-pool small-first round-robin hybrid}}"
 LOCAL_PORT="${LOCAL_PORT:-18080}"
 SENSITIVE_PORT="${LOCAL_SENSITIVE_PORT:-18083}"
 # Provenance travels with the run. Default to the ROSA cluster this script

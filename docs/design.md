@@ -40,14 +40,15 @@ different things**, and the same word can appear in more than one layer.
 
 ### 2.1 Read this first
 
-1. **`gpu-small` is a routing-policy name, not hardware.** On ROSA, the route
-   `vllm-gpu-small` is backed by **Qwen2.5-1.5B on CPU**. On the Linux/g5
-   real profile it is a small **GPU** model. The name is historical.
-2. **`all-gpu` is also a routing-policy name, not a hardware promise.** It
-   means "send every request to the route called `vllm-gpu`". On ROSA that
-   route is 4×A10G; on the earlier SNO stack every route, including
-   `vllm-gpu`, was CPU-served.
-3. **`all-gpu` is not a direct run.** It still goes through trace-ui and
+1. **`small-first` is a routing-policy name, not hardware.** The retired
+   name `gpu-small` remains an alias; the route `vllm-gpu-small` keeps its
+   historical name. On ROSA, that route is backed by **Qwen2.5-1.5B on
+   CPU**. On the Linux/g5 real profile it is a small **GPU** model.
+2. **`one-pool` is also a routing-policy name, not a hardware promise.**
+   The retired name `all-gpu` remains an alias. The policy means "send every
+   request to the route called `vllm-gpu`". On ROSA that route is 4×A10G; on the
+   earlier SNO stack every route, including `vllm-gpu`, was CPU-served.
+3. **`one-pool` is not a direct run.** It still goes through trace-ui and
    praxis. Direct means one bare endpoint with no relay, praxis, label, pool
    choice, or trace. Direct GPU is `runs/direct/gpu-moe` (archived at
    `cfc52cc`; recover with `git checkout cfc52cc -- runs/direct/gpu-moe`).
@@ -58,7 +59,8 @@ different things**, and the same word can appear in more than one layer.
 5. **The current run directory is
    `runs/rosa-200-2026-11-10-praxis-routes/hybrid`** (rebuilt two-entry graph,
    old config key `D`). The default dashboard uses A = that run, B = the
-   same-run all-gpu control. The pre-rebuild 2026-11-09 record
+   same-run one-pool control (historical run directory and record label:
+   `all-gpu`). The pre-rebuild 2026-11-09 record
    (`runs/rosa-200-2026-11-09-cpu-term-rerun/hybrid`) and its controls remain
    in the tree for comparison; they measured the composite `vllm-cpu` route.
 
@@ -116,8 +118,8 @@ not hardware.
 
 | Config | Old key | Behavior | Routes used |
 |---|---|---|---|
-| `all-gpu` | A | Every request → `vllm-gpu`. No CPU, no failover. | `vllm-gpu` |
-| `gpu-small` | B (`gpu-split`) | Every request → `vllm-gpu-small` (historically label-routed; the classifier labelled everything MEDIUM, so the pin reproduces the measured routing). On failure, fail over to either GPU pool. | `vllm-gpu-small`, `vllm-gpu` |
+| `one-pool` | A (old `all-gpu`) | Every request → `vllm-gpu`. No CPU, no failover. | `vllm-gpu` |
+| `small-first` | B (old `gpu-small`, `gpu-split`) | Every request → `vllm-gpu-small` (historically label-routed; the classifier labelled everything MEDIUM, so the pin reproduces the measured routing). On failure, fail over to either GPU pool. | `vllm-gpu-small`, `vllm-gpu` |
 | `round-robin` | C | Alternate across CPU and GPU. | `vllm-cpu`, `vllm-gpu` |
 | `hybrid` | D (`matrix`) | Two entries. Inside each, the router table sends CUAD clause extraction to `cuad-specialist`, classify/data-protection to `vllm-cpu`, and risk/report to a GPU route (`vllm-gpu` general, `vllm-gpu-approved` sensitive). The general entry degrades to `vllm-gpu`; the sensitive entry degrades only to `vllm-gpu-approved` (fail closed). | `cuad-specialist`, `vllm-cpu`, `vllm-gpu`, `vllm-gpu-approved` |
 
@@ -150,10 +152,11 @@ has no real hardware at all. The presenter guide
 (`docs/stage-review-walkthrough.html`) carries the on-screen version of this
 warning in its "Pool vs hardware" row.
 
-**Do not write a sentence like "all-gpu uses a GPU" without naming the
+**Do not write a sentence like "one-pool uses a GPU" without naming the
 environment.** It is true on ROSA and false on SNO. Write "on ROSA,
-`all-gpu` routes to the 4×A10G pool" or "on SNO, the same route was
-CPU-served."
+`one-pool` routes to the 4×A10G pool" or "on SNO, the same route was
+CPU-served." Historical text may still say `all-gpu`; that is the retired
+name, not a separate config.
 
 ### 2.5 Direct vs through-stack
 
@@ -180,11 +183,11 @@ through-stack.
 | Path | Meaning |
 |---|---|
 | `runs/rosa-200-2026-11-10-praxis-routes/hybrid` | current through-stack `hybrid`, 200 docs — rebuilt two-entry / `X-Demo-Step` graph, 0 violations |
-| `runs/rosa-200-2026-11-10-praxis-routes/all-gpu` | same-run `all-gpu` control, 200 docs (11 transport timeouts) |
-| `runs/rosa-200-2026-11-10-praxis-routes/gpu-small` | same-run `gpu-small` matrix row |
+| `runs/rosa-200-2026-11-10-praxis-routes/all-gpu` | same-run `one-pool` control (run dir keeps old `all-gpu`), 200 docs (11 transport timeouts) |
+| `runs/rosa-200-2026-11-10-praxis-routes/gpu-small` | same-run `small-first` matrix row (run dir keeps old `gpu-small`) |
 | `runs/rosa-200-2026-11-10-praxis-routes/round-robin` | same-run `round-robin` matrix row |
-| `runs/rosa-200-2026-11-09/all-gpu` | pre-rebuild through-stack `all-gpu`, 200 docs (same-day §15.9 copy) |
-| `runs/rosa-200-2026-11-09/gpu-small` | through-stack config `gpu-small`, 200 docs (same-day §15.9 copy) |
+| `runs/rosa-200-2026-11-09/all-gpu` | pre-rebuild through-stack `one-pool` (run dir keeps old `all-gpu`), 200 docs (same-day §15.9 copy) |
+| `runs/rosa-200-2026-11-09/gpu-small` | through-stack config `small-first` (run dir keeps old `gpu-small`), 200 docs (same-day §15.9 copy) |
 | `runs/rosa-200-2026-11-09/round-robin` | through-stack config `round-robin`, 200 docs (same-day §15.9 copy) |
 | `runs/rosa-200-2026-11-09-cpu-term-rerun/hybrid` | pre-rebuild through-stack `hybrid`, 200 docs (old `arm-D`), composite `vllm-cpu` route |
 | `runs/rosa-200-2026-11-09-cpu-term/hybrid` | archived at `cfc52cc` — same policy, first measurement (198/200; two risk flips documented as serving variance) |
@@ -217,9 +220,10 @@ uv run hybrid-run --target gateway \
   --data data/synthetic --out ../runs/rosa-200/hybrid
 ```
 
-- Primary config flag: `--config all-gpu|gpu-small|round-robin|hybrid`;
-  legacy `--arm A|B|C|D` still works but is hidden from help. Aliases:
-  `gpu-split` → B, `matrix` → D, lowercase letters accepted.
+- Primary config flag: `--config one-pool|small-first|round-robin|hybrid`;
+  legacy `--arm A|B|C|D` still works but is hidden from help. Retired names
+  remain aliases: `all-gpu` → A, `gpu-small`/`gpu-split` → B, `matrix` → D;
+  lowercase letters accepted.
 - `hybrid-direct-arm` and `hybrid-review` remain aliases for the low-level
   entry points.
 - The config catalog is one file, `demo/src/hybrid_demo/configs.json`
@@ -231,8 +235,9 @@ uv run hybrid-run --target gateway \
   `scripts/linux/set_arm.sh hybrid` (legacy filename).
 - A/B orientation: the default dashboard uses A =
   `runs/rosa-200-2026-11-10-praxis-routes/hybrid` (through-stack), B =
-  `runs/rosa-200-2026-11-10-praxis-routes/all-gpu` (through-stack); the
-  guide's CUAD example uses a direct/gateway pair. Do not say "A is direct"
+  `runs/rosa-200-2026-11-10-praxis-routes/all-gpu` (one-pool control; the run
+  directory keeps the historical label); the guide's CUAD example uses a
+  direct/gateway pair. Do not say "A is direct"
   without naming the run.
 
 ## 3. Routing and governance design
@@ -379,12 +384,12 @@ historical — FINDINGS §15 has the full analysis):
 
 | Config | Calls by route | Extract F1 | Risk acc | Wall s | Recorded GPU-s/doc | Note |
 |---|---|---:|---:|---:|---:|---|
-| `all-gpu` | 1201 × `vllm-gpu` | 1.000 | 1.000 | 202.19 | 1.974 | quality reference; all GPU |
-| `gpu-small` | 1200 × `vllm-gpu-small`, 1 × `vllm-gpu` | 1.000 | **0.395** | 438.92 | 2.218 | 1.5B answered almost everything |
+| `one-pool` | 1201 × `vllm-gpu` | 1.000 | 1.000 | 202.19 | 1.974 | quality reference; all GPU (recorded as `all-gpu`) |
+| `small-first` | 1200 × `vllm-gpu-small`, 1 × `vllm-gpu` | 1.000 | **0.395** | 438.92 | 2.218 | 1.5B answered almost everything (recorded as `gpu-small`) |
 | `round-robin` | 600 × `vllm-gpu`, 601 × `vllm-cpu` | 0.992 | 1.000 | 612.91 | 2.855 | ungoverned hybrid |
 | `hybrid` | 1200 × `vllm-cpu`, 1 × `vllm-gpu-approved` | 0.982 | 0.995 | 1111.76 | **0.036** | 0 sensitive violations |
 
-Why `gpu-small` collapsed: the classifier labels almost every per-document
+Why `small-first` (recorded as `gpu-small`) collapsed: the classifier labels almost every per-document
 step MEDIUM, and in config B MEDIUM went to the small model — so 1,200 of
 1,201 calls went to Qwen2.5-1.5B and risk accuracy fell to 0.395. The 2.218
 GPU-s/doc figure is recorded under the route's GPU label even though that
@@ -407,32 +412,38 @@ arms: 200 documents, 1,201 steps, regex screen 41/0/159/0.
 
 | config | wall | extract F1 | risk | report | fully correct | CPU share | sensitive approved | violations | errors | GPU-s/doc |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| all-gpu | 601.22 | 0.993 | 0.975 | 0.764 | 189/200 | 0.0 | 0/247 | 245 | 11 | 0.043 |
-| gpu-small | 457.63 | 1.000 | 0.395 | 0.278 | 77/200 | 0.0 | 0/247 | 247 | 0 | n/a |
+| one-pool | 601.22 | 0.993 | 0.975 | 0.764 | 189/200 | 0.0 | 0/247 | 245 | 11 | 0.043 |
+| small-first | 457.63 | 1.000 | 0.395 | 0.278 | 77/200 | 0.0 | 0/247 | 247 | 0 | n/a |
 | round-robin | 938.36 | 1.000 | 1.000 | 0.750 | 200/200 | 0.5 | 130/247 | 117 | 0 | n/a |
 | **hybrid** | **839.90** | **1.000** | **1.000** | **0.750** | **200/200** | **0.833** | **247/247** | **0** | **0** | **n/a** |
+
+The `one-pool` and `small-first` rows were recorded under the retired labels
+`all-gpu` and `gpu-small`; the run directories keep those labels. The
+canonical names are used in the table so the current policy is unambiguous.
 
 GPU-s/doc counts a shared physical backend once:
 `gpumoe-vllm-approved` and `gpumoe-vllm` are the same pod, so the scorer maxes
 the group instead of summing it. The rebuilt hybrid arm's device time is
 **`n/a`**, not zero: the per-pool relays did not expose vLLM's in-flight
 gauges. The pre-rebuild 2026-11-09 table (0.22 GPU-s/doc hybrid vs 1.013
-all-gpu) remains valid for that graph and must not be quoted for this one.
-Judgment steps: 201/201 on GPU (159 `vllm-gpu`, 42 approved). Termination
-extraction (200 steps) is on `cuad-specialist`; classify and data-protection
-stay on `vllm-cpu`, so the route split is visible in `summary.stage_routes`
-without a composite route. The all-gpu control's 11 transport timeouts are
-part of the record; it is not a clean latency baseline.
+one-pool, recorded as `all-gpu`) remains valid for that graph and must not be
+quoted for this one. Judgment steps: 201/201 on GPU (159 `vllm-gpu`, 42
+approved). Termination extraction (200 steps) is on `cuad-specialist`;
+classify and data-protection stay on `vllm-cpu`, so the route split is visible
+in `summary.stage_routes` without a composite route. The one-pool control's
+11 transport timeouts are part of the record; it is not a clean latency
+baseline.
 
 ### 3.4 Do not break
 
 - Do **not** change `summary.arm` values (A/B/C/D); they are recorded evidence.
 - Do not rename historical run directories under `runs/cuad-test`, or any
   archived path restored from `cfc52cc`.
-- Do not infer hardware from `vllm-gpu`, `vllm-gpu-small`, or `all-gpu`.
-- Do not call `all-gpu` a direct run. Direct runs are a separate mode; their
+- Do not infer hardware from `vllm-gpu`, `vllm-gpu-small`, or `one-pool`.
+- Do not call `one-pool` a direct run. Direct runs are a separate mode; their
   archived examples live under `runs/direct` at `cfc52cc`.
-- Keep `--arm`, letter aliases, `gpu-split`, and `matrix` working.
+- Keep `--arm`, letter aliases, `all-gpu`, `gpu-small`, `gpu-split`, and
+  `matrix` working.
 - Keep `set_arm.sh` working even if `set_config.sh` is the documented name.
 - Do not reintroduce a forwarding branch in the specialist or any other
   model pod. A second hop inside the app bypasses praxis's route table, and
@@ -497,8 +508,15 @@ The MCP server is a **thin adapter**, not a second control plane. It runs
 inside the sandbox/namespace, uses the same per-step API keys as the
 pipeline, and calls the ingress relays. It must never call a pool's vLLM
 endpoint directly: that would bypass the approved set and the audit trail.
-The sandbox's egress policy still allows only praxis, so a compromised agent
-can invoke the governed tools and nothing else.
+The sandbox's egress policy allows only trace-ui's general and sensitive
+ingress ports (plus the existing read-only GitHub exception), so a compromised
+agent can invoke the governed tools and nothing else; Praxis and the pools are
+not reachable from the sandbox. That
+keeps the sandbox on the same ingress path as the pipeline, so the ingress
+row and per-pool hop share one trace id. The ingress port also serves the
+trace UI's dashboard APIs; before running real data in the sandbox, put a
+path-filtering proxy or token in front of those APIs so the agent can reach
+`/v1/*` without reading the audit store.
 
 What this buys: MCP hosts (OpenClaw, IDE assistants, other agent frameworks)
 can discover the capability without importing this repository's prompts or
@@ -605,6 +623,24 @@ cause trigger against the CUAD guardrail. The cause trigger is also opt-in:
 contract has termination-for-cause language, falls back to the regex on any
 error, and is not adopted because it scores F1 0.625 against the recorded
 0.714 on the 19-document CUAD subset (FINDINGS §16.8).
+
+#### Precision, recall and F1
+
+Every quality table reports extraction F1 as the harmonic mean of precision
+and recall:
+
+- **Precision** — of the clauses the model flagged, how many were actually
+  correct? High precision means few false positives.
+- **Recall** — of the clauses that should have been found, how many did the
+  model find? High recall means few misses.
+- **F1** — `2 × (precision × recall) / (precision + recall)`. It is high only
+  when both are high; a model that returns every clause gets high recall but
+  low precision, and a correspondingly low F1.
+
+For example, a run with recall 1.0 and precision 0.156 has F1 0.27: it found
+every annotated clause, but most of what it returned was wrong. Extraction
+precision and recall use the containment matcher below, not exact span
+equality.
 
 #### Span scoring: exact, containment, partial, nervaluate
 
@@ -997,29 +1033,41 @@ CPU-model test plan in §9.
   the policy. Historical runs from the classifier-in-path and earlier
   stacks are archived at commit `cfc52cc`; the working tree keeps the quoted
   record and the guide evidence (`runs/README.md`).
+- **2026-11-11 — config names become behavior names.** Renamed the two
+  hardware-implying policies: `all-gpu` → `one-pool`, `gpu-small` →
+  `small-first`. Every old name and letter remains an alias; the recorded
+  `summary.mode` strings and historical run directories are unchanged. The
+  stage UI and trace UI present the canonical name for old runs while keeping
+  the historical run directory visible. The guide, README, design notes and
+  runbook use the new names.
+- **2026-11-11 — the sandbox enters through trace-ui.** The OpenShell egress
+  allowlist now permits only trace-ui's general/sensitive ingress ports (plus
+  the existing read-only GitHub exception); OpenClaw's base URL points at the
+  general ingress, and Praxis/pools are no longer reachable directly. This
+  gives agent calls the same ingress trace row and `_trace` id as pipeline
+  calls. Cluster re-verification of the blocked-action moment is still
+  pending.
 
 ## 8. Open decisions and next actions
 
-### 8.1 Open: rename `all-gpu` and `gpu-small`?
+### 8.1 Closed: rename `all-gpu` and `gpu-small`
 
-The names still imply hardware. A behavior-based set would be harder to
-misread:
+The old names implied hardware, so the two policy names are now behavioral:
 
-| Current | Proposed | Why |
+| Current | Retired name | Why |
 |---|---|---|
-| `all-gpu` | `one-pool` or `single-route` | all requests to one through-stack route; no hardware claim |
-| `gpu-small` | `small-first` | per-document work to the small model |
-| `round-robin` | `round-robin` | already behavioral |
-| `hybrid` | `hybrid` (or `cpu-first`) | already established; optionally make the behavior explicit |
+| `one-pool` | `all-gpu` | all requests to one through-stack route; no hardware claim |
+| `small-first` | `gpu-small` (`gpu-split`) | per-document work to the small model |
+| `round-robin` | — | already behavioral |
+| `hybrid` | `matrix` | already established |
 
-Recommendation: rename at least A and B to behavior names, keep every old
-name and letter as an alias, keep the route/cluster names unchanged for
-evidence compatibility, and do not rename historical run directories. If
-not renaming, the minimum alternative is a hardware badge everywhere the
-config name appears. (Done-and-closed items from the same list: the config
-metadata single source of truth, visible run hardware, config-labelled
-reports, the regenerated ROSA report, and the alias regression tests —
-§2.7 and §7 record them.)
+Every old name and letter remains an alias; route/cluster names are unchanged
+for evidence compatibility; historical run directories keep their original
+names. The dashboard presents the canonical name for old runs, while the run
+line still shows the historical directory. (Done-and-closed items from the
+same list: the config metadata single source of truth, visible run hardware,
+config-labelled reports, the regenerated ROSA report, and the alias
+regression tests — §2.7 and §7 record them.)
 
 ### 8.2 Next actions, in order
 

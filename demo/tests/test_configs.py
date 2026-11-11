@@ -10,8 +10,10 @@ from hybrid_demo.ui.payload import build_payload
 
 
 @pytest.mark.parametrize("value,key", [
-    ("A", "A"), ("a", "A"), ("all-gpu", "A"), ("ALL-GPU", "A"),
-    ("B", "B"), ("b", "B"), ("gpu-small", "B"), ("gpu-split", "B"),
+    ("A", "A"), ("a", "A"), ("one-pool", "A"), ("ONE-POOL", "A"),
+    ("all-gpu", "A"), ("ALL-GPU", "A"),
+    ("B", "B"), ("b", "B"), ("small-first", "B"), ("SMALL-FIRST", "B"),
+    ("gpu-small", "B"), ("gpu-split", "B"),
     ("C", "C"), ("c", "C"), ("round-robin", "C"),
     ("D", "D"), ("d", "D"), ("hybrid", "D"), ("matrix", "D"),
 ])
@@ -21,7 +23,7 @@ def test_every_name_alias_and_letter_resolves(value, key):
 
 
 def test_unknown_config_names_the_choices():
-    with pytest.raises(ValueError, match="all-gpu"):
+    with pytest.raises(ValueError, match="one-pool"):
         configs.resolve_config("gpu")
 
 
@@ -29,7 +31,7 @@ def test_catalog_keys_and_recorded_arm_values_are_unchanged():
     catalog = configs.catalog()
     assert [c["key"] for c in catalog] == ["A", "B", "C", "D"]
     assert [c["name"] for c in catalog] == [
-        "all-gpu", "gpu-small", "round-robin", "hybrid"]
+        "one-pool", "small-first", "round-robin", "hybrid"]
     # The old recorded mode strings are still the modes in configs.json.
     assert [c["mode"] for c in catalog] == [
         "all-gpu", "gpu-split", "round-robin", "matrix"]
@@ -72,7 +74,18 @@ def test_old_run_with_only_arm_gets_its_config_name(tmp_path):
 def test_payload_exposes_the_canonical_catalog_once(tmp_path):
     payload = _payload(tmp_path, {"arm": "A", "mode": "all-gpu", "docs": 0})
     assert [c["name"] for c in payload["configs"]] == [
-        "all-gpu", "gpu-small", "round-robin", "hybrid"]
+        "one-pool", "small-first", "round-robin", "hybrid"]
+
+
+def test_historical_config_name_is_presented_canonically(tmp_path):
+    payload = _payload(tmp_path, {
+        "config": "all-gpu", "arm": "A", "mode": "all-gpu", "docs": 0,
+    })
+    # The run directory and recorded summary keep the historical label; the
+    # page reads the canonical policy name, not the retired one.
+    assert payload["meta"]["run"] == "run"
+    assert payload["meta"]["config"] == "one-pool"
+    assert payload["meta"]["config_meta"]["aliases"] == ["all-gpu"]
 
 
 def test_hardware_comes_from_the_pool_map_not_the_route_name(tmp_path):

@@ -117,6 +117,10 @@ async def test_arm_d_full_matrix(stack, tmp_path):
     report_steps = [r for r in records if r["step"] == "report"]
     assert report_steps and report_steps[0]["headers"]["x-demo-route"] == "vllm-gpu-approved"
     assert report_steps[0]["entry"] == "sensitive"
+    # The report's counts are a deterministic rollup of the pipeline rows,
+    # not the model's arithmetic over a long prompt.
+    assert report_steps[0].get("report_rollup") is True
+    assert report_steps[0]["content"]["documents"] == 12
 
     sensitive = [r for r in records if r["true_sensitive"]]
     assert sensitive

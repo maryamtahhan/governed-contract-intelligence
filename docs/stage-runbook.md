@@ -7,7 +7,8 @@ cluster (or the recording fallback).
 Read the header run line before every beat: in the default dashboard **A is
 the rebuilt-graph ROSA hybrid run**
 (`runs/rosa-200-2026-11-10-praxis-routes/hybrid`) and **B is the same-run
-all-GPU control** (`runs/rosa-200-2026-11-10-praxis-routes/all-gpu`). Both
+one-pool control** (`runs/rosa-200-2026-11-10-praxis-routes/all-gpu`; run
+directory keeps the historical `all-gpu` label). Both
 cross Praxis; A is governed, B is not. The CUAD appendix instead uses a
 direct run for A and a failed gateway run for B.
 

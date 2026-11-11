@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="860" viewBox="0 0 1280 860" font-family="Inter, ui-sans-serif, system-ui, sans-serif" role="img" aria-labelledby="t d">
   <title id="t">As-built architecture — clients, recorders, policy gate and pools</title>
-  <desc id="d">Four layers. Clients: the review pipeline and the OpenShell sandbox. The pipeline sends each request to one of two trace-ui ingress relays, general or sensitive, chosen only by the PII screen; the sandbox may reach only praxis, enforced by its egress policy. Record and decide: trace-ui records the entry and forwards to praxis, while praxis authenticates each step's API key, records the request, runs an observe-only PII scan, and matches the declarative X-Demo-Step header against the work-to-pool table to pick a pool: CUAD clause extraction goes to cuad-specialist, classify and data protection to vllm-cpu, and risk/report to vllm-gpu (general) or vllm-gpu-approved (sensitive). Pool relays: one trace-ui relay per pool records the model call and its timing; praxis never calls a pool directly. Pools: cuad-specialist, vllm-cpu and vllm-gpu-approved sit inside the approved set where sensitive data may run; vllm-gpu and vllm-gpu-small are the general pools. The gateway audit trail, not a log line, is the evidence. A fifth, control-plane path (opt-in, not part of the recorded run) is the pre-entry PII screen: trace-ui screen ingress 8086 to the Praxis screen listener, then the jev-cpu relay 8089 to the CPU Jev pool; it is not a review entry and has no failover.</desc>
+  <desc id="d">Four layers. Clients: the review pipeline and the OpenShell sandbox. Both clients enter trace-ui: the pipeline picks the general or sensitive ingress from its PII screen, and the sandbox may reach only those two trace-ui ingress ports (plus read-only GitHub), enforced by its egress policy; Praxis and the pools are not in the sandbox allowlist. Record and decide: trace-ui records the entry and forwards to praxis, while praxis authenticates each step's API key, records the request, runs an observe-only PII scan, and matches the declarative X-Demo-Step header against the work-to-pool table to pick a pool: CUAD clause extraction goes to cuad-specialist, classify and data protection to vllm-cpu, and risk/report to vllm-gpu (general) or vllm-gpu-approved (sensitive). Pool relays: one trace-ui relay per pool records the model call and its timing; praxis never calls a pool directly. Pools: cuad-specialist, vllm-cpu and vllm-gpu-approved sit inside the approved set where sensitive data may run; vllm-gpu and vllm-gpu-small are the general pools. The gateway audit trail, not a log line, is the evidence. A fifth, control-plane path (opt-in, not part of the recorded run) is the pre-entry PII screen: trace-ui screen ingress 8086 to the Praxis screen listener, then the jev-cpu relay 8089 to the CPU Jev pool; it is not a review entry and has no failover.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#9db1c8"/>
@@ -30,13 +30,13 @@
   <rect x="620" y="108" width="560" height="104" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
   <text x="900" y="134" font-size="14" font-weight="600" fill="#e9f2ff" text-anchor="middle">OPENSHELL SANDBOX</text>
   <text x="900" y="158" font-size="11" fill="#9db1c8" text-anchor="middle">OpenClaw agent · Landlock + NetworkPolicy</text>
-  <text x="900" y="178" font-size="11" fill="#9db1c8" text-anchor="middle">egress allows praxis only; everything else denied</text>
-  <text x="900" y="198" font-size="9.5" fill="#6f8298" text-anchor="middle">no pool access, no direct model access</text>
+  <text x="900" y="178" font-size="11" fill="#9db1c8" text-anchor="middle">egress: trace-ui ingress + GitHub read-only; else denied</text>
+  <text x="900" y="198" font-size="9.5" fill="#6f8298" text-anchor="middle">no Praxis, no pool, no direct model access</text>
 
   <line x1="480" y1="214" x2="480" y2="254" stroke="#9db1c8" stroke-width="1.5" marker-end="url(#arrow)"/>
 
-  <line x1="900" y1="214" x2="900" y2="254" stroke="#6f8298" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#arrow-dim)"/>
-  <text x="912" y="238" font-size="9.5" fill="#6f8298">egress: praxis only</text>
+  <path d="M 900 214 L 900 238 L 540 238 L 540 254" fill="none" stroke="#6f8298" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#arrow-dim)"/>
+  <text x="720" y="232" font-size="9.5" fill="#6f8298" text-anchor="middle">review egress: trace-ui ingress</text>
 
   <!-- layer 2: record + decide -->
   <text x="40" y="248" font-size="9.5" font-weight="700" letter-spacing="1.1" fill="#7fb2e5">RECORD + DECIDE · TRACE-UI AND PRAXIS</text>
@@ -44,7 +44,7 @@
   <rect x="40" y="258" width="520" height="180" rx="8" fill="#0d1b2d" stroke="#2b4865" stroke-width="1.5"/>
   <text x="60" y="284" font-size="14" font-weight="600" fill="#e9f2ff">TRACE-UI · RECORDERS</text>
   <text x="60" y="310" font-size="10.5" fill="#c9d8ea">two ingress doors: general · sensitive</text>
-  <text x="60" y="328" font-size="10.5" fill="#c9d8ea">the PII screen picks the door; both record</text>
+  <text x="60" y="328" font-size="10.5" fill="#c9d8ea">the caller picks a door; both record</text>
   <text x="60" y="350" font-size="10.5" fill="#c9d8ea">writes a request row, then forwards to praxis</text>
   <text x="60" y="372" font-size="10.5" fill="#c9d8ea">SQLite on a PVC · waterfall UI · audit.jsonl</text>
   <text x="60" y="400" font-size="9.5" fill="#6f8298">the audit trail is the evidence, not a log line</text>

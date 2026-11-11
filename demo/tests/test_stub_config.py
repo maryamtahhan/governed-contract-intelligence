@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import yaml
+
 from stub_praxis import parse_config
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -72,6 +74,25 @@ def test_matrix_config_parses():
     assert screen_routes[(("x-demo-step", "decide:cause"),)] == "jev-cpu"
     assert screen_routes[()] == "jev-cpu"
     assert parsed["clusters"]["jev-cpu"]["endpoints"] == [MAP["trace-ui:8089"]]
+
+
+def test_review_chains_allow_the_pipeline_timeout_for_long_documents():
+    data = yaml.safe_load((CONFIGS / "config.yaml").read_text())
+    chains = {
+        chain["name"]: chain
+        for chain in data["filter_chains"]
+        if chain["name"] in {"inference-routing", "sensitive-routing"}
+    }
+    assert set(chains) == {"inference-routing", "sensitive-routing"}
+    for chain in chains.values():
+        router = next(
+            f for f in chain["filters"]
+            if f["filter"] == "iterative_request_router"
+        )
+        # The pipeline's client budget is 600 s. A 120 s gateway step cap
+        # aborted slow CUAD contracts before the client deadline.
+        assert router["step_timeout_ms"] >= 600_000
+        assert router["timeout_ms"] >= 600_000
 
 
 def test_arm_configs_parse():

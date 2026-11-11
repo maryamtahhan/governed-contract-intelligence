@@ -11,7 +11,7 @@ from typing import Any
 import httpx
 
 from ..classifier import detect_sensitivity
-from ..common import api_key_for_step, parse_pools, run_provenance
+from ..common import api_key_for_step, normalize_text, parse_pools, run_provenance
 from ..configs import (
     CONFIG_ALIASES,
     CONFIG_MODES,
@@ -19,7 +19,7 @@ from ..configs import (
     GOVERNED_CONFIGS,
     resolve_config,
 )
-from ..evalkit.score import gpu_device_seconds
+from ..evalkit.score import gpu_device_seconds, jurisdiction
 from ..routes import APPROVED_ROUTES, GPU_ROUTES
 from .generate import CLAUSE_KEYS
 from .risk import DATA_PROTECTION_KEY, rubric_text
@@ -177,6 +177,46 @@ def report_body(doc_lines: list[str], count: int,
             },
         ],
     }, "report")
+
+
+def report_rollup(rows: list[dict], has_data_protection: bool) -> dict:
+    """Aggregate the report from the pipeline's own per-document rows.
+
+    The report prompt asks a model to count every row. That is arithmetic, not
+    judgment, and it gets worse as the batch grows: the 2026-11-10 200-document
+    run returned 32 missing-data-protection contracts against 52, even though
+    the extractor had labelled every row correctly. The pipeline already has
+    the structured rows, so compute the counts here and keep the model call for
+    the synthesis/provenance path. The scorer should measure propagation from
+    extraction and risk, not whether a model can count 200 JSON lines.
+    """
+    risk_counts = {"low": 0, "medium": 0, "high": 0}
+    law_counts: dict[str, int] = {}
+    high_ids: list[str] = []
+    missing_dp = 0
+    for row in rows:
+        risk = row.get("risk") or "unknown"
+        risk_counts[risk] = risk_counts.get(risk, 0) + 1
+        law = row.get("governing_law")
+        key = jurisdiction(law) or (
+            "missing"
+            if law in (None, "", "missing", "unknown")
+            else normalize_text(str(law))
+        )
+        law_counts[key] = law_counts.get(key, 0) + 1
+        if not row.get("data_protection"):
+            missing_dp += 1
+        if risk == "high":
+            high_ids.append(row["ref"])
+    result = {
+        "documents": len(rows),
+        "risk_counts": risk_counts,
+        "governing_law_counts": law_counts,
+        "highest_risk_ref": sorted(high_ids)[0] if high_ids else None,
+    }
+    if has_data_protection:
+        result["missing_data_protection"] = missing_dp
+    return result
 
 
 def parse_content(content: str | None) -> dict:
@@ -392,6 +432,7 @@ class ReviewRun:
         )
 
         doc_lines = []
+        report_rows: list[dict] = []
         any_sensitive = False
         for doc in docs:
             doc_records = [r for r in self.records if r["doc_id"] == doc["doc_id"]]
@@ -415,25 +456,34 @@ class ReviewRun:
             # the manifest label; the label is ground truth used for scoring.
             screened = self.screened.get(doc["doc_id"], False)
             any_sensitive = any_sensitive or screened
-            doc_lines.append(
-                json.dumps(
-                    {
-                        "ref": doc["doc_id"],
-                        "type": doc["type"],
-                        "risk": risk,
-                        "governing_law": law,
-                        "data_protection": dp_present,
-                        "sensitive": screened,
-                    },
-                    ensure_ascii=False,
-                )
-            )
+            row = {
+                "ref": doc["doc_id"],
+                "type": doc["type"],
+                "risk": risk,
+                "governing_law": law,
+                "data_protection": dp_present,
+                "sensitive": screened,
+            }
+            report_rows.append(row)
+            doc_lines.append(json.dumps(row, ensure_ascii=False))
         prefixed = [f"- {line}" for line in doc_lines]
         client, entry = self.entry_for_sensitivity(any_sensitive)
         has_data_protection = DATA_PROTECTION_KEY in self.clause_keys
-        await self.call(client, entry, "report",
-                        report_body(prefixed, len(docs), has_data_protection), None,
-                        "REASONING", any_sensitive)
+        report_rec = await self.call(
+            client, entry, "report",
+            report_body(prefixed, len(docs), has_data_protection), None,
+            "REASONING", any_sensitive,
+        )
+        # The counts are a rollup of the rows above, not a model judgment.
+        # Keep the model's answer for synthesis, but make the audited report
+        # fields deterministic so a long batch cannot lose rows in the prompt.
+        if report_rec.get("outcome") == "served":
+            content = report_rec.get("content")
+            if not isinstance(content, dict):
+                content = {}
+            content.update(report_rollup(report_rows, has_data_protection))
+            report_rec["content"] = content
+            report_rec["report_rollup"] = True
         self.wall_s = time.time() - t0
 
 
@@ -670,8 +720,8 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--data", default="data/synthetic")
     parser.add_argument("--out", required=True)
     parser.add_argument("--config", default=None,
-                        help="routing policy, not hardware: all-gpu, gpu-small, "
-                             "round-robin or hybrid")
+                        help="routing policy, not hardware: one-pool, small-first, "
+                             "round-robin or hybrid (old all-gpu/gpu-small accepted)")
     # Legacy alias. Kept so old scripts and recorded commands still run, but
     # hidden from help: the policy names are the supported interface.
     parser.add_argument("--arm", default=None, help=argparse.SUPPRESS)
@@ -708,7 +758,7 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
     chosen = args.config or args.arm
     if not chosen:
-        parser.error("--config is required; choose all-gpu, gpu-small, "
+        parser.error("--config is required; choose one-pool, small-first, "
                      "round-robin or hybrid")
     try:
         config = resolve_config(chosen)

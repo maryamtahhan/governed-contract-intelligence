@@ -9,15 +9,20 @@ reports referenced live under `runs*/` per stack. Claims are labelled
 **[measured]** (our numbers, our replay), **[observed]** (single-run or
 qualitative), or **[external]** (cited, not ours).
 
-**Naming:** the configs now have policy names: **all-gpu** (old A),
-**gpu-small** (old B), **round-robin** (old C), **hybrid** (old D). The
-letters remain internal keys in `summary.json` and in historical run ids;
-the CLI and new run directories use the policy names.
+**Naming:** the configs now have behavior names: **one-pool** (old
+`all-gpu`, key A), **small-first** (old `gpu-small`, key B),
+**round-robin** (key C), **hybrid** (old `matrix`, key D). The old names and
+letters remain aliases. Historical run directories and the recorded
+`summary.mode` strings keep their original labels; the dashboard and trace
+UI present the canonical name for old runs.
 
 **Run archive:** the working tree keeps the current quoted run, the same-day
 control, and the CUAD/retrieval evidence. Older run directories named below
 were pruned from the checkout; recover any of them from git history at
 `cfc52cc` with `git checkout cfc52cc -- <path>`. See `runs/README.md`.
+
+**Metric definitions:** precision, recall, F1 and the containment matcher are
+defined in [design.md § Precision, recall and F1](docs/design.md#precision-recall-and-f1).
 
 ## 1. What was built
 
@@ -46,12 +51,12 @@ records, not the batch runner's.
 Sensitive-document steps served outside the approved pool set
 (`vllm-cpu`, `vllm-gpu-approved`), by arm:
 
-| arm | violations | CPU-served share |
+| config | violations | CPU-served share |
 |---|---|---|
-| A all-GPU | 25/25 | 0% |
-| B gpu-split | 25/25 | 0% |
+| A one-pool (old all-gpu) | 25/25 | 0% |
+| B small-first (old gpu-small/gpu-split) | 25/25 | 0% |
 | C round-robin | 12–24 (varies by run) | ~50% |
-| **D matrix** | **0 — on every stack, every dataset** | ~99% |
+| **D hybrid (old matrix)** | **0 — on every stack, every dataset** | ~99% |
 
 Also verified on all stacks: GPU-outage degrade with a visible signal
 (trace "fell back" badge: REASONING label recorded on the failed GPU hop,
@@ -1127,36 +1132,41 @@ report: `runs/rosa-direct-vs-stacked/report.md` (archived at `cfc52cc`).
 
 `runs/rosa-200-2026-11-09-gpu-term` (archived at `cfc52cc`) is a **measured
 alternative route, not the current policy** (§15.9 supersedes it). The hybrid arm was rerun with
-termination extraction on the GPU-bound entry; the all-gpu, gpu-small and
+termination extraction on the GPU-bound entry; the one-pool, small-first and
 round-robin arms were copied from the same-day run because the routing change
 only applies to the governed hybrid. §15.1-§15.7 are the earlier
 classifier-in-path record and must not be mixed with it.
 
-| arm | wall | extract F1 | risk acc | report acc | fully correct | CPU-served | sensitive approved | violations | GPU-s/doc |
+The table uses the current config names. These runs were recorded under the
+retired labels `all-gpu` and `gpu-small`; the run directories keep those
+labels.
+
+| config | wall | extract F1 | risk acc | report acc | fully correct | CPU-served | sensitive approved | violations | GPU-s/doc |
 |---|---|---|---|---|---|---|---|---|---|
-| all-gpu | 202.83 s | 1.000 | 0.995 | 0.756 | 199/200 | 0.0% | 0/247 | 247 | 1.013 |
-| gpu-small | 454.21 s | 1.000 | 0.395 | 0.278 | 75/200 | 0.0% | 0/247 | 247 | 2.241* |
+| one-pool (recorded as all-gpu) | 202.83 s | 1.000 | 0.995 | 0.756 | 199/200 | 0.0% | 0/247 | 247 | 1.013 |
+| small-first (recorded as gpu-small) | 454.21 s | 1.000 | 0.395 | 0.278 | 75/200 | 0.0% | 0/247 | 247 | 2.241* |
 | round-robin | 570.81 s | 0.991 | 1.000 | 0.756 | 186/200 | 50.0% | 129/247 | 118 | 1.773 |
 | **hybrid** | **726.77 s** | **1.000** | **1.000** | **0.756** | **200/200** | **66.6%** | **247/247** | **0** | **0.508** |
 
 Zero errors and zero fallbacks in all four arms. The screen was 41/0/159/0.
 Hybrid judgment steps were 201/201 on GPU.
 
-- **The governance result is unchanged.** Hybrid is the only arm with 0
+- **The governance result is unchanged.** Hybrid is the only config with 0
   violations and 247/247 sensitive steps on approved pools.
 - **The economics changed because the policy changed.** Hybrid sends
   termination extraction (200 steps) plus risk/report (201) to GPU-bound
-  entries. It uses ~2.0x less GPU time than all-gpu (0.508 vs 1.013 GPU-s/doc;
-  101.6 vs 202.7 GPU-s total), and wall time is 726.77 s — faster than the
-  802.85 s run where termination was on the CPU specialist.
+  entries. It uses ~2.0x less GPU time than one-pool, recorded as `all-gpu`
+  (0.508 vs 1.013 GPU-s/doc; 101.6 vs 202.7 GPU-s total), and wall time is
+  726.77 s — faster than the 802.85 s run where termination was on the CPU
+  specialist.
 - **GPU-s/doc counts a physical backend once.** `gpumoe-vllm-approved` selects
   the same pod as `gpumoe-vllm`; the scorer maxes a declared shared group
   instead of summing both routes. Without that correction the figures are
   doubled (1.991 / 0.398) and the saving reads ~6x. Raw samples are unchanged.
-- **`gpu-small` is CPU hardware (`*`).** `vllm-gpu-small` is route-accounted
-  as GPU but the pool map records the x8i CPU node; 2.241 is not GPU time. It
-  is a negative control: risk 0.395 and report 0.278 show the small model
-  collapsing, not a device effect.
+- **`small-first` (recorded as `gpu-small`) is CPU hardware (`*`).**
+  `vllm-gpu-small` is route-accounted as GPU but the pool map records the x8i
+  CPU node; 2.241 is not GPU time. It is a negative control: risk 0.395 and
+  report 0.278 show the small model collapsing, not a device effect.
 - **Termination recall was a taxonomy issue, fixed by routing.** The previous
   hybrid run scored 173/200 because all 27 misses were the same synthetic
   template — “terminated only for material breach…” — which is **termination
@@ -1188,20 +1198,23 @@ returns no span and the contract contains explicit cause language
 (`material breach`, `uncured`, `termination for cause`, `for cause`), a focused
 termination-for-cause follow-up (`specialist/questions.py`,
 `specialist/server.py`). Judgment (risk/report) stays on the GPU-bound entries.
-The all-gpu, gpu-small and round-robin arms are the same-day §15.8 copies.
+The one-pool, small-first and round-robin arms are the same-day §15.8 copies;
+the table uses the current config names, while the run directories keep the
+retired labels `all-gpu` and `gpu-small`.
 
-| arm | wall | extract F1 | risk acc | report acc | fully correct | CPU-served | sensitive approved | violations | GPU-s/doc |
+| config | wall | extract F1 | risk acc | report acc | fully correct | CPU-served | sensitive approved | violations | GPU-s/doc |
 |---|---|---|---|---|---|---|---|---|---|
-| all-gpu | 202.83 s | 1.000 | 0.995 | 0.756 | 199/200 | 0.0% | 0/247 | 247 | 1.013 |
-| gpu-small | 454.21 s | 1.000 | 0.395 | 0.278 | 75/200 | 0.0% | 0/247 | 247 | 2.241* |
+| one-pool (recorded as all-gpu) | 202.83 s | 1.000 | 0.995 | 0.756 | 199/200 | 0.0% | 0/247 | 247 | 1.013 |
+| small-first (recorded as gpu-small) | 454.21 s | 1.000 | 0.395 | 0.278 | 75/200 | 0.0% | 0/247 | 247 | 2.241* |
 | round-robin | 570.81 s | 0.991 | 1.000 | 0.756 | 186/200 | 50.0% | 129/247 | 118 | 1.773 |
 | **hybrid** | **816.59 s** | **1.000** | **1.000** | **0.752** | **200/200** | **83.3%** | **247/247** | **0** | **0.22** |
 
 Zero errors and zero fallbacks; screen 41/0/159/0; judgment steps 201/201 on
 GPU; termination extraction 200/200 on `vllm-cpu`. GPU device time is 44.0 s
 (0.22 GPU-s/doc) against 101.6 s (0.508) for the GPU-term route and 202.7 s
-(1.013) for all-gpu: the CPU policy keeps the extraction quality of the GPU
-route at the baseline hybrid's GPU cost, and wall time is 816.59 s.
+(1.013) for one-pool, recorded as `all-gpu`: the CPU policy keeps the
+extraction quality of the GPU route at the baseline hybrid's GPU cost, and
+wall time is 816.59 s.
 
 The policy was measured twice on the same commit and the same pools. The
 first run (`runs/rosa-200-2026-11-09-cpu-term`, archived at `cfc52cc`; wall 823.84 s, 43.4 GPU-s)
@@ -1233,7 +1246,7 @@ scored 200/200 with risk 1.000.
   decision-list rubric ("evaluate in order, stop at the first match") was
   A/B-tested on the same inputs and rejected: no gain on the synthetic corpus
   (200/200 either way) and a CUAD regression (14/19 vs 15/19 on the §17.2
-  inputs). all-gpu itself scores 0.995 on the same corpus, so 0.990 is within
+  inputs). one-pool itself scores 0.995 on the same corpus, so 0.990 is within
   the judgment stage's observed variance, not a routing regression — the
   failure moved from extraction (27 documents) to two borderline judgment
   calls. The quoted rerun scored risk 1.000 with 200/200 documents fully
@@ -1297,8 +1310,9 @@ That is 400 `vllm-cpu`, 600 `cuad-specialist`, 159 `vllm-gpu` and 42
 `vllm-gpu-approved`; 247/247 sensitive steps were served by the approved set
 (`cuad-specialist`, `vllm-cpu`, `vllm-gpu-approved`) and the score reports
 **0 sensitive violations**. The app made no pool choice: the pipeline sent
-`X-Demo-Step` and the entry only. The same run's controls: all-gpu 601.2 s
-with 11 transport timeouts and 245 violations; gpu-small 457.6 s with 247
+`X-Demo-Step` and the entry only. The same run's controls: one-pool
+(recorded as `all-gpu`) 601.2 s with 11 transport timeouts and 245
+violations; small-first (recorded as `gpu-small`) 457.6 s with 247
 violations; round-robin 938.4 s with 117 violations.
 
 Caveat: device time for the rebuilt hybrid arm is **`n/a`**, not zero. The

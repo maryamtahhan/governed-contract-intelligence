@@ -92,7 +92,7 @@ Qwen3.5-35B-A3B synthesis: risk judgment, cross-doc report        [built]
 Every hop goes through the same governed request path — the part that is
 built, governed and measured end-to-end today:
 
-![As-built architecture: clients (review pipeline, OpenShell sandbox) → trace-ui recorders and the Praxis policy gate → one relay per pool → pools; the green dashed boundary marks the approved set where sensitive data may run](docs/architecture-as-built.svg)
+![As-built architecture: both clients (review pipeline and OpenShell sandbox) enter through trace-ui ingress recorders → the Praxis policy gate → one relay per pool → pools; the green dashed boundary marks the approved set where sensitive data may run](docs/architecture-as-built.svg)
 
 The two run shapes are deliberately different, and the diagrams make the
 difference explicit:
@@ -138,9 +138,9 @@ Key properties of the governed path:
   observe-only PII scanner.
 - **The same praxis configs** (`manifests/base/praxis/`) drive the Linux
   stack and OpenShift, so routing is byte-identical on both.
-- **Arms** (measurement baselines, swapped live): **A** all-GPU large model,
-  **B** all-GPU small model, **C** naive hybrid round-robin, **D** the hybrid
-  policy — two data-classification entries with the `X-Demo-Step` route
+- **Configs** (measurement baselines, swapped live): **A** `one-pool` (old
+  `all-gpu`, large model), **B** `small-first` (old `gpu-small`, small model),
+  **C** naive hybrid round-robin, **D** the hybrid policy — two data-classification entries with the `X-Demo-Step` route
   table inside them, and fail-closed sensitive failover.
   The measured D run predates the rebuilt route table (and the specialist
   split); re-measuring it is a new run directory, not a reinterpretation of
@@ -219,7 +219,7 @@ restore one.
 │   └── octo-demo-v0.3.md             business case / OCTO framing
 ├── mcp/                          root launcher for the MCP facade
 ├── classifiers/                  contract-step taxonomy + evaluation anchors (candidate)
-├── sandbox/policy.yaml           OpenShell sandbox egress policy (praxis + GitHub read-only)
+├── sandbox/policy.yaml           OpenShell sandbox egress policy (trace-ui ingress + GitHub read-only)
 ├── values/                       OpenShift Helm overrides
 └── .github/workflows/            CI + gateway image publish
 ```
@@ -253,8 +253,8 @@ hardware are **five different things** (full treatment: [design §2](docs/design
 Two rules follow from this:
 
 1. **Never infer hardware from a route or config name.** On ROSA,
-   `vllm-gpu-small` is served by Qwen2.5-1.5B **on CPU**; `all-gpu` is a
-   routing policy, not a hardware promise.
+   `vllm-gpu-small` is served by Qwen2.5-1.5B **on CPU**; `one-pool` (old
+   `all-gpu`) is a routing policy, not a hardware promise.
 2. **Routes name one endpoint since the 2026-11-10 rebuild.**
    `cuad-specialist` is the RoBERTa service and `vllm-cpu` is the CPU MoE;
    there is no forwarding inside the specialist. The quoted 2026-11-09
@@ -319,7 +319,7 @@ Two deployment shapes:
   ./scripts/00-prereqs.sh            # checks + Agent Sandbox CRD/controller
   ./scripts/01-install-openshell.sh  # OpenShell gateway (Helm)
   ./scripts/02-apply.sh              # praxis, trace-ui, netpols, KServe pools
-  ./scripts/03-create-sandbox.sh     # OpenClaw sandbox, egress: praxis only
+  ./scripts/03-create-sandbox.sh     # OpenClaw sandbox, egress: trace-ui ingress + GitHub read-only
   ```
 - **ROSA / plain-Deployment stack** (`manifests/base` + `deploy/openshift/rosa`):
   follow [`deploy/openshift/rosa/README.md`](deploy/openshift/rosa/README.md).
@@ -374,19 +374,22 @@ scripts/demo/pull-the-plug.sh [--restore]   # scale a GPU pool to zero mid-run
 scripts/demo/blocked-action.sh     # sandbox egress denials (after 03 + port-forward)
 ```
 
-Routing configs are swapped by **policy name** (`hybrid`, `all-gpu`, …) —
+Routing configs are swapped by **policy name** (`hybrid`, `one-pool`, …) —
 the one catalog of names, aliases and manifests is
 `demo/src/hybrid_demo/configs.json`, with `scripts/configs.sh` as its shell
-adapter. `scripts/cluster/arms.sh` is the measured path: `CONFIGS="all-gpu
+adapter. `scripts/cluster/arms.sh` is the measured path: `CONFIGS="one-pool
 hybrid"` selects, the default runs the full matrix, and `hybrid-run --config
-hybrid` is the CLI form. A manual swap points the deployment at the manifest
+hybrid` is the CLI form. Old names (`all-gpu`, `gpu-small`, `gpu-split`) and
+letters remain aliases. A manual swap points the deployment at the manifest
 behind the name — the files keep their historical `arm-*` filenames for
-recorded-evidence compatibility, so `all-gpu` is
+recorded-evidence compatibility, so `one-pool` is
 `oc -n openshell-demo set env deploy/praxis PRAXIS_CONFIG=/etc/praxis/arm-a.yaml`
 — then `oc -n openshell-demo rollout status deploy/praxis`. NetworkPolicies
 restrict the pools to the trace-ui relays (the V15 enforcement layer). The
-OpenClaw sandbox keeps its egress policy: praxis (read-write) and read-only
-api.github.com; everything else denied and logged (`openshell logs`).
+OpenClaw sandbox may reach only trace-ui's general/sensitive ingress ports
+(read-write) and read-only api.github.com; Praxis and the pools are not in its
+egress allowlist, so the agent cannot bypass the ingress trace row. Everything
+else is denied and logged (`openshell logs`).
 
 The trace UI has no Route in the base install — the dashboard holds contract
 questions and responses. To publish it, set a token and opt in:
@@ -396,8 +399,11 @@ oc -n openshell-demo set env deploy/trace-ui TRACE_API_TOKEN=<token>
 oc apply -k manifests/overlays/trace-ui-route
 ```
 
-The relays reach trace-ui through the Service either way. The audit trail is
-SQLite on the trace-ui PVC, exported as plaintext `audit.jsonl`; raw traces
+The relays reach trace-ui through the Service either way. The sandbox reaches
+the internal Service, not this Route; because the ingress port also serves the
+trace UI dashboard APIs, put a path-filtering proxy or token in front before
+running real data. The audit trail is SQLite on the trace-ui PVC, exported as
+plaintext `audit.jsonl`; raw traces
 are a rolling window of 250 (`TRACE_MAX_TRACES`), so a governance check is
 only complete when the window covers the run — per-run summaries in the
 `runs` table are the durable record. Treat the PVC and exports as sensitive,
@@ -414,11 +420,12 @@ open http://127.0.0.1:8099/
 ```
 
 It defaults to the current rebuilt-graph run
-(`runs/rosa-200-2026-11-10-praxis-routes/hybrid`) with the same-run all-GPU
-control as B. Useful variants:
+(`runs/rosa-200-2026-11-10-praxis-routes/hybrid`) with the same-run one-pool
+control as B. The run directory keeps the historical `all-gpu` label. Useful
+variants:
 
 ```bash
-make dashboard-up RUN=../runs/rosa-200-2026-11-10-praxis-routes/all-gpu COMPARE=   # show the all-GPU control
+make dashboard-up RUN=../runs/rosa-200-2026-11-10-praxis-routes/all-gpu COMPARE=   # show the one-pool control
 make dashboard-live ENDPOINT=http://127.0.0.1:8000/v1   # one-document live runs
 make dashboard-live HOST=0.0.0.0 LIVE_TOKEN=sesame      # token-gated, non-loopback
 make dashboard-down
@@ -615,9 +622,10 @@ before quoting any of these:
 
 - **Governance**: the hybrid config = 0 sensitive violations on every stack,
   every dataset — including 0/247 sensitive steps on the 200-document ROSA
-  run. Ungoverned controls leak: classifier-free ROSA all-gpu/gpu-small
-  247/247, round-robin 118/247 (the earlier classifier-in-path run leaked 122);
-  earlier SNO/CUAD all-gpu/gpu-small 25, round-robin 12–24. This is a
+  run. Ungoverned controls leak: classifier-free ROSA one-pool/small-first
+  (recorded as all-gpu/gpu-small) 247/247, round-robin 118/247 (the earlier
+  classifier-in-path run leaked 122); earlier SNO/CUAD one-pool/small-first
+  25, round-robin 12–24. This is a
   containment result — routing, not PII ground truth (FINDINGS §2).
 - **Quality (CUAD held-out test split, 19 unique contracts)**: 1.5B F1 0.242
   (recall 1.0, precision ~0.15 — always answers, usually wrong: the worst
@@ -656,8 +664,9 @@ before quoting any of these:
   `runs/rosa-200-2026-11-10-praxis-routes/report.md` and FINDINGS §15.10.
 - **Cost caveat**: the rebuilt hybrid arm's per-pool device time is **`n/a`**,
   not zero — the relays did not expose vLLM's in-flight gauges. Do not price
-  it from the old 0.22 GPU-s/doc figure. That figure (hybrid 0.22 vs all-gpu
-  1.013, ≈4.6×) remains valid only for the pre-rebuild 2026-11-09 graph
+  it from the old 0.22 GPU-s/doc figure. That figure (hybrid 0.22 vs one-pool
+  1.013, ≈4.6×; recorded as all-gpu) remains valid only for the pre-rebuild
+  2026-11-09 graph
   with the composite `vllm-cpu` route (FINDINGS §15.9); the classifier-in-path
   run (0.036 vs 1.974) and the GPU-termination alternative (0.508, archived at
   `cfc52cc`) are different policies, not the current record.
@@ -682,8 +691,11 @@ before quoting any of these:
 
 ## Manage the sandbox
 
-`03-create-sandbox.sh` registers the gateway as plaintext at port 8080.
-Port forward the gateway to manage your sandboxes:
+`03-create-sandbox.sh` registers the gateway as plaintext at port 8080 and
+points OpenClaw at the trace-ui general ingress, which forwards to Praxis.
+`SANDBOX_BASE_URL` overrides that URL; keep it on trace-ui, not Praxis, or the
+sandbox policy will deny the call. Port forward the gateway to manage your
+sandboxes:
 
 ```bash
 oc -n openshell-demo port-forward svc/openshell 8080:8080

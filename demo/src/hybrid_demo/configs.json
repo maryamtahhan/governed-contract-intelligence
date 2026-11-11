@@ -1,12 +1,12 @@
 {
   "schema": 1,
-  "note": "The four praxis routing policies. routes are routing-tier names, not hardware; read a run's pool map for what actually served it. Keys stay A/B/C/D because summary.arm is recorded evidence.",
+  "note": "The four praxis routing policies. routes are routing-tier names, not hardware; read a run's pool map for what actually served it. Keys stay A/B/C/D because summary.arm is recorded evidence. The old names all-gpu, gpu-small and gpu-split remain aliases; historical run directories keep their original names.",
   "configs": [
     {
       "key": "A",
-      "name": "all-gpu",
+      "name": "one-pool",
       "mode": "all-gpu",
-      "aliases": [],
+      "aliases": ["all-gpu"],
       "behavior": "Every request goes to one through-stack route: no classifier, no CPU, no failover.",
       "routes": ["vllm-gpu"],
       "manifest": "manifests/base/praxis/arm-a.yaml",
@@ -14,9 +14,9 @@
     },
     {
       "key": "B",
-      "name": "gpu-small",
+      "name": "small-first",
       "mode": "gpu-split",
-      "aliases": ["gpu-split"],
+      "aliases": ["gpu-small", "gpu-split"],
       "behavior": "Every request pins to the small route (the classifier labelled effectively everything MEDIUM, so the pin reproduces the recorded routing). Either GPU route can take over on failure.",
       "routes": ["vllm-gpu-small", "vllm-gpu"],
       "manifest": "manifests/base/praxis/arm-b.yaml",

@@ -68,8 +68,8 @@ is speed, not accuracy.
 
 **Naming.** The CLI and the new run directories use policy names. Where older
 text in this document says “arm D”, read **hybrid config**; arm A is
-**all-gpu**, arm B is **gpu-small**, and arm C is **round-robin**. Historical
-run ids keep their recorded names.
+**one-pool** (old `all-gpu`), arm B is **small-first** (old `gpu-small`), and
+arm C is **round-robin**. Historical run ids keep their recorded names.
 
 ## Results in plain language
 
@@ -584,7 +584,7 @@ summary of what these checks mean is in "Results in plain language" above.
 | V7 | Failover: kill the GPU pool mid-run | **Validated** — degradation, fail-closed, isolation, recovery, all stacks |
 | V8 | Quality harness + acceptance threshold | **Validated** — evalkit scorer vs CUAD ground truth; every arm compared to Arm A on identical fields |
 | V9 | OpenShell on OpenShift | **Validated** — Helm install, SCC and CRDs handled; runbook scripted |
-| V10 | Sandbox → gateway path | **Validated** — in-cluster plain-HTTP policy proxy; egress praxis-only, default-deny, logged |
+| V10 | Sandbox → gateway path | **Validated** — in-cluster plain-HTTP policy proxy; egress trace-ui ingress-only (Praxis reached through the ingress), default-deny, logged |
 | V11 | Observability plumbing | **Validated** — trace waterfall, arms panel, dashboard, metrics sampler, JSONL audit export |
 | V12 | Licences | **Validated** — Apache-2.0 models; CUAD CC BY 4.0 (confirmed on the Atticus site); no customer data |
 | V13 | Define the "Praxis gateway" | **Resolved** — Praxis is the gateway; four config-driven arms; the llm-d-sc classifier was carried, measured (§6.2), then removed from the request path (2026-11-05) |

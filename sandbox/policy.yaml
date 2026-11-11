@@ -11,13 +11,23 @@ landlock:
 process: {}
 
 network_policies:
-  praxis:
-    name: praxis
+  # The sandbox reaches the review entries, never Praxis or a model pool.
+  # Trace-ui writes the request row, forwards to Praxis, and gives the
+  # per-pool relays the _trace id they need to attach the model-call hop.
+  # Allowing Praxis directly would bypass the ingress trace row and leave
+  # the agent call invisible in the trace UI.
+  trace_ui:
+    name: trace-ui-ingress
     endpoints:
-      - { host: praxis.openshell-demo.svc.cluster.local, port: 80, protocol: rest, enforcement: enforce, access: read-write }
+      - { host: trace-ui.openshell-demo.svc.cluster.local, port: 8080, protocol: rest, enforcement: enforce, access: read-write }
+      - { host: trace-ui.openshell-demo.svc.cluster.local, port: 8083, protocol: rest, enforcement: enforce, access: read-write }
     binaries:
       - { path: /usr/bin/node }
       - { path: /usr/local/bin/node }
+      - { path: /usr/bin/python3 }
+      - { path: /usr/local/bin/python3 }
+      - { path: /usr/bin/curl }
+      - { path: /usr/local/bin/curl }
   github_api:
     name: github-api-readonly
     endpoints:

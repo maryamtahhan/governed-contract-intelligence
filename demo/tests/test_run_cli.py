@@ -4,11 +4,15 @@ from hybrid_demo.pipeline import review, run
 
 
 def test_config_names_and_legacy_letters_resolve():
-    assert review.resolve_config("all-gpu") == "A"
-    assert review.resolve_config("gpu-small") == "B"
+    assert review.resolve_config("one-pool") == "A"
+    assert review.resolve_config("small-first") == "B"
     assert review.resolve_config("round-robin") == "C"
     assert review.resolve_config("hybrid") == "D"
     assert review.resolve_config("D") == "D"
+    # The retired names stay as aliases for old commands and runbooks.
+    assert review.resolve_config("all-gpu") == "A"
+    assert review.resolve_config("gpu-small") == "B"
+    assert review.resolve_config("gpu-split") == "B"
 
 
 def test_direct_target_passes_the_remaining_options(monkeypatch):

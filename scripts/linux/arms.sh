@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run the four routing policies (all-gpu, gpu-small, round-robin, hybrid)
+# Run the four routing policies (one-pool, small-first, round-robin, hybrid)
 # on the same documents, then build the report. Each policy swaps the praxis
 # config, waits for readiness, scrapes pool/praxis metrics before and after,
 # and runs the review pipeline through the trace UI so every request is
@@ -15,7 +15,7 @@ DATA="${DATA:-data/synthetic}"
 CONCURRENCY="${CONCURRENCY:-12}"
 GATEWAY="${GATEWAY:-http://127.0.0.1:8080}"
 SENSITIVE="${SENSITIVE:-http://127.0.0.1:8083}"
-CONFIGS="${CONFIGS:-${ARMS:-all-gpu gpu-small round-robin hybrid}}"
+CONFIGS="${CONFIGS:-${ARMS:-one-pool small-first round-robin hybrid}}"
 
 for c in curl uv; do command -v "$c" >/dev/null || { echo "missing: $c" >&2; exit 1; }; done
 $COMPOSE version >/dev/null 2>&1 || { echo "compose not usable: $COMPOSE" >&2; exit 1; }

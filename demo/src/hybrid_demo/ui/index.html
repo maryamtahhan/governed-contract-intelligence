@@ -722,7 +722,8 @@ function renderMeta() {
   const cfg = m.config;
   const cfgLabel = cfg ? `config ${cfg}` : (m.arm === "direct" ? "direct run" : null);
   const runName = m.run && m.run !== cfg ? m.run : null;
-  const mode = m.mode && m.mode !== cfg && m.mode !== "matrix" ? m.mode : null;
+  const mode = m.mode && m.mode !== cfg && m.mode !== "matrix"
+    && !(m.config_meta && m.config_meta.mode === m.mode) ? m.mode : null;
   $("#runLine").textContent = [cfgLabel, runName, mode]
     .filter(Boolean).join(" · ");
 
