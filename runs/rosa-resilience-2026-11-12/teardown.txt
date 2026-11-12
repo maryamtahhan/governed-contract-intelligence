@@ -1,0 +1,103 @@
+== teardown start 2026-11-12T15:29:17Z
+--- nodes ---
+NAME                         STATUS   ROLES    AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                                                KERNEL-VERSION                 CONTAINER-RUNTIME
+<redacted-node-1>   Ready    worker   53m   v1.35.5   <redacted-ip-1>    <none>        Red Hat Enterprise Linux CoreOS 9.8.20260715-1 (Plow)   5.14.0-687.26.1.el9_8.x86_64   cri-o://1.35.5-3.rhaos4.22.git0adf62b.el9
+<redacted-node-2>     Ready    worker   55m   v1.35.5   <redacted-ip-2>      <none>        Red Hat Enterprise Linux CoreOS 9.8.20260715-1 (Plow)   5.14.0-687.26.1.el9_8.x86_64   cri-o://1.35.5-3.rhaos4.22.git0adf62b.el9
+--- deployments ---
+NAME                        READY   UP-TO-DATE   AVAILABLE   AGE
+cpureal-specialist          1/1     1            1           45m
+cpureal-vllm-cpu            1/1     1            1           45m
+cpureal-vllm-gpu            0/0     0            0           45m
+cpureal-vllm-gpu-approved   0/0     0            0           45m
+cpureal-vllm-gpu-small      1/1     1            1           45m
+gpumoe-vllm                 1/1     1            1           45m
+jev-cpu                     1/1     1            1           45m
+praxis                      1/1     1            1           45m
+praxis-traffic-gen          0/0     0            0           45m
+trace-ui                    1/1     1            1           45m
+--- pvcs ---
+NAME              STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+model-cache-cpu   Bound    pvc-e5518755-1cf5-404c-b6ad-48e52c711f59   150Gi      RWO            gp3-csi        <unset>                 51m
+model-cache-gpu   Bound    pvc-7c6a9bd9-31c3-4361-ae9b-e903ee8c1eb5   100Gi      RWO            gp3-csi        <unset>                 51m
+trace-ui-data     Bound    pvc-735d62e3-6063-4d5c-a518-d29b47ca4f45   1Gi        RWO            gp3-csi        <unset>                 45m
+--- pvs (cache/trace) ---
+NAME                                       CLAIM                    VOLUME                  STATUS
+pvc-086967a6-176b-4f51-bcbc-6dbfe34755e1   <redacted-volume-tag-2>   <redacted-volume-4>   Bound
+pvc-735d62e3-6063-4d5c-a518-d29b47ca4f45   trace-ui-data            <redacted-volume-3>   Bound
+pvc-7c6a9bd9-31c3-4361-ae9b-e903ee8c1eb5   model-cache-gpu          <redacted-volume-2>   Bound
+pvc-a3e2043a-c913-484a-9584-4d1634efd823   <redacted-volume-tag-2>   <redacted-volume-5>   Bound
+pvc-e5518755-1cf5-404c-b6ad-48e52c711f59   model-cache-cpu          <redacted-volume-1>   Bound
+--- machinepools ---
+ID               AUTOSCALING  REPLICAS  INSTANCE TYPE  LABELS                              TAINTS                                         AVAILABILITY ZONE  SUBNET                    SPOT INSTANCES  DISK SIZE  VERSION  AUTOREPAIR
+<redacted-gpu-pool>  No           1/1       g5.12xlarge    demo.openshell.ai/node=gpu          nvidia.com/gpu=present:NoSchedule              us-east-1a         <redacted-subnet>  No              300 GiB    4.22.6   Yes
+<redacted-cpu-pool>  No           1/1       x8i.24xlarge   demo.openshell.ai/node=cpu-infer    demo.openshell.ai/cpu-infer=true:NoSchedule    us-east-1a         <redacted-subnet>  No              300 GiB    4.22.6   Yes
+--- ec2 instances ---
+------------------------------------------------------------------
+|                        DescribeInstances                       |
++----------------------+---------------+----------+--------------+
+|  <redacted-instance-1> |  x8i.24xlarge |  running |  <redacted-ip-2>    |
+|  <redacted-instance-2> |  g5.12xlarge  |  running |  <redacted-ip-1>  |
++----------------------+---------------+----------+--------------+
+deployment.apps "cpureal-specialist" deleted from <redacted-namespace> namespace
+deployment.apps "cpureal-vllm-cpu" deleted from <redacted-namespace> namespace
+deployment.apps "cpureal-vllm-gpu" deleted from <redacted-namespace> namespace
+deployment.apps "cpureal-vllm-gpu-approved" deleted from <redacted-namespace> namespace
+deployment.apps "cpureal-vllm-gpu-small" deleted from <redacted-namespace> namespace
+deployment.apps "gpumoe-vllm" deleted from <redacted-namespace> namespace
+deployment.apps "jev-cpu" deleted from <redacted-namespace> namespace
+deployment.apps "praxis" deleted from <redacted-namespace> namespace
+deployment.apps "praxis-traffic-gen" deleted from <redacted-namespace> namespace
+deployment.apps "trace-ui" deleted from <redacted-namespace> namespace
+job.batch "seed-model-cache-cpu" deleted from <redacted-namespace> namespace
+job.batch "seed-model-cache-gpu" deleted from <redacted-namespace> namespace
+pod "hybrid-jev-1-build" deleted from <redacted-namespace> namespace
+pod "praxis-6f79fc5f97-nrhhz" deleted from <redacted-namespace> namespace
+pod "trace-ui-7c59c4fc7b-8mmhx" deleted from <redacted-namespace> namespace
+persistentvolumeclaim "model-cache-cpu" deleted from <redacted-namespace> namespace
+persistentvolumeclaim "model-cache-gpu" deleted from <redacted-namespace> namespace
+persistentvolumeclaim "trace-ui-data" deleted from <redacted-namespace> namespace
+WARN: The current version (1.2.67) is not up to date with latest rosa cli released version (1.2.68).
+WARN: It is recommended that you update to the latest version.
+INFO: Successfully deleted machine pool '<redacted-gpu-pool>' from hosted cluster '<redacted-cluster>'
+WARN: The current version (1.2.67) is not up to date with latest rosa cli released version (1.2.68).
+WARN: It is recommended that you update to the latest version.
+INFO: Successfully deleted machine pool '<redacted-cpu-pool>' from hosted cluster '<redacted-cluster>'
+--- final nodes ---
+No resources found
+--- final machinepools ---
+ID               AUTOSCALING  REPLICAS  INSTANCE TYPE  LABELS         TAINTS                         AVAILABILITY ZONE  SUBNET                    SPOT INSTANCES  DISK SIZE  VERSION  AUTOREPAIR
+--- final ec2 instances ---
+--- demo PVCs ---
+No resources found in <redacted-namespace> namespace.
+--- demo cache PVs ---
+--- cache EBS volumes ---
+
+aws: [ERROR]: An error occurred (InvalidVolume.NotFound) when calling the DescribeVolumes operation: The volume '<redacted-volume-1>' does not exist.
+--- available volumes tagged for demo caches ---
+== teardown end 2026-11-12T15:37:40Z
+--- explicit cache volume checks ---
+<redacted-volume-1> absent:
+aws: [ERROR]: An error occurred (InvalidVolume.NotFound) when calling the DescribeVolumes operation: The volume '<redacted-volume-1>' does not exist.
+<redacted-volume-2> absent:
+aws: [ERROR]: An error occurred (InvalidVolume.NotFound) when calling the DescribeVolumes operation: The volume '<redacted-volume-2>' does not exist.
+<redacted-volume-3> absent:
+aws: [ERROR]: An error occurred (InvalidVolume.NotFound) when calling the DescribeVolumes operation: The volume '<redacted-volume-3>' does not exist.
+--- any volume tagged for the demo caches ---
+--- any available volume in the cluster ---
+-----------------------------------------------
+|               DescribeVolumes               |
++------------------------+-------------+------+
+|  <redacted-volume-4> |  available  |  200 |
+|  <redacted-volume-6> |  available  |  200 |
+|  <redacted-volume-5> |  available  |  200 |
++------------------------+-------------+------+
+--- demo workload objects remaining ---
+No resources found in <redacted-namespace> namespace.
+--- related EC2 instances by nodepool tag ---
+
+--- unrelated available volumes note ---
+<redacted-volume-6>, <redacted-volume-4> and <redacted-volume-5> are
+200Gi gp3-csi-retain volumes tagged <redacted-volume-tag-1> / <redacted-volume-tag-2>
+in namespaces <redacted-tenant-ns-1>, <redacted-tenant-ns-2> and <redacted-tenant-ns-3>. They predate this
+run and are not the demo model-cache-cpu/model-cache-gpu/trace-ui-data volumes.
+They were left untouched.

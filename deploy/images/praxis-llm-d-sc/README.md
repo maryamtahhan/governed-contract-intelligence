@@ -4,9 +4,11 @@
 2026-11-12 in run `43203547413`, digest
 `sha256:3140a8dad2626ef71504546fa7901f53d9ec68ac49ed20e39919ae0af71c77c6`).
 `build.sh`, the publish workflow, base manifests and compose all name it.
-The measured image is `quay.io/mtahhan/gci-praxis:v0.9.1` (2026-11-06,
-digest `sha256:d17410449aec2f30a8d07819503ad00badaab398a4f18a1d4692961026c91c56`);
-the previous build was `v0.9.0` (2026-11-05, digest
+It is the current measured image: the 2026-11-12 real-pool ROSA matrix ran
+this digest. The previous measured image is
+`quay.io/mtahhan/gci-praxis:v0.9.1` (2026-11-06, digest
+`sha256:d17410449aec2f30a8d07819503ad00badaab398a4f18a1d4692961026c91c56`);
+the earlier build was `v0.9.0` (2026-11-05, digest
 `sha256:2187ab818efab9a8f3d1f911190d47fad960888bada7d3db8a973d3ad70ac992`),
 which the v0.9.0-era configs ran.
 
@@ -26,14 +28,22 @@ through [`policy-host/`](policy-host/) via the same build-time discovery as
 the filter. Updating the base image alone would silently remove them.
 
 > **Live validation (2026-11-12):** the published image passed
-> `--validate` with all four plugin kinds at build time, then a fresh ROSA
+> `--validate` with all four plugin kinds at build time. A fresh ROSA
 > fake-pool stack ran `scripts/cluster/smoke.sh` with **27/27 checks**,
-> including the step-key and PII-gate negative cases. The policy declarations
-> must grant `read_roles` to the step-key and audit plugins: `read_subject`
-> alone projects only the subject id, so the step gate would see an empty role
-> set and deny every keyed request. This is a policy configuration contract,
-> not an image-tag issue. No 200-document or model-quality measurement was
-> rerun; the quoted record remains the 2026-11-11 `v0.9.1` matrix.
+> including the step-key and PII-gate negative cases. The real `x8i.24xlarge`
+> + `g5.12xlarge` stack then passed the two-document smoke
+> (`runs/rosa-smoke-2026-11-12`), the live gate assertions
+> (`runs/rosa-policy-2026-11-12-real`) and the 200-document matrix
+> (`runs/rosa-200-2026-11-12-praxis-routes`): hybrid 818.87 s, 0 errors,
+> 247/247 sensitive steps approved, F1 1.000, risk 0.995, report 0.998,
+> 199/200 fully correct, 0.259 GPU-s/doc and 33.006 CPU core-s/doc. The same
+> real stack then passed the parameterized `STACK=rosa` suite **28/28**
+> (`runs/rosa-resilience-2026-11-12`), including CPU fallback/recovery and
+> shared-GPU sensitive fail-closed/recovery. The policy declarations must
+> grant `read_roles` to the step-key and audit
+> plugins: `read_subject` alone projects only the subject id, so the step
+> gate would see an empty role set and deny every keyed request. This is a
+> policy configuration contract, not an image-tag issue.
 
 The previous published build before this lineage was
 `quay.io/rmalone/praxis-ai-llm-d-sc:v0.7.0` (Praxis 0.7.0).
@@ -163,16 +173,17 @@ not main's 0.5.0 — and the RPITIT trait shape; see the build-commit messages):
 
 | Image | Digest | Consumed by the default stack |
 | --- | --- | --- |
-| `quay.io/mtahhan/gci-praxis:v0.9.2` | `sha256:3140a8dad2626ef71504546fa7901f53d9ec68ac49ed20e39919ae0af71c77c6` | current base manifests and Linux compose — registers the RC1 gate and step-key plugins; passed the 27/27 live policy smoke on 2026-11-12 |
-| `quay.io/mtahhan/gci-praxis:v0.9.1` | `sha256:d17410449aec2f30a8d07819503ad00badaab398a4f18a1d4692961026c91c56` | the 2026-11-11 measured record — audit observer + observe-only PII scanner; predates the RC1 gate and step-key plugins |
+| `quay.io/mtahhan/gci-praxis:v0.9.2` | `sha256:3140a8dad2626ef71504546fa7901f53d9ec68ac49ed20e39919ae0af71c77c6` | current base manifests and Linux compose — registers the RC1 gate and step-key plugins; measured in the 2026-11-12 real-pool matrix and passed the 27/27 fake-pool policy smoke |
+| `quay.io/mtahhan/gci-praxis:v0.9.1` | `sha256:d17410449aec2f30a8d07819503ad00badaab398a4f18a1d4692961026c91c56` | previous 2026-11-11 measured record — audit observer + observe-only PII scanner; predates the RC1 gate and step-key plugins |
 
 ## Switching the manifests
 
 The base manifests and the Linux compose stack point at `v0.9.2`, the
-published RC1 image; the measured stack ran `v0.9.1`. Applying the current
-policies against an older image fails gateway validation because the policy
-names plugin kinds that image does not register — that is the intended
-fail-closed behavior, not a config bug. The opt-in
+published RC1 image; the 2026-11-12 real-pool stack ran `v0.9.2`, and the
+2026-11-11 record ran `v0.9.1`. Applying the current policies against an
+older image fails gateway validation because the policy names plugin kinds
+that image does not register — that is the intended fail-closed behavior,
+not a config bug. The opt-in
 `deploy/openshift/praxis-0.9.0/` overlay is retired — base is the current
 stack. A live cluster still running the v0.7.0 pair rolls with
 `oc apply -k manifests` (or its own overlay); since the classifier removal

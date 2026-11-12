@@ -1,0 +1,641 @@
+{
+ "summary": {
+  "arm": "D",
+  "config": "hybrid",
+  "mode": "matrix",
+  "governance": true,
+  "docs": 2,
+  "model": null,
+  "concurrency": 2,
+  "timeout_s": 600.0,
+  "started_at": "2026-11-12T12:56:28Z",
+  "wall_s": 19.17,
+  "judgment_split": true,
+  "sensitive_judgment_split": true,
+  "steps": 13,
+  "routes": {
+   "vllm-cpu": 4,
+   "cuad-specialist": 6,
+   "vllm-gpu-approved": 2,
+   "vllm-gpu": 1
+  },
+  "labels": {},
+  "entries": {
+   "general": 6,
+   "sensitive": 7
+  },
+  "models": {
+   "Semantic-Qwen": 7,
+   "cuad-specialist": 6
+  },
+  "stage_models": {
+   "classify": {
+    "Semantic-Qwen": 2
+   },
+   "extract": {
+    "cuad-specialist": 6,
+    "Semantic-Qwen": 2
+   },
+   "risk": {
+    "Semantic-Qwen": 2
+   },
+   "report": {
+    "Semantic-Qwen": 1
+   }
+  },
+  "stage_routes": {
+   "classify": {
+    "vllm-cpu": 2
+   },
+   "extract": {
+    "cuad-specialist": 6,
+    "vllm-cpu": 2
+   },
+   "risk": {
+    "vllm-gpu-approved": 1,
+    "vllm-gpu": 1
+   },
+   "report": {
+    "vllm-gpu-approved": 1
+   }
+  },
+  "judgment_steps": 3,
+  "judgment_on_gpu": 3,
+  "fallback": 0,
+  "errors": 0,
+  "screen": {
+   "tp": 1,
+   "fp": 0,
+   "tn": 1,
+   "fn": 0
+  },
+  "sensitive_steps": 7,
+  "sensitive_on_approved": 7,
+  "sensitive_violations": 0,
+  "classifier_latency_us_avg": null,
+  "gpu_busy_ms": 0,
+  "cpu_busy_ms": 0,
+  "latency_ms_avg": 2683,
+  "latency_ms_p95": 7319,
+  "environment": "rosa",
+  "cluster": "<redacted-cluster>",
+  "git_sha": "df8925ef354f344c3e1b5ed778f7bfa90637a8d0",
+  "git_dirty": true,
+  "pools": {
+   "vllm-cpu": {
+    "model": "Qwen/Qwen3.5-35B-A3B",
+    "hardware": "cpu (ROSA x8i.24xlarge, Granite Rapids, 16 pinned cores, OMP-bind, no static CPU manager)",
+    "deployment": "cpureal-vllm-cpu"
+   },
+   "vllm-gpu": {
+    "model": "Qwen/Qwen3.5-35B-A3B",
+    "hardware": "4x A10G (ROSA g5.12xlarge, TP=4)",
+    "deployment": "gpumoe-vllm"
+   },
+   "vllm-gpu-approved": {
+    "model": "Qwen/Qwen3.5-35B-A3B",
+    "hardware": "4x A10G (ROSA g5.12xlarge, TP=4, shared with vllm-gpu)",
+    "deployment": "gpumoe-vllm (shared with vllm-gpu)",
+    "shared_with": "vllm-gpu"
+   },
+   "vllm-gpu-small": {
+    "model": "Qwen/Qwen2.5-1.5B-Instruct",
+    "hardware": "cpu (ROSA x8i.24xlarge, 12 pinned cores, OMP-bind)",
+    "deployment": "cpureal-vllm-gpu-small"
+   },
+   "cuad-specialist": {
+    "model": "CUAD RoBERTa-large QA (fine-tuned 2021 checkpoint)",
+    "hardware": "cpu (ROSA x8i.24xlarge, 2 cores, taskset-pinned; model endpoint only)",
+    "deployment": "cpureal-specialist"
+   },
+   "jev-cpu": {
+    "model": "Laya English checkpoint (Jev-compatible System One decision service)",
+    "hardware": "cpu (ROSA x8i.24xlarge, 2 cores, taskset-pinned; pre-entry screen only)",
+    "deployment": "jev-cpu"
+   }
+  },
+  "run_kind": "batch",
+  "gpu_device_active_s": 0.0,
+  "gpu_s_per_doc": 0.0
+ },
+ "records": [
+  {
+   "step": "classify",
+   "doc_id": "C-2026-0001",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 200,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Classify the following contract by type and state its initial term.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0001\nEffective Date: 2025-01-01   Initial Term: 24 months\nBetween: Northwind Analytics Ltd (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"type\": \"MSA|NDA|SOW|DPA\", \"initial_term_months\": N, \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 6313,
+   "headers": {
+    "x-demo-route": "vllm-cpu",
+    "x-praxis-trace-id": "ab279420-8272-4d54-961a-81f692c8a31e",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "type": "MSA",
+    "initial_term_months": 24,
+    "ref": "C-2026-0001"
+   }
+  },
+  {
+   "step": "classify",
+   "doc_id": "C-2026-0003",
+   "entry": "sensitive",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": true,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 200,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Classify the following contract by type and state its initial term.\n\nDATA PROCESSING AGREEMENT\nContract Reference: C-2026-0003\nEffective Date: 2026-06-01   Initial Term: 24 months\nBetween: Harbourline Software DAC (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of the State of New York.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\n(No data-protection clause is present in this Agreement.)\n\nSCHEDULE 3 - PERSONAL DATA\nData Controller contact: Aoife Lombard, aoife.lombard@lakeshore.example, +353 1 555 9785\nData Controller address: 21 Waterford Main Street, Galway\nEmployee IDs: EMP-230889, EMP-496922\n\n\nReturn JSON: {\"type\": \"MSA|NDA|SOW|DPA\", \"initial_term_months\": N, \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 6402,
+   "headers": {
+    "x-demo-route": "vllm-cpu",
+    "x-praxis-trace-id": "e8362916-4f8b-4df5-9f10-931fe5c166b2",
+    "x-demo-entry": "sensitive"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "type": "DPA",
+    "initial_term_months": 24,
+    "ref": "C-2026-0003"
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "C-2026-0001",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the termination clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0001\nEffective Date: 2025-01-01   Initial Term: 24 months\nBetween: Northwind Analytics Ltd (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"clause\": \"termination\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 1150,
+   "headers": {
+    "x-demo-route": "cuad-specialist",
+    "x-praxis-trace-id": "f2ffd35c-ec44-4ad0-bd75-9ce1a936ef40",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "cuad-specialist",
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "score": 13.4
+   }
+  },
+  {
+   "step": "extract:termination",
+   "doc_id": "C-2026-0003",
+   "entry": "sensitive",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": true,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the termination clause from the following contract. If the clause is absent, say not found.\n\nDATA PROCESSING AGREEMENT\nContract Reference: C-2026-0003\nEffective Date: 2026-06-01   Initial Term: 24 months\nBetween: Harbourline Software DAC (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of the State of New York.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\n(No data-protection clause is present in this Agreement.)\n\nSCHEDULE 3 - PERSONAL DATA\nData Controller contact: Aoife Lombard, aoife.lombard@lakeshore.example, +353 1 555 9785\nData Controller address: 21 Waterford Main Street, Galway\nEmployee IDs: EMP-230889, EMP-496922\n\n\nReturn JSON: {\"clause\": \"termination\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 1311,
+   "headers": {
+    "x-demo-route": "cuad-specialist",
+    "x-praxis-trace-id": "8e704834-69e0-4ab0-80c8-5551fc19f749",
+    "x-demo-entry": "sensitive"
+   },
+   "outcome": "served",
+   "response_model": "cuad-specialist",
+   "content": {
+    "clause": "termination",
+    "found": true,
+    "text": "Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.",
+    "score": 13.81
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "C-2026-0001",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the governing law clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0001\nEffective Date: 2025-01-01   Initial Term: 24 months\nBetween: Northwind Analytics Ltd (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"clause\": \"governing law\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 964,
+   "headers": {
+    "x-demo-route": "cuad-specialist",
+    "x-praxis-trace-id": "a9436ed2-508f-4194-ae2a-eb6ecf230beb",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "cuad-specialist",
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "This Agreement shall be governed by the laws of England and Wales.",
+    "score": 13.57
+   }
+  },
+  {
+   "step": "extract:governing_law",
+   "doc_id": "C-2026-0003",
+   "entry": "sensitive",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": true,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the governing law clause from the following contract. If the clause is absent, say not found.\n\nDATA PROCESSING AGREEMENT\nContract Reference: C-2026-0003\nEffective Date: 2026-06-01   Initial Term: 24 months\nBetween: Harbourline Software DAC (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of the State of New York.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\n(No data-protection clause is present in this Agreement.)\n\nSCHEDULE 3 - PERSONAL DATA\nData Controller contact: Aoife Lombard, aoife.lombard@lakeshore.example, +353 1 555 9785\nData Controller address: 21 Waterford Main Street, Galway\nEmployee IDs: EMP-230889, EMP-496922\n\n\nReturn JSON: {\"clause\": \"governing law\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 1238,
+   "headers": {
+    "x-demo-route": "cuad-specialist",
+    "x-praxis-trace-id": "ba9e120d-21e0-4a81-b4a1-1ac7b9b90d67",
+    "x-demo-entry": "sensitive"
+   },
+   "outcome": "served",
+   "response_model": "cuad-specialist",
+   "content": {
+    "clause": "governing law",
+    "found": true,
+    "text": "This Agreement shall be governed by the laws of the State of New York.",
+    "score": 14.48
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "C-2026-0001",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the liability cap clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0001\nEffective Date: 2025-01-01   Initial Term: 24 months\nBetween: Northwind Analytics Ltd (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"clause\": \"liability cap\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 1054,
+   "headers": {
+    "x-demo-route": "cuad-specialist",
+    "x-praxis-trace-id": "c91887a6-38e4-4d75-a4b5-02b071197137",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "cuad-specialist",
+   "content": {
+    "clause": "liability cap",
+    "found": true,
+    "text": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "score": 11.78
+   }
+  },
+  {
+   "step": "extract:liability_cap",
+   "doc_id": "C-2026-0003",
+   "entry": "sensitive",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": true,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the liability cap clause from the following contract. If the clause is absent, say not found.\n\nDATA PROCESSING AGREEMENT\nContract Reference: C-2026-0003\nEffective Date: 2026-06-01   Initial Term: 24 months\nBetween: Harbourline Software DAC (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of the State of New York.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\n(No data-protection clause is present in this Agreement.)\n\nSCHEDULE 3 - PERSONAL DATA\nData Controller contact: Aoife Lombard, aoife.lombard@lakeshore.example, +353 1 555 9785\nData Controller address: 21 Waterford Main Street, Galway\nEmployee IDs: EMP-230889, EMP-496922\n\n\nReturn JSON: {\"clause\": \"liability cap\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 1061,
+   "headers": {
+    "x-demo-route": "cuad-specialist",
+    "x-praxis-trace-id": "13a30e80-4d20-45aa-afe9-49e1bc4f15b1",
+    "x-demo-entry": "sensitive"
+   },
+   "outcome": "served",
+   "response_model": "cuad-specialist",
+   "content": {
+    "clause": "liability cap",
+    "found": true,
+    "text": "The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.",
+    "score": 11.89
+   }
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "C-2026-0003",
+   "entry": "sensitive",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": true,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the data protection clause from the following contract. If the clause is absent, say not found.\n\nDATA PROCESSING AGREEMENT\nContract Reference: C-2026-0003\nEffective Date: 2026-06-01   Initial Term: 24 months\nBetween: Harbourline Software DAC (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of the State of New York.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\n(No data-protection clause is present in this Agreement.)\n\nSCHEDULE 3 - PERSONAL DATA\nData Controller contact: Aoife Lombard, aoife.lombard@lakeshore.example, +353 1 555 9785\nData Controller address: 21 Waterford Main Street, Galway\nEmployee IDs: EMP-230889, EMP-496922\n\n\nReturn JSON: {\"clause\": \"data protection\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 3774,
+   "headers": {
+    "x-demo-route": "vllm-cpu",
+    "x-praxis-trace-id": "b37875ba-ca69-4387-9710-25feeb99c953",
+    "x-demo-entry": "sensitive"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "data protection",
+    "found": false,
+    "text": "",
+    "ref": ""
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "C-2026-0003",
+   "entry": "sensitive",
+   "true_complexity": "COMPLEX",
+   "true_sensitive": true,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Assess the overall risk of this contract given the extracted clauses below. Apply exactly this rubric: risk is high if there is no data-protection clause, or if liability is uncapped or absent; medium if termination is absent or only permitted for material breach that remains uncured; otherwise low.\nThis document contains personal data (see Schedule 3).\nExtracted clauses: {\"termination\": {\"found\": true, \"text\": \"Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\"}, \"governing_law\": {\"found\": true, \"text\": \"This Agreement shall be governed by the laws of the State of New York.\"}, \"liability_cap\": {\"found\": true, \"text\": \"The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\"}, \"data_protection\": {\"found\": false, \"text\": null}}\n\nReturn JSON: {\"risk\": \"low|medium|high\", \"reasons\": [\"...\"], \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 1929,
+   "headers": {
+    "x-demo-route": "vllm-gpu-approved",
+    "x-praxis-trace-id": "181489a7-4c81-4f54-ba85-c340ccf6c400",
+    "x-demo-entry": "sensitive"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "risk": "high",
+    "reasons": [
+     "No data-protection clause found."
+    ],
+    "ref": "data_protection"
+   }
+  },
+  {
+   "step": "extract:data_protection",
+   "doc_id": "C-2026-0001",
+   "entry": "general",
+   "true_complexity": "SIMPLE",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Extract the data protection clause from the following contract. If the clause is absent, say not found.\n\nMASTER SERVICES AGREEMENT\nContract Reference: C-2026-0001\nEffective Date: 2025-01-01   Initial Term: 24 months\nBetween: Northwind Analytics Ltd (\"Supplier\") and Lakeshore Manufacturing Ltd (\"Client\")\n\nCLAUSES\nTermination: Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\nGoverning Law: This Agreement shall be governed by the laws of England and Wales.\nLiability Cap: The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\nData Protection: The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\n\n\nReturn JSON: {\"clause\": \"data protection\", \"found\": true, \"text\": \"...\", \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 7319,
+   "headers": {
+    "x-demo-route": "vllm-cpu",
+    "x-praxis-trace-id": "3a27ba41-2655-461f-b47b-d52e78ce61a6",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "clause": "data protection",
+    "found": true,
+    "text": "The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.",
+    "ref": "C-2026-0001"
+   }
+  },
+  {
+   "step": "risk",
+   "doc_id": "C-2026-0001",
+   "entry": "general",
+   "true_complexity": "COMPLEX",
+   "true_sensitive": false,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 300,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Assess the overall risk of this contract given the extracted clauses below. Apply exactly this rubric: risk is high if there is no data-protection clause, or if liability is uncapped or absent; medium if termination is absent or only permitted for material breach that remains uncured; otherwise low.\n\nExtracted clauses: {\"termination\": {\"found\": true, \"text\": \"Either party may terminate this Agreement upon sixty (60) days' prior written notice to the other party.\"}, \"governing_law\": {\"found\": true, \"text\": \"This Agreement shall be governed by the laws of England and Wales.\"}, \"liability_cap\": {\"found\": true, \"text\": \"The Supplier's aggregate liability shall not exceed the total fees paid or payable in the twelve (12) months preceding the claim.\"}, \"data_protection\": {\"found\": true, \"text\": \"The Supplier shall process client information in accordance with applicable data protection law and shall maintain a data processing agreement.\"}}\n\nReturn JSON: {\"risk\": \"low|medium|high\", \"reasons\": [\"...\"], \"ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 1444,
+   "headers": {
+    "x-demo-route": "vllm-gpu",
+    "x-praxis-trace-id": "bc3bfc55-7c38-4a28-8356-d1e758c00c2a",
+    "x-demo-entry": "general"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "risk": "low",
+    "reasons": [
+     "Data protection clause is present.",
+     "Liability is capped at total fees paid in the preceding 12 months.",
+     "Termination is permitted with notice, not restricted to uncured material breach."
+    ],
+    "ref": "Extracted clauses analysis"
+   }
+  },
+  {
+   "step": "report",
+   "doc_id": null,
+   "entry": "sensitive",
+   "true_complexity": "REASONING",
+   "true_sensitive": true,
+   "request_body": {
+    "model": "Semantic-Qwen",
+    "temperature": 0,
+    "max_tokens": 1200,
+    "chat_template_kwargs": {
+     "enable_thinking": false
+    },
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a contract-analysis assistant for a legal-operations team. Answer with compact JSON only, no prose."
+     },
+     {
+      "role": "user",
+      "content": "Produce the cross-document risk report across all 2 documents. Synthesise and compare the per-document extractions below, derive the aggregate counts, and prove the ranking: count contracts by risk level, count governing laws, count contracts missing a data-protection clause, and name the highest-risk contract reference. If several contracts tie for highest risk, name the lexicographically smallest reference.\n\n- {\"ref\": \"C-2026-0001\", \"type\": \"MSA\", \"risk\": \"low\", \"governing_law\": \"This Agreement shall be governed by the laws of England and Wales.\", \"data_protection\": true, \"sensitive\": false}\n- {\"ref\": \"C-2026-0003\", \"type\": \"DPA\", \"risk\": \"high\", \"governing_law\": \"This Agreement shall be governed by the laws of the State of New York.\", \"data_protection\": false, \"sensitive\": true}\n\nReturn JSON: {\"documents\": N, \"risk_counts\": {...}, \"governing_law_counts\": {...}, \"missing_data_protection\": N, \"highest_risk_ref\": \"...\"}"
+     }
+    ]
+   },
+   "latency_ms": 921,
+   "headers": {
+    "x-demo-route": "vllm-gpu-approved",
+    "x-praxis-trace-id": "97b9683e-b925-4a5a-bc96-6bcbb6bfc60e",
+    "x-demo-entry": "sensitive"
+   },
+   "outcome": "served",
+   "response_model": "Semantic-Qwen",
+   "content": {
+    "documents": 2,
+    "risk_counts": {
+     "low": 1,
+     "medium": 0,
+     "high": 1
+    },
+    "governing_law_counts": {
+     "england and wales": 1,
+     "new york": 1
+    },
+    "missing_data_protection": 1,
+    "highest_risk_ref": "C-2026-0003"
+   },
+   "report_rollup": true
+  }
+ ]
+}

@@ -1,0 +1,168 @@
+
+=== config hybrid ================================================
+praxis now running config hybrid (config.yaml)
+{
+ "arm": "D",
+ "config": "hybrid",
+ "mode": "matrix",
+ "governance": true,
+ "docs": 2,
+ "model": null,
+ "concurrency": 2,
+ "timeout_s": 600.0,
+ "started_at": "2026-11-12T12:56:28Z",
+ "wall_s": 19.17,
+ "judgment_split": true,
+ "sensitive_judgment_split": true,
+ "steps": 13,
+ "routes": {
+  "vllm-cpu": 4,
+  "cuad-specialist": 6,
+  "vllm-gpu-approved": 2,
+  "vllm-gpu": 1
+ },
+ "labels": {},
+ "entries": {
+  "general": 6,
+  "sensitive": 7
+ },
+ "models": {
+  "Semantic-Qwen": 7,
+  "cuad-specialist": 6
+ },
+ "stage_models": {
+  "classify": {
+   "Semantic-Qwen": 2
+  },
+  "extract": {
+   "cuad-specialist": 6,
+   "Semantic-Qwen": 2
+  },
+  "risk": {
+   "Semantic-Qwen": 2
+  },
+  "report": {
+   "Semantic-Qwen": 1
+  }
+ },
+ "stage_routes": {
+  "classify": {
+   "vllm-cpu": 2
+  },
+  "extract": {
+   "cuad-specialist": 6,
+   "vllm-cpu": 2
+  },
+  "risk": {
+   "vllm-gpu-approved": 1,
+   "vllm-gpu": 1
+  },
+  "report": {
+   "vllm-gpu-approved": 1
+  }
+ },
+ "judgment_steps": 3,
+ "judgment_on_gpu": 3,
+ "fallback": 0,
+ "errors": 0,
+ "screen": {
+  "tp": 1,
+  "fp": 0,
+  "tn": 1,
+  "fn": 0
+ },
+ "sensitive_steps": 7,
+ "sensitive_on_approved": 7,
+ "sensitive_violations": 0,
+ "classifier_latency_us_avg": null,
+ "gpu_busy_ms": 0,
+ "cpu_busy_ms": 0,
+ "latency_ms_avg": 2683,
+ "latency_ms_p95": 7319,
+ "environment": "rosa",
+ "cluster": "<redacted-cluster>",
+ "git_sha": "df8925ef354f344c3e1b5ed778f7bfa90637a8d0",
+ "git_dirty": true,
+ "pools": {
+  "vllm-cpu": {
+   "model": "Qwen/Qwen3.5-35B-A3B",
+   "hardware": "cpu (ROSA x8i.24xlarge, Granite Rapids, 16 pinned cores, OMP-bind, no static CPU manager)",
+   "deployment": "cpureal-vllm-cpu"
+  },
+  "vllm-gpu": {
+   "model": "Qwen/Qwen3.5-35B-A3B",
+   "hardware": "4x A10G (ROSA g5.12xlarge, TP=4)",
+   "deployment": "gpumoe-vllm"
+  },
+  "vllm-gpu-approved": {
+   "model": "Qwen/Qwen3.5-35B-A3B",
+   "hardware": "4x A10G (ROSA g5.12xlarge, TP=4, shared with vllm-gpu)",
+   "deployment": "gpumoe-vllm (shared with vllm-gpu)",
+   "shared_with": "vllm-gpu"
+  },
+  "vllm-gpu-small": {
+   "model": "Qwen/Qwen2.5-1.5B-Instruct",
+   "hardware": "cpu (ROSA x8i.24xlarge, 12 pinned cores, OMP-bind)",
+   "deployment": "cpureal-vllm-gpu-small"
+  },
+  "cuad-specialist": {
+   "model": "CUAD RoBERTa-large QA (fine-tuned 2021 checkpoint)",
+   "hardware": "cpu (ROSA x8i.24xlarge, 2 cores, taskset-pinned; model endpoint only)",
+   "deployment": "cpureal-specialist"
+  },
+  "jev-cpu": {
+   "model": "Laya English checkpoint (Jev-compatible System One decision service)",
+   "hardware": "cpu (ROSA x8i.24xlarge, 2 cores, taskset-pinned; pre-entry screen only)",
+   "deployment": "jev-cpu"
+  }
+ },
+ "run_kind": "batch",
+ "gpu_device_active_s": 0.0,
+ "gpu_s_per_doc": 0.0
+}
+praxis now running config hybrid (config.yaml)
+
+=== report =========================================================
+|---|---|---|---|---|---|
+| hybrid | 0 | None | 1/0/1/0 | 1.0 | 1.0 |
+
+## Routing and governance
+
+| config | CPU-served share | sensitive steps | on approved pool | violations |
+|---|---|---|---|---|
+| hybrid | 0.769 | 7 | 7 | 0 |
+
+Violations count sensitive-document steps served by a pool outside the approved set (cuad-specialist, vllm-cpu, vllm-gpu-approved). Target for the governed arm: zero.
+
+Judgment routing (risk + report through GPU routes): config hybrid 3/3 on GPU.
+
+Termination extraction routes (CPU specialist; the canonical CUAD convenience question is asked first and a cause follow-up only when it finds nothing and the contract has cause language): config hybrid cuad-specialist=2.
+
+## Cost (device-time, then priced as a sweep - no single $ figure)
+
+- device-time source: measured (hybrid)
+
+| config | GPU-s/doc | CPU core-s/doc |
+|---|---|---|
+| hybrid | 0.0 | 69.08 |
+
+- GPU-s/doc counts each physical backend once. Routes whose pool map declares `shared_with` (or a deployment marked `(shared with ...)`) are maxed, not summed.
+- Route `vllm-gpu-small` is accounted as GPU but its pool map records CPU hardware; its GPU-s/doc is route-name accounting, not GPU device time.
+
+Dollar sweep (ILLUSTRATIVE rates; replace with the agreed cost model before any number leaves this repo):
+
+- config hybrid:
+  - cloud list (gpu $1.1/h, core $0.13/h): $0.0025/document (gpu $1.1/h, core $0.13/h)
+  - owned hardware @ 25% utilisation: $0.0023/document (gpu $3.0/h, core $0.12/h)
+  - owned hardware @ 50% utilisation: $0.0012/document (gpu $1.5/h, core $0.06/h)
+  - owned hardware @ 75% utilisation: $0.0008/document (gpu $1.0/h, core $0.04/h)
+
+## Resilience
+
+| config | fallback (degraded) | errors |
+|---|---|---|
+| hybrid | 0 | 0 |
+
+
+report: runs/rosa-smoke-2026-11-12/report.md (+ .json, .html)
+dashboard: oc -n openshell-demo port-forward svc/trace-ui 8080:8080 -> http://127.0.0.1:8080

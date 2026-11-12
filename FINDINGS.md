@@ -64,11 +64,16 @@ Sensitive-document steps served outside the approved pool set
 | **D hybrid (old matrix)** | **0 — on every stack, every dataset** | ~99% |
 
 The table is the replicated containment result from the earlier stacks. On
-the current 2026-11-11 ROSA record the hybrid share is **83.3% CPU-served**
-(`vllm-cpu` 400 + `cuad-specialist` 600 of 1,201 steps), with **247/247**
-sensitive steps approved and **0** violations; one-pool and small-first each
-record 247 expected violations, round-robin 110 (§15.11). The difference is
-the route split, not a change in the containment claim.
+the current 2026-11-12 RC1 ROSA record the hybrid share is **83.3%
+CPU-served** (the same route split), with **247/247** sensitive steps
+approved, **0** violations and **0** errors (§15.12). The three ungoverned
+controls in that RC1 matrix are no longer quality comparisons: they send
+every document through the general entry, where the PII gate denied 246
+sensitive steps and one content miss per run reached a non-approved route.
+The 2026-11-11 `v0.9.1` matrix remains the last comparable four-arm routing
+measurement (one-pool and small-first 247 violations, round-robin 110;
+§15.11). The difference is the entry boundary, not a change in the
+containment claim.
 
 Also verified on all stacks: GPU-outage degrade with a visible signal
 (trace "fell back" badge: REASONING label recorded on the failed GPU hop,
@@ -1340,10 +1345,10 @@ cost number. The all-GPU arm's device time was measured (0.043 GPU-s/doc) but
 that arm also hit 11 transport timeouts, so it is a control, not a clean
 latency baseline. Do not edit or reinterpret the recorded runs.
 
-### 15.11 2026-11-11 re-run: current record (measured)
+### 15.11 2026-11-11 re-run: previous four-arm record (measured)
 
 The rebuilt graph was re-measured after the OpenShell sandbox egress fix and
-the deterministic report rollup. The current record is
+the deterministic report rollup. The 2026-11-11 record is
 `runs/rosa-200-2026-11-11-praxis-routes` (ROSA `<redacted-cluster>`, 200
 synthetic documents, 41 sensitive, concurrency 12, `environment: rosa`,
 regex screen 41/0/159/0):
@@ -1369,7 +1374,61 @@ The 2026-11-11 direct baselines are in `runs/rosa-200-2026-11-11-direct`:
 `gpu-moe` 301.6 s (1.000, 1.000, 0.760) and `cpu-small` 1144.4 s (1.000,
 0.395, 0.212). The 1.5B CPU pool is not a judgment substitute. The 2026-11-10
 matrix remains the previous record; the 2026-11-09 matrix and rerun are
-recoverable at `25bfa4d` but are no longer in the working tree.
+recoverable at `25bfa4d` but are no longer in the working tree. This
+2026-11-11 matrix remains the last comparable four-arm routing measurement;
+the 2026-11-12 RC1 hybrid supersedes it as the quoted record.
+
+### 15.12 2026-11-12 RC1 real-pool validation: current record (measured)
+
+The RC1 image (`quay.io/mtahhan/gci-praxis:v0.9.2`, digest
+`sha256:3140a8dad2626ef71504546fa7901f53d9ec68ac49ed20e39919ae0af71c77c6`)
+was deployed on real ROSA pools after rebuilding `<redacted-cpu-pool>`
+(`x8i.24xlarge`, 96 logical CPUs in 2 NUMA nodes) and `<redacted-gpu-pool>`
+(`g5.12xlarge`, 4× A10G), both in `us-east-1a`. The CPU topology script
+reproduced the recorded bind lists (`problems: []`) and the live pods
+reported `Cpus_allowed_list` 0-15, 24-35 and 16-17 for the MoE, 1.5B and
+specialist processes.
+
+Record: `runs/rosa-200-2026-11-12-praxis-routes`, 200 synthetic documents,
+41 sensitive, concurrency 12, regex screen 41/0/159/0, entries general 954 /
+sensitive 247:
+
+| config | wall s | extract F1 | risk | report | fully correct | sensitive approved | violations | errors | GPU-s/doc |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| one-pool | 157.03 | 0.887 | 0.795 | 0.636 | 159/200 | 0/247 | 1 | 246 | 0.776 |
+| small-first | 377.68 | 0.887 | 0.345 | 0.318 | 67/200 | 0/247 | 1 | 246 | 1.856 |
+| round-robin | 725.35 | 0.887 | 0.795 | 0.636 | 159/200 | 0/247 | 1 | 246 | 1.890 |
+| **hybrid** | **818.87** | **1.000** | **0.995** | **0.998** | **199/200** | **247/247** | **0** | **0** | **0.259** |
+
+The hybrid arm records **33.006 CPU core-s/doc**, 201/201 judgment steps on
+GPU, and the same route split as 2026-11-11: `vllm-cpu` 400,
+`cuad-specialist` 600, `vllm-gpu` 159, `vllm-gpu-approved` 42. It is 12.3 s
+slower than the 2026-11-11 row, with the same containment result and a
+0.5-point risk / 0.2-point report difference on one document.
+
+The controls are RC1 boundary evidence, not quality controls. Their configs
+have no sensitive listener, so every document arrives at the general entry;
+the PII gate returned 246 `403`s per run. One sensitive step in each control
+still reached a non-approved route because its request content did not match
+a PII pattern. The quality columns above are therefore computed over the 159
+non-sensitive documents only (the sensitive rows are 0/41), and **must not**
+be compared with the 2026-11-11 controls. This is the concrete reason the
+hybrid pipeline must choose the sensitive entry; a content gate alone is not
+the containment boundary.
+
+The real-pool 2-document smoke (`runs/rosa-smoke-2026-11-12`) passed with
+2/2 documents fully correct, 7/7 sensitive steps approved, 0 violations and
+19.17 s wall. The live gate assertions in
+`runs/rosa-policy-2026-11-12-real` separately verified keyless 401, unknown
+key 401, wrong-step 403, general-entry PII 403, sensitive-entry PII 200,
+approved sensitive risk 200, step-less eval 200 and a parsed audit export.
+The real-pool resilience run (`runs/rosa-resilience-2026-11-12`) then passed
+the parameterized `STACK=rosa` smoke **28/28**, including CPU-to-GPU fallback
+with a failed-hop trace and recovery, shared-GPU sensitive fail-closed
+(502, no spill), governance (7/7 sensitive-entry traces on approved pools),
+audit export, and the policy gate. The two GPU Service names select the same
+`gpumoe-vllm` Deployment, so an approved-only outage is not isolatable on
+this stack; the test asserts the shared-backend failure instead.
 
 ## 16. Open-source reuse audit and adapters (2026-11-05)
 
@@ -1813,15 +1872,15 @@ option for now.
 
 ## 18. RC1 gateway hardening: PII gate and step-key binding
 
-This section records the RC1 implementation, local tests, and functional
-live policy evidence. It is not a new ROSA measurement. The quoted
-200-document record remains §15.11 until a real-pool rebuild passes the
-negative smoke and a fresh matrix is recorded in a new run directory.
+This section records the RC1 implementation, local tests, real-pool
+validation, and the functional fake-pool smoke. The quoted 200-document
+record is now §15.12; §15.11 remains the previous four-arm matrix.
 
 Two PPE plugins were added to the policy host in RC1. Image `v0.9.2`
 (published 2026-11-12, run `43203547413`, digest
 `sha256:3140a8dad2626ef71504546fa7901f53d9ec68ac49ed20e39919ae0af71c77c6`)
-registers both; the measured `v0.9.1` image predates them.
+registers both; it is the image behind the 2026-11-12 real-pool record. The
+2026-11-11 record ran `v0.9.1`, which predates them.
 
 - `validator/gci-step-key` (`mode: sequential`) reads the authenticated
   subject and `X-Demo-Step` and requires a `step:<stage>` role matching the
@@ -1865,8 +1924,26 @@ Local and live evidence:
   PII gate, sensitive-pool containment, fail-closed pool loss, and the
   step-less eval request. No model-quality or cost number comes from this
   fake-pool stack.
+- Real-pool ROSA validation (2026-11-12), after rebuilding the `x8i.24xlarge`
+  and `g5.12xlarge` machine pools in `us-east-1a`:
+  `runs/rosa-smoke-2026-11-12` passed the two-document hybrid smoke (2/2
+  correct, 7/7 sensitive steps approved, 0 violations, 19.17 s);
+  `runs/rosa-policy-2026-11-12-real` verified keyless 401, unknown key 401,
+  wrong-step 403, general-entry PII 403, sensitive-entry PII 200, approved
+  sensitive risk 200, step-less eval 200 and a parsed audit export;
+  `runs/rosa-resilience-2026-11-12` ran the parameterized `STACK=rosa` smoke
+  **28/28** (CPU fallback/recovery, shared-GPU sensitive fail-closed with
+  502/no spill, governance, audit and policy gate); and
+  `runs/rosa-200-2026-11-12-praxis-routes` recorded the 200-document matrix.
+- The real-pool hybrid row is **818.87 s**, extract F1 **1.000**, risk
+  **0.995**, report **0.998**, **199/200** fully correct, **247/247**
+  sensitive steps approved, **0** violations, **0** errors, **0.259
+  GPU-s/doc** and **33.006 CPU core-s/doc** (§15.12). This is the current
+  quoted RC1 record.
 
-Open verification: rebuild the **real-pool** ROSA stack with a renewed OCM
-login and GPU/x8i capacity, execute `scripts/cluster/smoke.sh` (or the Linux
-twin), then run the 200-document matrix in a **new** run directory; do not
-overwrite `2026-11-11`. The quoted measurement is still `v0.9.1`.
+The real-pool controls are not comparable quality rows. All three send every
+document to the general entry, where the PII gate denied 246 sensitive steps
+and one content miss per run reached a non-approved route. That is the
+boundary the hybrid's sensitive entry exists to enforce; the 2026-11-11
+`v0.9.1` matrix remains the last comparable four-arm routing measurement.
+The earlier fake-all smoke remains functional evidence only.

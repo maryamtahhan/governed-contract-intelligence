@@ -1,0 +1,11 @@
+# CPU pinning observed inside the live pods
+== cpureal-vllm-cpu
+Cpus_allowed_list:	0-15
+== cpureal-vllm-gpu-small
+Cpus_allowed_list:	24-35
+== cpureal-specialist
+Cpus_allowed_list:	16-17
+
+# GPU allocatable on the g5 node
+NAME                         TYPE          GPU
+<redacted-node-6>   g5.12xlarge   4

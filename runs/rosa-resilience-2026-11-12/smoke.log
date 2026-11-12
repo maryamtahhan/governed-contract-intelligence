@@ -1,0 +1,62 @@
+Thu Nov 12 15:08:22 UTC 2026
+STACK=rosa NS=<redacted-namespace>
+praxis image: quay.io/mtahhan/gci-praxis:v0.9.2
+NAME                         STATUS   ROLES    AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                                                KERNEL-VERSION                 CONTAINER-RUNTIME
+<redacted-node-1>   Ready    worker   32m   v1.35.5   <redacted-ip-1>    <none>        Red Hat Enterprise Linux CoreOS 9.8.20260715-1 (Plow)   5.14.0-687.26.1.el9_8.x86_64   cri-o://1.35.5-3.rhaos4.22.git0adf62b.el9
+<redacted-node-2>     Ready    worker   34m   v1.35.5   <redacted-ip-2>      <none>        Red Hat Enterprise Linux CoreOS 9.8.20260715-1 (Plow)   5.14.0-687.26.1.el9_8.x86_64   cri-o://1.35.5-3.rhaos4.22.git0adf62b.el9
+<redacted-node-1> allocatable-gpu=4
+
+waiting for model pools ok
+warming pools specialist cpu gpu approved done
+== 1. gateway up
+ok 1 - gateway serves /v1/models (keyed probe; keyless fails closed)
+== 2. general entry: classify stays on the CPU pool
+ok 2 - general classify -> vllm-cpu
+== 3. general entry: CUAD extraction routes to the specialist
+ok 3 - extract:termination -> cuad-specialist
+== 4. general entry: data-protection extraction routes to the CPU MoE
+ok 4 - extract:data_protection -> vllm-cpu
+== 5. general entry: judgment routes to the GPU pool
+ok 5 - general risk -> vllm-gpu
+== 6. sensitive entry: CPU work stays approved
+ok 6 - sensitive classify -> vllm-cpu
+== 7. sensitive entry: judgment routes to the approved GPU pool
+ok 7 - sensitive risk -> vllm-gpu-approved
+== 8. pull the plug on the CPU pool: general degrades visibly
+ok 8 - general classify degraded to vllm-gpu (trace: failed CPU hop, fell-back badge)
+ok 9 - risk traffic unaffected by the CPU outage
+== 9. recovery
+waiting for the CPU pool to reload.................................... up
+ok 10 - classify back on vllm-cpu, fallback cleared
+== 10. kill the approved pool: sensitive judgment fails closed
+ok 11 - sensitive risk failed closed (status 502, never spilled)
+ok 12 - general risk failed closed with the shared backend (status 502)
+ok 13 - sensitive CPU work unaffected (approved GPU only needed for judgment)
+waiting for the GPU pool to reload........................................................................................................................................................... up
+ok 14 - sensitive risk recovered on vllm-gpu-approved
+== 11. governance: sensitive-entry traces never left the approved set
+    7 sensitive-entry traces, all on approved pools
+ok 15 - governance claim verified from the trace UI's own records
+== 12. audit export
+    22 traces exported as JSONL
+ok 16 - audit.jsonl exports one JSON object per trace
+== 13. policy layer: the gateway fails closed without a valid key
+ok 17 - keyless request denied (status 401)
+ok 18 - unknown key denied (status 401)
+ok 19 - known key still served
+== 13b. policy layer: a valid key cannot claim another step
+ok 20 - classify key claiming risk denied (status 403)
+ok 21 - sensitive entry still accepts the matching step key
+== 13c. policy layer: the general entry denies PII
+ok 22 - PII-positive general request denied with 403
+ok 23 - clean general request still served
+== 13d. policy layer: the eval key may omit the step
+ok 24 - step-less eval identity accepted (no review-stage claim)
+== 14. policy layer: request records and the PII scanner
+ok 25 - 20 policy-layer request records emitted
+ok 26 - 6 observe + 15 gate scanner lines emitted
+ok 27 - PII gate recorded the general-entry denial
+ok 28 - scanner observed PII content in the sensitive prompts
+
+ALL 28 CHECKS PASSED
+dashboard: oc -n <redacted-namespace> port-forward svc/trace-ui 8080:8080 -> http://127.0.0.1:8080

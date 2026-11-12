@@ -1,0 +1,14 @@
+# Real ROSA RC1 gate assertions - 2026-11-12T12:57:14Z
+
+keyed /v1/models status=200 route=none violation=none
+keyless general status=401 route=none violation=auth.missing_credential
+unknown key status=401 route=none violation=auth.key_unknown
+classify key claiming risk status=403 route=none violation=step_key_mismatch
+PII on general status=403 route=none violation=pii_detected
+clean general classify status=200 route=vllm-cpu violation=none
+sensitive PII classify status=200 route=vllm-cpu violation=none
+sensitive risk status=200 route=vllm-gpu-approved violation=none
+step-less eval status=200 route=vllm-cpu violation=none
+
+--- audit export ---
+33 audit records parsed

@@ -1,0 +1,103 @@
+collecting topology from node <redacted-node-5> ...
+
+--- proposal ---
+  cpureal-vllm-cpu             16 cores on NUMA node 0: VLLM_CPU_OMP_THREADS_BIND=0-15
+  cpureal-vllm-gpu-small       12 cores on NUMA node 1: VLLM_CPU_OMP_THREADS_BIND=24-35
+  specialist                    2 cores on NUMA node 0: VLLM_CPU_OMP_THREADS_BIND=16-17
+  housekeeping (unpinned thread-0 per node): {'node0': 6, 'node1': 12}
+{
+  "node": {
+    "physical_cores": 48,
+    "logical": 96,
+    "smt": 2,
+    "numa_nodes": {
+      "0": 24,
+      "1": 24
+    },
+    "numa_thread0": {
+      "0": "0-23",
+      "1": "24-47"
+    },
+    "amx": [
+      "amx_bf16",
+      "amx_int8",
+      "amx_tile"
+    ],
+    "avx512": [
+      "avx512_bf16",
+      "avx512_bitalg",
+      "avx512_fp16",
+      "avx512_vbmi2",
+      "avx512_vnni",
+      "avx512_vpopcntdq",
+      "avx512bw",
+      "avx512cd",
+      "avx512dq",
+      "avx512f",
+      "avx512ifma",
+      "avx512vbmi",
+      "avx512vl"
+    ]
+  },
+  "layout": [
+    {
+      "name": "cpureal-vllm-cpu",
+      "cores": 16,
+      "numa_node": 0,
+      "bind": "0-15",
+      "thread0_ids": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ]
+    },
+    {
+      "name": "cpureal-vllm-gpu-small",
+      "cores": 12,
+      "numa_node": 1,
+      "bind": "24-35",
+      "thread0_ids": [
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35
+      ]
+    },
+    {
+      "name": "specialist",
+      "cores": 2,
+      "numa_node": 0,
+      "bind": "16-17",
+      "thread0_ids": [
+        16,
+        17
+      ]
+    }
+  ],
+  "free_per_node": {
+    "0": 6,
+    "1": 12
+  },
+  "problems": []
+}

@@ -1,0 +1,515 @@
+
+=== config one-pool ================================================
+praxis now running config one-pool (arm-a.yaml)
+{
+ "arm": "A",
+ "config": "one-pool",
+ "mode": "all-gpu",
+ "governance": false,
+ "docs": 200,
+ "model": null,
+ "concurrency": 12,
+ "timeout_s": 600.0,
+ "started_at": "2026-11-12T12:57:58Z",
+ "wall_s": 157.03,
+ "judgment_split": false,
+ "sensitive_judgment_split": false,
+ "steps": 1201,
+ "routes": {
+  "vllm-gpu": 955
+ },
+ "labels": {},
+ "entries": {
+  "general": 1201
+ },
+ "models": {
+  "Semantic-Qwen": 955
+ },
+ "stage_models": {
+  "classify": {
+   "Semantic-Qwen": 159
+  },
+  "extract": {
+   "Semantic-Qwen": 636
+  },
+  "risk": {
+   "Semantic-Qwen": 159
+  },
+  "report": {
+   "Semantic-Qwen": 1
+  }
+ },
+ "stage_routes": {
+  "classify": {
+   "vllm-gpu": 159
+  },
+  "extract": {
+   "vllm-gpu": 636
+  },
+  "risk": {
+   "vllm-gpu": 159
+  },
+  "report": {
+   "vllm-gpu": 1
+  }
+ },
+ "judgment_steps": 160,
+ "judgment_on_gpu": 160,
+ "fallback": 0,
+ "errors": 246,
+ "screen": {
+  "tp": 41,
+  "fp": 0,
+  "tn": 159,
+  "fn": 0
+ },
+ "sensitive_steps": 247,
+ "sensitive_on_approved": 0,
+ "sensitive_violations": 1,
+ "classifier_latency_us_avg": null,
+ "gpu_busy_ms": 0,
+ "cpu_busy_ms": 0,
+ "latency_ms_avg": 22910,
+ "latency_ms_p95": 27689,
+ "environment": "rosa",
+ "cluster": "<redacted-cluster>",
+ "git_sha": "df8925ef354f344c3e1b5ed778f7bfa90637a8d0",
+ "git_dirty": true,
+ "pools": {
+  "vllm-cpu": {
+   "model": "Qwen/Qwen3.5-35B-A3B",
+   "hardware": "cpu (ROSA x8i.24xlarge, Granite Rapids, 16 pinned cores, OMP-bind, no static CPU manager)",
+   "deployment": "cpureal-vllm-cpu"
+  },
+  "vllm-gpu": {
+   "model": "Qwen/Qwen3.5-35B-A3B",
+   "hardware": "4x A10G (ROSA g5.12xlarge, TP=4)",
+   "deployment": "gpumoe-vllm"
+  },
+  "vllm-gpu-approved": {
+   "model": "Qwen/Qwen3.5-35B-A3B",
+   "hardware": "4x A10G (ROSA g5.12xlarge, TP=4, shared with vllm-gpu)",
+   "deployment": "gpumoe-vllm (shared with vllm-gpu)",
+   "shared_with": "vllm-gpu"
+  },
+  "vllm-gpu-small": {
+   "model": "Qwen/Qwen2.5-1.5B-Instruct",
+   "hardware": "cpu (ROSA x8i.24xlarge, 12 pinned cores, OMP-bind)",
+   "deployment": "cpureal-vllm-gpu-small"
+  },
+  "cuad-specialist": {
+   "model": "CUAD RoBERTa-large QA (fine-tuned 2021 checkpoint)",
+   "hardware": "cpu (ROSA x8i.24xlarge, 2 cores, taskset-pinned; model endpoint only)",
+   "deployment": "cpureal-specialist"
+  },
+  "jev-cpu": {
+   "model": "Laya English checkpoint (Jev-compatible System One decision service)",
+   "hardware": "cpu (ROSA x8i.24xlarge, 2 cores, taskset-pinned; pre-entry screen only)",
+   "deployment": "jev-cpu"
+  }
+ },
+ "run_kind": "batch",
+ "gpu_device_active_s": 155.17,
+ "gpu_s_per_doc": 0.776
+}
+
+=== config small-first ================================================
+praxis now running config small-first (arm-b.yaml)
+{
+ "arm": "B",
+ "config": "small-first",
+ "mode": "gpu-split",
+ "governance": false,
+ "docs": 200,
+ "model": null,
+ "concurrency": 12,
+ "timeout_s": 600.0,
+ "started_at": "2026-11-12T13:00:55Z",
+ "wall_s": 377.68,
+ "judgment_split": false,
+ "sensitive_judgment_split": false,
+ "steps": 1201,
+ "routes": {
+  "vllm-gpu-small": 955
+ },
+ "labels": {},
+ "entries": {
+  "general": 1201
+ },
+ "models": {
+  "Semantic-Qwen": 955
+ },
+ "stage_models": {
+  "classify": {
+   "Semantic-Qwen": 159
+  },
+  "extract": {
+   "Semantic-Qwen": 636
+  },
+  "risk": {
+   "Semantic-Qwen": 159
+  },
+  "report": {
+   "Semantic-Qwen": 1
+  }
+ },
+ "stage_routes": {
+  "classify": {
+   "vllm-gpu-small": 159
+  },
+  "extract": {
+   "vllm-gpu-small": 636
+  },
+  "risk": {
+   "vllm-gpu-small": 159
+  },
+  "report": {
+   "vllm-gpu-small": 1
+  }
+ },
+ "judgment_steps": 160,
+ "judgment_on_gpu": 160,
+ "fallback": 0,
+ "errors": 246,
+ "screen": {
+  "tp": 41,
+  "fp": 0,
+  "tn": 159,
+  "fn": 0
+ },
+ "sensitive_steps": 247,
+ "sensitive_on_approved": 0,
+ "sensitive_violations": 1,
+ "classifier_latency_us_avg": null,
+ "gpu_busy_ms": 0,
+ "cpu_busy_ms": 0,
+ "latency_ms_avg": 53912,
+ "latency_ms_p95": 66270,
+ "environment": "rosa",
+ "cluster": "<redacted-cluster>",
+ "git_sha": "df8925ef354f344c3e1b5ed778f7bfa90637a8d0",
+ "git_dirty": true,
+ "pools": {
+  "vllm-cpu": {
+   "model": "Qwen/Qwen3.5-35B-A3B",
+   "hardware": "cpu (ROSA x8i.24xlarge, Granite Rapids, 16 pinned cores, OMP-bind, no static CPU manager)",
+   "deployment": "cpureal-vllm-cpu"
+  },
+  "vllm-gpu": {
+   "model": "Qwen/Qwen3.5-35B-A3B",
+   "hardware": "4x A10G (ROSA g5.12xlarge, TP=4)",
+   "deployment": "gpumoe-vllm"
+  },
+  "vllm-gpu-approved": {
+   "model": "Qwen/Qwen3.5-35B-A3B",
+   "hardware": "4x A10G (ROSA g5.12xlarge, TP=4, shared with vllm-gpu)",
+   "deployment": "gpumoe-vllm (shared with vllm-gpu)",
+   "shared_with": "vllm-gpu"
+  },
+  "vllm-gpu-small": {
+   "model": "Qwen/Qwen2.5-1.5B-Instruct",
+   "hardware": "cpu (ROSA x8i.24xlarge, 12 pinned cores, OMP-bind)",
+   "deployment": "cpureal-vllm-gpu-small"
+  },
+  "cuad-specialist": {
+   "model": "CUAD RoBERTa-large QA (fine-tuned 2021 checkpoint)",
+   "hardware": "cpu (ROSA x8i.24xlarge, 2 cores, taskset-pinned; model endpoint only)",
+   "deployment": "cpureal-specialist"
+  },
+  "jev-cpu": {
+   "model": "Laya English checkpoint (Jev-compatible System One decision service)",
+   "hardware": "cpu (ROSA x8i.24xlarge, 2 cores, taskset-pinned; pre-entry screen only)",
+   "deployment": "jev-cpu"
+  }
+ },
+ "run_kind": "batch",
+ "gpu_device_active_s": 371.14,
+ "gpu_s_per_doc": 1.856
+}
+
+=== config round-robin ================================================
+praxis now running config round-robin (arm-c.yaml)
+{
+ "arm": "C",
+ "config": "round-robin",
+ "mode": "round-robin",
+ "governance": false,
+ "docs": 200,
+ "model": null,
+ "concurrency": 12,
+ "timeout_s": 600.0,
+ "started_at": "2026-11-12T13:07:28Z",
+ "wall_s": 725.35,
+ "judgment_split": false,
+ "sensitive_judgment_split": false,
+ "steps": 1201,
+ "routes": {
+  "vllm-gpu": 478,
+  "vllm-cpu": 477
+ },
+ "labels": {},
+ "entries": {
+  "general": 1201
+ },
+ "models": {
+  "Semantic-Qwen": 955
+ },
+ "stage_models": {
+  "classify": {
+   "Semantic-Qwen": 159
+  },
+  "extract": {
+   "Semantic-Qwen": 636
+  },
+  "risk": {
+   "Semantic-Qwen": 159
+  },
+  "report": {
+   "Semantic-Qwen": 1
+  }
+ },
+ "stage_routes": {
+  "classify": {
+   "vllm-gpu": 80,
+   "vllm-cpu": 79
+  },
+  "extract": {
+   "vllm-gpu": 313,
+   "vllm-cpu": 323
+  },
+  "risk": {
+   "vllm-gpu": 84,
+   "vllm-cpu": 75
+  },
+  "report": {
+   "vllm-gpu": 1
+  }
+ },
+ "judgment_steps": 160,
+ "judgment_on_gpu": 85,
+ "fallback": 0,
+ "errors": 246,
+ "screen": {
+  "tp": 41,
+  "fp": 0,
+  "tn": 159,
+  "fn": 0
+ },
+ "sensitive_steps": 247,
+ "sensitive_on_approved": 0,
+ "sensitive_violations": 1,
+ "classifier_latency_us_avg": null,
+ "gpu_busy_ms": 0,
+ "cpu_busy_ms": 0,
+ "latency_ms_avg": 106407,
+ "latency_ms_p95": 142581,
+ "environment": "rosa",
+ "cluster": "<redacted-cluster>",
+ "git_sha": "df8925ef354f344c3e1b5ed778f7bfa90637a8d0",
+ "git_dirty": true,
+ "pools": {
+  "vllm-cpu": {
+   "model": "Qwen/Qwen3.5-35B-A3B",
+   "hardware": "cpu (ROSA x8i.24xlarge, Granite Rapids, 16 pinned cores, OMP-bind, no static CPU manager)",
+   "deployment": "cpureal-vllm-cpu"
+  },
+  "vllm-gpu": {
+   "model": "Qwen/Qwen3.5-35B-A3B",
+   "hardware": "4x A10G (ROSA g5.12xlarge, TP=4)",
+   "deployment": "gpumoe-vllm"
+  },
+  "vllm-gpu-approved": {
+   "model": "Qwen/Qwen3.5-35B-A3B",
+   "hardware": "4x A10G (ROSA g5.12xlarge, TP=4, shared with vllm-gpu)",
+   "deployment": "gpumoe-vllm (shared with vllm-gpu)",
+   "shared_with": "vllm-gpu"
+  },
+  "vllm-gpu-small": {
+   "model": "Qwen/Qwen2.5-1.5B-Instruct",
+   "hardware": "cpu (ROSA x8i.24xlarge, 12 pinned cores, OMP-bind)",
+   "deployment": "cpureal-vllm-gpu-small"
+  },
+  "cuad-specialist": {
+   "model": "CUAD RoBERTa-large QA (fine-tuned 2021 checkpoint)",
+   "hardware": "cpu (ROSA x8i.24xlarge, 2 cores, taskset-pinned; model endpoint only)",
+   "deployment": "cpureal-specialist"
+  },
+  "jev-cpu": {
+   "model": "Laya English checkpoint (Jev-compatible System One decision service)",
+   "hardware": "cpu (ROSA x8i.24xlarge, 2 cores, taskset-pinned; pre-entry screen only)",
+   "deployment": "jev-cpu"
+  }
+ },
+ "run_kind": "batch",
+ "gpu_device_active_s": 378.08,
+ "gpu_s_per_doc": 1.89
+}
+
+=== config hybrid ================================================
+praxis now running config hybrid (config.yaml)
+E1112 13:20:11.879340   15650 portforward.go:391] "Unhandled Error" err="error copying from remote stream to local connection: readfrom tcp4 127.0.0.1:18081->127.0.0.1:61139: write tcp4 127.0.0.1:18081->127.0.0.1:61139: write: broken pipe"
+{
+ "arm": "D",
+ "config": "hybrid",
+ "mode": "matrix",
+ "governance": true,
+ "docs": 200,
+ "model": null,
+ "concurrency": 12,
+ "timeout_s": 600.0,
+ "started_at": "2026-11-12T13:19:51Z",
+ "wall_s": 818.87,
+ "judgment_split": true,
+ "sensitive_judgment_split": true,
+ "steps": 1201,
+ "routes": {
+  "vllm-cpu": 400,
+  "cuad-specialist": 600,
+  "vllm-gpu": 159,
+  "vllm-gpu-approved": 42
+ },
+ "labels": {},
+ "entries": {
+  "general": 954,
+  "sensitive": 247
+ },
+ "models": {
+  "Semantic-Qwen": 601,
+  "cuad-specialist": 600
+ },
+ "stage_models": {
+  "classify": {
+   "Semantic-Qwen": 200
+  },
+  "extract": {
+   "cuad-specialist": 600,
+   "Semantic-Qwen": 200
+  },
+  "risk": {
+   "Semantic-Qwen": 200
+  },
+  "report": {
+   "Semantic-Qwen": 1
+  }
+ },
+ "stage_routes": {
+  "classify": {
+   "vllm-cpu": 200
+  },
+  "extract": {
+   "cuad-specialist": 600,
+   "vllm-cpu": 200
+  },
+  "risk": {
+   "vllm-gpu": 159,
+   "vllm-gpu-approved": 41
+  },
+  "report": {
+   "vllm-gpu-approved": 1
+  }
+ },
+ "judgment_steps": 201,
+ "judgment_on_gpu": 201,
+ "fallback": 0,
+ "errors": 0,
+ "screen": {
+  "tp": 41,
+  "fp": 0,
+  "tn": 159,
+  "fn": 0
+ },
+ "sensitive_steps": 247,
+ "sensitive_on_approved": 247,
+ "sensitive_violations": 0,
+ "classifier_latency_us_avg": null,
+ "gpu_busy_ms": 0,
+ "cpu_busy_ms": 0,
+ "latency_ms_avg": 132619,
+ "latency_ms_p95": 265008,
+ "environment": "rosa",
+ "cluster": "<redacted-cluster>",
+ "git_sha": "df8925ef354f344c3e1b5ed778f7bfa90637a8d0",
+ "git_dirty": true,
+ "pools": {
+  "vllm-cpu": {
+   "model": "Qwen/Qwen3.5-35B-A3B",
+   "hardware": "cpu (ROSA x8i.24xlarge, Granite Rapids, 16 pinned cores, OMP-bind, no static CPU manager)",
+   "deployment": "cpureal-vllm-cpu"
+  },
+  "vllm-gpu": {
+   "model": "Qwen/Qwen3.5-35B-A3B",
+   "hardware": "4x A10G (ROSA g5.12xlarge, TP=4)",
+   "deployment": "gpumoe-vllm"
+  },
+  "vllm-gpu-approved": {
+   "model": "Qwen/Qwen3.5-35B-A3B",
+   "hardware": "4x A10G (ROSA g5.12xlarge, TP=4, shared with vllm-gpu)",
+   "deployment": "gpumoe-vllm (shared with vllm-gpu)",
+   "shared_with": "vllm-gpu"
+  },
+  "vllm-gpu-small": {
+   "model": "Qwen/Qwen2.5-1.5B-Instruct",
+   "hardware": "cpu (ROSA x8i.24xlarge, 12 pinned cores, OMP-bind)",
+   "deployment": "cpureal-vllm-gpu-small"
+  },
+  "cuad-specialist": {
+   "model": "CUAD RoBERTa-large QA (fine-tuned 2021 checkpoint)",
+   "hardware": "cpu (ROSA x8i.24xlarge, 2 cores, taskset-pinned; model endpoint only)",
+   "deployment": "cpureal-specialist"
+  },
+  "jev-cpu": {
+   "model": "Laya English checkpoint (Jev-compatible System One decision service)",
+   "hardware": "cpu (ROSA x8i.24xlarge, 2 cores, taskset-pinned; pre-entry screen only)",
+   "deployment": "jev-cpu"
+  }
+ },
+ "run_kind": "batch",
+ "gpu_device_active_s": 51.89,
+ "gpu_s_per_doc": 0.259
+}
+praxis now running config hybrid (config.yaml)
+
+=== report =========================================================
+| one-pool | 0.776 | — |
+| small-first | 1.856 | — |
+| round-robin | 1.89 | 28.874 |
+| hybrid | 0.259 | 33.006 |
+
+- GPU-s/doc counts each physical backend once. Routes whose pool map declares `shared_with` (or a deployment marked `(shared with ...)`) are maxed, not summed.
+- Route `vllm-gpu-small` is accounted as GPU but its pool map records CPU hardware; its GPU-s/doc is route-name accounting, not GPU device time.
+
+Dollar sweep (ILLUSTRATIVE rates; replace with the agreed cost model before any number leaves this repo):
+
+- config one-pool:
+  - cloud list (gpu $1.1/h, core $0.13/h): $0.0002/document (gpu $1.1/h, core $0.13/h)
+  - owned hardware @ 25% utilisation: $0.0006/document (gpu $3.0/h, core $0.12/h)
+  - owned hardware @ 50% utilisation: $0.0003/document (gpu $1.5/h, core $0.06/h)
+  - owned hardware @ 75% utilisation: $0.0002/document (gpu $1.0/h, core $0.04/h)
+- config small-first:
+  - cloud list (gpu $1.1/h, core $0.13/h): $0.0006/document (gpu $1.1/h, core $0.13/h)
+  - owned hardware @ 25% utilisation: $0.0015/document (gpu $3.0/h, core $0.12/h)
+  - owned hardware @ 50% utilisation: $0.0008/document (gpu $1.5/h, core $0.06/h)
+  - owned hardware @ 75% utilisation: $0.0005/document (gpu $1.0/h, core $0.04/h)
+- config round-robin:
+  - cloud list (gpu $1.1/h, core $0.13/h): $0.0016/document (gpu $1.1/h, core $0.13/h)
+  - owned hardware @ 25% utilisation: $0.0025/document (gpu $3.0/h, core $0.12/h)
+  - owned hardware @ 50% utilisation: $0.0013/document (gpu $1.5/h, core $0.06/h)
+  - owned hardware @ 75% utilisation: $0.0008/document (gpu $1.0/h, core $0.04/h)
+- config hybrid:
+  - cloud list (gpu $1.1/h, core $0.13/h): $0.0013/document (gpu $1.1/h, core $0.13/h)
+  - owned hardware @ 25% utilisation: $0.0013/document (gpu $3.0/h, core $0.12/h)
+  - owned hardware @ 50% utilisation: $0.0007/document (gpu $1.5/h, core $0.06/h)
+  - owned hardware @ 75% utilisation: $0.0004/document (gpu $1.0/h, core $0.04/h)
+
+## Resilience
+
+| config | fallback (degraded) | errors |
+|---|---|---|
+| one-pool | 0 | 246 |
+| small-first | 0 | 246 |
+| round-robin | 0 | 246 |
+| hybrid | 0 | 0 |
+
+
+report: runs/rosa-200-2026-11-12-praxis-routes/report.md (+ .json, .html)
+dashboard: oc -n openshell-demo port-forward svc/trace-ui 8080:8080 -> http://127.0.0.1:8080

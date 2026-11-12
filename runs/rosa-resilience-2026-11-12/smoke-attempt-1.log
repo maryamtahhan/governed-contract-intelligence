@@ -1,0 +1,16 @@
+Thu Nov 12 15:06:13 UTC 2026
+STACK=rosa NS=<redacted-namespace>
+praxis image: quay.io/mtahhan/gci-praxis:v0.9.2
+NAME                         STATUS   ROLES    AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                                                KERNEL-VERSION                 CONTAINER-RUNTIME
+<redacted-node-1>   Ready    worker   30m   v1.35.5   <redacted-ip-1>    <none>        Red Hat Enterprise Linux CoreOS 9.8.20260715-1 (Plow)   5.14.0-687.26.1.el9_8.x86_64   cri-o://1.35.5-3.rhaos4.22.git0adf62b.el9
+<redacted-node-2>     Ready    worker   32m   v1.35.5   <redacted-ip-2>      <none>        Red Hat Enterprise Linux CoreOS 9.8.20260715-1 (Plow)   5.14.0-687.26.1.el9_8.x86_64   cri-o://1.35.5-3.rhaos4.22.git0adf62b.el9
+<redacted-node-1> allocatable-gpu=4
+
+waiting for model pools ok
+warming pools specialist cpu gpu approved done
+== 1. gateway up
+ok 1 - gateway serves /v1/models (keyed probe; keyless fails closed)
+== 2. general entry: classify stays on the CPU pool
+ok 2 - general classify -> vllm-cpu
+== 3. general entry: CUAD extraction routes to the specialist
+FAIL: termination status 400

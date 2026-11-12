@@ -57,10 +57,12 @@ different things**, and the same word can appear in more than one layer.
    `deploy/openshift/rosa/pools.json`. Do not infer hardware from a route
    name.
 5. **The current run directory is
-   `runs/rosa-200-2026-11-11-praxis-routes/hybrid`** (rebuilt two-entry graph,
-   old config key `D`). The default dashboard uses A = that run, B = the
-   same-run `one-pool` control. The 2026-11-10 matrix remains in the tree as
-   the previous measured record. The pre-rebuild 2026-11-09 record and its
+   `runs/rosa-200-2026-11-12-praxis-routes/hybrid`** (RC1 `v0.9.2`, real
+   pools, rebuilt two-entry graph). The default dashboard uses A = that run,
+   B = the same-run `one-pool` control. That control is PII-gate-blocked and
+   is not a quality comparison; the 2026-11-11 `v0.9.1` matrix remains the
+   last comparable four-arm routing measurement. The 2026-11-10 matrix is
+   the earlier measured record. The pre-rebuild 2026-11-09 record and its
    controls measured the composite `vllm-cpu` route and were pruned from the
    working tree; recover them at commit `25bfa4d`.
 
@@ -101,13 +103,15 @@ chosen. The opt-in served shape calls `screen:pii` on the control-plane
 listener (`:8086`), which routes only to `jev-cpu`; the 2026-11-11 run used
 the regex screen and does not include that hop (see §3.1 and FINDINGS §16.9).
 
-**The quoted 200-doc measurement is the rebuilt graph.** In
-`runs/rosa-200-2026-11-11-praxis-routes/hybrid`, `stage_routes` shows
-`cuad-specialist: 600` and `vllm-cpu: 400` as separate routes. The
-2026-11-10 matrix remains as the previous record; the pre-rebuild 2026-11-09
-record was pruned and is recoverable at `25bfa4d`, where `vllm-cpu: 1000` was
-600 RoBERTa passes plus 400 forwarded Qwen calls. Each record stays valid for
-the routing that produced it. Evidence per run is `summary.stage_routes` and
+**The quoted 200-doc measurement is the rebuilt graph on RC1.** In
+`runs/rosa-200-2026-11-12-praxis-routes/hybrid`, `stage_routes` shows
+`cuad-specialist: 600` and `vllm-cpu: 400` as separate routes, with all
+sensitive documents on the sensitive entry. The 2026-11-11 `v0.9.1` matrix
+remains the last comparable four-arm routing measurement; the 2026-11-10
+matrix is the earlier record. The pre-rebuild 2026-11-09 record was pruned
+and is recoverable at `25bfa4d`, where `vllm-cpu: 1000` was 600 RoBERTa
+passes plus 400 forwarded Qwen calls. Each record stays valid for the
+routing that produced it. Evidence per run is `summary.stage_routes` and
 `summary.stage_models`; the specialist `/health` reports only
 `{"model": "/opt/cuad-model/roberta-large"}`.
 
@@ -182,14 +186,18 @@ through-stack.
 
 | Path | Meaning |
 |---|---|
-| `runs/rosa-200-2026-11-11-praxis-routes/hybrid` | current through-stack `hybrid`, 200 docs — rebuilt two-entry / `X-Demo-Step` graph, 0 violations |
-| `runs/rosa-200-2026-11-11-praxis-routes/one-pool` | same-run `one-pool` control, 200 docs; 247 sensitive-pool violations expected |
-| `runs/rosa-200-2026-11-11-praxis-routes/small-first` | same-run `small-first` matrix row |
-| `runs/rosa-200-2026-11-11-praxis-routes/round-robin` | same-run `round-robin` matrix row |
+| `runs/rosa-200-2026-11-12-praxis-routes/hybrid` | current through-stack RC1 `hybrid`, 200 docs — real pools, `v0.9.2`, 0 violations |
+| `runs/rosa-200-2026-11-12-praxis-routes/one-pool` | same-run `one-pool` control; PII gate blocked 246 sensitive steps (not a quality comparison) |
+| `runs/rosa-200-2026-11-12-praxis-routes/small-first` | same-run `small-first` control; same PII-gate boundary |
+| `runs/rosa-200-2026-11-12-praxis-routes/round-robin` | same-run `round-robin` control; same PII-gate boundary |
+| `runs/rosa-200-2026-11-11-praxis-routes/hybrid` | previous through-stack `hybrid`, 200 docs — last comparable four-arm `v0.9.1` matrix |
+| `runs/rosa-200-2026-11-11-praxis-routes/one-pool` | previous same-run `one-pool` control; 247 sensitive-pool violations expected |
+| `runs/rosa-200-2026-11-11-praxis-routes/small-first` | previous same-run `small-first` matrix row |
+| `runs/rosa-200-2026-11-11-praxis-routes/round-robin` | previous same-run `round-robin` matrix row |
 | `runs/rosa-200-2026-11-11-direct/cpu-moe` | direct, one CPU endpoint, 35B-A3B |
 | `runs/rosa-200-2026-11-11-direct/gpu-moe` | direct, one GPU endpoint, 35B-A3B |
 | `runs/rosa-200-2026-11-11-direct/cpu-small` | direct, one CPU endpoint, 1.5B |
-| `runs/rosa-200-2026-11-10-praxis-routes/hybrid` | previous through-stack `hybrid`, 200 docs — rebuilt two-entry / `X-Demo-Step` graph, 0 violations |
+| `runs/rosa-200-2026-11-10-praxis-routes/hybrid` | earlier through-stack `hybrid`, 200 docs — rebuilt two-entry / `X-Demo-Step` graph, 0 violations |
 | `runs/rosa-200-2026-11-10-praxis-routes/all-gpu` | previous same-run `one-pool` control (run dir keeps old `all-gpu`), 200 docs (11 transport timeouts) |
 | `runs/rosa-200-2026-11-10-praxis-routes/gpu-small` | previous same-run `small-first` matrix row (run dir keeps old `gpu-small`) |
 | `runs/rosa-200-2026-11-10-praxis-routes/round-robin` | previous same-run `round-robin` matrix row |
@@ -422,12 +430,13 @@ the cost of wall-clock (1112 s vs 202 s). Those recorded figures sum both
 routes that front the same `gpumoe-vllm` pod; the rebuilt table below is the
 current policy.
 
-#### 2026-11-11 rebuilt-graph re-run (current record)
+#### 2026-11-11 rebuilt-graph re-run (previous four-arm record)
 
-`runs/rosa-200-2026-11-11-praxis-routes` is the current through-stack record.
-It re-ran the same two-entry graph after the OpenShell sandbox egress fix,
-with the report rollup now deterministic from the per-document rows. All
-arms: 200 documents, 1,201 steps, regex screen 41/0/159/0.
+`runs/rosa-200-2026-11-11-praxis-routes` is the last comparable four-arm
+routing record. It re-ran the same two-entry graph after the OpenShell
+sandbox egress fix, with the report rollup now deterministic from the
+per-document rows. All arms: 200 documents, 1,201 steps, regex screen
+41/0/159/0.
 
 | config | wall | extract F1 | risk | report | fully correct | CPU share | sensitive approved | violations | errors | GPU-s/doc |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -442,9 +451,31 @@ one-pool and small-first controls intentionally violate the sensitive-pool
 boundary; the hybrid arm is the governed result. `round-robin` has one
 degraded fallback; every arm has 0 errors.
 
-#### 2026-11-10 rebuilt-graph measurement (previous record)
+#### 2026-11-12 RC1 real-pool re-run (current record)
 
-`runs/rosa-200-2026-11-10-praxis-routes` is the previous through-stack record.
+`runs/rosa-200-2026-11-12-praxis-routes` is the current through-stack record.
+It ran the RC1 `v0.9.2` image on real `x8i.24xlarge` and `g5.12xlarge` pools
+in `us-east-1a`, with the same 200 documents, 1,201 steps and regex screen
+41/0/159/0. All arms: 200 documents.
+
+| config | wall | extract F1 | risk | report | fully correct | CPU share | sensitive approved | violations | errors | GPU-s/doc |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| one-pool | 157.03 | 0.887 | 0.795 | 0.636 | 159/200 | 0.0 | 0/247 | 1 | 246 | 0.776 |
+| small-first | 377.68 | 0.887 | 0.345 | 0.318 | 67/200 | 0.0 | 0/247 | 1 | 246 | 1.856 |
+| round-robin | 725.35 | 0.887 | 0.795 | 0.636 | 159/200 | 0.5 | 0/247 | 1 | 246 | 1.890 |
+| **hybrid** | **818.87** | **1.000** | **0.995** | **0.998** | **199/200** | **0.833** | **247/247** | **0** | **0** | **0.259** |
+
+The hybrid arm also records **33.006 CPU core-s/doc** and 201/201 judgment
+steps on GPU. The controls are not quality comparisons: they send every
+document through the general entry, where the PII gate denied 246 sensitive
+steps per run, and one content miss per run reached a non-approved route.
+Their quality columns cover only the 159 non-sensitive documents. This is
+the RC1 entry boundary, not a routing-policy regression; the 2026-11-11
+matrix remains the comparable four-arm measurement.
+
+#### 2026-11-10 rebuilt-graph measurement (earlier record)
+
+`runs/rosa-200-2026-11-10-praxis-routes` is the earlier through-stack record.
 The hybrid arm runs termination extraction on the CPU specialist with a
 conditional cause follow-up (canonical CUAD convenience question first; a
 focused termination-for-cause question only when that returns no span and the
@@ -1021,15 +1052,14 @@ longer in the base stack (§3.2) — re-adding it is the first step:
 
 The classifier instance serves one signal — if both complexity and
 contract-step are needed, run two instances, not one multi-signal instance.
-The measured gateway is `quay.io/mtahhan/gci-praxis:v0.9.1` (Praxis 0.7.5 /
-ai-gateway 0.9.0, PPE 0.4.1 host plugins), a custom build carrying the
-out-of-tree `llm_d_sc` filter and the PPE policy host that upstream `ai`
-does not have. The tree and manifests now target the published `v0.9.2`
-RC1 image (gate + step-key plugins), which passed a 27/27 live policy smoke
-on ROSA fake pools (2026-11-12). The measured 2026-11-11 record remains
-`v0.9.1`. The filter is unused by the default configs but stays in the image
-for this experiment; the policy host is used by every entry. The rebuild path
-is `deploy/images/praxis-llm-d-sc/`.
+The current measured gateway is `quay.io/mtahhan/gci-praxis:v0.9.2` (RC1
+gate + step-key plugins), a custom build carrying the out-of-tree `llm_d_sc`
+filter and the PPE policy host that upstream `ai` does not have. It is the
+image behind the 2026-11-12 real-pool record and the 27/27 fake-pool policy
+smoke. The 2026-11-11 record ran `v0.9.1`, which predates the RC1 plugins.
+The filter is unused by the default configs but stays in the image for this
+experiment; the policy host is used by every entry. The rebuild path is
+`deploy/images/praxis-llm-d-sc/`.
 
 ### 5.6 Claim boundary
 
@@ -1046,33 +1076,35 @@ runners because the dev machines are arm64):
 
 | Image | Published | Digest | Consumed by the default stack |
 | --- | --- | --- | --- |
-| `quay.io/mtahhan/gci-praxis:v0.9.2` | 2026-11-12, run `43203547413` | `sha256:3140a8dad2626ef71504546fa7901f53d9ec68ac49ed20e39919ae0af71c77c6` | current base manifests and Linux compose — registers `validator/gci-step-key` and `validator/gci-pii-gate`; passed the 27/27 live policy smoke on ROSA fake pools |
-| `quay.io/mtahhan/gci-praxis:v0.9.1` | 2026-11-06, run `42202721911` | `sha256:d17410449aec2f30a8d07819503ad00badaab398a4f18a1d4692961026c91c56` | **yes for the measured 2026-11-11 run** — gateway + PPE host (audit observer + observe-only PII scanner). **Predates RC1**: it does not register `validator/gci-step-key` or `validator/gci-pii-gate` |
+| `quay.io/mtahhan/gci-praxis:v0.9.2` | 2026-11-12, run `43203547413` | `sha256:3140a8dad2626ef71504546fa7901f53d9ec68ac49ed20e39919ae0af71c77c6` | current base manifests and Linux compose — registers `validator/gci-step-key` and `validator/gci-pii-gate`; measured on real ROSA pools in the 2026-11-12 matrix and passed the 27/27 fake-pool policy smoke |
+| `quay.io/mtahhan/gci-praxis:v0.9.1` | 2026-11-06, run `42202721911` | `sha256:d17410449aec2f30a8d07819503ad00badaab398a4f18a1d4692961026c91c56` | **yes for the previous 2026-11-11 run** — gateway + PPE host (audit observer + observe-only PII scanner). **Predates RC1**: it does not register `validator/gci-step-key` or `validator/gci-pii-gate` |
 | `quay.io/mtahhan/gci-praxis:v0.9.0` | 2026-11-05, run `42043729532` | `sha256:2187ab818efab9a8f3d1f911190d47fad960888bada7d3db8a973d3ad70ac992` | superseded by v0.9.1 |
 | `quay.io/mtahhan/gci-llm-d-sc:main-e660fff` | 2026-11-05 | `sha256:d94c1f7226bfbaeb5a300f0efdbab0e8a8988fc16af7fd80cff0e008a11fa3e1` | no — §5 experiment only |
 | `quay.io/mtahhan/gci-llm-d-sc-modelcar:complexity` | 2026-11-05 | `sha256:299874af83c565d8435c8e061b87da1754cdd918ca15e977a7fecbf3aa17f491` (mirror, byte-identical) | no — §5 experiment only |
 
 The digests are the reproducibility boundary for measured runs; record the
 digest, not the tag. The base manifests and the Linux compose stack point at
-`v0.9.2`, the published RC1 image; the measured stack ran `v0.9.1`. Applying
-the current policies against an older image fails gateway validation by
-design. The opt-in praxis-0.9.0 overlay is retired — base is the current
-stack. `oc apply -k manifests` on a live cluster lands the image switch
-together with the classifier removal and the PPE policy documents. Treat the
-rebuilt stack as new and re-run the measurement arms (FINDINGS §12). What is
-real vs simulated per environment is tabulated in README ("What is measured
-vs simulated"); quote test-split numbers only (FINDINGS §3, §13).
+`v0.9.2`, the published RC1 image; the 2026-11-12 real-pool stack ran
+`v0.9.2`, and the 2026-11-11 record ran `v0.9.1`. Applying the current
+policies against an older image fails gateway validation by design. The
+opt-in praxis-0.9.0 overlay is retired — base is the current stack.
+`oc apply -k manifests` on a live cluster lands the image switch together
+with the classifier removal and the PPE policy documents. Treat the rebuilt
+stack as new and re-run the measurement arms (FINDINGS §12). What is real vs
+simulated per environment is tabulated in README ("What is measured vs
+simulated"); quote test-split numbers only (FINDINGS §3, §13).
 
-**RC1 is image-complete and policy-smoke validated, but not yet measured on
-real pools.** The 2026-11-12 tree adds `validator/gci-step-key` and
-`validator/gci-pii-gate` to `deploy/images/praxis-llm-d-sc/policy-host/`, and
-the shipped policies name them. The published `v0.9.2` digest above carries
-both. A live ROSA `fake-all` stack passed 27/27 smoke checks, including the
-wrong-step, PII-gate, sensitive-containment and step-less-eval cases
-(`runs/rosa-policy-2026-11-12`). Those pools are simulated, so this is
-functional evidence only. The quoted 2026-11-11 measurement remains
-`v0.9.1`; a real-pool rebuild and a fresh 200-document matrix are still
-required before quoting RC1 numbers.
+**RC1 is measured on real pools.** The 2026-11-12 tree adds
+`validator/gci-step-key` and `validator/gci-pii-gate` to
+`deploy/images/praxis-llm-d-sc/policy-host/`, and the shipped policies name
+them. The published `v0.9.2` digest above carries both. The real-pool
+`x8i.24xlarge` + `g5.12xlarge` stack passed the two-document smoke, the live
+gate assertions (`runs/rosa-policy-2026-11-12-real`) and the 200-document
+hybrid matrix (`runs/rosa-200-2026-11-12-praxis-routes`): 818.87 s, 0 errors,
+0 sensitive violations, 247/247 approved, F1 1.000, risk 0.995, report 0.998,
+199/200 fully correct, 0.259 GPU-s/doc and 33.006 CPU core-s/doc. The live
+`fake-all` 27/27 smoke remains functional evidence only. The 2026-11-11
+`v0.9.1` matrix is the previous comparable four-arm measurement.
 
 ## 7. Design history
 
@@ -1133,9 +1165,12 @@ CPU-model test plan in §9.
   key grants. Image `v0.9.2` (run `43203547413`) published both plugins, and
   a live ROSA fake-pool smoke passed 27/27 checks. Granting `read_roles` in
   the policy declarations is required: `read_subject` alone exposes only the
-  subject id, which made the step gate deny every keyed request. This entry
-  records implementation, local tests and functional live policy evidence,
-  not a new ROSA measurement.
+  subject id, which made the step gate deny every keyed request. The
+  real-pool rebuild then passed the two-document smoke, the live gate
+  assertions and the 200-document matrix: hybrid 818.87 s, 0 violations,
+  0 errors, 247/247 sensitive approved, F1 1.000, risk 0.995, report 0.998,
+  199/200 fully correct, 0.259 GPU-s/doc and 33.006 CPU core-s/doc
+  (`runs/rosa-200-2026-11-12-praxis-routes`).
 - **2026-11-09 — the classifier-free policy is measured, twice.** The
   200-document ROSA matrix was re-run without the classifier and with the
   conditional CPU termination follow-up (§3.3). The first measurement scored
@@ -1146,8 +1181,9 @@ CPU-model test plan in §9.
   the policy. Historical runs from the classifier-in-path and earlier
   stacks are archived at commit `cfc52cc`; the 2026-11-09 matrix and rerun
   were pruned in the 2026-11-11 cleanup and are recoverable at `25bfa4d`.
-  The working tree keeps the current record, the previous 2026-11-10 record
-  and the guide evidence (`runs/README.md`).
+  The working tree keeps the current 2026-11-12 record, the previous
+  2026-11-11 four-arm matrix, the earlier 2026-11-10 record and the guide
+  evidence (`runs/README.md`).
 - **2026-11-11 — config names become behavior names.** Renamed the two
   hardware-implying policies: `all-gpu` → `one-pool`, `gpu-small` →
   `small-first`. Every old name and letter remains an alias; the recorded
@@ -1170,8 +1206,9 @@ CPU-model test plan in §9.
   hybrid arm completed in 806.59 s with 0 errors, 0 fallback, 247/247
   sensitive steps approved, 0 violations, extract F1 1.000, risk 1.000 and
   report 1.000 (the deterministic rollup), with **0.265 GPU-s/doc** and
-  32.555 CPU core-s/doc. This is the current quoted record; the 2026-11-10
-  matrix remains the previous record (FINDINGS §15.11).
+  32.555 CPU core-s/doc. This was the current quoted record before the
+  2026-11-12 RC1 real-pool run; it remains the last comparable four-arm
+  matrix (FINDINGS §15.11), and the 2026-11-10 matrix is the earlier record.
 
 ## 8. Open decisions and next actions
 
@@ -1196,25 +1233,15 @@ regression tests — §2.7 and §7 record them.)
 
 ### 8.2 Next actions, in order
 
-1. **Rebuild the real-pool ROSA stack for the RC1 measurement.** The RC1
-   image is published (`v0.9.2`) and the fake-pool policy smoke passed
-   27/27; what remains is the real GPU/x8i stack. Follow
-   `deploy/openshift/rosa/README.md`: g5 capacity probe, both machine pools
-   in one AZ, GPU operator, `scripts/cluster/cpu-topology.sh` bind lists
-   into `pools-cpu.yaml`, storage + seeders, `oc apply -k
-   deploy/openshift/rosa`, and the specialist image rebuild. Renew the
-   `rosa` OCM login first.
-2. **Run the 2-document smoke on that stack.** Use one sensitive and one
-   non-sensitive document (config hybrid) and verify the two RC1 denials
-   (wrong step key, PII on the general entry) plus the step-less eval path
-   before starting the matrix. The fake-pool equivalent is already recorded
-   in `runs/rosa-policy-2026-11-12`.
-3. **Run the 200-document matrix on the RC1 stack, in a new directory.**
-   The quoted 2026-11-11 record is §3.3 / FINDINGS §15.11
-   (`runs/rosa-200-2026-11-11-praxis-routes`); the 2026-11-10 matrix is the
-   previous record. Do not overwrite either. Re-run
-   (`DOCS=200 scripts/cluster/arms.sh` plus the direct baselines) only after
-   the real-pool RC1 stack passes the smoke.
+1–3. **Closed 2026-11-12 — real-pool RC1 validation.** The `x8i.24xlarge`
+   and `g5.12xlarge` pools were rebuilt in `us-east-1a`; the topology and
+   live CPU pinning matched the recorded lists; the 2-document smoke
+   (`runs/rosa-smoke-2026-11-12`), live gate assertions
+   (`runs/rosa-policy-2026-11-12-real`) and 200-document matrix
+   (`runs/rosa-200-2026-11-12-praxis-routes`) all passed. The hybrid row is
+   the current quoted RC1 record; the 2026-11-11 `v0.9.1` matrix remains
+   the last comparable four-arm measurement. The added machine pools were
+   removed after the run.
 4. **Contract-step taxonomy eval** once a stack is up
    (`hybrid-eval-contract-steps`; pass = same-document control 4/4, §5),
    then the CUAD test-split specialist through-stack rerun at lower

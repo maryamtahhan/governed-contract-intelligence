@@ -13,10 +13,15 @@
 #   oc apply -k deploy/openshift/fake-all
 #   scripts/cluster/smoke.sh
 # The fake-all overlay runs a fake-specialist; the ROSA stack points the
-# same route at the real RoBERTa service.
+# same route at the real RoBERTa service. For the real stack:
+#   STACK=rosa scripts/cluster/smoke.sh
+# On ROSA, vllm-gpu and vllm-gpu-approved are the same Deployment (two
+# Services select the same gpumoe-vllm pod), so the approved-pool outage
+# check expects both general and sensitive judgment to fail closed.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 NS="${NS:-openshell-demo}"
+STACK="${STACK:-fake-all}"
 GW="${GATEWAY:-http://127.0.0.1:18080}"
 SGW="${SENSITIVE:-http://127.0.0.1:18083}"
 # The gateway's PPE policy layer fails closed on unknown or missing API
@@ -47,17 +52,31 @@ fail() { echo "FAIL: $*" >&2; exit 1; }
 ok() { PASS=$((PASS + 1)); echo "ok $PASS - $*"; }
 
 pool_deployments() {
-  case "$1" in
-    cuad-specialist) echo fake-specialist ;;
-    vllm-cpu) echo fake-vllm-cpu ;;
-    vllm-gpu) echo fake-vllm-gpu ;;
-    vllm-gpu-approved) echo fake-vllm-gpu-approved ;;
-    vllm-gpu-small) echo fake-vllm-gpu-small ;;
-    *) echo "unknown pool: $1" >&2; return 1 ;;
+  case "$STACK:$1" in
+    fake-all:cuad-specialist) echo fake-specialist ;;
+    fake-all:vllm-cpu) echo fake-vllm-cpu ;;
+    fake-all:vllm-gpu) echo fake-vllm-gpu ;;
+    fake-all:vllm-gpu-approved) echo fake-vllm-gpu-approved ;;
+    fake-all:vllm-gpu-small) echo fake-vllm-gpu-small ;;
+    rosa:cuad-specialist) echo cpureal-specialist ;;
+    rosa:vllm-cpu) echo cpureal-vllm-cpu ;;
+    # One physical GPU backend; both Service names select gpumoe-vllm.
+    rosa:vllm-gpu) echo gpumoe-vllm ;;
+    rosa:vllm-gpu-approved) echo gpumoe-vllm ;;
+    rosa:vllm-gpu-small) echo cpureal-vllm-gpu-small ;;
+    *) echo "unknown stack/pool: $STACK/$1" >&2; return 1 ;;
   esac
 }
 pool_stop()  { oc -n "$NS" scale "deploy/$(pool_deployments "$1")" --replicas=0 >/dev/null; }
 pool_start() { oc -n "$NS" scale "deploy/$(pool_deployments "$1")" --replicas=1 >/dev/null; }
+# Scaling to zero only removes the Service endpoints after the pod actually
+# goes away. Wait for that before asserting a fail-closed path; a large vLLM
+# pod can spend longer than the fake one in termination.
+wait_pool_gone() {
+  local dep
+  dep=$(pool_deployments "$1")
+  oc -n "$NS" wait --for=delete pod -l "app=$dep" --timeout=180s >/dev/null 2>&1 || true
+}
 praxis_logs() { oc -n "$NS" logs deploy/praxis 2>&1 || true; }
 
 # A previously failed run may have left pools scaled to zero; bring them
@@ -76,9 +95,23 @@ cleanup() {
 trap cleanup EXIT
 
 oc whoami >/dev/null || { echo "not logged in" >&2; exit 1; }
-for d in praxis trace-ui fake-specialist fake-vllm-cpu fake-vllm-gpu fake-vllm-gpu-approved fake-vllm-gpu-small; do
-  oc -n "$NS" rollout status "deploy/$d" --timeout=300s >/dev/null \
-    || fail "deployment $d not rolled out (apply -k deploy/openshift/fake-all?)"
+case "$STACK" in
+  fake-all)
+    deployments=(praxis trace-ui fake-specialist fake-vllm-cpu fake-vllm-gpu \
+      fake-vllm-gpu-approved fake-vllm-gpu-small)
+    ;;
+  rosa)
+    deployments=(praxis trace-ui cpureal-specialist cpureal-vllm-cpu \
+      gpumoe-vllm cpureal-vllm-gpu-small)
+    ;;
+  *) fail "unknown STACK=$STACK (use fake-all or rosa)" ;;
+esac
+for d in "${deployments[@]}"; do
+  # Available, not Progressing: a real pool can spend longer than the 600s
+  # progress deadline attaching its RWO cache and loading weights, then
+  # become Ready with ProgressDeadlineExceeded still recorded.
+  oc -n "$NS" wait --for=condition=Available "deploy/$d" --timeout=300s >/dev/null \
+    || fail "deployment $d not available (apply -k deploy/openshift/$STACK?)"
 done
 restore_pools
 
@@ -91,9 +124,13 @@ PF_PID=$!
 trap cleanup EXIT
 sleep 5
 
+if [ "$STACK" = rosa ]; then WAIT_ATTEMPTS="${WAIT_ATTEMPTS:-240}"; else WAIT_ATTEMPTS="${WAIT_ATTEMPTS:-120}"; fi
+
 wait_pools() {
+  local attempts
+  if [ "$STACK" = rosa ]; then attempts="${WAIT_ATTEMPTS:-240}"; else attempts="${WAIT_ATTEMPTS:-120}"; fi
   echo -n "waiting for model pools"
-  for i in $(seq 1 120); do
+  for _ in $(seq 1 "$attempts"); do
     ok=0
     for port in 18088 18081 18082 18084 18085; do
       curl -sf -m 3 "http://127.0.0.1:$port/health" >/dev/null 2>&1 || ok=1
@@ -135,7 +172,9 @@ gateway_post() { # url step prompt max_tokens
     -d "{\"model\":\"Semantic-Qwen\",\"messages\":[{\"role\":\"user\",\"content\":\"$3\"}],\"max_tokens\":$4}"
 }
 simple_prompt() { gateway_post "$GW" classify 'What is the capital of France?' 24; }
-termination_prompt() { gateway_post "$GW" extract:termination 'Extract the termination clause from the following contract. If the clause is absent, say not found.' 30; }
+# The real CUAD specialist rejects prompts without a contract body and the
+# pipeline's Return JSON suffix; the fake specialist is more permissive.
+termination_prompt() { gateway_post "$GW" extract:termination 'Extract the termination clause from the following contract.\n\nThe Supplier may terminate this Agreement upon thirty (30) days prior written notice.\n\nReturn JSON.' 30; }
 data_protection_prompt() { gateway_post "$GW" extract:data_protection 'Extract the data protection clause from the following contract.' 30; }
 risk_prompt() { gateway_post "$GW" risk 'Assess the aggregate risk exposure across these contracts and rank them.' 48; }
 sensitive_simple() { gateway_post "$SGW" classify 'What is the capital of France? The data controller contact is aoife@example.com, EMP-123456.' 24; }
@@ -207,6 +246,7 @@ ok "sensitive risk -> vllm-gpu-approved"
 
 echo "== 8. pull the plug on the CPU pool: general degrades visibly"
 pool_stop vllm-cpu
+wait_pool_gone vllm-cpu
 sleep 14
 simple_prompt
 [ "$(status_of)" = 200 ] || fail "general during cpu outage: $(status_of) $(cat /tmp/b)"
@@ -231,7 +271,7 @@ ok "risk traffic unaffected by the CPU outage"
 echo "== 9. recovery"
 pool_start vllm-cpu
 echo -n "waiting for the CPU pool to reload"
-for i in $(seq 1 90); do
+for _ in $(seq 1 "$WAIT_ATTEMPTS"); do
   curl -sf -m 3 http://127.0.0.1:18081/health >/dev/null 2>&1 && { echo " up"; break; }
   echo -n .
   sleep 5
@@ -251,28 +291,69 @@ assert not any(h.get('error') for h in t['hops']), t
 ok "classify back on vllm-cpu, fallback cleared"
 
 echo "== 10. kill the approved pool: sensitive judgment fails closed"
-pool_stop vllm-gpu-approved
-sleep 14
-sensitive_risk
-s_status=$(status_of)
-if [ "$s_status" = 200 ]; then
-  fail "sensitive risk served while the approved pool is down: route $(hdr X-Demo-Route)"
+if [ "$STACK" = rosa ]; then
+  # vllm-gpu and vllm-gpu-approved are two Services over the same
+  # gpumoe-vllm Deployment. There is no isolated approved replica to kill;
+  # the honest check is that both judgment routes fail closed when that one
+  # physical backend is down.
+  pool_stop vllm-gpu
+  wait_pool_gone vllm-gpu
+  sleep 14
+  sensitive_risk
+  s_status=$(status_of)
+  if [ "$s_status" = 200 ]; then
+    fail "sensitive risk served while the shared GPU backend is down: route $(hdr X-Demo-Route)"
+  fi
+  route_during_fail=$(hdr X-Demo-Route)
+  if [ -n "${route_during_fail:-}" ] && [ "$route_during_fail" != "vllm-gpu-approved" ]; then
+    fail "sensitive risk spilled to $route_during_fail"
+  fi
+  ok "sensitive risk failed closed (status $s_status, never spilled)"
+  risk_prompt
+  g_status=$(status_of)
+  [ "$g_status" != "200" ] || fail "general risk was served while the shared GPU backend was down"
+  ok "general risk failed closed with the shared backend (status $g_status)"
+  sensitive_simple
+  [ "$(status_of)" = 200 ] || fail "sensitive simple broke while the shared GPU was down"
+  [ "$(hdr X-Demo-Route)" = "vllm-cpu" ] || fail "sensitive simple route during shared-GPU outage"
+  ok "sensitive CPU work unaffected (approved GPU only needed for judgment)"
+  pool_start vllm-gpu
+  echo -n "waiting for the GPU pool to reload"
+  for _ in $(seq 1 "$WAIT_ATTEMPTS"); do
+    curl -sf -m 3 http://127.0.0.1:18082/health >/dev/null 2>&1 && { echo " up"; break; }
+    echo -n .
+    sleep 5
+  done
+  sleep 14
+  sensitive_risk
+  [ "$(status_of)" = 200 ] || fail "sensitive risk did not recover after the GPU pool returned: $(status_of)"
+  [ "$(hdr X-Demo-Route)" = "vllm-gpu-approved" ] || fail "sensitive risk recovery route $(hdr X-Demo-Route)"
+  ok "sensitive risk recovered on vllm-gpu-approved"
+else
+  pool_stop vllm-gpu-approved
+  wait_pool_gone vllm-gpu-approved
+  sleep 14
+  sensitive_risk
+  s_status=$(status_of)
+  if [ "$s_status" = 200 ]; then
+    fail "sensitive risk served while the approved pool is down: route $(hdr X-Demo-Route)"
+  fi
+  route_during_fail=$(hdr X-Demo-Route)
+  if [ -n "${route_during_fail:-}" ] && [ "$route_during_fail" != "vllm-gpu-approved" ]; then
+    fail "sensitive risk spilled to $route_during_fail"
+  fi
+  ok "sensitive risk failed closed (status $s_status, never spilled)"
+  risk_prompt
+  [ "$(status_of)" = 200 ] || fail "general risk broke while approved pool down"
+  [ "$(hdr X-Demo-Route)" = "vllm-gpu" ] || fail "general risk route during approved outage"
+  ok "general risk unaffected (pool isolation)"
+  sensitive_simple
+  [ "$(status_of)" = 200 ] || fail "sensitive simple broke while approved pool down"
+  [ "$(hdr X-Demo-Route)" = "vllm-cpu" ] || fail "sensitive simple route during approved outage"
+  ok "sensitive CPU work unaffected (approved pool only needed when CPU is down)"
+  pool_start vllm-gpu-approved
+  sleep 14
 fi
-route_during_fail=$(hdr X-Demo-Route)
-if [ -n "${route_during_fail:-}" ] && [ "$route_during_fail" != "vllm-gpu-approved" ]; then
-  fail "sensitive risk spilled to $route_during_fail"
-fi
-ok "sensitive risk failed closed (status $s_status, never spilled)"
-risk_prompt
-[ "$(status_of)" = 200 ] || fail "general risk broke while approved pool down"
-[ "$(hdr X-Demo-Route)" = "vllm-gpu" ] || fail "general risk route during approved outage"
-ok "general risk unaffected (pool isolation)"
-sensitive_simple
-[ "$(status_of)" = 200 ] || fail "sensitive simple broke while approved pool down"
-[ "$(hdr X-Demo-Route)" = "vllm-cpu" ] || fail "sensitive simple route during approved outage"
-ok "sensitive CPU work unaffected (approved pool only needed when CPU is down)"
-pool_start vllm-gpu-approved
-sleep 14
 
 echo "== 11. governance: sensitive-entry traces never left the approved set"
 (cd demo && uv run hybrid-score governance --trace-ui "$GW" > /tmp/gov.json)
