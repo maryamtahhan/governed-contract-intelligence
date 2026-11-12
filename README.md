@@ -171,7 +171,7 @@ Everything measurable lives in `demo/`; everything deployable lives in
 `manifests/`, `deploy/`, `scripts/` and `sandbox/`; the current recorded
 evidence lives in `runs/`. Historical run directories referenced in
 [FINDINGS.md](FINDINGS.md) and in the results below are archived at commit
-`cfc52cc` — [`runs/README.md`](runs/README.md) lists them and shows how to
+`235311b` — [`runs/README.md`](runs/README.md) lists them and shows how to
 restore one.
 
 ```
@@ -263,7 +263,7 @@ Two rules follow from this:
    `cuad-specialist` is the RoBERTa service and `vllm-cpu` is the CPU MoE;
    there is no forwarding inside the specialist. The pre-rebuild 2026-11-09
    runs predate the split, when `vllm-cpu` was composite; they were pruned
-   from the working tree and are recoverable at commit `25bfa4d` — read
+   from the working tree and are recoverable at commit `a0fa8ec` — read
    `summary.stage_models` for those runs rather than assuming the new graph.
 
 ## Linux runbook
@@ -381,7 +381,7 @@ The first revision tried model-labelled complexity routing. Every
 contract-analysis step came back MEDIUM and went to the same pool, so the
 classifier was removed; routing now uses the declarative step-to-pool table
 (FINDINGS §15.5). The old
-deployment and classifier-routed config remain in git history (`aa080e9`).
+deployment and classifier-routed config remain in git history (`4ac0551`).
 
 Then:
 
@@ -705,7 +705,7 @@ before quoting any of these:
   last comparable control costs are the 2026-11-11 one-pool 0.981 GPU-s/doc
   and small-first 2.429 GPU-s/doc. The 2026-11-10 hybrid run's per-pool
   device time remains **`n/a`**, not zero; the older 0.22 GPU-s/doc figure
-  belongs to the pre-rebuild 2026-11-09 graph (recoverable at `25bfa4d`)
+  belongs to the pre-rebuild 2026-11-09 graph (recoverable at `a0fa8ec`)
   and must not be quoted for the rebuilt graph.
 - **Retrieval (single runs)**: regime decides the winner. Within-document
   (the retrieve-then-extract regime) the MTEB(Law) ordering inverts — the
@@ -794,7 +794,7 @@ recorded run directories.
   praxis chain, or a promoted PPE rule — remains a measured upgrade (V19);
   the scanner's agreement
   number is the prerequisite evidence either way. Re-adding the classifier
-  means git history, commit `aa080e9`. Network policies provide the
+  means git history, commit `4ac0551`. Network policies provide the
   enforcement layer either way (V15).
 - rhgaudi3s2 was found emptied of our workloads on 2026-10-31 (FINDINGS
   §7); redeploy from the runbooks above before any cluster-dependent demo.

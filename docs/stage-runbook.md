@@ -105,7 +105,7 @@ per-pool device time.
   last comparable four-arm matrix; the current RC1 controls are PII-gate
   boundary evidence, not cost comparisons.
 - The **0.22 vs 1.013 GPU-s/doc** figure belongs to the pre-rebuild
-  2026-11-09 graph (recoverable at `25bfa4d`) and is not a measurement of
+  2026-11-09 graph (recoverable at `a0fa8ec`) and is not a measurement of
   the rebuilt graph. Do not use the old **0.036 / 1.974 / 54×**
   classifier-in-path figures at all.
 

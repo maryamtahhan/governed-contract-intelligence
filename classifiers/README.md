@@ -3,7 +3,7 @@
 This directory holds llm-d-sc taxonomy definitions that are not compiled into
 the upstream llm-d-sc binary. Note that **llm-d-sc is not part of the base
 stack** (removed 2026-11-05; the Deployment is preserved in git history at
-commit `aa080e9`) — these definitions are data for the experiment that would
+commit `4ac0551`) — these definitions are data for the experiment that would
 re-add it.
 
 - [`contract-step.json`](contract-step.json) labels the four contract pipeline

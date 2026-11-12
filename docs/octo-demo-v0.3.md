@@ -30,7 +30,7 @@ Demo plan and business case · **Draft v0.3 · measured on the ROSA demo stack**
 > Device time is now measured: **0.265 GPU-s/doc** and 32.555 CPU core-s/doc.
 > The 2026-11-10 matrix below is the previous record; its hybrid device time
 > remains **`n/a`**. The **0.22 vs 1.013 GPU-s/doc (~4.6×)** figure belongs to
-> the pre-rebuild 2026-11-09 graph (recoverable at `25bfa4d`) and must not be
+> the pre-rebuild 2026-11-09 graph (recoverable at `a0fa8ec`) and must not be
 > quoted as the rebuilt graph's cost. See FINDINGS §15.11.
 >
 > **Previous update 2026-11-10 — rebuilt two-entry graph measured.** The
@@ -40,12 +40,12 @@ Demo plan and business case · **Draft v0.3 · measured on the ROSA demo stack**
 > 201/201 judgment steps on GPU, extract F1 1.000, risk 1.000, 200/200 fully
 > correct. Route counts: `vllm-cpu` 400, `cuad-specialist` 600, `vllm-gpu` 159,
 > `vllm-gpu-approved` 42. The GPU-termination alternative
-> (`runs/rosa-200-2026-11-09-gpu-term`, archived at `cfc52cc`) measured 0.508
+> (`runs/rosa-200-2026-11-09-gpu-term`, archived at `235311b`) measured 0.508
 > GPU-s/doc; it is a measured route, not the current policy. The
 > **0.036 / 1.974 / 54×** classifier-in-path figures are superseded and
 > double-count the shared `gpumoe-vllm` backend. Older run directories
 > referenced below were pruned from the working tree and are recoverable from
-> git at `cfc52cc` (see `runs/README.md`).
+> git at `235311b` (see `runs/README.md`).
 
 Every number in this document comes from our own measurements; evidence packs
 and protocols live in the source repository (`FINDINGS.md` + `runs*/`). Claims
@@ -702,7 +702,7 @@ Reading:
   **600 were answered by `cuad-specialist`** (governing law, liability
   cap, termination) and 200 (data protection) by the CPU MoE. All routed
   through the composite (`x-demo-route=vllm-cpu`). Derivation:
-  `runs/rosa-200/specialist-metrics-2026-11-04.txt` (archived at `cfc52cc`). That is the
+  `runs/rosa-200/specialist-metrics-2026-11-04.txt` (archived at `235311b`). That is the
   through-stack evidence the earlier 0.800 local run lacked.
 - **Cost.** 54× less GPU time: 0.036 vs 1.974 GPU-s/doc, 7.3 vs 394.8
   GPU-seconds total. At the illustrative $1.10/GPU-hour that is ≈ $0.002 of
@@ -747,8 +747,8 @@ Reading:
 Same 200 documents and the same scorer, with no router: each arm sends its
 1,201 requests (classify + six extractions + risk per document, plus one
 portfolio report) to a single pool. Raw records:
-`runs/direct/{cpu-moe,gpu-moe,cpu-small}` (archived at `cfc52cc`); combined
-report: `runs/rosa-direct-vs-stacked/report.md` (archived at `cfc52cc`).
+`runs/direct/{cpu-moe,gpu-moe,cpu-small}` (archived at `235311b`); combined
+report: `runs/rosa-direct-vs-stacked/report.md` (archived at `235311b`).
 
 | arm | pool | wall | extract F1 | risk acc | report acc | fully correct | errors |
 |---|---|---|---|---|---|---|---|

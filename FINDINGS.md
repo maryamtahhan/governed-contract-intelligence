@@ -19,7 +19,7 @@ UI present the canonical name for old runs.
 **Run archive:** the working tree keeps the current quoted run, the same-day
 control, and the CUAD/retrieval evidence. Older run directories named below
 were pruned from the checkout; recover any of them from git history at
-`cfc52cc` with `git checkout cfc52cc -- <path>`. See `runs/README.md`.
+`235311b` with `git checkout 235311b -- <path>`. See `runs/README.md`.
 
 **Metric definitions:** precision, recall, F1 and the containment matcher are
 defined in [design.md § Precision, recall and F1](docs/design.md#precision-recall-and-f1).
@@ -445,7 +445,7 @@ flightpath k8s (6 huge CPU nodes, no accelerators); g5.12xlarge AMI kept
   state, is the rollout risk (seed caches, long readiness timeouts).
   Ranked test order: 35B-A3B (incumbent) → gpt-oss-20b → Qwen3-30B-A3B.
   The full review with rendered commands is preserved in git history
-  (`docs/handoff-2026-11-04-cpu-model-recipes.md` at commit `8798da3`).
+  (`docs/handoff-2026-11-04-cpu-model-recipes.md` at commit `8f556b2`).
 - Open items: **the embedding-tier call — all inputs measured** (§11:
   corrected numbers + dinghy-8B; everything ties at the top; decide on
   cost/provenance/simplicity); **specialist + specialist-moe CUAD
@@ -967,7 +967,7 @@ Environment: ROSA HCP `<redacted-cluster>` (us-east-1a; cluster
 `<redacted-ocm-cluster-id>`), namespace `openshell-demo`. CPU node
 `x8i.24xlarge` (48 cores, 1.5 TiB) and GPU node `g5.12xlarge` (4x A10G,
 TP=4) in the same AZ; pools `<redacted-gpu-pool>` and `<redacted-cpu-pool>`. Raw
-records and reports: `runs/rosa-200/` (archived at `cfc52cc`).
+records and reports: `runs/rosa-200/` (archived at `235311b`).
 
 This section replaces the SNO numbers for every demo-facing claim. The SNO
 runs remain the validation record; they are not the demo environment.
@@ -1081,7 +1081,7 @@ numbers in §15.5-§15.9 came from the earlier classifier-in-path config.
 The classifier-routed arm B
 config and the llm-d-sc Deployment are preserved in git history
 (`manifests/base/praxis/arm-b.yaml`, `manifests/base/llm-d-sc.yaml` at
-commit `aa080e9`); the contract-step taxonomy remains the measured path
+commit `4ac0551`); the contract-step taxonomy remains the measured path
 back to semantic routing (`docs/design.md` §5).
 
 ### 15.6 Gaps this round leaves open
@@ -1099,7 +1099,7 @@ back to semantic routing (`docs/design.md` §5).
   regression test.
 - **Warnings that survive any routing rerun** (from the 2026-11-05 routing
   review; the analysis with the option table is preserved in git history,
-  `docs/handoff-2026-11-04-rosa-routing.md` at commit `8798da3`): do not
+  `docs/handoff-2026-11-04-rosa-routing.md` at commit `8f556b2`): do not
   just repoint the specialist composite's `--forward-to` at another pool —
   it forwards outside praxis and would bypass the approved set; the pool
   relay's `X-Demo-Route` header hides the composite's real backend, so read
@@ -1113,8 +1113,8 @@ back to semantic routing (`docs/design.md` §5).
 
 Each direct arm sends all 1,201 requests to one bare pool; there is no
 classifier, no screen and no approved-pool check. Raw records:
-`runs/direct/{cpu-moe,gpu-moe,cpu-small}` (archived at `cfc52cc`); combined
-report: `runs/rosa-direct-vs-stacked/report.md` (archived at `cfc52cc`).
+`runs/direct/{cpu-moe,gpu-moe,cpu-small}` (archived at `235311b`); combined
+report: `runs/rosa-direct-vs-stacked/report.md` (archived at `235311b`).
 
 | arm | pool | wall | extract F1 | risk acc | report acc | fully correct |
 |---|---|---|---|---|---|---|
@@ -1147,7 +1147,7 @@ report: `runs/rosa-direct-vs-stacked/report.md` (archived at `cfc52cc`).
 
 ### 15.8 Classifier-free re-measurement, GPU termination route (2026-11-09)
 
-`runs/rosa-200-2026-11-09-gpu-term` (archived at `cfc52cc`) is a **measured
+`runs/rosa-200-2026-11-09-gpu-term` (archived at `235311b`) is a **measured
 alternative route, not the current policy** (§15.9 supersedes it). The hybrid arm was rerun with
 termination extraction on the GPU-bound entry; the one-pool, small-first and
 round-robin arms were copied from the same-day run because the routing change
@@ -1198,7 +1198,7 @@ Hybrid judgment steps were 201/201 on GPU.
   The new run scores extraction F1 **1.000**, **200/200 fully correct**, and
   precision 1.000. Another CUAD expert inherits the same question; the route or
   the label is the fix, not a different specialist.
-- `runs/rosa-200-2026-11-09-gpu-term/report.md` (archived at `cfc52cc`) carries the corrected cost
+- `runs/rosa-200-2026-11-09-gpu-term/report.md` (archived at `235311b`) carries the corrected cost
   notes; the run recorded `git_dirty: true` because the routing change was in
   the working tree at run time.
 
@@ -1209,7 +1209,7 @@ stack; treat them as the earlier comparison until that run is repeated.
 
 > Directory note: the 2026-11-09 matrix and rerun were pruned from the working
 > tree after the 2026-11-11 promotion. Recover them with
-> `git checkout 25bfa4d -- runs/rosa-200-2026-11-09`. The measurements below
+> `git checkout a0fa8ec -- runs/rosa-200-2026-11-09`. The measurements below
 > remain valid for the graph that produced them.
 
 `runs/rosa-200-2026-11-09-cpu-term-rerun` is the pre-rebuild classifier-free
@@ -1239,7 +1239,7 @@ extraction quality of the GPU route at the baseline hybrid's GPU cost, and
 wall time is 816.59 s.
 
 The policy was measured twice on the same commit and the same pools. The
-first run (`runs/rosa-200-2026-11-09-cpu-term`, archived at `cfc52cc`; wall 823.84 s, 43.4 GPU-s)
+first run (`runs/rosa-200-2026-11-09-cpu-term`, archived at `235311b`; wall 823.84 s, 43.4 GPU-s)
 scored 198/200 with risk 0.990; the quoted rerun, on a stack rebuilt from
 the identical tree (fresh model caches, fresh specialist image build),
 scored 200/200 with risk 1.000.
@@ -1374,7 +1374,7 @@ The 2026-11-11 direct baselines are in `runs/rosa-200-2026-11-11-direct`:
 `gpu-moe` 301.6 s (1.000, 1.000, 0.760) and `cpu-small` 1144.4 s (1.000,
 0.395, 0.212). The 1.5B CPU pool is not a judgment substitute. The 2026-11-10
 matrix remains the previous record; the 2026-11-09 matrix and rerun are
-recoverable at `25bfa4d` but are no longer in the working tree. This
+recoverable at `a0fa8ec` but are no longer in the working tree. This
 2026-11-11 matrix remains the last comparable four-arm routing measurement;
 the 2026-11-12 RC1 hybrid supersedes it as the quoted record.
 
@@ -1828,7 +1828,7 @@ it is not measured today.
 ### 17.3 The through-stack CUAD path is timeout-bound (finding)
 
 The first attempt to measure this end-to-end through the ROSA stack
-(`runs/cuad-test-hybrid-2026-11-09`, archived at `cfc52cc`) hit a structural limit and **must not be
+(`runs/cuad-test-hybrid-2026-11-09`, archived at `235311b`) hit a structural limit and **must not be
 quoted as a policy result**:
 
 - The specialist pod (2 pinned cores, `--concurrency 4`) answers a

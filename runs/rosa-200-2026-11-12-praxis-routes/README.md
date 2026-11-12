@@ -16,7 +16,7 @@ RC1 step-key binding and general-entry PII gate enabled.
 | screen | regex, 41 tp / 0 fp / 159 tn / 0 fn |
 | concurrency | 12 |
 | run start | `2026-11-12T13:19:51Z` (hybrid arm) |
-| git | `df8925e`, worktree dirty (same three one-line uncommitted edits as the 2026-11-11 record) |
+| git | `1cd6733`, worktree dirty (same three one-line uncommitted edits as the 2026-11-11 record) |
 
 The CPU topology script reproduced the recorded layout exactly (`problems: []`):
 
