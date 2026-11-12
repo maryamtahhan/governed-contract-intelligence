@@ -4,8 +4,9 @@
 2026-11-12 in run `43203547413`, digest
 `sha256:3140a8dad2626ef71504546fa7901f53d9ec68ac49ed20e39919ae0af71c77c6`).
 `build.sh`, the publish workflow, base manifests and compose all name it.
-It is the current measured image: the 2026-11-12 real-pool ROSA matrix ran
-this digest. The previous measured image is
+It is the current measured image: the 2026-11-12 real-pool ROSA matrix and
+the 28/28 `STACK=rosa` resilience smoke ran this digest. The previous measured
+image is
 `quay.io/mtahhan/gci-praxis:v0.9.1` (2026-11-06, digest
 `sha256:d17410449aec2f30a8d07819503ad00badaab398a4f18a1d4692961026c91c56`);
 the earlier build was `v0.9.0` (2026-11-05, digest
@@ -173,7 +174,7 @@ not main's 0.5.0 — and the RPITIT trait shape; see the build-commit messages):
 
 | Image | Digest | Consumed by the default stack |
 | --- | --- | --- |
-| `quay.io/mtahhan/gci-praxis:v0.9.2` | `sha256:3140a8dad2626ef71504546fa7901f53d9ec68ac49ed20e39919ae0af71c77c6` | current base manifests and Linux compose — registers the RC1 gate and step-key plugins; measured in the 2026-11-12 real-pool matrix and passed the 27/27 fake-pool policy smoke |
+| `quay.io/mtahhan/gci-praxis:v0.9.2` | `sha256:3140a8dad2626ef71504546fa7901f53d9ec68ac49ed20e39919ae0af71c77c6` | current base manifests and Linux compose — registers the RC1 gate and step-key plugins; measured in the 2026-11-12 real-pool matrix, passed the 28/28 real-pool resilience smoke and the 27/27 fake-pool policy smoke |
 | `quay.io/mtahhan/gci-praxis:v0.9.1` | `sha256:d17410449aec2f30a8d07819503ad00badaab398a4f18a1d4692961026c91c56` | previous 2026-11-11 measured record — audit observer + observe-only PII scanner; predates the RC1 gate and step-key plugins |
 
 ## Switching the manifests

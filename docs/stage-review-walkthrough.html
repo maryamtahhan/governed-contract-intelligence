@@ -515,7 +515,7 @@ footer .mono { font-size: 11.5px; }
   <h1>Stage Review Walkthrough</h1>
   <p class="deck">What the page at <span class="mono">127.0.0.1:8099</span> is showing, what each number means, and what to say about it to a technical audience.</p>
   <div class="meta">
-    <span class="chip"><b>measured</b> · ROSA · 2026-11-11</span>
+    <span class="chip"><b>measured</b> · ROSA · 2026-11-12</span>
     <span class="chip"><b>200</b> synthetic contracts</span>
     <span class="chip"><b>4</b> clause categories</span>
     <span class="chip">A: <b>hybrid</b> · B: <b>one-pool</b></span>
@@ -534,25 +534,27 @@ footer .mono { font-size: 11.5px; }
 
 <div class="callout warn">
   <div class="label">Which run is on screen?</div>
-  <p><b id="runContext">Checking the server…</b> The default stage page replays the <b>rebuilt
-    two-entry ROSA 200-document matrix</b> (2026-11-11): A is the governed hybrid config, B is the same-run
-    one-pool control. The <b>CUAD 19-contract example</b> is still documented below as the model-quality
-    reference. The provenance chip is the source of truth: green <b>measured</b> is the ROSA run;
-    amber <b>example data</b> is CUAD. Pool names are routing tiers, not hardware claims; the header
-    hardware chip reads the run's recorded pool map.</p>
+  <p><b id="runContext">Checking the server…</b> The default stage page replays the <b>RC1
+    two-entry ROSA 200-document matrix</b> (2026-11-12): A is the governed hybrid config, B is the same-run
+    one-pool control. B is the PII-gate boundary control, not a quality comparison. The <b>CUAD
+    19-contract example</b> is still documented below as the model-quality reference. The provenance chip is
+    the source of truth: green <b>measured</b> is the ROSA run; amber <b>example data</b> is CUAD. Pool names
+    are routing tiers, not hardware claims; the header hardware chip reads the run's recorded pool map.</p>
 </div>
 
 <section>
   <div class="sec-head"><h2>What you are looking at</h2><span class="kicker">the 30-second version</span></div>
-  <p>By default the page replays the 2026-11-11 rebuilt-graph ROSA run over <b>200 synthetic contracts</b>. For each document it shows the model's output for one classification step, four clause extractions, and one risk judgment, placed next to the generated ground truth the scorer compared it against. The <b>CUAD 19-contract example</b> is the model-quality reference further down this page; launch it explicitly when you want expert-annotated real contracts.</p>
+  <p>By default the page replays the 2026-11-12 RC1 ROSA run over <b>200 synthetic contracts</b>. For each document it shows the model's output for one classification step, four clause extractions, and one risk judgment, placed next to the generated ground truth the scorer compared it against. The <b>CUAD 19-contract example</b> is the model-quality reference further down this page; launch it explicitly when you want expert-annotated real contracts.</p>
   <p>It is a replay, not a live service. Every card is rendered from <span class="mono">results.json</span>; the live button is disabled because the server was started without an endpoint. Clicking a document on the left replays its recorded stages at roughly the latency they actually took.</p>
   <div class="callout warn">
     <div class="label">Say this early</div>
     <p>By default this is a <b>measured ROSA run</b>, not example data. View A is the governed
     <span class="mono">hybrid</span> config: clause work on CPU, sensitive work only on approved pools,
     risk and report on the GPU routes. View B is the same-run <span class="mono">one-pool</span>
-    control: same corpus, same relays and Praxis, but no sensitivity policy. Both are through-stack, so
-    the A/B isolates the <b>policy</b>, not gateway versus direct. The CUAD example below is the
+    control: same corpus, same relays and Praxis, but no sensitive listener. Under RC1 the general-entry
+    PII gate blocks its sensitive work, so B is boundary evidence, not a quality A/B. Both are
+    through-stack, so the comparison still isolates <b>policy</b>, not gateway versus direct. The CUAD
+    example below is the
     model-quality reference and is <b>example data</b>; use it only when you explicitly launch it.</p>
   </div>
 </section>
@@ -601,7 +603,7 @@ footer .mono { font-size: 11.5px; }
         <tr><td><b>Left rail</b></td><td>The run's documents (200 in the default ROSA replay; 19 in the CUAD example), each with a state dot and a ✓ when every field is correct.</td><td>Green, amber, red dots are a scan of which documents passed, missed something, or quoted something wrong.</td></tr>
         <tr><td><b>Header chips</b></td><td>Provenance first, then the document count, the gateway/direct distinction, the model and live status.</td><td>The provenance chip is the one that sets the terms: amber <b>example data</b> means the numbers are illustrative; green <b>measured</b> means the run is the ROSA baseline. Hover it for environment, commit, start time, concurrency, timeout and the pool map. The model chip identifies the checkpoint, not just the endpoint's alias. When a through-stack run used more than one model, the header shows “models N per call” instead of pretending there was one.</td></tr>
         <tr><td><b>Request path</b></td><td>The run-level chain directly under the header: batch runner → vLLM (all stages) → model, or batch runner → ingress relay → praxis → pool relay → vLLM pool → model.</td><td>Read it with the A/B toggle. Both default views include the ingress relay, praxis and a pool; the CUAD appendix's view A is the direct path and has no praxis. The batch runner is CPU-side orchestration only — it builds prompts and parses JSON. Both runners share the same prompt builders in <span class="mono">review.py</span>; only the transport differs. Classify, the four extracts, risk and one report call are model calls. The governed hybrid view can show more than one served model; the path strip lists them with call counts.</td></tr>
-        <tr><td><b>A/B button</b></td><td>Swaps the two runs the server was started with: A is <span class="mono">--run</span>, B is <span class="mono">--compare</span>. The header run line names both.</td><td>In the default <span class="mono">make dashboard-up</span>, A is the rebuilt-graph ROSA hybrid run (<span class="mono">runs/rosa-200-2026-11-11-praxis-routes/hybrid</span>) and B is the same-run one-pool control (<span class="mono">runs/rosa-200-2026-11-11-praxis-routes/one-pool</span>). In the CUAD example below, A is the direct run and B is the appendix gateway run. Do not assume a letter means direct or praxis.</td></tr>
+        <tr><td><b>A/B button</b></td><td>Swaps the two runs the server was started with: A is <span class="mono">--run</span>, B is <span class="mono">--compare</span>. The header run line names both.</td><td>In the default <span class="mono">make dashboard-up</span>, A is the current RC1 ROSA hybrid run (<span class="mono">runs/rosa-200-2026-11-12-praxis-routes/hybrid</span>) and B is the same-run one-pool control (<span class="mono">runs/rosa-200-2026-11-12-praxis-routes/one-pool</span>); B is PII-gate boundary evidence, not a quality comparison. In the CUAD example below, A is the direct run and B is the appendix gateway run. Do not assume a letter means direct or praxis.</td></tr>
         <tr><td><b>Pipeline strip</b></td><td>The chain as it ran, with real latency per stage.</td><td>Four extraction nodes fan out from classify; risk waits for them.</td></tr>
         <tr><td><b>Stage cards</b></td><td>Classify, one card per clause, then risk.</td><td>Each extract card has the model's quote, a source excerpt with the quote highlighted, and a truth block.</td></tr>
         <tr><td><b>Truth toggle</b></td><td>Hides every annotation and verdict badge.</td><td>Use it to show the system's output before revealing the answer key.</td></tr>
@@ -741,9 +743,9 @@ footer .mono { font-size: 11.5px; }
 </section>
 
 <section id="rosa-current">
-  <div class="sec-head"><h2>ROSA 200-document run</h2><span class="kicker">measured · synthetic corpus · 2026-11-11 · rebuilt two-entry graph · no classifier in the request path</span></div>
+  <div class="sec-head"><h2>ROSA 200-document run</h2><span class="kicker">measured · synthetic corpus · 2026-11-12 · RC1 two-entry graph · no classifier in the request path</span></div>
   <p>The current 200-document matrix ran on the ROSA cluster (<span class="mono"><redacted-cluster></span>) on
-    2026-11-11 through the rebuilt two-entry graph: the pipeline chooses only the general or sensitive entry,
+    2026-11-12 through the RC1 two-entry graph: the pipeline chooses only the general or sensitive entry,
     and Praxis maps each declarative <span class="mono">X-Demo-Step</span> to a route. It is <b>measured
     operational evidence</b>: real vLLM pools, real routing, real wall-clock. It is <b>not</b> a CUAD quality
     baseline — the corpus is synthetic, so its extraction and risk scores cannot be compared with the
@@ -755,10 +757,10 @@ footer .mono { font-size: 11.5px; }
     <table>
       <thead><tr><th>Old key</th><th>Config</th><th class="num">Wall s</th><th class="num">Extract F1</th><th class="num">Risk acc</th><th class="num">Fully correct</th><th class="num">Sensitive violations</th><th class="num">GPU-s/doc</th></tr></thead>
       <tbody>
-        <tr><td>A</td><td>one-pool</td><td class="num">202</td><td class="num">1.000</td><td class="num">1.000</td><td class="num">200/200</td><td class="num" style="color:var(--bad)">247</td><td class="num">0.981</td></tr>
-        <tr><td>B</td><td>small-first</td><td class="num">490</td><td class="num">1.000</td><td class="num">0.395</td><td class="num">77/200</td><td class="num" style="color:var(--bad)">247</td><td class="num">2.429</td></tr>
-        <tr><td>C</td><td>round-robin</td><td class="num">936</td><td class="num">1.000</td><td class="num">1.000</td><td class="num">200/200</td><td class="num" style="color:var(--bad)">110</td><td class="num">1.862</td></tr>
-        <tr><td>D</td><td>hybrid</td><td class="num">807</td><td class="num">1.000</td><td class="num">1.000</td><td class="num">200/200</td><td class="num" style="color:var(--ok)"><b>0</b></td><td class="num">0.265</td></tr>
+        <tr><td>A</td><td>one-pool</td><td class="num">157</td><td class="num">0.887*</td><td class="num">0.795*</td><td class="num">159/200*</td><td class="num" style="color:var(--bad)">1</td><td class="num">0.776*</td></tr>
+        <tr><td>B</td><td>small-first</td><td class="num">378</td><td class="num">0.887*</td><td class="num">0.345*</td><td class="num">67/200*</td><td class="num" style="color:var(--bad)">1</td><td class="num">1.856*</td></tr>
+        <tr><td>C</td><td>round-robin</td><td class="num">725</td><td class="num">0.887*</td><td class="num">0.795*</td><td class="num">159/200*</td><td class="num" style="color:var(--bad)">1</td><td class="num">1.890*</td></tr>
+        <tr><td>D</td><td>hybrid</td><td class="num">819</td><td class="num">1.000</td><td class="num">0.995</td><td class="num">199/200</td><td class="num" style="color:var(--ok)"><b>0</b></td><td class="num">0.259</td></tr>
       </tbody>
     </table>
   </div>
@@ -766,16 +768,20 @@ footer .mono { font-size: 11.5px; }
     landed on approved pools, with zero violations, and <b>201/201</b> judgment steps ran on GPU. The route
     counts are <b>400</b> <span class="mono">vllm-cpu</span>, <b>600</b>
     <span class="mono">cuad-specialist</span>, <b>159</b> <span class="mono">vllm-gpu</span> and <b>42</b>
-    <span class="mono">vllm-gpu-approved</span>. The rebuilt hybrid arm now has measured device time:
-    <b>0.265 GPU-s/doc</b> and <b>32.555 CPU core-s/doc</b>. The one-pool control has 247 expected
-    sensitive-pool violations; every arm has 0 errors. Full report:
-    <span class="mono">runs/rosa-200-2026-11-11-praxis-routes/report.md</span>.</p>
+    <span class="mono">vllm-gpu-approved</span>. The RC1 hybrid arm records <b>818.87 s</b>, extract F1
+    <b>1.000</b>, risk <b>0.995</b>, report <b>0.998</b>, <b>199/200</b> fully correct,
+    <b>0.259 GPU-s/doc</b> and <b>33.006 CPU core-s/doc</b>. The controls marked * ran with the general-entry
+    PII gate blocking sensitive work; their scores cover only the 159 non-sensitive documents (small-first gets 67 of
+    those fully correct), with 246 denials and one sensitive content miss each. They are boundary evidence,
+    not quality or cost comparisons. The 2026-11-11 four-arm matrix remains the last comparable control set.
+    Full report: <span class="mono">runs/rosa-200-2026-11-12-praxis-routes/report.md</span>.</p>
   <div class="callout">
     <div class="label">The report rollup is deterministic now</div>
-    <p>The report tile is <b>1.000</b>: the pipeline computes the rollup from the per-document rows instead
-    of asking a model to count 200 JSON records. The previous 2026-11-10 run recorded <b>0.750</b> because
-    its report call miscounted the data-protection and risk tallies; that record is preserved as history.
-    The default view now reads the current 2026-11-11 run, where the report and per-document fields agree.</p>
+    <p>The current RC1 report tile is <b>0.998</b> with <b>199/200</b> documents fully correct: the pipeline
+    computes the rollup from the per-document rows instead of asking a model to count 200 JSON records. The
+    previous 2026-11-11 run recorded <b>1.000</b> and 200/200; the 2026-11-10 run recorded <b>0.750</b>
+    because its report call miscounted the data-protection and risk tallies. Those records are preserved as
+    history. The default view now reads the current 2026-11-12 run.</p>
   </div>
   <div class="callout">
     <div class="label">How termination came back to the CPU</div>
@@ -787,8 +793,9 @@ footer .mono { font-size: 11.5px; }
     (<span class="mono">archived at cfc52cc</span>, a measured alternative, not the policy). The
     current fix keeps it on the CPU specialist: ask the canonical question first, and only when it returns no
     span <i>and</i> the contract contains explicit cause language, ask a focused termination-for-cause
-    follow-up. The current 2026-11-11 run scores <b>extraction F1 1.000</b> (all 48 cause clauses recovered,
-    zero false positives) at <b>0.265 GPU-s/doc</b>. CUAD held-out termination F1 stays at the canonical
+    follow-up. The current 2026-11-12 RC1 run scores <b>extraction F1 1.000</b> (all 48 cause clauses
+    recovered, zero false positives) at <b>0.259 GPU-s/doc</b>; the previous 2026-11-11 run was 0.265.
+    CUAD held-out termination F1 stays at the canonical
     <b>0.714</b> because the follow-up only fires where the canonical question already found nothing.</p>
   </div>
   <div class="callout warn">
@@ -797,7 +804,8 @@ footer .mono { font-size: 11.5px; }
     classify and all four extraction clauses stay on the CPU, while risk/report use the GPU entries; sensitive
     documents use only approved pools. Its <b>83.3% CPU-served</b> share is the policy, not a learned
     separation of simple from complex work. The honest claim is governance and GPU economics, not that a
-    classifier decided difficulty. Risk 1.000 in the current run. For comparison, the pre-rebuild
+    classifier decided difficulty. Risk is 0.995 in the current RC1 run (199/200 fully correct);
+    the previous 2026-11-11 run was 1.000. For comparison, the pre-rebuild
     2026-11-09 pair scored 0.990 and 0.995: two sensitive documents flipped on rubric priority at the GPU
     judgment stage — one on inputs byte-identical to a run where it scored correctly — and the flips did not
     reproduce on that day's rerun, within the temperature-0 divergence already recorded between runs. The
@@ -813,21 +821,21 @@ footer .mono { font-size: 11.5px; }
     (<span class="mono">:8086</span>), which routes only to the CPU <span class="mono">jev-cpu</span> pool
     through the trace-ui relay (<span class="mono">:8089</span>). It has no failover, records
     <span class="mono">entry=screen</span> with the body hidden by default, and fails closed to the
-    sensitive review entry. That route is <b>not</b> in the 2026-11-11 measurement and changes no
+    sensitive review entry. That route is <b>not</b> in the 2026-11-12 measurement and changes no
     number on this page. The termination cause
     trigger is likewise the regex: the opt-in Jev trigger scored <b>0.625</b> against the
     <b>0.714</b> CUAD guardrail and was not adopted.</p>
-    <p><b>RC1 is later and not in this run.</b> The current tree adds two PPE
-    controls: <span class="mono">validator/gci-step-key</span> binds each
-    authenticated key to its <span class="mono">step:&lt;stage&gt;</span> grant,
-    and <span class="mono">validator/gci-pii-gate</span> denies PII on the
-    general review entry with a 403. The screen and sensitive entries keep the
-    observe-only scanner because both must see the document. These are covered
-    by negative tests, but the measured <span class="mono">v0.9.1</span> image
-    predates them; <span class="mono">v0.9.2</span> is the rebuild target and
-    is not published yet, and the 2026-11-11 run above did not execute them.
-    Present them as “implemented, pending a rebuilt image and live
-    validation”.</p>
+    <p><b>RC1 is measured.</b> The current tree adds two PPE controls:
+    <span class="mono">validator/gci-step-key</span> binds each authenticated
+    key to its <span class="mono">step:&lt;stage&gt;</span> grant, and
+    <span class="mono">validator/gci-pii-gate</span> denies PII on the general
+    review entry with a 403. The screen and sensitive entries keep the
+    observe-only scanner because both must see the document. Image
+    <span class="mono">v0.9.2</span> is published and carried the 2026-11-12
+    matrix above plus the 28/28 real-pool resilience smoke
+    (<span class="mono">runs/rosa-resilience-2026-11-12</span>) and the live
+    gate assertions (<span class="mono">runs/rosa-policy-2026-11-12-real</span>).
+    Present them as measured, not as a pending rebuild.</p>
   </div>
 </section>
 
@@ -983,11 +991,11 @@ footer .mono { font-size: 11.5px; }
   <div class="sec-head"><h2>Before you present</h2><span class="kicker">nine checks</span></div>
   <ul class="checklist">
     <li><span class="sev must">Decide</span><b>Live or replay.</b> Live is off right now. The default replay is the classifier-free ROSA 200-document run; <span class="mono">make dashboard-up</span> starts it. To replay the CUAD 19-contract example instead:<br><code>uv run hybrid-ui --run ../runs/cuad-test/arm-direct-moe-gpu-v2 --compare ../runs/cuad-test/arm-D-specialist --data data/cuad-test --port 8099</code><br>Live mode is a <b>direct</b> path — same prompts and scorer shape, sent straight to the endpoint with no PII routing, labels or sensitive pool — so present it as the model path, not the governance path; governance is what the replayed through-stack runs (or a fresh <span class="mono">hybrid-run --target gateway</span>) show. The server binds 127.0.0.1 by default; pass <span class="mono">--live-token</span> before binding a wider <span class="mono">--host</span>.</li>
-    <li><span class="sev must">Decide</span><b>Which A/B pair.</b> The default <span class="mono">make dashboard-up</span> compares the governed hybrid run with the same-run one-pool control; both are measured and both cross Praxis, so the difference is policy, not gateway versus direct. If you present the CUAD appendix instead, A is the direct model run and B is the failed gateway run; 76 of that page's 115 steps have no answer (82 of the run's 121 executed steps; the page folds one repeated doc_id). Use it only to show entry → label → pool → trace, and quote the specialist's quality from <span class="mono">runs/retrieval/e2e-specialist.json</span> (0.780 full document, 0.800 top-5), not from that view.</li>
-    <li><span class="sev know">Know</span><b>The report was re-scored.</b> This applies to the CUAD example: its page and stored <span class="mono">metrics.json</span> both read 64.5% with the current scorer; the run-time value was 26.3%. The default ROSA run's report accuracy is 1.000 on the synthetic corpus (deterministic rollup) and is not comparable to CUAD. If you present from an older CUAD copy, re-score it or disclose that 26.3% predates the checker fixes.</li>
-    <li><span class="sev know">Know</span><b>The model.</b> The default ROSA run uses Qwen/Qwen3.5-35B-A3B. On the hybrid view most calls run on CPU (400 on the CPU MoE, 600 on the CPU specialist); the one-pool control attempts all 1,201 calls on 4× A10G with TP=4 and completes 200/200 in the current run. The previous 2026-11-10 control had 11 transport timeouts and 189/200. Both are served under the alias <span class="mono">Semantic-Qwen</span>. The header chip shows both; the runners record the checkpoint label from <span class="mono">--model</span> because the OpenAI API only reports the served alias.</li>
+    <li><span class="sev must">Decide</span><b>Which A/B pair.</b> The default <span class="mono">make dashboard-up</span> compares the governed hybrid run with the same-run one-pool control; both are measured and both cross Praxis. The RC1 control is PII-gate boundary evidence, not a quality comparison, so the difference is policy, not gateway versus direct. If you present the CUAD appendix instead, A is the direct model run and B is the failed gateway run; 76 of that page's 115 steps have no answer (82 of the run's 121 executed steps; the page folds one repeated doc_id). Use it only to show entry → label → pool → trace, and quote the specialist's quality from <span class="mono">runs/retrieval/e2e-specialist.json</span> (0.780 full document, 0.800 top-5), not from that view.</li>
+    <li><span class="sev know">Know</span><b>The report was re-scored.</b> This applies to the CUAD example: its page and stored <span class="mono">metrics.json</span> both read 64.5% with the current scorer; the run-time value was 26.3%. The current RC1 ROSA run's report accuracy is 0.998 on the synthetic corpus (deterministic rollup; the previous 2026-11-11 run was 1.000) and is not comparable to CUAD. If you present from an older CUAD copy, re-score it or disclose that 26.3% predates the checker fixes.</li>
+    <li><span class="sev know">Know</span><b>The model.</b> The default ROSA run uses Qwen/Qwen3.5-35B-A3B. On the hybrid view most calls run on CPU (400 on the CPU MoE, 600 on the CPU specialist); the RC1 one-pool control attempts all 1,201 calls on 4× A10G with TP=4; the general-entry PII gate denies 246 sensitive steps, so it records 159/200 fully correct. The previous 2026-11-10 control had 11 transport timeouts and 189/200. Both are served under the alias <span class="mono">Semantic-Qwen</span>. The header chip shows both; the runners record the checkpoint label from <span class="mono">--model</span> because the OpenAI API only reports the served alias.</li>
     <li><span class="sev know">Know</span><b>Pool vs hardware.</b> A <span class="mono">vllm-gpu</span> chip is a tier name, not proof of a GPU. In the default ROSA run the recorded pool map says <span class="mono">vllm-gpu</span> and <span class="mono">vllm-gpu-approved</span> are the same 4× A10G deployment, <span class="mono">vllm-cpu</span> is CPU, and <span class="mono">vllm-gpu-small</span> is CPU despite its name. In the CUAD appendix every pool was CPU-served. Read the header hardware chip and the run's pool map before making a silicon claim.</li>
-    <li><span class="sev should">Set</span><b>Provenance flags on any run you will present.</b> Both runners now record <span class="mono">--environment</span> and <span class="mono">--cluster</span> (or <span class="mono">HYBRID_ENVIRONMENT</span>/<span class="mono">HYBRID_CLUSTER</span>), the git commit and whether the tree was dirty, concurrency, timeout, and a <span class="mono">--pools</span> map of route → model/hardware/deployment. Without the pool map a later reader can see which pool answered but not what was in it. Neither CUAD run on this page records an environment, so the page shows amber <b>example data</b> — that default is deliberate, and a run is never promoted to <b>measured</b> just because it exists. The <span class="mono">runs/rosa-200-2026-11-11-praxis-routes</span> configurations record <span class="mono">environment: rosa</span> and <span class="mono">cluster: <redacted-cluster></span>, so they show green <b>measured</b>. A ROSA run recorded with <span class="mono">--environment rosa</span> (or an explicit measured provenance field) flips the chip.</li>
+    <li><span class="sev should">Set</span><b>Provenance flags on any run you will present.</b> Both runners now record <span class="mono">--environment</span> and <span class="mono">--cluster</span> (or <span class="mono">HYBRID_ENVIRONMENT</span>/<span class="mono">HYBRID_CLUSTER</span>), the git commit and whether the tree was dirty, concurrency, timeout, and a <span class="mono">--pools</span> map of route → model/hardware/deployment. Without the pool map a later reader can see which pool answered but not what was in it. Neither CUAD run on this page records an environment, so the page shows amber <b>example data</b> — that default is deliberate, and a run is never promoted to <b>measured</b> just because it exists. The <span class="mono">runs/rosa-200-2026-11-12-praxis-routes</span> configurations record <span class="mono">environment: rosa</span> and <span class="mono">cluster: <redacted-cluster></span>, so they show green <b>measured</b>. A ROSA run recorded with <span class="mono">--environment rosa</span> (or an explicit measured provenance field) flips the chip.</li>
     <li><span class="sev should">Pick</span><b>Two example documents.</b> For the CUAD example: CENTRACK for a fully-correct document with real quotes; PAXMEDICA or FEDERATED for a mixed failure. For the default ROSA run, pick one fully-correct document and one mixed failure from the left rail and open them once before the talk so the clicks are warm.</li>
     <li><span class="sev should">Start</span><b>With ground truth off.</b> Let the audience see the model's output before the answer key. The toggle is in the header and reads “Ground truth: on/off”; it must be on for the side scoreboard to make sense.</li>
     <li><span class="sev know">Avoid</span><b>Two overclaims.</b> In the default dashboard both A and B are gateway-routed: A is governed, B is the one-pool control. Do not call B “direct”, and do not claim governance from a direct run if you switch to the CUAD appendix (its view A is direct). Do not claim the extraction fan-out from a batch replay. Read the header run line before describing either view.</li>
@@ -999,7 +1007,7 @@ footer .mono { font-size: 11.5px; }
 <p class="pipe-note" style="margin-bottom:22px">This comparison run is kept as an appendix because 82 of its 121 calls failed. It is evidence of the gateway path — entry, label, pool, trace — not of model quality. The main guide stops before it.</p>
 <div class="callout warn">
   <div class="label">A/B order is set by the server, not by this table</div>
-  <p>The CUAD example below was started with A = direct run (<span class="mono">arm-direct-moe-gpu-v2</span>) and B = gateway run (<span class="mono">arm-D-specialist</span>). The default <span class="mono">make dashboard-up</span> uses a different pair: A = rebuilt-graph ROSA hybrid (<span class="mono">runs/rosa-200-2026-11-11-praxis-routes/hybrid</span>) and B = same-run one-pool control (<span class="mono">runs/rosa-200-2026-11-11-praxis-routes/one-pool</span>). Read the run line in the header before describing either view.</p>
+  <p>The CUAD example below was started with A = direct run (<span class="mono">arm-direct-moe-gpu-v2</span>) and B = gateway run (<span class="mono">arm-D-specialist</span>). The default <span class="mono">make dashboard-up</span> uses a different pair: A = current RC1 ROSA hybrid (<span class="mono">runs/rosa-200-2026-11-12-praxis-routes/hybrid</span>) and B = same-run one-pool control (<span class="mono">runs/rosa-200-2026-11-12-praxis-routes/one-pool</span>); B is PII-gate boundary evidence, not a quality comparison. Read the run line in the header before describing either view.</p>
 </div>
 <section id="two-configs">
   <div class="sec-head"><h2>The CUAD example: two configurations, and why a chip can say “CPU”</h2><span class="kicker">the optional quality reference</span></div>
@@ -1083,7 +1091,7 @@ footer .mono { font-size: 11.5px; }
 </details>
 
 <footer>
-  <p id="guideSource">Built from the running server at <span class="mono">127.0.0.1:8099</span>. The default replay is the rebuilt-graph ROSA run at <span class="mono">runs/rosa-200-2026-11-11-praxis-routes</span> (A: hybrid, B: one-pool). The CUAD example at <span class="mono">runs/cuad-test/arm-direct-moe-gpu-v2</span> and its appendix are documented below as the model-quality reference; they are example data, not the ROSA baseline.</p>
+  <p id="guideSource">Built from the running server at <span class="mono">127.0.0.1:8099</span>. The default replay is the current RC1 ROSA run at <span class="mono">runs/rosa-200-2026-11-12-praxis-routes</span> (A: hybrid, B: one-pool). The CUAD example at <span class="mono">runs/cuad-test/arm-direct-moe-gpu-v2</span> and its appendix are documented below as the model-quality reference; they are example data, not the ROSA baseline.</p>
   <p>Model label backfilled into view A's <span class="mono">summary.json</span> from the run notes: <span class="mono">Qwen/Qwen3.5-35B-A3B</span>, served as <span class="mono">Semantic-Qwen</span>, 4× A10G at TP=4. The direct and hybrid runners now record it at run time, together with the model each response named.</p>
   <p class="mono">demo/src/hybrid_demo/ui/payload.py · evalkit/score.py · pipeline/direct.py · pipeline/review.py · deploy/openshift/rosa/ · docs/octo-demo-v0.3.md §2d</p>
 </footer>
@@ -1149,7 +1157,7 @@ footer .mono { font-size: 11.5px; }
         }
         const source = document.getElementById("guideSource");
         if (source) {
-          source.innerHTML = `Built from the running server at <span class="mono">127.0.0.1:8099</span>, replaying the measured 2026-11-11 rebuilt-graph ROSA run <span class="mono">runs/rosa-200-2026-11-11-praxis-routes/${meta.run}</span> (config ${config}, ${meta.docs} synthetic documents). The CUAD example and its appendix are still documented below; the current numbers are in <span class="mono">runs/rosa-200-2026-11-11-praxis-routes/report.md</span>.`;
+          source.innerHTML = `Built from the running server at <span class="mono">127.0.0.1:8099</span>, replaying the measured 2026-11-12 RC1 ROSA run <span class="mono">runs/rosa-200-2026-11-12-praxis-routes/${meta.run}</span> (config ${config}, ${meta.docs} synthetic documents). The CUAD example and its appendix are still documented below; the current numbers are in <span class="mono">runs/rosa-200-2026-11-12-praxis-routes/report.md</span>.`;
         }
       }
     } catch (e) {

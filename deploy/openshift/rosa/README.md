@@ -72,20 +72,20 @@ model caches, digest-pinned vLLM image).
 4. Seed the caches, then deploy:
 
    ```bash
-   oc create ns openshell-demo
+   oc create ns <redacted-namespace>
    # server.py imports otel.py beside it; a ConfigMap with only server.py
    # crash-loops with ModuleNotFoundError: No module named 'otel'.
-   oc -n openshell-demo create configmap trace-ui-server \
+   oc -n <redacted-namespace> create configmap trace-ui-server \
      --from-file=server.py=demo/src/hybrid_demo/traceui/server.py \
      --from-file=otel.py=demo/src/hybrid_demo/traceui/otel.py \
      --dry-run=client -o yaml | oc apply -f -
-   oc apply -n openshell-demo -f deploy/openshift/rosa/storage.yaml
-   oc apply -n openshell-demo -f deploy/openshift/rosa/seeders.yaml
-   oc -n openshell-demo wait --for=condition=complete \
+   oc apply -n <redacted-namespace> -f deploy/openshift/rosa/storage.yaml
+   oc apply -n <redacted-namespace> -f deploy/openshift/rosa/seeders.yaml
+   oc -n <redacted-namespace> wait --for=condition=complete \
      job/seed-model-cache-cpu job/seed-model-cache-gpu --timeout=3600s
    # Completed seeder pods keep the RWO caches mounted; delete just the pods
    # (not the Jobs, which apply -k would recreate) before the pools start.
-   oc -n openshell-demo delete pod \
+   oc -n <redacted-namespace> delete pod \
      -l 'job-name in (seed-model-cache-cpu,seed-model-cache-gpu)'
    oc apply -k deploy/openshift/rosa
    ```
@@ -95,15 +95,15 @@ model caches, digest-pinned vLLM image).
    `--from-dir` workaround - `oc start-build --dockerfile` is not supported:
 
    ```bash
-   oc -n openshell-demo new-build --binary --strategy docker --name hybrid-specialist
-   oc -n openshell-demo patch bc hybrid-specialist --type merge \
+   oc -n <redacted-namespace> new-build --binary --strategy docker --name hybrid-specialist
+   oc -n <redacted-namespace> patch bc hybrid-specialist --type merge \
      -p '{"spec":{"strategy":{"dockerStrategy":{"dockerfilePath":"Dockerfile.specialist"}}}}'
    # stage only what the Dockerfile needs (--from-dir=demo uploads the
    # 950MB .venv and sits in git-clone: 40+ min measured 2026-11-04)
    STAGE=$(mktemp -d)
    cp demo/Dockerfile.specialist demo/pyproject.toml "$STAGE/"
    cp -R demo/src "$STAGE/src"
-   oc -n openshell-demo start-build hybrid-specialist --from-dir="$STAGE" --follow
+   oc -n <redacted-namespace> start-build hybrid-specialist --from-dir="$STAGE" --follow
    ```
 
    The Dockerfile downloads the 1.4GB CUAD checkpoint *before* copying
@@ -113,18 +113,18 @@ model caches, digest-pinned vLLM image).
    staging directory.
 
 6. Build the Jev image **only if you are enabling the opt-in `screen:pii`
-   route**. `jev-cpu` is in the kustomization, but the 2026-11-11 recorded run
+   route**. `jev-cpu` is in the kustomization, but the 2026-11-12 RC1 run
    used the regex screen and did not need it. The English checkpoint is baked
    into the image at build time:
 
    ```bash
-   oc -n openshell-demo new-build --binary --strategy docker --name hybrid-jev
-   oc -n openshell-demo patch bc hybrid-jev --type merge \
+   oc -n <redacted-namespace> new-build --binary --strategy docker --name hybrid-jev
+   oc -n <redacted-namespace> patch bc hybrid-jev --type merge \
      -p '{"spec":{"strategy":{"dockerStrategy":{"dockerfilePath":"Dockerfile.jev"}}}}'
    STAGE=$(mktemp -d)
    cp demo/Dockerfile.jev demo/pyproject.toml "$STAGE/"
    cp -R demo/src "$STAGE/src"
-   oc -n openshell-demo start-build hybrid-jev --from-dir="$STAGE" --follow
+   oc -n <redacted-namespace> start-build hybrid-jev --from-dir="$STAGE" --follow
    ```
 
    The service starts with `--warmup`, so the readiness probe only passes
@@ -293,40 +293,60 @@ documents into "non-sensitive".
 
 - 2026-11-11, us-east-1 `<redacted-cluster>` (rebuilt two-entry graph, cleaned
   stack). The same topology and pools, re-run after the OpenShell sandbox
-  egress fix and the deterministic report rollup. Current record:
-  `runs/rosa-200-2026-11-11-praxis-routes/`. Hybrid: **806.59 s, 0 errors, 0
-  fallback, 247/247 sensitive steps on approved pools, 0 violations, extract
-  F1 1.000, risk 1.000, report 1.000, 200/200 fully correct**, with **0.265
-  GPU-s/doc** and **32.555 CPU core-s/doc**. Route counts unchanged:
-  `vllm-cpu` 400, `cuad-specialist` 600, `vllm-gpu` 159,
+  egress fix and the deterministic report rollup. Previous comparable record
+  (`v0.9.1`): `runs/rosa-200-2026-11-11-praxis-routes/`. Hybrid: **806.59 s,
+  0 errors, 0 fallback, 247/247 sensitive steps on approved pools, 0
+  violations, extract F1 1.000, risk 1.000, report 1.000, 200/200 fully
+  correct**, with **0.265 GPU-s/doc** and **32.555 CPU core-s/doc**. Route
+  counts unchanged: `vllm-cpu` 400, `cuad-specialist` 600, `vllm-gpu` 159,
   `vllm-gpu-approved` 42. Same-run controls: one-pool 201.89 s / 0.981
   GPU-s/doc / 247 violations; small-first 489.92 s / 2.429 GPU-s/doc /
   risk 0.395 / 247 violations; round-robin 935.56 s / 1.862 GPU-s/doc / 110
   violations. Direct baselines: `cpu-moe` 2949.5 s, `gpu-moe` 301.6 s,
   `cpu-small` 1144.4 s (risk 0.395, report 0.212). The 2026-11-10 record is
-  preserved as the previous matrix. **RC1 (step-key binding + general-entry
-  PII gate) is not in this run**; it needs a rebuilt gateway image and a new
-  live validation before it can be quoted.
+  preserved as the earlier matrix. RC1 is not in this run.
+- 2026-11-12, us-east-1 `<redacted-cluster>` (RC1 `v0.9.2`, real pools).
+  Pools were recreated in `us-east-1a`, cache seeds completed, and the CPU
+  topology reproduced `0-15` / `16-17` / `24-35` with `problems: []`.
+  **Current quoted record:** `runs/rosa-200-2026-11-12-praxis-routes/`.
+  Hybrid: **818.87 s, 0 errors, 0 fallbacks, 247/247 sensitive steps
+  approved, 0 violations, extract F1 1.000, risk 0.995, report 0.998,
+  199/200 fully correct**, with **0.259 GPU-s/doc** and **33.006 CPU
+  core-s/doc**. The same stack passed the 2-document smoke
+  (`runs/rosa-smoke-2026-11-12`), live gate assertions
+  (`runs/rosa-policy-2026-11-12-real`) and the **28/28** `STACK=rosa`
+  resilience smoke (`runs/rosa-resilience-2026-11-12`): CPU
+  fallback/recovery and shared-GPU sensitive fail-closed/recovery. The
+  current controls (`one-pool` 157.03 s, `small-first` 377.68 s,
+  `round-robin` 725.35 s) are PII-gate boundary evidence: 246 denials and 1
+  sensitive violation each, not quality or cost comparisons. On this stack
+  `vllm-gpu` and `vllm-gpu-approved` select the same `gpumoe-vllm`
+  Deployment, so an approved-only outage cannot be isolated.
 
-## Teardown (2026-11-04, repeated 2026-11-11)
+## Teardown (2026-11-04, repeated 2026-11-11 and 2026-11-12)
 
-The 2026-11-11 re-run used the same bring-up and teardown shape: the
-`openshell-demo` namespace was deleted after the matrix was recorded, and the
+The 2026-11-12 RC1 run used the same bring-up and teardown shape: demo
+deployments, jobs, pods and PVCs were deleted after the matrix was recorded,
+the three cache PVs and EBS volumes were removed, and the
 `<redacted-gpu-pool>` / `<redacted-cpu-pool>` machine pools were deleted the same
-day. **The cluster stack is down.** Rebuild from this README before any new
-cluster measurement; the 2026-11-11 runs are in git and are the current
-quoted record.
+day. The nodes and instances terminated. **The cluster stack is down.**
+Rebuild from this README before any new cluster measurement; the 2026-11-12
+runs are in git and are the current quoted record. Teardown evidence:
+`runs/rosa-resilience-2026-11-12/teardown.txt`.
 
 Measurements were copied to `runs/` before anything was removed. Then:
 
-- `oc delete namespace openshell-demo` removed every workload: deployments,
-  services, routes, PVCs, builds, the specialist imagestream, configmaps,
-  secrets and jobs. No PVs, EBS volumes, snapshots or load balancers remain
-  from the stack.
+- The demo Deployments, Jobs, Pods and PVCs were deleted; the Services,
+  Routes, ConfigMaps, BuildConfigs, secrets and namespace were left in
+  place. The three model-cache PVs and their EBS volumes were deleted with
+  the PVCs; `runs/rosa-resilience-2026-11-12/teardown.txt` records that all
+  three volume IDs returned `InvalidVolume.NotFound`.
 - `rosa delete machinepool <redacted-gpu-pool>` and
   `rosa delete machinepool <redacted-cpu-pool>` removed both pools; the
   instances reached `terminated`, their ASGs are gone, and the node objects
   disappeared from the cluster.
+- Three unrelated 200 GiB `<redacted-volume-tag-1>` retain volumes in other
+  namespaces were present before teardown and were left untouched.
 - The empty `<redacted-eu-namespace>` namespace (created during the eu-west-1
   experiment) was also deleted.
 

@@ -5,11 +5,14 @@ three beats below are the same in replay and live; only beat 2 needs a live
 cluster (or the recording fallback).
 
 Read the header run line before every beat: in the default dashboard **A is
-the rebuilt-graph ROSA hybrid run**
-(`runs/rosa-200-2026-11-11-praxis-routes/hybrid`) and **B is the same-run
-one-pool control** (`runs/rosa-200-2026-11-11-praxis-routes/one-pool`). Both
-cross Praxis; A is governed, B is not. The CUAD appendix instead uses a
-direct run for A and a failed gateway run for B.
+the current RC1 ROSA hybrid run**
+(`runs/rosa-200-2026-11-12-praxis-routes/hybrid`) and **B is the same-run
+one-pool control** (`runs/rosa-200-2026-11-12-praxis-routes/one-pool`). Both
+cross Praxis; A is governed, B is not. B is the RC1 PII-gate boundary
+control, not a quality comparison: the gate blocks sensitive work before the
+pool. The 2026-11-11 A/B pair remains the last comparable four-arm matrix,
+and the CUAD appendix instead uses a direct run for A and a failed gateway
+run for B.
 
 ## Pre-flight (5 minutes)
 
@@ -38,15 +41,19 @@ Leave the A/B toggle on **A**. On the ROSA run the header reads
 Point at the routing figures: **247/247 sensitive steps on approved pools,
 0 violations**, **1000 CPU-served steps** (400 `vllm-cpu` for
 classify/data-protection + 600 `cuad-specialist` for clause extraction) and
-**201 judgment steps on GPU** (159 `vllm-gpu` + 42 approved).
+**201 judgment steps on GPU** (159 `vllm-gpu` + 42 approved). The current RC1
+quality row is extract F1 **1.000**, risk **0.995**, report **0.998** and
+**199/200** documents fully correct.
 
 Say: *“This is the recorded routing evidence. The sensitive entry never
-reached a non-approved pool; when the approved pool was unavailable it failed
-closed instead of spilling.”*
+reached a non-approved pool; when the shared GPU backend was unavailable it
+failed closed instead of spilling.”*
 
-Do **not** toggle to B for this beat. B is the one-pool control: it still
-crosses Praxis, but it has no sensitivity policy and records 247 expected
-sensitive-pool violations. Neither view is a direct run.
+Do **not** toggle to B for this beat. B is the RC1 one-pool control: it
+still crosses Praxis, but it has no sensitive listener, so the general-entry
+PII gate denies 246 sensitive steps and one content miss reaches the pool
+(1 violation). Its partial quality row is not comparable with A. Neither
+view is a direct run.
 
 ## Beat 2 — pull the plug (live only, or the recording)
 
@@ -62,35 +69,41 @@ DOC_IDS=C-2026-0001,C-2026-0003 ARMS=hybrid CONCURRENCY=2 \
   scripts/cluster/arms.sh
 # terminal 2 — while it runs
 scripts/demo/pull-the-plug.sh                 # scales gpumoe-vllm to 0
-# sensitive fail-closed: point a sensitive run at the approved pool, then
-scripts/demo/pull-the-plug.sh --pool vllm-gpu-approved
 scripts/demo/pull-the-plug.sh --restore       # scale it back to 1
 ```
 
 Watch with `oc -n openshell-demo port-forward svc/trace-ui 8080:8080` and
-open `http://127.0.0.1:8080`. The general entry degrades to CPU with
-`x-praxis-fallback: true`; the sensitive entry returns an explicit 502/503 and
-never spills to a non-approved pool.
+open `http://127.0.0.1:8080`. On the real stack `vllm-gpu` and
+`vllm-gpu-approved` select the same `gpumoe-vllm` Deployment, so do **not**
+claim an approved-only outage. The recorded 2026-11-12 resilience run shows
+the honest version: general classify falls back to the GPU with a visible
+failed-hop trace, then recovers to `vllm-cpu`; with the shared GPU backend
+down, sensitive risk and general risk both return 502, sensitive classify
+stays healthy on `vllm-cpu`, and sensitive risk recovers after restart.
+Evidence: `runs/rosa-resilience-2026-11-12/smoke.log`.
 
 **Fallback:** play the pre-recorded clip (record it once in prep; keep it at
 `docs/media/pull-the-plug.mp4`). Say plainly: *“This is a recording of the
-2026-11-11 ROSA run; the live cluster is not required for the talk.”* If the
-clip is missing, skip the outage claim and show the recorded trace rows from
-the last live run instead.
+2026-11-12 ROSA RC1 run; the live cluster is not required for the talk.”* If
+the clip is missing, skip the outage claim and show the recorded trace rows
+from the last live run instead.
 
 ## Beat 3 — GPU economics (replay A)
 
-Stay on **A**. The rebuilt 2026-11-11 run records routing, quality and
+Stay on **A**. The current RC1 2026-11-12 run records routing, quality and
 per-pool device time.
 
 - Routing: **400 `vllm-cpu` + 600 `cuad-specialist`** CPU-served, **159
   `vllm-gpu` + 42 `vllm-gpu-approved`** judgment steps.
-- Quality: extraction F1 **1.000**, risk **1.000**, report **1.000**,
-  **200/200 documents fully correct**, **0 sensitive violations**.
-- Cost: **0.265 GPU-s/doc** and **32.555 CPU core-s/doc** for the governed
-  hybrid arm; the one-pool control records 0.981 GPU-s/doc and small-first
-  2.429 GPU-s/doc.
-- Source: `runs/rosa-200-2026-11-11-praxis-routes/report.md`.
+- Quality: extraction F1 **1.000**, risk **0.995**, report **0.998**,
+  **199/200 documents fully correct**, **0 sensitive violations**.
+- Cost: **0.259 GPU-s/doc** and **33.006 CPU core-s/doc** for the governed
+  RC1 hybrid arm, with **201/201** judgment steps on GPU.
+- Source: `runs/rosa-200-2026-11-12-praxis-routes/report.md`.
+- The previous 2026-11-11 `v0.9.1` run was 806.59 s, F1/risk/report 1.000,
+  200/200, **0.265 GPU-s/doc** and 32.555 CPU core-s/doc. That remains the
+  last comparable four-arm matrix; the current RC1 controls are PII-gate
+  boundary evidence, not cost comparisons.
 - The **0.22 vs 1.013 GPU-s/doc** figure belongs to the pre-rebuild
   2026-11-09 graph (recoverable at `25bfa4d`) and is not a measurement of
   the rebuilt graph. Do not use the old **0.036 / 1.974 / 54×**
@@ -113,19 +126,25 @@ high-volume clause work on CPU; the governance boundary held.”*
 - Do not quote **26.3%** for the report. That is the pre-fix value; the page
   and the re-scored `metrics.json` both read **64.5%**.
 - Do not claim the **200-document run** was live today. It was recorded on
-  2026-11-11 in replay; a live run is a separate, smaller run.
+  2026-11-12 in replay; a live run is a separate, smaller run.
 - Do not claim **Jev or the served screen** from this run. The recorded
   screen is the regex (41/0/159/0); `HYBRID_PII_DETECTOR=screen` and the
-  `jev-cpu` control-plane route are implemented but not in the 2026-11-11
+  `jev-cpu` control-plane route are implemented but not in the 2026-11-12
   record. The cause trigger is the regex; the opt-in Jev trigger failed its
   CUAD F1 guardrail (0.625 vs 0.714) and is not adopted.
-- Do not claim the **RC1 gateway enforcement** from this replay. The
-  recorded 2026-11-11 run used the pre-RC1 gateway image: per-step keys and
-  an observe-only PII scanner. The current tree adds key-to-step binding and
-  a general-entry PII gate, but the measured `v0.9.1` digest predates them;
-  `v0.9.2` is the rebuild target and is not published yet, and no re-run
-  exists. Say “implemented and covered by negative tests”, not “measured on
-  this run”.
+- Do not claim an **approved-only outage** on the real stack. `vllm-gpu` and
+  `vllm-gpu-approved` share the `gpumoe-vllm` Deployment. The measured RC1
+  fail-closed result is for that shared backend, not an isolated approved
+  pool.
+- Do not quote the current RC1 controls as quality or cost comparisons. The
+  general-entry PII gate blocks their sensitive work; their partial quality
+  rows are not comparable with the hybrid. The 2026-11-11 four-arm matrix is
+  the last comparable control set.
+- RC1 key-to-step binding and the general-entry PII gate are **measured** on
+  the 2026-11-12 real stack: 28/28 resilience checks, live gate assertions
+  and the 200-document matrix. Say that, and cite
+  `runs/rosa-resilience-2026-11-12` and
+  `runs/rosa-policy-2026-11-12-real`.
 
 ## Live cluster quick reference
 

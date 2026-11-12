@@ -3,18 +3,26 @@
 Demo plan and business case · **Draft v0.3 · measured on the ROSA demo stack**
 (2026-10-29 → 2026-11-12)
 
-> **Update 2026-11-12 — RC1 gateway hardening (source + local tests, not
-> measured).** The policy host now adds key-to-step binding
-> (`validator/gci-step-key`) and an enforcing PII gate on the general review
-> entry (`validator/gci-pii-gate`, 403 on a match). The screen listener uses
-> `policy-screen.yaml` and the sensitive entry stays observe-only, so both can
-> still see the document. The measured `v0.9.1` image predates these plugins;
-> `v0.9.2` is the RC1 rebuild target and is not published yet. Build and push
-> it before applying the current policies, then run the negative smoke and a
-> new ROSA run. No number in this document changes; the quoted record remains
-> the 2026-11-11 matrix.
+> **Update 2026-11-12 — RC1 gateway hardening, published and measured.** The
+> policy host adds key-to-step binding (`validator/gci-step-key`) and an
+> enforcing PII gate on the general review entry (`validator/gci-pii-gate`,
+> 403 on a match). The screen listener uses `policy-screen.yaml` and the
+> sensitive entry stays observe-only, so both can still see the document.
+> `v0.9.2` is published (digest
+> `sha256:3140a8dad2626ef71504546fa7901f53d9ec68ac49ed20e39919ae0af71c77c6`)
+> and is the current measured image. The real ROSA RC1 matrix
+> (`runs/rosa-200-2026-11-12-praxis-routes`) records hybrid **818.87 s,
+> 0 errors, 0 fallbacks, 0 sensitive violations, 247/247 sensitive steps
+> approved, extract F1 1.000, risk 0.995, report 0.998, 199/200 fully
+> correct, 0.259 GPU-s/doc and 33.006 CPU core-s/doc**. The real stack also
+> passed the 28/28 `STACK=rosa` resilience smoke (`runs/rosa-resilience-2026-11-12`),
+> the live gate assertions and the 2-document smoke. The 2026-11-11
+> `v0.9.1` matrix remains the previous comparable four-arm record. The
+> 2026-11-12 one-pool/small-first/round-robin controls are PII-gate boundary
+> evidence (246 denials and 1 violation each), not quality or cost
+> comparisons.
 >
-> **Update 2026-11-11 — current record re-run.** The current ROSA matrix
+> **Update 2026-11-11 — previous record re-run.** The 2026-11-11 ROSA matrix
 > (`runs/rosa-200-2026-11-11-praxis-routes`) re-ran the rebuilt two-entry
 > graph after the sandbox egress fix: hybrid 806.59 s, 0 errors, 0 sensitive
 > violations, 247/247 sensitive steps approved, 201/201 judgment steps on
@@ -600,7 +608,7 @@ summary of what these checks mean is in "Results in plain language" above.
 | V3 | CPU model loads and runs on our hardware | **Validated** — 1.5B/7B/9B/35B-A3B served by vLLM on Xeon; plain builds, no vendor tuning needed |
 | V4 | Routing by model name; prefix caching on CPU | **Validated** via Praxis label routing (architecture evolved past plain EPP); prefix-cache engagement not separately isolated |
 | V5 | Semantic cache hit/FP rates; threshold | **Validated** — threshold sweep: zero-FP operating point 0.98 with 41.7% hits; similarity layer awaits a real embedder (litil is the measured swap-in) |
-| V6 | Fan-out limits; 200-document visual | **Validated** — concurrency 12 stable; the 2026-11-11 ROSA matrix ran 200 synthetic documents (41 sensitive, arms A–D) with 0 errors on the governed arm and 0 sensitive violations |
+| V6 | Fan-out limits; 200-document visual | **Validated** — concurrency 12 stable; the current 2026-11-12 RC1 ROSA matrix ran 200 synthetic documents (41 sensitive) with 0 errors, 0 fallbacks and 0 sensitive violations on the governed hybrid arm; the 2026-11-11 four-arm matrix remains the last comparable control set |
 | V7 | Failover: kill the GPU pool mid-run | **Validated** — degradation, fail-closed, isolation, recovery, all stacks |
 | V8 | Quality harness + acceptance threshold | **Validated** — evalkit scorer vs CUAD ground truth; every arm compared to Arm A on identical fields |
 | V9 | OpenShell on OpenShift | **Validated** — Helm install, SCC and CRDs handled; runbook scripted |
@@ -609,7 +617,7 @@ summary of what these checks mean is in "Results in plain language" above.
 | V12 | Licences | **Validated** — Apache-2.0 models; CUAD CC BY 4.0 (confirmed on the Atticus site); no customer data |
 | V13 | Define the "Praxis gateway" | **Resolved** — Praxis is the gateway; four config-driven arms; the llm-d-sc classifier was carried, measured (§6.2), then removed from the request path (2026-11-05) |
 | V14 | Classifier transfer to contract steps | **Validated with a twist** — llm-d-sc labels all contract-analysis steps MEDIUM, only cross-doc reports REASONING; within-tier composition lives in the composite pool; prompt wording calibrated so report prompts label REASONING; disagreement reported, never hidden |
-| V15 | Sensitivity enforcement beyond the classifier | **Validated (routing) + hardened (RC1)** — PII screen (P 1.0 / R 1.0 synthetic; 5–12/20 CUAD docs flagged), NetworkPolicies, and gateway-record verification; RC1 adds a general-entry PII gate and key-to-step binding, source-complete but awaiting a rebuilt image and live validation. Two-label routing in a single chain remains **open** (V19) |
+| V15 | Sensitivity enforcement beyond the classifier | **Validated (routing) + live-validated (RC1)** — PII screen (P 1.0 / R 1.0 synthetic; 5–12/20 CUAD docs flagged), NetworkPolicies, and gateway-record verification; RC1 adds a general-entry PII gate and key-to-step binding, published in `v0.9.2` and validated on real ROSA (28/28 resilience smoke, live gate assertions, 200-document matrix). Two-label routing in a single chain remains **open** (V19) |
 | V16 | GPU-removal for in-flight REASONING | **Validated** — bounded degradation with visible badge; fail-closed for sensitive; recovery verified |
 | V17 | Cost model agreement | **Partial** — device-time exact; priced as sweep only; org-validated rates open |
 | V18 | Skeptic's baseline (Arm B) | **Validated** — measured and beaten. The 7B was never run on the held-out split, so the old mixed-split comparison is retired; on identical test-split fields the CPU MoE scores 0.690 and the retrieval-first specialist 0.800 (local direct) |
