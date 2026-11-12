@@ -1,0 +1,83 @@
+# PPE policy document for the pre-entry PII screen (listener :8086 in
+# manifests/base/praxis/config.yaml).
+#
+# The screen is not a review entry: it calls the Jev/System One decision
+# model on the document text before the pipeline chooses general or
+# sensitive. Its input is expected to contain PII, so the scanner here is
+# deliberately observe-only. The general review entry uses policy.yaml,
+# where the same scanner is a gate; that split is what keeps screening
+# possible without leaving a general-entry bypass.
+#
+# Key-to-step binding applies here as it does on both review entries. The
+# screen key carries step:screen and step:decide; a review key cannot call
+# the screen listener, and the screen key cannot claim a review stage. No
+# stepless caller is admitted on this listener.
+plugins:
+  - name: api-keys
+    kind: identity/api-key
+    hooks: [identity.resolve]
+    on_error: fail
+    config:
+      credential:
+        kind: header
+        name: X-API-Key
+      provider:
+        kind: file
+        path: /etc/praxis/api-keys.yaml
+        refresh_secs: 30
+        max_staleness_secs: 300
+      record_map:
+        subject:
+          id: user
+          roles: groups
+
+  # Same observer-mode audit sink as the review entries.
+  - name: audit
+    kind: audit/logger
+    mode: audit
+    hooks: [cmf.llm_input]
+    capabilities:
+      - read_subject
+      - read_client
+      - read_labels
+    config:
+      destination: stderr
+      source: gci-screen
+
+  - name: step-key
+    kind: validator/gci-step-key
+    mode: sequential
+    hooks: [cmf.llm_input]
+    capabilities:
+      - read_headers
+      - read_subject
+    config:
+      header: X-Demo-Step
+      role_prefix: "step:"
+      stepless_roles: []
+
+  # Observe-only on purpose: the screen must see the document it is
+  # classifying. The gate lives on the general review entry.
+  - name: pii-observe
+    kind: validator/gci-pii-observe
+    mode: audit
+    hooks: [cmf.llm_input]
+    capabilities:
+      - read_agent
+      - read_headers
+      - read_subject
+
+global:
+  authentication: [api-keys]
+  authorization:
+    pre_invocation:
+      - "require(authenticated)"
+
+routes:
+  - llm: Semantic-Qwen
+    authorization:
+      pre_invocation:
+        - "require(authenticated)"
+        - "run(step-key)"
+        - "run(pii-observe)"
+        - "run(audit)"

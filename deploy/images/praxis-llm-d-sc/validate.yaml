@@ -3,8 +3,8 @@
 # This is intentionally small: it exists so `praxis-ai --validate` constructs
 # the llm_d_sc filter, validates its config schema, checks that the filter
 # and the load balancer agree on the selected cluster, and — since v0.9.1 —
-# loads the policy filter with a document naming both host-registered PPE
-# plugins (see validate-policy.yaml). It does not contact llm-d-sc or any
+# loads the policy filter with a document naming every host-registered PPE
+# plugin (see validate-policy.yaml). It does not contact llm-d-sc or any
 # model pool. The gRPC channel is lazy and validation performs no DNS or
 # network I/O.
 

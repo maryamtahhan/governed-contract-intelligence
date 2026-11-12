@@ -10,14 +10,14 @@
 #
 # The taint is keyed by (subject, X-Session-Id): each step key that touches
 # the document gets its own label, set the first time that step passes a
-# sensitive entry. It is groundwork — nothing denies on it yet; the Phase 2
-# audit records surface the taint diff, and any future deny rule is a
-# measured decision, not an assumption.
+# sensitive entry. Nothing denies on the taint itself yet; the Phase 2 audit
+# records surface the taint diff, and any future deny rule is a measured
+# decision, not an assumption. Key-to-step binding is enforced here too.
 #
-# Enforcing pool containment from this label would be the `restrict`
-# effect; the praxis router does not consume it, so containment remains the
-# entry's failover set (approved-only, fail closed) in the praxis config;
-# the route table inside the entry chooses the approved pool by X-Demo-Step.
+# Enforcing pool containment from this label would be the `restrict` effect;
+# the praxis router does not consume it, so containment remains the entry's
+# failover set (approved-only, fail closed) in the praxis config; the route
+# table inside the entry chooses the approved pool by X-Demo-Step.
 plugins:
   - name: api-keys
     kind: identity/api-key
@@ -56,16 +56,33 @@ plugins:
       destination: stderr
       source: gci-gateway
 
-  # Shadow PII screen (V19 groundwork): same observe-only scanner as the
-  # general policy. On the sensitive entries its lines will usually agree
-  # with the screen that routed the document here — disagreement is exactly
-  # what the agreement report exists to surface.
+  # RC1 key-to-step binding, same stage grants as the general entry but no
+  # stepless caller: a key that can reach the sensitive entry must name its
+  # review stage and cannot claim another stage's route.
+  - name: step-key
+    kind: validator/gci-step-key
+    mode: sequential
+    hooks: [cmf.llm_input]
+    capabilities:
+      - read_headers
+      - read_subject
+    config:
+      header: X-Demo-Step
+      role_prefix: "step:"
+      stepless_roles: []
+
+  # Shadow PII screen (V19 measurement): same observe-only scanner as the
+  # general policy. The sensitive entry must allow the document through, so
+  # this scanner never denies. Its lines usually agree with the screen that
+  # routed the document here — disagreement is exactly what the agreement
+  # report exists to surface.
   - name: pii-observe
     kind: validator/gci-pii-observe
     mode: audit
     hooks: [cmf.llm_input]
     capabilities:
       - read_agent
+      - read_headers
       - read_subject
 
 global:
@@ -79,6 +96,7 @@ routes:
     authorization:
       pre_invocation:
         - "require(authenticated)"
+        - "run(step-key)"
         - "taint(sensitive, session)"
         # The scanner runs after the taint so its lines for sensitive
         # sessions are attributable to a request already marked sensitive.

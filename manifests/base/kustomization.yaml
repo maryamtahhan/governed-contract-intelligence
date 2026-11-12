@@ -37,4 +37,5 @@ configMapGenerator:
       # digests of the demo keys in demo/src/hybrid_demo/common.py.
       - policy.yaml=praxis/policy.yaml
       - policy-sensitive.yaml=praxis/policy-sensitive.yaml
+      - policy-screen.yaml=praxis/policy-screen.yaml
       - api-keys.yaml=praxis/api-keys.yaml

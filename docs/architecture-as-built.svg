@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="860" viewBox="0 0 1280 860" font-family="Inter, ui-sans-serif, system-ui, sans-serif" role="img" aria-labelledby="t d">
   <title id="t">As-built architecture — clients, recorders, policy gate and pools</title>
-  <desc id="d">Four layers. Clients: the review pipeline and the OpenShell sandbox. Both clients enter trace-ui: the pipeline picks the general or sensitive ingress from its PII screen, and the sandbox may reach only those two trace-ui ingress ports (plus read-only GitHub), enforced by its egress policy; Praxis and the pools are not in the sandbox allowlist. Record and decide: trace-ui records the entry and forwards to praxis, while praxis authenticates each step's API key, records the request, runs an observe-only PII scan, and matches the declarative X-Demo-Step header against the work-to-pool table to pick a pool: CUAD clause extraction goes to cuad-specialist, classify and data protection to vllm-cpu, and risk/report to vllm-gpu (general) or vllm-gpu-approved (sensitive). Pool relays: one trace-ui relay per pool records the model call and its timing; praxis never calls a pool directly. Pools: cuad-specialist, vllm-cpu and vllm-gpu-approved sit inside the approved set where sensitive data may run; vllm-gpu and vllm-gpu-small are the general pools. The gateway audit trail, not a log line, is the evidence. A fifth, control-plane path (opt-in, not part of the recorded run) is the pre-entry PII screen: trace-ui screen ingress 8086 to the Praxis screen listener, then the jev-cpu relay 8089 to the CPU Jev pool; it is not a review entry and has no failover.</desc>
+  <desc id="d">Four layers. Clients: the review pipeline and the OpenShell sandbox. Both clients enter trace-ui: the pipeline picks the general or sensitive ingress from its PII screen, and the sandbox may reach only those two trace-ui ingress ports (plus read-only GitHub), enforced by its egress policy; Praxis and the pools are not in the sandbox allowlist. Record and decide: trace-ui records the entry and forwards to praxis, while praxis authenticates each step's API key, binds the X-Demo-Step claim to that key's step grant, records the request, runs the PII scanner (enforcing on the general entry, observe-only on the sensitive entry), and matches X-Demo-Step against the work-to-pool table to pick a pool: CUAD clause extraction goes to cuad-specialist, classify and data protection to vllm-cpu, and risk/report to vllm-gpu (general) or vllm-gpu-approved (sensitive). Pool relays: one trace-ui relay per pool records the model call and its timing; praxis never calls a pool directly. Pools: cuad-specialist, vllm-cpu and vllm-gpu-approved sit inside the approved set where sensitive data may run; vllm-gpu and vllm-gpu-small are the general pools. The gateway audit trail, not a log line, is the evidence. A fifth, control-plane path (opt-in, not part of the recorded run) is the pre-entry PII screen: trace-ui screen ingress 8086 to the Praxis screen listener, then the jev-cpu relay 8089 to the CPU Jev pool; it is not a review entry and has no failover.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#9db1c8"/>
@@ -16,7 +16,7 @@
   <rect width="1280" height="860" fill="#07111f"/>
 
   <text x="40" y="44" font-size="20" font-weight="700" fill="#e9f2ff">As-built architecture — clients, recorders, policy gate and pools</text>
-  <text x="40" y="68" font-size="12" fill="#9db1c8">every request is recorded and authenticated · the gateway database is the audit trail · gateway image v0.9.1 · demo target: ROSA HCP</text>
+  <text x="40" y="68" font-size="12" fill="#9db1c8">every request is recorded and authenticated · the gateway database is the audit trail · gateway build v0.9.2 (RC1 rebuild, pending publish) · demo target: ROSA HCP</text>
 
   <!-- layer 1: clients -->
   <text x="40" y="96" font-size="9.5" font-weight="700" letter-spacing="1.1" fill="#7fb2e5">CLIENTS · WHERE A REQUEST STARTS</text>
@@ -57,7 +57,7 @@
   <text x="640" y="284" font-size="14" font-weight="600" fill="#e9f2ff">PRAXIS · POLICY + ROUTING</text>
   <text x="640" y="310" font-size="10.5" fill="#c9d8ea">PPE: per-step API key; an unknown key fails closed</text>
   <text x="640" y="332" font-size="10.5" fill="#c9d8ea">audit record for every request</text>
-  <text x="640" y="354" font-size="10.5" fill="#c9d8ea">shadow PII scan — observe-only, never routes</text>
+  <text x="640" y="354" font-size="10.5" fill="#c9d8ea">PII gate on general — observe-only on sensitive</text>
   <text x="640" y="376" font-size="10.5" fill="#c9d8ea">router matches X-Demo-Step → work-to-pool table</text>
   <text x="640" y="398" font-size="10.5" fill="#c9d8ea">hybrid: CUAD clauses → cuad-specialist</text>
   <text x="640" y="418" font-size="9.5" fill="#c9d8ea">classify/data protection → vllm-cpu · risk/report → GPU · sensitive: approved pools only</text>

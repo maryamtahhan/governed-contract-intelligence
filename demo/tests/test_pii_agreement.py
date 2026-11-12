@@ -18,14 +18,16 @@ from hybrid_demo.evalkit.pii_agreement import (
 )
 
 
-def _line(session: str, subject: str, matched: list[str], chars: int) -> str:
+def _line(session: str, subject: str, matched: list[str], chars: int,
+          *, plugin: str = "gci_pii_observe", action: str = "observe") -> str:
     """One log line as the host formatter wraps it: timestamp, level,
     target, then the scanner's compact serde_json record verbatim."""
     record = json.dumps(
-        {"plugin": "gci_pii_observe", "session_id": session, "subject": subject,
+        {"plugin": plugin, "action": action, "session_id": session,
+         "subject": subject, "step": subject.removeprefix("gci-"),
          "matched": matched, "text_chars": chars},
         separators=(",", ":"))
-    return f"2026-11-06T10:00:00Z INFO gci_pii_observe: {record}"
+    return f"2026-11-06T10:00:00Z INFO {plugin}: {record}"
 
 
 LOGS = "\n".join([
@@ -70,6 +72,18 @@ def test_observe_lines_parse_through_log_wrapping():
     assert lines[0]["session_id"] == "C-2026-0001"
     assert lines[0]["matched"] == ["EMAIL_ADDRESS"]
     assert lines[3]["matched"] == ["PERSONAL_DATA_MARKER"]
+
+
+def test_gate_lines_parse_and_keep_their_action():
+    line = _line("C-2026-0099", "gci-classify", ["EMAIL_ADDRESS"], 8123,
+                 plugin="gci_pii_gate", action="deny")
+    parsed = parse_observe_lines(line)
+    assert parsed == [{
+        "plugin": "gci_pii_gate", "action": "deny",
+        "session_id": "C-2026-0099", "subject": "gci-classify",
+        "step": "classify", "matched": ["EMAIL_ADDRESS"],
+        "text_chars": 8123,
+    }]
 
 
 def test_observe_lines_parse_json_log_mode():

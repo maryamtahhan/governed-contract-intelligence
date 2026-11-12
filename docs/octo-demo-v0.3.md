@@ -1,8 +1,19 @@
 # OCTO Demo: Private, Governed Agents on Hybrid CPU + GPU Inference
 
 Demo plan and business case · **Draft v0.3 · measured on the ROSA demo stack**
-(2026-10-29 → 2026-11-11)
+(2026-10-29 → 2026-11-12)
 
+> **Update 2026-11-12 — RC1 gateway hardening (source + local tests, not
+> measured).** The policy host now adds key-to-step binding
+> (`validator/gci-step-key`) and an enforcing PII gate on the general review
+> entry (`validator/gci-pii-gate`, 403 on a match). The screen listener uses
+> `policy-screen.yaml` and the sensitive entry stays observe-only, so both can
+> still see the document. The measured `v0.9.1` image predates these plugins;
+> `v0.9.2` is the RC1 rebuild target and is not published yet. Build and push
+> it before applying the current policies, then run the negative smoke and a
+> new ROSA run. No number in this document changes; the quoted record remains
+> the 2026-11-11 matrix.
+>
 > **Update 2026-11-11 — current record re-run.** The current ROSA matrix
 > (`runs/rosa-200-2026-11-11-praxis-routes`) re-ran the rebuilt two-entry
 > graph after the sandbox egress fix: hybrid 806.59 s, 0 errors, 0 sensitive
@@ -598,11 +609,11 @@ summary of what these checks mean is in "Results in plain language" above.
 | V12 | Licences | **Validated** — Apache-2.0 models; CUAD CC BY 4.0 (confirmed on the Atticus site); no customer data |
 | V13 | Define the "Praxis gateway" | **Resolved** — Praxis is the gateway; four config-driven arms; the llm-d-sc classifier was carried, measured (§6.2), then removed from the request path (2026-11-05) |
 | V14 | Classifier transfer to contract steps | **Validated with a twist** — llm-d-sc labels all contract-analysis steps MEDIUM, only cross-doc reports REASONING; within-tier composition lives in the composite pool; prompt wording calibrated so report prompts label REASONING; disagreement reported, never hidden |
-| V15 | Sensitivity enforcement beyond the classifier | **Validated** — PII screen (P 1.0 / R 1.0 synthetic; 5–12/20 CUAD docs flagged), NetworkPolicies, and gateway-record verification; two-label routing in a single chain remains **open** (V19) |
+| V15 | Sensitivity enforcement beyond the classifier | **Validated (routing) + hardened (RC1)** — PII screen (P 1.0 / R 1.0 synthetic; 5–12/20 CUAD docs flagged), NetworkPolicies, and gateway-record verification; RC1 adds a general-entry PII gate and key-to-step binding, source-complete but awaiting a rebuilt image and live validation. Two-label routing in a single chain remains **open** (V19) |
 | V16 | GPU-removal for in-flight REASONING | **Validated** — bounded degradation with visible badge; fail-closed for sensitive; recovery verified |
 | V17 | Cost model agreement | **Partial** — device-time exact; priced as sweep only; org-validated rates open |
 | V18 | Skeptic's baseline (Arm B) | **Validated** — measured and beaten. The 7B was never run on the held-out split, so the old mixed-split comparison is retired; on identical test-split fields the CPU MoE scores 0.690 and the retrieval-first specialist 0.800 (local direct) |
-| V19 | Both labels routed at once | **Open** — implemented as two gateway entries (general/sensitive); single-chain two-label routing unvalidated |
+| V19 | Both labels routed at once | **Open** — implemented as two gateway entries (general/sensitive); the general entry now *enforces* the PII boundary (RC1 gate), but moving the label decision fully into one chain remains unvalidated |
 
 **Also open:** thinking-mode A/B (Qwen3.5 thinking is the untested quality
 lever for the judgment tier); the 7B on the held-out test split (headline

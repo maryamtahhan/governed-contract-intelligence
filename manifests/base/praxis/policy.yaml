@@ -1,20 +1,26 @@
 # PPE policy document for the general gateway entry (listener :8080 in
 # manifests/base/praxis/config.yaml, and the single entry of arms A/B/C).
-# The sensitive entry (:8083) uses policy-sensitive.yaml.
+# The sensitive entry (:8083) uses policy-sensitive.yaml; the pre-entry PII
+# screen (:8086) uses policy-screen.yaml.
 #
-# Phase 1 of the PPE integration (docs/design.md and the integration plan):
-# per-step identity and a fail-closed authentication gate. Every inference
-# request must present a known X-API-Key (digests in api-keys.yaml); the
-# runner sends one key per pipeline step, so each decision record attributes
-# the request to classify / extract / risk / report. The model must be the
-# one this stack serves — an unknown model fails closed.
+# RC1: every inference request presents a known X-API-Key (digests in
+# api-keys.yaml) and that key is bound to the stage in X-Demo-Step. The
+# runner sends one key per pipeline step; a valid extract key cannot claim
+# classify, risk, report or another stage. The model must be the one this
+# stack serves — an unknown model fails closed.
+#
+# The general entry also runs the PII scanner in gate mode. A document that
+# reaches this entry with PII is denied, so the client cannot bypass the
+# pipeline's screen and put personal data on the general pool. The screen
+# entry intentionally uses policy-screen.yaml, where the same scanner stays
+# observe-only: screening a document must be allowed to see the document.
 #
 # What this policy deliberately does NOT do:
 #   - pool steering: PPE's restrict effect is not consumed by the praxis
 #     router (no backend labels, one served-model name), so which pool may
 #     serve a request stays expressed by the router's X-Demo-Step table in
 #     the praxis config. Do not claim policy-driven routing.
-#   - sensitivity: the sensitive entry (:8083) loads
+#   - sensitivity taint: the sensitive entry (:8083) loads
 #     policy-sensitive.yaml, which additionally taints the session.
 #   - llm.input.* predicates: praxis does not yet populate the normalized
 #     request parts (praxis-proxy/praxis#1429); rules keyed on them would
@@ -59,21 +65,34 @@ plugins:
       destination: stderr
       source: gci-gateway
 
-  # Shadow PII screen (V19 groundwork): the gateway-side scanner, run in
-  # observe mode. It NEVER denies and NEVER rewrites — it logs one
-  # structured line per scanned request (session, subject, matched entity
-  # names), keyed for hybrid-pii-agreement to join against the pipeline's
-  # client-side screen (demo/src/hybrid_demo/pii.py). The pattern catalog
-  # mirrors that screen regex-for-regex. Promoting this to a gate is a
-  # measured decision for a later run, not a config flip. Under
-  # dispatch: policy (ppe 0.4.1) a plugin runs only from a step that
-  # names it, hence the run() step in the route below.
-  - name: pii-observe
-    kind: validator/gci-pii-observe
-    mode: audit
+  # RC1 key-to-step binding. The API-key directory maps each key's groups
+  # into subject.roles; the `step:<stage>` groups are the grants. A request
+  # for another stage is denied before it can reach the router. The eval
+  # harness is the only stepless caller: it may make a classifier call with
+  # no X-Demo-Step, but an eval key that names a review step is denied too.
+  - name: step-key
+    kind: validator/gci-step-key
+    mode: sequential
+    hooks: [cmf.llm_input]
+    capabilities:
+      - read_headers
+      - read_subject
+    config:
+      header: X-Demo-Step
+      role_prefix: "step:"
+      stepless_roles: [eval]
+
+  # RC1 PII gate for the general entry. Same pattern catalog as the
+  # pipeline's client-side screen (demo/src/hybrid_demo/pii.py). A match
+  # returns a 403 denial; allowed traffic still logs one structured line so
+  # hybrid-pii-agreement can compare the gateway and client screens.
+  - name: pii-gate
+    kind: validator/gci-pii-gate
+    mode: sequential
     hooks: [cmf.llm_input]
     capabilities:
       - read_agent
+      - read_headers
       - read_subject
 
 global:
@@ -87,5 +106,6 @@ routes:
     authorization:
       pre_invocation:
         - "require(authenticated)"
-        - "run(pii-observe)"
+        - "run(step-key)"
+        - "run(pii-gate)"
         - "run(audit)"

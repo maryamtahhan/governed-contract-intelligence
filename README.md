@@ -59,15 +59,15 @@ pipeline, the measurement harness and the OpenShell sandbox.
 | capability | state |
 |---|---|
 | Praxis routing, governance, fail-closed, audit export | **built, verified on 3 stacks** |
-| PPE policy layer: per-step API keys, audit records, shadow PII screen | **built; observe-only** — deny-on-PII is an open measured decision (design §3.1) |
+| PPE policy layer: per-step API keys, key-to-step binding, audit records, PII gate | **built; negative tests green** — live ROSA validation on the rebuilt stack pending (design §3.1) |
 | CUAD review pipeline (extraction → risk → report), scored vs ground truth | **built** |
 | CUAD specialist pool (RoBERTa-large QA, model endpoint only) | **built** |
 | Semantic cache in the specialist (V5 ordering rules, zero-FP threshold) | **built, measured** |
 | Four-arm measurement (A/B/C/D) + model-variant comparison on OCP | **built** |
 | Trace UI (waterfall, arms panel, dashboard, audit) | **built** |
-| Test suite | **230 tests green** (`cd demo && uv run pytest`) |
+| Test suite | **248 tests green** (`cd demo && uv run pytest`) |
 | Contract-step taxonomy + evaluation harness | **candidate, not measured** — evaluate before routing ([design §5](docs/design.md)) |
-| Gateway image `v0.9.1` (Praxis 0.7.5 / ai-gateway 0.9.0 + PPE host plugins) | **built and published** — `quay.io/mtahhan/gci-praxis:v0.9.1`, base manifests switched ([docs](deploy/images/praxis-llm-d-sc/README.md)) |
+| Gateway image `v0.9.2` (Praxis 0.7.5 / ai-gateway 0.9.0 + PPE host plugins) | **RC1 rebuild target, not yet published** — the tree, manifests and compose stack name `v0.9.2`; the measured image is `v0.9.1`, which carries audit + observe-only PII. Build and push `v0.9.2` before the current policies load ([docs](deploy/images/praxis-llm-d-sc/README.md)) |
 | Retrieval evaluation (chunking + recall@k/MRR vs annotation spans) | **run, both regimes — ordering inverts within-doc, restores cross-doc (FINDINGS §11)** |
 | OSS adapters (Presidio, Jev/Laya, nervaluate, ranx, docling, RedisVL, OTel, RAGAS, llm-d sim/batch/bench) | **built as opt-in swaps, default path unchanged** ([design §4](docs/design.md)) |
 | docling ingestion + PII screen at ingest | adapter built; default remains builtin/regex, not yet measured on the corpus (FINDINGS §16) |
@@ -132,10 +132,12 @@ Key properties of the governed path:
 - **Praxis reaches the pools only through the trace-ui relays** — every
   request recorded with route, per-hop timings; SQLite is the audit trail,
   exported as `audit.jsonl`.
-- **Every request is authenticated at the gateway.** Each pipeline step
-  presents a per-step `X-API-Key` to the PPE policy filter; unknown or missing
-  keys fail closed. The same policy layer emits request records and runs the
-  observe-only PII scanner.
+- **Every request is authenticated and scope-bound at the gateway.** Each
+  pipeline step presents a per-step `X-API-Key`; unknown or missing keys fail
+  closed, and the key's `step:<stage>` grant must match `X-Demo-Step`. The
+  general entry runs the PII scanner as a gate; the screen and sensitive
+  entries keep it observe-only for the comparison. The same policy layer
+  emits request records.
 - **The same praxis configs** (`manifests/base/praxis/`) drive the Linux
   stack and OpenShift, so routing is byte-identical on both.
 - **Configs** (measurement baselines, swapped live): **A** `one-pool` (old
@@ -190,7 +192,7 @@ restore one.
 │   │   ├── pii.py              pluggable PII detectors (regex default)
 │   │   ├── configs.json        single source of routing-config metadata
 │   │   └── common.py, routes.py, bench.py, classifier.py
-│   ├── tests/                    230-test suite, incl. e2e against a praxis stub
+│   ├── tests/                    248-test suite, incl. e2e against a praxis stub
 │   ├── tools/                    probes, validators, paired significance, PII compare, bench helpers
 │   ├── Dockerfile                trace-ui / package image
 │   └── Dockerfile.specialist     specialist image (bakes the CUAD checkpoint)
@@ -279,8 +281,8 @@ export COMPOSE="$HOME/pv/bin/podman-compose"    # or "docker compose"
 export PATH="$HOME/.local/bin:$PATH"
 
 scripts/linux/up.sh        # build + start the stack (hybrid config), wait for readiness
-scripts/linux/smoke.sh     # 18 assertions: routing, fallback, fail-closed, governance, audit,
-                           # policy auth (keys fail closed) + shadow PII observe lines
+scripts/linux/smoke.sh     # 27 checks: routing, fallback, fail-closed, governance, audit,
+                           # key-to-step binding, the general-entry PII gate, and scanner lines
 DOCS=40 scripts/linux/arms.sh   # all four routing configs on the same documents + report
 scripts/linux/demo.sh      # choreographed on-stage run (pauses between acts)
 scripts/linux/down.sh      # stop (-v also deletes the trace database)
@@ -351,15 +353,23 @@ On any new node, read `lscpu` first and regenerate the core lists.
 
 The gateway image is published by this repo: upstream `ai` has no
 `llm_d_sc` filter and no PPE policy host, so the repo publishes its own
-build — `quay.io/mtahhan/gci-praxis:v0.9.1` (Praxis 0.7.5 / ai-gateway 0.9.0,
-PPE 0.4.1 host plugins; digest
-`sha256:9def8e14befedeef75a088266630386dc4506004dd43fd6962212dcb122f375a`)
-— via the `publish-images` workflow
+build via the `publish-images` workflow
 ([deploy/images/praxis-llm-d-sc/](deploy/images/praxis-llm-d-sc/README.md)).
+The current tree, manifests, compose stack and CI target
+`quay.io/mtahhan/gci-praxis:v0.9.2`, the RC1 rebuild (Praxis 0.7.5 /
+ai-gateway 0.9.0, PPE 0.4.1 host plugins); **that tag is not published yet**.
+The measured 2026-11-11 stack ran `v0.9.1` (digest
+`sha256:9def8e14befedeef75a088266630386dc4506004dd43fd6962212dcb122f375a`).
 The `llm_d_sc` filter is unused by the shipped configs (no classifier in the
 request path) but stays in the image for the contract-step taxonomy
-experiment. The policy layer is used by every entry: per-step API keys,
-request records and the observe-only PII scanner. The classifier
+experiment. The policy layer is used by every entry: per-step API keys bound
+to their `X-Demo-Step` stage, request records, and the PII scanner — enforcing
+on the general entry, observe-only on the screen and sensitive entries. **The
+measured `v0.9.1` digest predates the RC1 plugins**: it carries the audit
+observer and the observe-only scanner, not `validator/gci-step-key` or
+`validator/gci-pii-gate`. Build and push `v0.9.2` before applying the current
+`manifests/base/praxis` policies, or the gateway's validation step will reject
+the unregistered plugin kinds. The classifier
 (`quay.io/mtahhan/gci-llm-d-sc:main-e660fff`) and its mirrored modelcar were
 published once (2026-11-05) and stay in the registry for that experiment;
 nothing in the default stack deploys them. The llm-d-sc Deployment and the
@@ -451,7 +461,7 @@ download or network.
 ```bash
 cd demo
 uv sync --locked --dev
-uv run pytest -q                  # 230 passed on a clean checkout
+uv run pytest -q                  # 248 passed on a clean checkout
 uv run ruff check src tests tools
 ```
 
@@ -484,9 +494,11 @@ in CI (`.github/workflows/ci.yml`), plus a **gateway-configs** job that boots
 the real image and validates every praxis config:
 
 ```bash
-# What CI runs for each of config.yaml / arm-a / arm-b / arm-c:
+# What CI runs for each of config.yaml / arm-a / arm-b / arm-c.
+# v0.9.2 is the RC1 rebuild target; until it is published this job fails by
+# design, because the current policies name plugins that v0.9.1 does not have.
 podman run --rm -v "$PWD/manifests/base/praxis:/etc/praxis:ro" \
-  quay.io/mtahhan/gci-praxis:v0.9.1 --validate -c /etc/praxis/config.yaml
+  quay.io/mtahhan/gci-praxis:v0.9.2 --validate -c /etc/praxis/config.yaml
 ```
 
 Cheap structural checks before a doc or script change:
@@ -523,7 +535,7 @@ component swap is [design §4.4](docs/design.md).
 | Jev/Laya PII screen (offline) | `uv run hybrid-jev-bench --data data/synthetic` | weights-only precision/recall vs regex; no serving claim |
 | Pre-entry screen through Praxis (served shape) | `HYBRID_PII_DETECTOR=screen HYBRID_PII_SCREEN_URL=http://127.0.0.1:8086/v1/systemone uv run hybrid-review ...` | exercises the `screen:pii` control-plane route on the fake stack; not a measured arm |
 | Cause-trigger guardrail | `uv run hybrid-cause-bench --deciders regex jev` | CUAD test-split termination F1; regex 0.714, Jev 0.625, so Jev is not adopted |
-| Gateway vs pipeline PII screen | `uv run hybrid-pii-agreement --run <run> --logs <praxis logs>` | V19 groundwork; agreement only, observe-only scanner |
+| Gateway vs pipeline PII screen | `uv run hybrid-pii-agreement --run <run> --logs <praxis logs>` | V19 measurement; joins observe and gate scanner records |
 | Specialist quality | `uv run python tools/validate_specialist.py --docs 12` | CUAD test-split F1 for the local checkpoint |
 | Semantic-cache threshold | `uv run python tools/validate_cache.py --docs 12` | hit rate and false positives per threshold; pick zero-FP point |
 | Paired significance | `uv run python tools/mcnemar.py <run_a> <run_b> --k 5` | exact McNemar (statsmodels backend when installed) |
@@ -745,26 +757,27 @@ recorded run directories.
 - The gateway runs plaintext HTTP behind port-forwards (add OIDC/mTLS
   before sharing). The trace UI can be published with an opt-in Route plus
   `TRACE_API_TOKEN`, and since the PPE integration the gateway path itself
-  authenticates requests (per-step API keys, fail closed) — but the keys
-  are fixed demo credentials checked into the repo, so that is attribution,
-  not access control.
+  authenticates requests (per-step API keys, fail closed, bound to their
+  step grant) — but the keys are fixed demo credentials checked into the
+  repo, so that is attribution and scope, not secrecy or general access
+  control.
 - The external llm-d-batch-gateway dispatches carry no `X-API-Key`, so the
   batch path through the gateway entries is denied by the policy layer
   until that component can present a key ([design §3.1](docs/design.md)).
-- The sensitive entry is chosen by the pipeline's PII screen (a DLP-style
-  gate). Since the PPE integration the gateway also runs an observe-only
-  PII scanner over every request (`validator/gci-pii-observe`, pattern
-  catalog mirroring the screen), measured against the pipeline's call by
-  `hybrid-pii-agreement` — but it only observes, and the entry choice is
-  still the client's. Moving that decision into the gateway — llm-d-sc's
-  sensitivity taxonomy over gRPC, two-label routing in one praxis chain,
-  or a promoted PPE rule — remains unvalidated (V19); the scanner's
-  agreement number is the prerequisite evidence either way. The rebuilt
-  stack authenticates the caller but not the claimed `X-Demo-Step`, so a
-  valid key can ask for another step's pool; binding key scope to step is
-  Phase 2. Re-adding the classifier means git history, commit `aa080e9`.
-  Network policies provide
-  the enforcement layer either way (V15).
+- The sensitive entry is still chosen by the pipeline's PII screen (a
+  DLP-style gate). RC1 now backs that choice at the gateway: the general
+  entry runs the scanner as a gate and denies PII, while the screen and
+  sensitive entries keep the observe-only scanner for the V19 comparison.
+  The key-to-step gate binds each valid key to its `step:<stage>` grant, so
+  a review key cannot claim another step's route; the eval key is step-less
+  and cannot name a review stage. Both changes are implemented with negative
+  tests but still need live validation on a rebuilt ROSA stack. Moving the
+  sensitive/general decision fully into the gateway — llm-d-sc's sensitivity
+  taxonomy over gRPC, two-label routing in one praxis chain, or a promoted
+  PPE rule — remains a measured upgrade (V19); the scanner's agreement
+  number is the prerequisite evidence either way. Re-adding the classifier
+  means git history, commit `aa080e9`. Network policies provide the
+  enforcement layer either way (V15).
 - rhgaudi3s2 was found emptied of our workloads on 2026-10-31 (FINDINGS
   §7); redeploy from the runbooks above before any cluster-dependent demo.
 - The ROSA demo footprint is torn down (2026-11-11, after the quoted re-run);

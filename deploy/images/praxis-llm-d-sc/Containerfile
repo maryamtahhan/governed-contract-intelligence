@@ -67,7 +67,7 @@ RUN cargo build --release -p praxis-ai-proxy \
 
 # Validate the real startup path: filter factory construction, chain expansion,
 # cluster alignment, and the llm_d_sc config schema — and, since v0.9.1, the
-# policy filter loading a document that names both host-registered PPE plugins.
+# policy filter loading a document that names every host-registered PPE plugin.
 # An unregistered `kind:` fails the policy load, so a missing host registration
 # breaks here, not at first request. This performs no DNS and no network I/O
 # (the gRPC channel is lazy; the api-key directory is a local file).

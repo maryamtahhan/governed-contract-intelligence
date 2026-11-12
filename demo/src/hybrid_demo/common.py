@@ -31,11 +31,34 @@ DEMO_API_KEYS = {
     "screen": os.environ.get("HYBRID_API_KEY_SCREEN", "gci-demo-key-screen"),
 }
 
+# The gateway's step-key gate reads these as `step:<stage>` roles in
+# manifests/base/praxis/api-keys.yaml. Empty means the key is allowed only
+# on a step-less call (the eval harness); it can never name a review step.
+DEMO_KEY_STEPS = {
+    "classify": ("classify",),
+    "extract": ("extract",),
+    "risk": ("risk",),
+    "report": ("report",),
+    "eval": (),
+    "screen": ("screen", "decide"),
+}
+
+# `decide:cause` is the optional screen-listener trigger, not a review step;
+# it shares the screen identity. Keep this alias here so the header builder
+# and the key directory's step grants express the same contract.
+DEMO_STAGE_KEYS = {"decide": "screen"}
+
 
 def api_key_for_step(step: str) -> str:
-    """The X-API-Key for a pipeline step ("extract:MSA-1.1" -> the extract key)."""
+    """The X-API-Key for a pipeline step ("extract:MSA-1.1" -> the extract key).
+
+    An unknown stage falls back to the eval key. That is not a bypass: the
+    gateway's step-key gate sees the unknown stage and denies the eval
+    identity, which has no step grant.
+    """
     stage = step.split(":", 1)[0]
-    return DEMO_API_KEYS.get(stage, DEMO_API_KEYS["eval"])
+    key_name = DEMO_STAGE_KEYS.get(stage, stage)
+    return DEMO_API_KEYS.get(key_name, DEMO_API_KEYS["eval"])
 
 
 def new_id(prefix: str) -> str:

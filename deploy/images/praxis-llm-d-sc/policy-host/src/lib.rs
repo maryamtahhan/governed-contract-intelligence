@@ -1,5 +1,6 @@
 // gci-praxis-policy-host — host registrations for the PPE plugins the GCI
-// gateway runs, plus the observe-only PII scanner.
+// gateway runs: the PII scanner (observe and gate modes) and the step-key
+// binding gate.
 //
 // The registration function below is called by the code the ai-gateway
 // server's build.rs generates for every discovered
@@ -8,26 +9,28 @@
 // constructs (and again reads the registry on every hot reload; the host
 // table is never drained, by design).
 //
-// The scanner mirrors the reference `validator/pii-scan`
+// The PII scanner mirrors the reference `validator/pii-scan`
 // (praxis-proxy/policy, reference/plugins/pii-scanner) in structure —
-// factory, hook fan-out, Text/argument scanning — with two deliberate
-// differences:
+// factory, hook fan-out, Text/argument scanning — and its pattern catalog
+// mirrors demo/src/hybrid_demo/pii.py (PII_PATTERNS) regex-for-regex, entity
+// name for entity name, so the agreement report compares like with like. A
+// divergence here is a bug in one side or the other, not a finding.
 //
-//   * it is observe-only. The reference's modes are `deny` and `redact`;
-//     neither belongs in a first deployment, whose job is to be measured
-//     against the pipeline's client-side screen, not to act. This plugin
-//     always returns allow and logs what it found.
-//   * its pattern catalog mirrors demo/src/hybrid_demo/pii.py
-//     (PII_PATTERNS) regex-for-regex, entity name for entity name, so the
-//     agreement report compares like with like. A divergence here is a
-//     bug in one side or the other, not a finding.
+// The observe kind still never denies and never rewrites: it is the
+// comparison instrument. The gate kind uses the same scanner and denies on a
+// match; the general review entry runs it so a client cannot bypass the
+// pipeline's sensitive-entry decision. The screen entry deliberately loads
+// the observe-only policy because its input is the document being screened.
 
-use std::sync::Arc;
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
 
 use praxis_policy_core::{
     cmf::{CmfHook, ContentPart, Message, MessagePayload},
     context::PluginContext,
-    error::PluginError,
+    error::{PluginError, PluginViolation},
     factory::{PluginFactory, PluginInstance},
     hooks::{
         payload::Extensions,
@@ -43,11 +46,21 @@ use serde_json::Value;
 /// `kind:` operators write in PPE YAML to declare the observe-only scanner.
 pub const PII_OBSERVE_KIND: &str = "validator/gci-pii-observe";
 
+/// `kind:` operators write in PPE YAML to declare the enforcing scanner.
+pub const PII_GATE_KIND: &str = "validator/gci-pii-gate";
+
+/// `kind:` operators write in PPE YAML to bind an API-key subject to the
+/// stage in `X-Demo-Step`.
+pub const STEP_KEY_KIND: &str = "validator/gci-step-key";
+
+const DEFAULT_STEP_HEADER: &str = "X-Demo-Step";
+const DEFAULT_ROLE_PREFIX: &str = "step:";
+
 /// The demo screen's pattern catalog (demo/src/hybrid_demo/pii.py,
 /// PII_PATTERNS), mirrored exactly — same regexes, same entity names, same
-/// case sensitivity — so the gateway-side shadow measurement and the
-/// pipeline's screen answer the same question. Rust's `regex` syntax
-/// covers every pattern here (no lookaround involved).
+/// case sensitivity — so the gateway-side measurement and the pipeline's
+/// screen answer the same question. Rust's `regex` syntax covers every
+/// pattern here (no lookaround involved).
 const PATTERNS: &[(&str, &str)] = &[
     ("EMAIL_ADDRESS", r"[\w.+-]+@[\w-]+\.[\w.]+"),
     ("EMPLOYEE_ID", r"\bEMP-\d{4,}\b"),
@@ -66,7 +79,7 @@ const PATTERNS: &[(&str, &str)] = &[
 
 /// Host registration, invoked at startup by the generated external-filter
 /// registration. The registry parameter is unused: this crate contributes
-/// no HTTP filters, only the two policy plugin factories.
+/// no HTTP filters, only the policy plugin factories.
 ///
 /// # Panics
 ///
@@ -81,9 +94,15 @@ pub fn register_filters(_registry: &mut praxis_filter::FilterRegistry) {
         praxis_policy_plugin_audit_logger::KIND,
         Arc::new(|| Box::new(praxis_policy_plugin_audit_logger::AuditLoggerFactory)),
     );
+    for kind in [PII_OBSERVE_KIND, PII_GATE_KIND] {
+        praxis_filter::register_policy_plugin_factory(
+            kind,
+            Arc::new(|| Box::new(GciPiiFactory)),
+        );
+    }
     praxis_filter::register_policy_plugin_factory(
-        PII_OBSERVE_KIND,
-        Arc::new(|| Box::new(GciPiiObserveFactory)),
+        STEP_KEY_KIND,
+        Arc::new(|| Box::new(GciStepKeyFactory)),
     );
 }
 
@@ -92,27 +111,60 @@ pub fn register_filters(_registry: &mut praxis_filter::FilterRegistry) {
 /// narrow the screen.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct ObserveConfig {
+struct PiiConfig {
     /// Entity names from the catalog; `None` means all of them.
     #[serde(default)]
     detect: Option<Vec<String>>,
 }
 
-/// Factory for [`PII_OBSERVE_KIND`]. Mirrors the reference scanner's
-/// factory: instantiates from the `config:` block and registers one
-/// handler per CMF hook name declared in `cfg.hooks` (empty is a config
-/// error — a scanner wired to nothing would look deployed and see nothing).
-pub struct GciPiiObserveFactory;
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum PiiAction {
+    Observe,
+    Gate,
+}
 
-impl PluginFactory for GciPiiObserveFactory {
+impl PiiAction {
+    fn from_kind(kind: &str) -> Option<Self> {
+        match kind {
+            PII_OBSERVE_KIND => Some(Self::Observe),
+            PII_GATE_KIND => Some(Self::Gate),
+            _ => None,
+        }
+    }
+
+    fn log_plugin(self) -> &'static str {
+        match self {
+            Self::Observe => "gci_pii_observe",
+            Self::Gate => "gci_pii_gate",
+        }
+    }
+
+    fn denies(self, matched: &[String]) -> bool {
+        self == Self::Gate && !matched.is_empty()
+    }
+}
+
+/// Factory shared by both scanner kinds. `config.kind` selects the action;
+/// both register the same handler on every CMF hook named in `cfg.hooks`.
+pub struct GciPiiFactory;
+
+impl PluginFactory for GciPiiFactory {
     fn create(&self, config: &PluginConfig) -> Result<PluginInstance, Box<PluginError>> {
-        let scanner = Arc::new(GciPiiObserve::new(config.clone())?);
+        let action = PiiAction::from_kind(&config.kind).ok_or_else(|| {
+            Box::new(PluginError::Config {
+                message: format!(
+                    "plugin '{}': factory registered for the PII scanner but kind is '{}'",
+                    config.name, config.kind
+                ),
+            })
+        })?;
+        let scanner = Arc::new(GciPiiScanner::new(config.clone(), action)?);
         if config.hooks.is_empty() {
             return Err(Box::new(PluginError::Config {
                 message: format!(
                     "plugin '{}' ({}): `hooks:` must list at least one CMF hook to scan on \
                      (e.g. cmf.llm_input)",
-                    config.name, PII_OBSERVE_KIND
+                    config.name, config.kind
                 ),
             }));
         }
@@ -137,26 +189,28 @@ impl PluginFactory for GciPiiObserveFactory {
     }
 }
 
-/// The observe-only scanner. Holds the compiled pattern set; every
-/// invocation logs one line and allows.
-pub struct GciPiiObserve {
+/// The scanner. Holds the compiled pattern set and the action selected by
+/// its registered kind; every invocation logs one line. Observe always
+/// allows; gate denies when any entity matches.
+pub struct GciPiiScanner {
     cfg: PluginConfig,
     patterns: Vec<(String, Regex)>,
+    action: PiiAction,
 }
 
-impl GciPiiObserve {
+impl GciPiiScanner {
     /// # Errors
     ///
     /// `PluginError::Config` when `config:` is present but does not
     /// deserialize, or names an entity outside the catalog.
-    fn new(cfg: PluginConfig) -> Result<Self, Box<PluginError>> {
+    fn new(cfg: PluginConfig, action: PiiAction) -> Result<Self, Box<PluginError>> {
         let typed = match cfg.config.as_ref() {
-            None => ObserveConfig::default(),
+            None => PiiConfig::default(),
             Some(raw) => serde_json::from_value(raw.clone()).map_err(|e| {
                 Box::new(PluginError::Config {
                     message: format!(
                         "plugin '{}' ({}): config parse failed: {e}",
-                        cfg.name, PII_OBSERVE_KIND
+                        cfg.name, cfg.kind
                     ),
                 })
             })?,
@@ -165,13 +219,13 @@ impl GciPiiObserve {
             None => PATTERNS.iter().map(|(name, _)| *name).collect(),
             Some(names) => {
                 for name in names {
-                    if !PATTERNS.iter().any(|(n, _)| n == name) {
+                    if !PATTERNS.iter().any(|(n, _)| *n == name.as_str()) {
                         return Err(Box::new(PluginError::Config {
                             message: format!(
                                 "plugin '{}' ({}): unknown entity '{name}' in detect:; the \
                                  catalog is: {}",
                                 cfg.name,
-                                PII_OBSERVE_KIND,
+                                cfg.kind,
                                 PATTERNS.iter().map(|(n, _)| *n).collect::<Vec<_>>().join(", ")
                             ),
                         }));
@@ -182,14 +236,18 @@ impl GciPiiObserve {
         };
         let patterns = PATTERNS
             .iter()
-            .filter(|(name, _)| selected.contains(&name))
+            .filter(|(name, _)| selected.contains(name))
             .filter_map(|(name, re)| {
                 Regex::new(re)
                     .ok()
                     .map(|compiled| ((*name).to_owned(), compiled))
             })
             .collect();
-        Ok(Self { cfg, patterns })
+        Ok(Self {
+            cfg,
+            patterns,
+            action,
+        })
     }
 
     /// Every matching entity name across the message's text parts and
@@ -234,7 +292,7 @@ impl GciPiiObserve {
     }
 }
 
-impl Plugin for GciPiiObserve {
+impl Plugin for GciPiiScanner {
     fn config(&self) -> &PluginConfig {
         &self.cfg
     }
@@ -246,7 +304,7 @@ impl Plugin for GciPiiObserve {
 // second v0.9.1 build failure). A bare `async fn` is the matching form —
 // same as the v0.4.1 reference scanner. If a praxis release moves the
 // trait to async-trait, this and the import come back.
-impl HookHandler<CmfHook> for GciPiiObserve {
+impl HookHandler<CmfHook> for GciPiiScanner {
     async fn handle(
         &self,
         payload: &MessagePayload,
@@ -265,6 +323,11 @@ impl HookHandler<CmfHook> for GciPiiObserve {
             .and_then(|s| s.subject.as_ref())
             .and_then(|s| s.id.clone())
             .unwrap_or_default();
+        let step = ext
+            .http
+            .as_ref()
+            .and_then(|h| h.get_request_header(DEFAULT_STEP_HEADER))
+            .unwrap_or_default();
         let text_chars: usize = payload
             .message
             .content
@@ -274,20 +337,310 @@ impl HookHandler<CmfHook> for GciPiiObserve {
                 _ => 0,
             })
             .sum();
+        let denied = self.action.denies(&matched);
+        let outcome = match self.action {
+            PiiAction::Observe => "observe",
+            PiiAction::Gate if denied => "deny",
+            PiiAction::Gate => "allow",
+        };
         // One self-contained JSON line as the event message, so the line is
         // parseable regardless of how the host's tracing subscriber formats
-        // fields. The analysis tool greps for the plugin field.
+        // fields. The agreement tool accepts both plugin markers.
         let line = serde_json::json!({
-            "plugin": "gci_pii_observe",
-            "session_id": session,
-            "subject": subject,
-            "matched": matched,
+            "plugin": self.action.log_plugin(),
+            "action": outcome,
+            "session_id": &session,
+            "subject": &subject,
+            "step": &step,
+            "matched": &matched,
             "text_chars": text_chars,
         });
-        tracing::info!(target: "gci_pii_observe", "{line}");
-        // Observe-only, by design: never deny, never modify. Promoting the
-        // scanner to a gate is a measured decision that belongs to a
-        // future config, not to this plugin.
+        match self.action {
+            PiiAction::Observe => tracing::info!(target: "gci_pii_observe", "{line}"),
+            PiiAction::Gate => tracing::info!(target: "gci_pii_gate", "{line}"),
+        }
+        if denied {
+            let mut details = HashMap::new();
+            if !subject.is_empty() {
+                details.insert("subject".to_owned(), Value::String(subject));
+            }
+            if !step.is_empty() {
+                details.insert("step".to_owned(), Value::String(step.to_owned()));
+            }
+            let reason = format!(
+                "PII detected on the general entry: {}",
+                matched.join(", ")
+            );
+            return PluginResult::deny(
+                PluginViolation::new("pii_detected", reason)
+                    .with_details(details)
+                    .with_proto_error_code(403),
+            );
+        }
         PluginResult::allow()
+    }
+}
+
+/// Settings for the step-key gate. The API-key directory maps each key's
+/// `groups` into `subject.roles`; a group named `step:<stage>` is the grant
+/// for that stage. A key with an `eval` role may make a step-less
+/// classifier/eval call, but it cannot claim a review step.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct StepKeyConfig {
+    /// Header carrying the routing step, e.g. `classify` or
+    /// `extract:MSA-1.1`.
+    #[serde(default = "default_step_header")]
+    header: String,
+    /// Prefix that turns a step stage into the role name.
+    #[serde(default = "default_role_prefix")]
+    role_prefix: String,
+    /// Roles allowed to omit the step header entirely. The eval harness is
+    /// the one caller that does this; it never names a pool.
+    #[serde(default)]
+    stepless_roles: Vec<String>,
+}
+
+impl Default for StepKeyConfig {
+    fn default() -> Self {
+        Self {
+            header: default_step_header(),
+            role_prefix: default_role_prefix(),
+            stepless_roles: Vec::new(),
+        }
+    }
+}
+
+fn default_step_header() -> String {
+    DEFAULT_STEP_HEADER.to_owned()
+}
+
+fn default_role_prefix() -> String {
+    DEFAULT_ROLE_PREFIX.to_owned()
+}
+
+/// Factory for [`STEP_KEY_KIND`]. Registers one handler per CMF hook named
+/// in `cfg.hooks`, same as the scanner.
+pub struct GciStepKeyFactory;
+
+impl PluginFactory for GciStepKeyFactory {
+    fn create(&self, config: &PluginConfig) -> Result<PluginInstance, Box<PluginError>> {
+        let gate = Arc::new(GciStepKey::new(config.clone())?);
+        if config.hooks.is_empty() {
+            return Err(Box::new(PluginError::Config {
+                message: format!(
+                    "plugin '{}' ({}): `hooks:` must list at least one CMF hook to scan on \
+                     (e.g. cmf.llm_input)",
+                    config.name, config.kind
+                ),
+            }));
+        }
+        let handlers: Vec<_> = config
+            .hooks
+            .iter()
+            .map(|h| -> (&'static str, _) {
+                let leaked: &'static str = Box::leak(h.clone().into_boxed_str());
+                let adapter: Arc<dyn praxis_policy_core::registry::AnyHookHandler> =
+                    Arc::new(TypedHandlerAdapter::<CmfHook, _>::new(Arc::clone(&gate)));
+                (leaked, adapter)
+            })
+            .collect();
+        Ok(PluginInstance {
+            plugin: gate,
+            handlers,
+        })
+    }
+}
+
+/// The step-key gate. Fails closed when the authenticated subject is absent,
+/// when a non-exempt caller omits the step header, or when the step's stage
+/// is not one of the subject's `step:<stage>` roles.
+pub struct GciStepKey {
+    cfg: PluginConfig,
+    settings: StepKeyConfig,
+}
+
+impl GciStepKey {
+    /// # Errors
+    ///
+    /// `PluginError::Config` when `config:` is present but does not
+    /// deserialize, or when the header/prefix would be empty.
+    fn new(cfg: PluginConfig) -> Result<Self, Box<PluginError>> {
+        let settings = match cfg.config.as_ref() {
+            None => StepKeyConfig::default(),
+            Some(raw) => serde_json::from_value(raw.clone()).map_err(|e| {
+                Box::new(PluginError::Config {
+                    message: format!(
+                        "plugin '{}' ({}): config parse failed: {e}",
+                        cfg.name, cfg.kind
+                    ),
+                })
+            })?,
+        };
+        if settings.header.trim().is_empty() {
+            return Err(Box::new(PluginError::Config {
+                message: format!(
+                    "plugin '{}' ({}): `header:` must name the step header",
+                    cfg.name, cfg.kind
+                ),
+            }));
+        }
+        if settings.role_prefix.trim().is_empty() {
+            return Err(Box::new(PluginError::Config {
+                message: format!(
+                    "plugin '{}' ({}): `role_prefix:` must not be empty",
+                    cfg.name, cfg.kind
+                ),
+            }));
+        }
+        Ok(Self { cfg, settings })
+    }
+}
+
+impl Plugin for GciStepKey {
+    fn config(&self) -> &PluginConfig {
+        &self.cfg
+    }
+}
+
+impl HookHandler<CmfHook> for GciStepKey {
+    async fn handle(
+        &self,
+        _payload: &MessagePayload,
+        ext: &Extensions,
+        _ctx: &mut PluginContext,
+    ) -> PluginResult<MessagePayload> {
+        let subject = ext
+            .security
+            .as_ref()
+            .and_then(|s| s.subject.as_ref());
+        let subject_id = subject
+            .and_then(|s| s.id.clone())
+            .unwrap_or_default();
+        let step = ext
+            .http
+            .as_ref()
+            .and_then(|h| h.get_request_header(&self.settings.header))
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .map(str::to_owned);
+        let outcome = match subject {
+            None => Err((
+                "subject_missing".to_owned(),
+                "step binding needs an authenticated subject".to_owned(),
+            )),
+            Some(subject) => check_step_roles(&subject.roles, step.as_deref(), &self.settings),
+        };
+        let (decision, code) = match &outcome {
+            Ok(()) => ("allow", ""),
+            Err((code, _)) => ("deny", code.as_str()),
+        };
+        let line = serde_json::json!({
+            "plugin": "gci_step_key",
+            "subject": &subject_id,
+            "step": step.as_deref().unwrap_or_default(),
+            "decision": decision,
+            "code": code,
+        });
+        tracing::info!(target: "gci_step_key", "{line}");
+        match outcome {
+            Ok(()) => PluginResult::allow(),
+            Err((code, reason)) => PluginResult::deny(
+                PluginViolation::new(code, reason)
+                    .with_proto_error_code(403),
+            ),
+        }
+    }
+}
+
+/// The role check, separated from the hook so it can be tested without an
+/// `Extensions` value. A step header's stage is the text before the first
+/// `:`; the subject must carry `role_prefix + stage`.
+fn check_step_roles(
+    roles: &HashSet<String>,
+    step: Option<&str>,
+    settings: &StepKeyConfig,
+) -> Result<(), (String, String)> {
+    match step {
+        Some(step) => {
+            let stage = step.split_once(':').map_or(step, |(stage, _)| stage).trim();
+            if stage.is_empty() {
+                return Err((
+                    "step_invalid".to_owned(),
+                    "the step header has an empty stage".to_owned(),
+                ));
+            }
+            let required = format!("{}{}", settings.role_prefix, stage);
+            if roles.contains(&required) {
+                Ok(())
+            } else {
+                Err((
+                    "step_key_mismatch".to_owned(),
+                    format!("subject is not granted the '{required}' role"),
+                ))
+            }
+        }
+        None => {
+            if settings
+                .stepless_roles
+                .iter()
+                .any(|role| roles.contains(role))
+            {
+                Ok(())
+            } else {
+                Err((
+                    "step_missing".to_owned(),
+                    "this key may not omit the step header".to_owned(),
+                ))
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn roles(values: &[&str]) -> HashSet<String> {
+        values.iter().map(|v| (*v).to_owned()).collect()
+    }
+
+    fn settings() -> StepKeyConfig {
+        StepKeyConfig {
+            header: DEFAULT_STEP_HEADER.to_owned(),
+            role_prefix: DEFAULT_ROLE_PREFIX.to_owned(),
+            stepless_roles: vec!["eval".to_owned()],
+        }
+    }
+
+    #[test]
+    fn a_step_is_granted_by_its_stage_role() {
+        assert!(
+            check_step_roles(&roles(&["step:extract"]), Some("extract:MSA-1.1"), &settings())
+                .is_ok()
+        );
+        assert!(
+            check_step_roles(&roles(&["step:classify"]), Some("extract:MSA-1.1"), &settings())
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn an_eval_key_can_be_stepless_but_cannot_claim_a_step() {
+        assert!(check_step_roles(&roles(&["eval"]), None, &settings()).is_ok());
+        assert!(check_step_roles(&roles(&["eval"]), Some("risk"), &settings()).is_err());
+    }
+
+    #[test]
+    fn empty_steps_are_rejected() {
+        assert!(check_step_roles(&roles(&["step:"]), Some(":"), &settings()).is_err());
+    }
+
+    #[test]
+    fn only_the_gate_denies_on_a_match() {
+        let matched = vec!["EMAIL_ADDRESS".to_owned()];
+        assert!(!PiiAction::Observe.denies(&matched));
+        assert!(PiiAction::Gate.denies(&matched));
+        assert!(!PiiAction::Gate.denies(&[]));
     }
 }

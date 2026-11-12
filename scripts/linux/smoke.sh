@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Assertion-based smoke test for the local Linux stack. Verifies the Praxis
 # work-to-pool table, the visible CPU->GPU fallback, strict fail-closed for
-# sensitive judgment work, recovery, and the governance claim from the trace
-# UI's own records. Run this on the Linux instance after scripts/linux/up.sh.
+# sensitive judgment work, recovery, the governance claim from the trace UI's
+# own records, and the RC1 step-key/PII-gate denials. Run this on the Linux
+# instance after scripts/linux/up.sh.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 STACK=deploy/linux
@@ -10,10 +11,27 @@ COMPOSE="${COMPOSE:-docker compose}"
 GW="${GATEWAY:-http://127.0.0.1:8080}"
 SGW="${SENSITIVE:-http://127.0.0.1:8083}"
 # The gateway's PPE policy layer fails closed on unknown or missing API
-# keys, so every prompt must present one. The eval identity is the smoke
-# script's; override with HYBRID_API_KEY_EVAL when a stack runs its own
-# keys (digests in manifests/base/praxis/api-keys.yaml).
-API_KEY="${HYBRID_API_KEY_EVAL:-gci-demo-key-eval}"
+# keys, and RC1 binds each key to its X-Demo-Step stage. The smoke script
+# therefore presents the per-step key, not one shared eval key. Override any
+# of these when a stack runs its own keys (digests in manifests/base/praxis/
+# api-keys.yaml); the eval key is only for the step-less /v1/models probe and
+# the stepless-eval exception.
+KEY_CLASSIFY="${HYBRID_API_KEY_CLASSIFY:-gci-demo-key-classify}"
+KEY_EXTRACT="${HYBRID_API_KEY_EXTRACT:-gci-demo-key-extract}"
+KEY_RISK="${HYBRID_API_KEY_RISK:-gci-demo-key-risk}"
+KEY_REPORT="${HYBRID_API_KEY_REPORT:-gci-demo-key-report}"
+KEY_SCREEN="${HYBRID_API_KEY_SCREEN:-gci-demo-key-screen}"
+EVAL_KEY="${HYBRID_API_KEY_EVAL:-gci-demo-key-eval}"
+key_for_step() {
+  case "${1%%:*}" in
+    classify) printf '%s' "$KEY_CLASSIFY" ;;
+    extract) printf '%s' "$KEY_EXTRACT" ;;
+    risk) printf '%s' "$KEY_RISK" ;;
+    report) printf '%s' "$KEY_REPORT" ;;
+    screen|decide) printf '%s' "$KEY_SCREEN" ;;
+    *) printf '%s' "$EVAL_KEY" ;;
+  esac
+}
 
 PASS=0
 fail() { echo "FAIL: $*" >&2; exit 1; }
@@ -94,8 +112,10 @@ warm_pool 18084 risk; echo -n " approved"
 echo " done"
 
 gateway_post() { # url step prompt max_tokens
+  local key
+  key=$(key_for_step "$2")
   curl -sf -D /tmp/h -o /tmp/b "$1/v1/chat/completions" \
-    -H 'Content-Type: application/json' -H "X-API-Key: $API_KEY" \
+    -H 'Content-Type: application/json' -H "X-API-Key: $key" \
     -H "X-Session-Id: smoke-test" -H "X-Demo-Step: $2" \
     -d "{\"model\":\"Semantic-Qwen\",\"messages\":[{\"role\":\"user\",\"content\":\"$3\"}],\"max_tokens\":$4}"
 }
@@ -105,6 +125,23 @@ data_protection_prompt() { gateway_post "$GW" extract:data_protection 'Extract t
 risk_prompt() { gateway_post "$GW" risk 'Assess the aggregate risk exposure across these contracts and rank them.' 48; }
 sensitive_simple() { gateway_post "$SGW" classify 'What is the capital of France? The data controller contact is aoife@example.com, EMP-123456.' 24; }
 sensitive_risk() { gateway_post "$SGW" risk 'Assess the aggregate risk exposure across these contracts containing personal data; the data controller is aoife@example.com (EMP-123456).' 48; }
+wrong_step_prompt() {
+  curl -s -D /tmp/h -o /tmp/b "$GW/v1/chat/completions" \
+    -H 'Content-Type: application/json' -H "X-API-Key: $KEY_CLASSIFY" \
+    -H 'X-Session-Id: smoke-test' -H 'X-Demo-Step: risk' \
+    -d '{"model":"Semantic-Qwen","messages":[{"role":"user","content":"What is the capital of France?"}],"max_tokens":24}'
+}
+pii_gate_prompt() {
+  curl -s -D /tmp/h -o /tmp/b "$GW/v1/chat/completions" \
+    -H 'Content-Type: application/json' -H "X-API-Key: $KEY_CLASSIFY" \
+    -H 'X-Session-Id: smoke-test' -H 'X-Demo-Step: classify' \
+    -d '{"model":"Semantic-Qwen","messages":[{"role":"user","content":"Contact aoife@example.com, EMP-123456 about the contract."}],"max_tokens":24}'
+}
+stepless_eval_prompt() {
+  curl -s -D /tmp/h -o /tmp/b "$GW/v1/chat/completions" \
+    -H 'Content-Type: application/json' -H "X-API-Key: $EVAL_KEY" \
+    -d '{"model":"Semantic-Qwen","messages":[{"role":"user","content":"What is the capital of France?"}],"max_tokens":24}'
+}
 keyless_prompt() { curl -s -D /tmp/h -o /tmp/b "$GW/v1/chat/completions" -H 'Content-Type: application/json' \
   -d '{"model":"Semantic-Qwen","messages":[{"role":"user","content":"What is the capital of France?"}],"max_tokens":24}'; }
 badkey_prompt() { curl -s -D /tmp/h -o /tmp/b "$GW/v1/chat/completions" -H 'Content-Type: application/json' \
@@ -120,7 +157,7 @@ hdr() { tr -d '\r' < /tmp/h | grep -i "^$1:" | head -1 | cut -d' ' -f2- || true;
 status_of() { head -1 /tmp/h | tr -d '\r' | awk '{print $2}'; }
 
 echo "== 1. gateway up"
-curl -sf -H "X-API-Key: $API_KEY" "$GW/v1/models" | grep -q Semantic-Qwen || fail "/v1/models"
+curl -sf -H "X-API-Key: $EVAL_KEY" "$GW/v1/models" | grep -q Semantic-Qwen || fail "/v1/models"
 ok "gateway serves /v1/models (keyed probe; keyless fails closed)"
 
 echo "== 2. general entry: classify stays on the CPU pool"
@@ -259,25 +296,48 @@ simple_prompt
 [ "$(status_of)" = "200" ] || fail "known key not served after the denials: $(status_of)"
 ok "known key still served"
 
-echo "== 14. policy layer: decision records and the shadow PII screen"
+echo "== 13b. policy layer: a valid key cannot claim another step"
+wrong_step_prompt
+[ "$(status_of)" != "200" ] || fail "classify key was served for X-Demo-Step: risk"
+ok "classify key claiming risk denied (status $(status_of))"
+sensitive_simple
+[ "$(status_of)" = "200" ] || fail "sensitive entry rejected the correct classify key: $(status_of)"
+ok "sensitive entry still accepts the matching step key"
+
+echo "== 13c. policy layer: the general entry denies PII"
+pii_gate_prompt
+[ "$(status_of)" = "403" ] || fail "PII on the general entry: expected 403, got $(status_of)"
+ok "PII-positive general request denied with 403"
+simple_prompt
+[ "$(status_of)" = "200" ] || fail "clean general request rejected after PII gate: $(status_of)"
+ok "clean general request still served"
+
+echo "== 13d. policy layer: the eval key may omit the step"
+stepless_eval_prompt
+[ "$(status_of)" = "200" ] || fail "step-less eval probe denied: $(status_of) $(cat /tmp/b)"
+ok "step-less eval identity accepted (no review-stage claim)"
+
+echo "== 14. policy layer: decision records and the PII scanner"
 praxis_logs > /tmp/praxis-logs.txt
 records=$(grep -c 'gci-gateway' /tmp/praxis-logs.txt || true)
 [ "${records:-0}" -gt 0 ] || fail "no audit decision records in praxis logs (source gci-gateway)"
 ok "$records audit decision records emitted"
-# The observe line rides tracing, so its form depends on PRAXIS_LOG_FORMAT:
+# The scanner line rides tracing, so its form depends on PRAXIS_LOG_FORMAT:
 # plain text keeps the JSON verbatim; json mode escapes it inside message.
-observe_markers=0
-grep -cF '"plugin":"gci_pii_observe"' /tmp/praxis-logs.txt >/dev/null 2>&1 \
-  && observe_markers=$(grep -cF '"plugin":"gci_pii_observe"' /tmp/praxis-logs.txt || true)
-grep -cF '\\"plugin\\":\\"gci_pii_observe\\"' /tmp/praxis-logs.txt >/dev/null 2>&1 \
-  && observe_markers=$((observe_markers + $(grep -cF '\\"plugin\\":\\"gci_pii_observe\\"' /tmp/praxis-logs.txt || true)))
+# Counting the plugin name covers both forms (the target also carries it).
+observe_markers=$(grep -cF 'gci_pii_observe' /tmp/praxis-logs.txt || true)
+gate_markers=$(grep -cF 'gci_pii_gate' /tmp/praxis-logs.txt || true)
 [ "${observe_markers:-0}" -gt 0 ] || fail "no pii-observe lines in praxis logs"
-ok "$observe_markers shadow-PII observe lines emitted (scanner fires on cmf.llm_input)"
+[ "${gate_markers:-0}" -gt 0 ] || fail "no pii-gate lines in praxis logs"
+ok "$observe_markers observe + $gate_markers gate scanner lines emitted"
+# The general-entry PII probe above must have produced a gate denial.
+grep -qF 'deny' /tmp/praxis-logs.txt || fail "no PII gate denial recorded"
+ok "PII gate recorded the general-entry denial"
 # The sensitive prompts contain screen markers ("personal data", EMP-...),
 # so at least one observe line must carry a match: the scanner sees content.
 { grep -qF '"matched":["' /tmp/praxis-logs.txt \
-    || grep -qF '\\"matched\\":[\\"' /tmp/praxis-logs.txt; } \
-  || fail "no observe line recorded a match"
+    || grep -qF '\"matched\":[\"' /tmp/praxis-logs.txt; } \
+  || fail "no scanner line recorded a match"
 ok "scanner observed PII content in the sensitive prompts"
 
 echo

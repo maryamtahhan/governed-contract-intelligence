@@ -817,6 +817,17 @@ footer .mono { font-size: 11.5px; }
     number on this page. The termination cause
     trigger is likewise the regex: the opt-in Jev trigger scored <b>0.625</b> against the
     <b>0.714</b> CUAD guardrail and was not adopted.</p>
+    <p><b>RC1 is later and not in this run.</b> The current tree adds two PPE
+    controls: <span class="mono">validator/gci-step-key</span> binds each
+    authenticated key to its <span class="mono">step:&lt;stage&gt;</span> grant,
+    and <span class="mono">validator/gci-pii-gate</span> denies PII on the
+    general review entry with a 403. The screen and sensitive entries keep the
+    observe-only scanner because both must see the document. These are covered
+    by negative tests, but the measured <span class="mono">v0.9.1</span> image
+    predates them; <span class="mono">v0.9.2</span> is the rebuild target and
+    is not published yet, and the 2026-11-11 run above did not execute them.
+    Present them as “implemented, pending a rebuilt image and live
+    validation”.</p>
   </div>
 </section>
 

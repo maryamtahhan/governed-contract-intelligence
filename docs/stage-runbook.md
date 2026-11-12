@@ -119,6 +119,13 @@ high-volume clause work on CPU; the governance boundary held.”*
   `jev-cpu` control-plane route are implemented but not in the 2026-11-11
   record. The cause trigger is the regex; the opt-in Jev trigger failed its
   CUAD F1 guardrail (0.625 vs 0.714) and is not adopted.
+- Do not claim the **RC1 gateway enforcement** from this replay. The
+  recorded 2026-11-11 run used the pre-RC1 gateway image: per-step keys and
+  an observe-only PII scanner. The current tree adds key-to-step binding and
+  a general-entry PII gate, but the measured `v0.9.1` digest predates them;
+  `v0.9.2` is the rebuild target and is not published yet, and no re-run
+  exists. Say “implemented and covered by negative tests”, not “measured on
+  this run”.
 
 ## Live cluster quick reference
 

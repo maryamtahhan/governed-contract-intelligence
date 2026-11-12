@@ -35,16 +35,21 @@ configs across all of them (`manifests/base/praxis/`):
 | Linux/podman, real | g5.12xlarge (4× A10G, stopped, AMI kept) | real vLLM: 1.5B CPU, 7B/1.5B GPU | the measured GPU-vs-CPU story |
 | OpenShift | rhgaudi3s2 SNO (4.22, 288 cores, 2.3TB, free) | real vLLM, all pools CPU-served (`accelerator: cpu` label) | full-platform validation: routing, governance, sandbox, measurement on OCP |
 
-Plus the **CUAD specialist pool**: the paper's fine-tuned RoBERTa-large QA
-checkpoint (354M, Zenodo) behind an OpenAI-compatible FastAPI wrapper,
-deployed as a *composite* CPU pool — extraction prompts answered by the QA
-model in one encoder pass, everything else forwarded to the general model
-behind the same relay.
+Plus the **CUAD specialist**: the paper's fine-tuned RoBERTa-large QA
+checkpoint (354M, Zenodo) behind an OpenAI-compatible FastAPI wrapper. In
+the first build it was a *composite* CPU pool — extraction prompts answered by
+the QA model in one encoder pass, everything else forwarded to the general
+model behind the same relay. The 2026-11-10 rebuild split it into its own
+`cuad-specialist` route, so there is no in-pod forwarding (FINDINGS §15.10);
+the composite rows in §15 describe the older graph and stay labelled as such.
 
-Architectural invariants kept throughout: every through-stack request goes
-batch runner → trace-ui → **praxis** (llm-d-sc label → pool) → pool; the trace
-UI's SQLite is the audit trail; governance is verified from the gateway's own
-records, not the batch runner's.
+Architectural invariants: every through-stack request goes batch runner →
+trace-ui → **praxis** → pool. The route is selected by the policy's
+`X-Demo-Step` table; the original build used llm-d-sc complexity labels, and
+the classifier was measured, found to label 1,200/1,201 steps MEDIUM, and
+removed from the request path on 2026-11-05 (§15.5). The trace UI's SQLite is
+the audit trail; governance is verified from the gateway's own records, not
+the batch runner's.
 
 ## 2. Governance and routing — the headline, replicated on every stack **[measured]**
 
@@ -57,6 +62,13 @@ Sensitive-document steps served outside the approved pool set
 | B small-first (old gpu-small/gpu-split) | 25/25 | 0% |
 | C round-robin | 12–24 (varies by run) | ~50% |
 | **D hybrid (old matrix)** | **0 — on every stack, every dataset** | ~99% |
+
+The table is the replicated containment result from the earlier stacks. On
+the current 2026-11-11 ROSA record the hybrid share is **83.3% CPU-served**
+(`vllm-cpu` 400 + `cuad-specialist` 600 of 1,201 steps), with **247/247**
+sensitive steps approved and **0** violations; one-pool and small-first each
+record 247 expected violations, round-robin 110 (§15.11). The difference is
+the route split, not a change in the containment claim.
 
 Also verified on all stacks: GPU-outage degrade with a visible signal
 (trace "fell back" badge: REASONING label recorded on the failed GPU hop,
@@ -1670,12 +1682,14 @@ pipeline -> trace-ui screen ingress :8086 -> Praxis screen listener :8086
   `jev-cpu-real` (the baked image) for `up.sh --real`; the ROSA overlay adds
   `deploy/openshift/rosa/jev-cpu.yaml` and the trace-ui ports/env.
 
-Verification: `230 passed` (the new tests cover the detector's headers/body,
-fail-closed behavior, the service contract, the cause guardrail's scoring, the
-config's third listener, and a fake-stack `screen:pii` end-to-end call). The
-screen route is **not** in a recorded run and changes no measured number:
-the default screen remains regex and no run directory was created. A cluster
-deployment still requires rebuilding the stack and the `hybrid-jev` image.
+Verification: `248 passed` at the 2026-11-12 tree (the screen/cause tests
+cover the detector's headers/body, fail-closed behavior, the service contract,
+the cause guardrail's scoring, the config's third listener, and a fake-stack
+`screen:pii` end-to-end call; RC1 adds the step-key and PII-gate policy
+tests). The screen route is **not** in a recorded run and changes no measured
+number: the default screen remains regex and no run directory was created. A
+cluster deployment still requires rebuilding the stack and the `hybrid-jev`
+image.
 
 ## 17. The CUAD risk gap is an input gap (2026-11-09)
 
@@ -1796,3 +1810,54 @@ category — which changes the CUAD manifest shape and breaks comparability
 with every recorded run — or documenting the gap. That is the same choice the
 data-protection category already faced, and documenting it is the honest
 option for now.
+
+## 18. RC1 gateway hardening: PII gate and step-key binding
+
+This section records source and local-test evidence, not a new ROSA
+measurement. The quoted 200-document record remains §15.11 until a rebuilt
+stack passes the negative smoke and a fresh run is recorded in a new run
+directory.
+
+Two PPE plugins were added to the policy host in the RC1 source tree. The
+measured `v0.9.1` image predates them; the tree targets `v0.9.2`, which is
+not published yet. Build and push it, then record the new digest before
+deployment:
+
+- `validator/gci-step-key` (`mode: sequential`) reads the authenticated
+  subject and `X-Demo-Step` and requires a `step:<stage>` role matching the
+  header's stage. The key directory grants classify, extract, risk, report,
+  and screen/decide individually; the eval key is step-less and may only
+  make a request with no step header. A valid extract key claiming `risk`
+  is denied.
+- `validator/gci-pii-gate` (`mode: sequential`) is the same pattern catalog
+  as the client screen and the existing observe plugin, but returns a 403
+  `pii_detected` violation on a match. It runs on the general review entry.
+  The screen listener moved to `policy-screen.yaml` and the sensitive entry
+  keeps `validator/gci-pii-observe`, both audit-only: screening and sensitive
+  review must be allowed to see the document.
+
+Policy shape: the general route runs `step-key`, then `pii-gate`, then
+`audit`; the sensitive route runs `step-key`, taints the session, then
+`pii-observe` and `audit`; the screen route runs `step-key`, then
+`pii-observe` and `audit`. `validate-policy.yaml` names all four registered
+kinds so an image missing one fails its build-time validation.
+
+Local evidence:
+
+- `cd demo && uv run pytest -q` -> **248 passed**, including structural
+  tests that pin the policy runs, the screen listener's policy path, the
+  key digests, and each key's step grants.
+- `bash -n scripts/linux/smoke.sh scripts/cluster/smoke.sh` -> clean. Both
+  smoke tests now send the per-step key and add live assertions: a classify
+  key claiming risk is denied, a PII-positive general request is denied with
+  403, the sensitive entry still accepts the matching key, the step-less
+  eval identity is accepted, and the logs contain both observe and gate
+  scanner lines plus a gate denial.
+- The image build must still be run: `validate-policy.yaml` names all four
+  kinds, so `praxis-ai --validate` fails the build if any registration is
+  missing. That is a source-level guard, not evidence that a published image
+  contains them.
+
+Open verification: run the rebuilt image on ROSA, execute
+`scripts/cluster/smoke.sh` (or the Linux twin), then run the 200-document
+matrix in a **new** run directory; do not overwrite `2026-11-11`.

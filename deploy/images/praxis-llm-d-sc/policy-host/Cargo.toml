@@ -19,12 +19,18 @@
 #                             record per request when a policy names it.
 #   validator/gci-pii-observe an observe-only PII scanner written here,
 #                             modeled on the reference validator/pii-scan.
-#                             It NEVER denies and NEVER rewrites: it logs
+#                             It NEVER denies and NEVER rewrites; it logs
 #                             one structured line per scanned request so
 #                             the gateway-side screen can be measured
 #                             against the pipeline's client-side screen
-#                             (demo/src/hybrid_demo/pii.py) before anyone
-#                             considers promoting it to a gate.
+#                             (demo/src/hybrid_demo/pii.py).
+#   validator/gci-pii-gate    the same scanner and pattern catalog in
+#                             enforcing mode: the general entry denies a
+#                             match (403) so a client cannot route PII
+#                             around the pipeline's sensitive screen.
+#   validator/gci-step-key    binds the authenticated API-key subject to
+#                             the `step:<stage>` grant for X-Demo-Step,
+#                             including the eval key's stepless exception.
 [package]
 name = "gci-praxis-policy-host"
 version = "0.1.0"
@@ -32,7 +38,7 @@ edition = "2024"
 rust-version = "1.96"
 license = "Apache-2.0"
 publish = false
-description = "GCI gateway host registrations: PPE reference audit sink and an observe-only PII scanner"
+description = "GCI gateway host registrations: PPE reference audit sink, PII observe/gate scanners, and the step-key binding gate"
 
 # Marker consumed by the Praxis server's build-time filter discovery
 # (server/build.rs walks cargo metadata looking for this key).

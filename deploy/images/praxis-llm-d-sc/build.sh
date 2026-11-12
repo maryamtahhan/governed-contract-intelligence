@@ -7,13 +7,13 @@
 # exports pinned sources, applies the one dependency update the filter needs for
 # Praxis 0.7.5 / ai-gateway 0.9.0, wires the crate into the server, and builds.
 #
-# Since v0.9.1 it also vendors two PPE policy plugins the engine deliberately
+# Since v0.9.1 it also vendors the PPE policy plugins the engine deliberately
 # does not bundle (praxis-proxy/policy enforces that by test): the reference
 # audit-logger sink, exported from the PPE v0.5.0 tag with an adapted
-# standalone manifest (audit-logger.Cargo.toml), and our own observe-only PII
-# scanner + host registration (policy-host/). Both register through
-# gci-praxis-policy-host, discovered by the same build-time mechanism as the
-# filter.
+# standalone manifest (audit-logger.Cargo.toml), plus our host registrations
+# in policy-host/ — the observe/gate PII scanners and the step-key binding
+# gate. They register through gci-praxis-policy-host, discovered by the same
+# build-time mechanism as the filter.
 #
 # Versions are pinned by commit, not by branch. Bump them deliberately:
 #
@@ -59,7 +59,7 @@ PPE_REPO="${PPE_REPO:-https://github.com/praxis-proxy/policy}"
 AI_GATEWAY_REF="${AI_GATEWAY_REF:-a716baaef1a027ff02a00bf4fc692de54c366cee}"
 FILTER_REF="${FILTER_REF:-b84acfb840c7232fcba2680e46fd023ac8c7e02c}"
 PPE_REF="${PPE_REF:-a178f14cb156aecef59d3e16de3cf7fe65c691db}"
-IMAGE="${IMAGE:-quay.io/mtahhan/gci-praxis:v0.9.1}"
+IMAGE="${IMAGE:-quay.io/mtahhan/gci-praxis:v0.9.2}"
 PLATFORM="${PLATFORM:-linux/amd64}"
 PUSH=0
 KEEP=0
@@ -138,8 +138,8 @@ export_ref "$PPE_SRC" "$PPE_REF" "$WORK/ppe-export"
 
 # Vendor the PPE reference audit-logger: src from the pinned tag, with our
 # adapted standalone manifest (the upstream one inherits workspace fields).
-# The observe-only scanner and the host registration are ours, checked in at
-# policy-host/.
+# The PII scanners, step-key gate and the host registration are ours,
+# checked in at policy-host/.
 log "assembling PPE policy host vendor tree"
 mkdir -p "$CTX/ai-gateway/vendor/praxis-policy-plugin-audit-logger"
 cp -R "$WORK/ppe-export/reference/plugins/audit-logger/src" \

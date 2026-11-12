@@ -1,18 +1,20 @@
-"""Agreement report: the gateway's shadow PII screen vs the pipeline's.
+"""Agreement report: the gateway's PII screen vs the pipeline's.
 
-Since the PPE integration (image v0.9.1), the praxis policy layer runs an
-observe-only PII scanner (``validator/gci-pii-observe``) on every
-``cmf.llm_input``. It never denies and never rewrites; it logs one
+The praxis policy layer runs the same scanner in two registered modes since
+RC1: ``validator/gci-pii-observe`` on the sensitive and screen entries, and
+``validator/gci-pii-gate`` on the general review entry. Both log one
 structured JSON line per scanned request::
 
-    {"plugin":"gci_pii_observe","session_id":"C-2026-0001",
-     "subject":"gci-classify","matched":["EMAIL_ADDRESS"],
+    {"plugin":"gci_pii_gate","action":"allow","session_id":"C-2026-0001",
+     "subject":"gci-classify","step":"classify","matched":[],
      "text_chars":8123}
 
-This tool joins those lines — captured from the gateway's container logs
-(``docker compose logs praxis`` / ``oc logs deploy/praxis``) — against a
-pipeline run's ``results.json`` and reports whether the gateway-side screen
-agrees with the client-side screen that actually routed the documents
+A gate line with ``action: "deny"`` is the request the general entry
+rejected; the observe line is the V19 comparison record. This tool joins
+both markers — captured from the gateway's container logs (``docker compose
+logs praxis`` / ``oc logs deploy/praxis``) — against a pipeline run's
+``results.json`` and reports whether the gateway-side scanner agrees with
+the client-side screen that actually routed the documents
 (``demo/src/hybrid_demo/pii.py``, the DLP-style gate of design.md §3.1).
 
 The comparison point is the **classify-time** observation: the classify
@@ -25,9 +27,10 @@ A disagreement at classify time is a finding about the screens; a
 disagreement at risk time is a finding about the comparison, and the report
 keeps them apart.
 
-This is V19 groundwork: the number is the deliverable. Promoting the
-scanner to a gate is a separate, measured decision (design.md §5, README
-known gaps).
+The gate's own live behavior (denials of PII-positive general requests) is
+validated by the negative smoke test, not by this agreement number. The
+boundary stays measured: the report counts what the scanner would have
+said, including requests the gate stopped.
 """
 from __future__ import annotations
 
@@ -39,50 +42,67 @@ from pathlib import Path
 # serde_json's compact form; the scanner emits exactly this as the tracing
 # message. The host's log formatter decides how it reaches the file: plain
 # text keeps it verbatim, JSON mode (PRAXIS_LOG_FORMAT=json) escapes it
-# inside the message field — hence the second marker.
+# inside the message field — hence the escaped variants.
 OBSERVE_MARKER = '{"plugin":"gci_pii_observe"'
-ESCAPED_MARKER = '{\\"plugin\\":\\"gci_pii_observe\\"'
+GATE_MARKER = '{"plugin":"gci_pii_gate"'
+PII_MARKERS = (OBSERVE_MARKER, GATE_MARKER)
+ESCAPED_MARKERS = tuple(json.dumps(marker)[1:-1] for marker in PII_MARKERS)
 CLASSIFY_SUBJECT = "gci-classify"
 SENSITIVE_ENTRIES = {"sensitive", "sensitive-judgment"}
 _DECODER = json.JSONDecoder()
 
 
-def parse_observe_lines(text: str) -> list[dict]:
-    """Extract every observe record from a captured log, in order.
+def _first_marker(text: str, markers: tuple[str, ...]) -> str | None:
+    for marker in markers:
+        if marker in text:
+            return marker
+    return None
 
-    Robust to the host's log formatting. In plain-text mode the record is
-    found by marker and decoded with ``raw_decode`` so anything the
-    subscriber wraps around it (timestamps, levels, span fields) is
-    ignored. In JSON mode the record is escaped inside the ``message``
-    field of a JSON log line, so the line is parsed and the message
-    decoded. Unparseable lines are skipped — a truncated line must not
-    kill the report.
+
+def parse_observe_lines(text: str) -> list[dict]:
+    """Extract every PII scanner record from a captured log, in order.
+
+    Accepts both the observe and gate markers; the report uses the record's
+    ``subject`` and ``matched`` fields, not its kind. Robust to the host's
+    log formatting. In plain-text mode the record is found by marker and
+    decoded with ``raw_decode`` so anything the subscriber wraps around it
+    (timestamps, levels, span fields) is ignored. In JSON mode the record
+    is escaped inside the ``message`` field of a JSON log line, so the line
+    is parsed and the message decoded. Unparseable lines are skipped — a
+    truncated line must not kill the report.
     """
     records: list[dict] = []
     for line in text.splitlines():
-        if OBSERVE_MARKER in line:
-            start = line.index(OBSERVE_MARKER)
+        marker = _first_marker(line, PII_MARKERS)
+        if marker is not None:
+            start = line.index(marker)
             try:
                 value, _ = _DECODER.raw_decode(line, start)
             except json.JSONDecodeError:
                 continue
             if isinstance(value, dict):
                 records.append(value)
-        elif ESCAPED_MARKER in line:
-            try:
-                outer = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            message = outer.get("message") if isinstance(outer, dict) else None
-            if not (isinstance(message, str) and OBSERVE_MARKER in message):
-                continue
-            start = message.index(OBSERVE_MARKER)
-            try:
-                value, _ = _DECODER.raw_decode(message, start)
-            except json.JSONDecodeError:
-                continue
-            if isinstance(value, dict):
-                records.append(value)
+            continue
+        escaped = _first_marker(line, ESCAPED_MARKERS)
+        if escaped is None:
+            continue
+        try:
+            outer = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        message = outer.get("message") if isinstance(outer, dict) else None
+        if not isinstance(message, str):
+            continue
+        marker = _first_marker(message, PII_MARKERS)
+        if marker is None:
+            continue
+        start = message.index(marker)
+        try:
+            value, _ = _DECODER.raw_decode(message, start)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(value, dict):
+            records.append(value)
     return records
 
 
@@ -209,7 +229,7 @@ def format_summary(result: dict) -> str:
     confusion = classify["confusion"]
     lines = [
         f"documents in run:        {result['documents']}",
-        f"scanner observe lines:   {result['observe_lines']}",
+        f"scanner lines:           {result['observe_lines']}",
         "classify-time agreement (the comparison that matters):",
         f"  compared:              {classify['compared']}",
         f"  pipeline flagged:      {classify['pipeline_flagged']}"

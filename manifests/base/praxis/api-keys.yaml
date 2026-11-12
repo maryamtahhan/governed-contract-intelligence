@@ -9,20 +9,23 @@
 # file could leak somewhere the plaintext cannot — for the demo, attribution
 # is the point, not secrecy.
 #
-# groups map to roles through the plugin's record_map (role.<group>).
+# groups map to roles through the plugin's record_map. The `step:<stage>`
+# groups are enforced by validator/gci-step-key: a key may only claim the
+# stages it is granted. The eval key deliberately has no step grant; it may
+# make a step-less classifier/eval call, but it cannot name a review step.
 keys:
   - hash: "sha256:895b459a009d54fe45cb392238adbaa34b779f935bd5cc6748fa5b4a134999c4"
     user: gci-classify
-    groups: [pipeline]
+    groups: [pipeline, "step:classify"]
   - hash: "sha256:4c0f66651b4155e1d6d53d219536eeccde6169eb299c159d4bc3b4fc0bc56e20"
     user: gci-extract
-    groups: [pipeline]
+    groups: [pipeline, "step:extract"]
   - hash: "sha256:1da330ebb40a40fe3fe456ab7331f1979162c5de61c901517bb471e6d3a9463b"
     user: gci-risk
-    groups: [pipeline, judgment]
+    groups: [pipeline, judgment, "step:risk"]
   - hash: "sha256:246a27d22463e8937035515368202d95035d6f21e0facb0f1b473c7a3ab47c56"
     user: gci-report
-    groups: [pipeline, judgment]
+    groups: [pipeline, judgment, "step:report"]
   - hash: "sha256:5583f39c9b0e1afaa7035091dd2d4b6cb2b6c03283b1186690f928da612965c9"
     user: gci-eval
     groups: [eval]
@@ -32,4 +35,4 @@ keys:
   # the decision before a general/sensitive entry is chosen.
   - hash: "sha256:54bc78fbe3aa0276cc6d6eba7bbdb12043dbe3bc7a821e07e5ad816e75c1811e"
     user: gci-screen
-    groups: [pipeline]
+    groups: [pipeline, "step:screen", "step:decide"]

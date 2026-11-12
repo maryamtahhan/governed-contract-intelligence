@@ -113,7 +113,7 @@ model caches, digest-pinned vLLM image).
    staging directory.
 
 6. Build the Jev image **only if you are enabling the opt-in `screen:pii`
-   route**. `jev-cpu` is in the kustomization, but the 2026-11-10 measured run
+   route**. `jev-cpu` is in the kustomization, but the 2026-11-11 recorded run
    used the regex screen and did not need it. The English checkpoint is baked
    into the image at build time:
 
@@ -291,7 +291,31 @@ documents into "non-sensitive".
   rejected by the builder; `--from-dir` on the small staging directory is
   the reliable path.
 
-## Teardown (2026-11-04)
+- 2026-11-11, us-east-1 `<redacted-cluster>` (rebuilt two-entry graph, cleaned
+  stack). The same topology and pools, re-run after the OpenShell sandbox
+  egress fix and the deterministic report rollup. Current record:
+  `runs/rosa-200-2026-11-11-praxis-routes/`. Hybrid: **806.59 s, 0 errors, 0
+  fallback, 247/247 sensitive steps on approved pools, 0 violations, extract
+  F1 1.000, risk 1.000, report 1.000, 200/200 fully correct**, with **0.265
+  GPU-s/doc** and **32.555 CPU core-s/doc**. Route counts unchanged:
+  `vllm-cpu` 400, `cuad-specialist` 600, `vllm-gpu` 159,
+  `vllm-gpu-approved` 42. Same-run controls: one-pool 201.89 s / 0.981
+  GPU-s/doc / 247 violations; small-first 489.92 s / 2.429 GPU-s/doc /
+  risk 0.395 / 247 violations; round-robin 935.56 s / 1.862 GPU-s/doc / 110
+  violations. Direct baselines: `cpu-moe` 2949.5 s, `gpu-moe` 301.6 s,
+  `cpu-small` 1144.4 s (risk 0.395, report 0.212). The 2026-11-10 record is
+  preserved as the previous matrix. **RC1 (step-key binding + general-entry
+  PII gate) is not in this run**; it needs a rebuilt gateway image and a new
+  live validation before it can be quoted.
+
+## Teardown (2026-11-04, repeated 2026-11-11)
+
+The 2026-11-11 re-run used the same bring-up and teardown shape: the
+`openshell-demo` namespace was deleted after the matrix was recorded, and the
+`<redacted-gpu-pool>` / `<redacted-cpu-pool>` machine pools were deleted the same
+day. **The cluster stack is down.** Rebuild from this README before any new
+cluster measurement; the 2026-11-11 runs are in git and are the current
+quoted record.
 
 Measurements were copied to `runs/` before anything was removed. Then:
 

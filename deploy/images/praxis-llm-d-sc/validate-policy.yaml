@@ -1,13 +1,14 @@
 # Build-time validation policy for the custom praxis-ai image.
 #
 # Minimal on purpose: it exists so `praxis-ai --validate` loads the policy
-# filter with a document that names BOTH host-registered plugin kinds. PPE
+# filter with a document that names EVERY host-registered plugin kind. PPE
 # fails a policy load naming an unregistered `kind:` at startup, so this is
 # the proof that gci-praxis-policy-host's registrations are live in the
 # binary — a missing registration fails the image build, not a demo run.
 #
 # It performs no I/O: no identity provider (nothing authenticates at
-# validation time), no session store, no callouts.
+# validation time), no session store, no callouts. The run() steps only
+# make the 0.4.1 visitor accept every plugin.
 
 plugins:
   # The reference audit sink, vendored from praxis-proxy/policy v0.4.1, in
@@ -25,14 +26,37 @@ plugins:
       destination: stderr
       source: gci-validate
 
-  # Our observe-only PII scanner, reached from the route's run() step —
-  # under dispatch: policy a plugin runs only from a step that names it.
+  # The RC1 step-key binding gate.
+  - name: step-key
+    kind: validator/gci-step-key
+    mode: sequential
+    hooks: [cmf.llm_input]
+    capabilities:
+      - read_headers
+      - read_subject
+    config:
+      header: X-Demo-Step
+      role_prefix: "step:"
+      stepless_roles: [eval]
+
+  # Both PII scanner actions share the pattern catalog but are separate
+  # registered kinds; validate both so an image missing either fails here.
   - name: pii-observe
     kind: validator/gci-pii-observe
     mode: audit
     hooks: [cmf.llm_input]
     capabilities:
       - read_agent
+      - read_headers
+      - read_subject
+
+  - name: pii-gate
+    kind: validator/gci-pii-gate
+    mode: sequential
+    hooks: [cmf.llm_input]
+    capabilities:
+      - read_agent
+      - read_headers
       - read_subject
 
 routes:
@@ -40,5 +64,7 @@ routes:
     authorization:
       pre_invocation:
         - "require(authenticated)"
+        - "run(step-key)"
         - "run(pii-observe)"
+        - "run(pii-gate)"
         - "run(audit)"

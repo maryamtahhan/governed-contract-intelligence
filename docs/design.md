@@ -301,12 +301,16 @@ trace UI badges as a fallback (praxis does not emit `X-Praxis-Fallback` on
 proxied failovers — FINDINGS §7; the header is only set on the explicit
 failover step).
 
-The `X-Demo-Step` value is declarative task metadata, not an authenticated
-claim: the PPE policy checks that the key is known, but it does not bind a
-key to a step. A client with any valid key can ask for another step's route.
-For the demo the pipeline is trusted and the keys are fixed demo credentials;
-binding key scope to step is a Phase 2 policy change, not a property of this
-build.
+Since RC1 the `X-Demo-Step` value is an authenticated claim in the only
+sense that matters here: PPE's `validator/gci-step-key` requires the
+authenticated subject to carry a `step:<stage>` role for the header's stage.
+The runner's per-step keys hold exactly their own grant (the screen key also
+holds `screen` and `decide`); the eval key is deliberately step-less and may
+not name a review stage. A valid extract key therefore cannot ask for
+classify, risk, report, or another step's pool. The step is still task
+metadata for the router — the key grants the stage, the router table chooses
+the pool — and the keys remain fixed demo credentials, so this is scope
+binding, not secrecy or general access control.
 
 Praxis reaches the pools only through the trace-ui relays (per-pool recording
 hops), and SQLite behind them is the audit trail, exported as
@@ -331,30 +335,39 @@ from the pipeline's screen — the trust model is unchanged — but the fact now
 lives in gateway-owned state the client cannot rewrite. Nothing denies on
 the label; any future rule on it is a measured decision.
 
-Since image v0.9.1 the same policy layer emits **request records** (from
-PPE's reference `audit/logger`, which the image host-registers because the
-engine deliberately does not bundle it) and runs a **shadow PII screen**:
-`validator/gci-pii-observe`, an observe-only scanner over `cmf.llm_input`
-whose pattern catalog mirrors `pii.py` regex-for-regex. It never denies and
-never rewrites; it logs one structured line per request, and
+Since image v0.9.1 the policy layer emits **request records** (from PPE's
+reference `audit/logger`, which the image host-registers because the engine
+deliberately does not bundle it) and runs an observe-only PII scanner over
+`cmf.llm_input`; the RC1 image adds the enforcing mode. The scanner's pattern
+catalog mirrors `pii.py` regex-for-regex. Two registered kinds share it:
+`validator/gci-pii-observe` on the sensitive and screen entries (never
+denies, never rewrites; the V19 comparison instrument) and
+`validator/gci-pii-gate` on the general review entry (denies a match with a
+403, so a client cannot put PII on the general pool by bypassing the
+pipeline's screen). The screen listener loads its own observe-only policy
+because its input is the document being screened; the sensitive entry stays
+observe-only because the document is supposed to be there. Both scanner
+kinds log one structured line per request, and
 `hybrid-pii-agreement` joins those lines against a run's records to report
 whether the gateway would have made the pipeline's screen call — the V19
-groundwork. The comparison point is the classify-time observation; later
+measurement. The comparison point is the classify-time observation; later
 steps are context, because their prompts embed document text (a screened
-document's risk prompt literally says "contains personal data"). Both
-records land in the praxis container logs alongside the trace-ui SQLite
-audit trail. One 0.4.1 limitation, recorded rather than worked around: the
-published praxis-policy 0.4.1 cannot load a hookless audit *sink* beside
-APL routes (the visitor rejects plugins no step names; fixed upstream on
-the 0.5.0 line as policy#210), so the logger runs as a reached observer —
-records for allowed traffic, no verdict field. Full verdict-and-deny
-records arrive when a praxis release ships PPE 0.5.x.
+document's risk prompt literally says "contains personal data"). The gate's
+live deny behavior is covered by the negative smoke test, not by the
+agreement number. Records land in the praxis container logs alongside the
+trace-ui SQLite audit trail. One 0.4.1 limitation, recorded rather than
+worked around: the published praxis-policy 0.4.1 cannot load a hookless
+audit *sink* beside APL routes (the visitor rejects plugins no step names;
+fixed upstream on the 0.5.0 line as policy#210), so the logger runs as a
+reached observer — records for allowed traffic, no verdict field. Full
+verdict-and-deny records arrive when a praxis release ships PPE 0.5.x.
 
-The policy layer attributes and audits; it does not steer pools. PPE's
-`restrict` effect is exactly the pool-constraint primitive this design
-wants (narrow the router's candidate set, fail closed on empty), but the
-praxis router does not consume it and the clusters carry no backend labels,
-so containment remains the entry pinning and failover sets above. One
+The policy layer authenticates the caller, binds the step claim, gates PII
+on the general entry, and audits; it does not steer pools. PPE's `restrict`
+effect is exactly the pool-constraint primitive this design wants (narrow
+the router's candidate set, fail closed on empty), but the praxis router
+does not consume it and the clusters carry no backend labels, so containment
+remains the entry pinning and failover sets above. One
 consequence of failing closed on unknown keys: the external
 llm-d-batch-gateway's dispatch requests carry no `X-API-Key` and would be
 denied by these entries — a known gap until that component can present a
@@ -475,8 +488,9 @@ record; it is not a clean latency baseline.
   actually went.
 - Do not move step-to-pool choices into the pipeline. The app may declare
   `X-Demo-Step`; only `manifests/base/praxis/config.yaml` maps it to a pool.
-- Do not treat `X-Demo-Step` as authenticated. The policy gate authenticates
-  the caller, not the claimed step.
+- The step-key gate binds `X-Demo-Step` to the authenticated key's
+  `step:<stage>` grant, but the step is still a router input, not a pool
+  selector. Changing the mapping belongs in `manifests/base/praxis/config.yaml`.
 
 ### 3.5 The agentic surface: MCP above, governance below
 
@@ -858,9 +872,13 @@ length/quality; A/B it.
 
 ### 4.6 Verification status
 
-- 230 tests pass; the adapter tests cover defaults, opt-in wire formats,
+- 248 tests pass; the adapter tests cover defaults, opt-in wire formats,
   offset relocation, JSONL export, mock batch transport, metric definitions
-  and the cache factory. The Jev adapter test mocks the System One HTTP
+  and the cache factory. The policy-identity tests also pin the RC1 contract:
+  key digests, each key's `step:<stage>` grants, the general-entry
+  `step-key` + `pii-gate` run order, the observe-only scanner on the
+  sensitive/screen entries, and the screen listener's `policy-screen.yaml`.
+  The Jev adapter test mocks the System One HTTP
   contract, the service test exercises `/v1/systemone` in fake mode, and the
   fake-stack e2e test posts `screen:pii` through the screen ingress to
   `jev-cpu`, so the suite still runs without a GPU, model download or
@@ -999,12 +1017,14 @@ longer in the base stack (§3.2) — re-adding it is the first step:
 
 The classifier instance serves one signal — if both complexity and
 contract-step are needed, run two instances, not one multi-signal instance.
-The gateway is `quay.io/mtahhan/gci-praxis:v0.9.1` (Praxis 0.7.5 /
+The measured gateway is `quay.io/mtahhan/gci-praxis:v0.9.1` (Praxis 0.7.5 /
 ai-gateway 0.9.0, PPE 0.4.1 host plugins), a custom build carrying the
 out-of-tree `llm_d_sc` filter and the PPE policy host that upstream `ai`
-does not have. The filter is unused by the default configs but stays in the
-image for this experiment; the policy host is used by every entry. The
-rebuild path is `deploy/images/praxis-llm-d-sc/`.
+does not have. The tree and manifests now target `v0.9.2`, the RC1 rebuild
+(gate + step-key plugins); that tag is not published yet. The filter is
+unused by the default configs but stays in the image for this experiment;
+the policy host is used by every entry. The rebuild path is
+`deploy/images/praxis-llm-d-sc/`.
 
 ### 5.6 Claim boundary
 
@@ -1021,19 +1041,33 @@ runners because the dev machines are arm64):
 
 | Image | Published | Digest | Consumed by the default stack |
 | --- | --- | --- | --- |
-| `quay.io/mtahhan/gci-praxis:v0.9.1` | 2026-11-06, run `42202721911` | `sha256:9def8e14befedeef75a088266630386dc4506004dd43fd6962212dcb122f375a` | **yes** — the gateway, plus the PPE policy host (audit observer + shadow PII scanner) |
+| `quay.io/mtahhan/gci-praxis:v0.9.2` | **not published** (RC1 rebuild target, 2026-11-12) | — | **target of the current tree** — build.sh, the publish workflow, base manifests and compose now name it; it registers `validator/gci-step-key` and `validator/gci-pii-gate`. Publish and record the digest before applying the current policies |
+| `quay.io/mtahhan/gci-praxis:v0.9.1` | 2026-11-06, run `42202721911` | `sha256:9def8e14befedeef75a088266630386dc4506004dd43fd6962212dcb122f375a` | **yes for the measured 2026-11-11 run** — gateway + PPE host (audit observer + observe-only PII scanner). **Predates RC1**: it does not register `validator/gci-step-key` or `validator/gci-pii-gate` |
 | `quay.io/mtahhan/gci-praxis:v0.9.0` | 2026-11-05, run `42043729532` | `sha256:2187ab818efab9a8f3d1f911190d47fad960888bada7d3db8a973d3ad70ac992` | superseded by v0.9.1 |
 | `quay.io/mtahhan/gci-llm-d-sc:main-e660fff` | 2026-11-05 | `sha256:d94c1f7226bfbaeb5a300f0efdbab0e8a8988fc16af7fd80cff0e008a11fa3e1` | no — §5 experiment only |
 | `quay.io/mtahhan/gci-llm-d-sc-modelcar:complexity` | 2026-11-05 | `sha256:299874af83c565d8435c8e061b87da1754cdd918ca15e977a7fecbf3aa17f491` (mirror, byte-identical) | no — §5 experiment only |
 
 The digests are the reproducibility boundary for measured runs; record the
-digest, not the tag. The base manifests and the Linux compose stack point at
-`v0.9.1` (the opt-in praxis-0.9.0 overlay is retired — base is the 0.9.1
-stack), and `oc apply -k manifests` on a live cluster lands the image switch
+digest, not the tag. The base manifests and the Linux compose stack now point
+at `v0.9.2`, the RC1 rebuild target; the measured stack ran `v0.9.1`. Until
+`v0.9.2` is pushed, applying the current manifests fails gateway validation
+by design. The opt-in praxis-0.9.0 overlay is retired — base is the 0.9.1
+stack now. `oc apply -k manifests` on a live cluster lands the image switch
 together with the classifier removal and the PPE policy documents. Treat the
 rebuilt stack as new and re-run the measurement arms (FINDINGS §12). What is
 real vs simulated per environment is tabulated in README ("What is measured
 vs simulated"); quote test-split numbers only (FINDINGS §3, §13).
+
+**RC1 is source-complete, not image-complete.** The 2026-11-12 working tree
+adds `validator/gci-step-key` and `validator/gci-pii-gate` to
+`deploy/images/praxis-llm-d-sc/policy-host/`, and the shipped policies now
+name them. The tree tags the rebuild `v0.9.2`; that image is **not in the
+registry yet**. The measured `v0.9.1` digest above was built before that
+change, so it registers only the audit observer and the observe-only scanner.
+Deploying the current policy files against `v0.9.1` fails the gateway's
+`--validate` load, correctly: a plugin named in a policy must be registered
+in the binary. Build and publish `v0.9.2` (then record the new digest) before
+claiming the RC1 behavior on any stack.
 
 ## 7. Design history
 
@@ -1083,6 +1117,16 @@ CPU-model test plan in §9.
   gateway-owned `sensitive` label. The layer attributes and audits; it does
   not steer pools (§3.1). The gateway image and its validation job are in
   `.github/workflows/`, the build in `deploy/images/praxis-llm-d-sc/`.
+- **2026-11-12 — RC1 gateway hardening.** The policy host adds
+  `validator/gci-step-key` and `validator/gci-pii-gate`. The step-key gate
+  binds the authenticated key to the `X-Demo-Step` stage via `step:<stage>`
+  roles in `api-keys.yaml`; the eval key is step-less and cannot claim a
+  review stage. The general entry runs the PII scanner as a gate (403 on a
+  match), while the screen listener moves to `policy-screen.yaml` and keeps
+  the observe-only scanner so it can still see the document; the sensitive
+  entry remains observe-only. Negative tests pin the policy shape and the
+  key grants. This entry records implementation and local test evidence, not
+  a new ROSA measurement.
 - **2026-11-09 — the classifier-free policy is measured, twice.** The
   200-document ROSA matrix was re-run without the classifier and with the
   conditional CPU termination follow-up (§3.3). The first measurement scored
@@ -1143,26 +1187,35 @@ regression tests — §2.7 and §7 record them.)
 
 ### 8.2 Next actions, in order
 
-1. **Rebuild ROSA** from `deploy/openshift/rosa/README.md`: g5 capacity
+1. **Rebuild and publish the RC1 gateway image.** The current policies name
+   `validator/gci-step-key` and `validator/gci-pii-gate`; the measured
+   `v0.9.1` digest predates both, and the `v0.9.2` target is not in the
+   registry. Run `deploy/images/praxis-llm-d-sc/build.sh --push`, record the
+   new digest in `docs/design.md` §6 and the image README, then run the
+   fake-stack smoke
+   (below) so the negative cases prove the gate and the step binding before a
+   cluster is involved.
+2. **Rebuild ROSA** from `deploy/openshift/rosa/README.md`: g5 capacity
    probe, both machine pools in one AZ, GPU operator,
    `scripts/cluster/cpu-topology.sh` bind lists into `pools-cpu.yaml`,
    storage + seeders, `oc apply -k deploy/openshift/rosa`, specialist
    image rebuild, then the 2-document smoke run (1 sensitive + 1
-   non-sensitive, config hybrid).
-2. **The 200-document matrix and direct baselines are done (2026-11-11).**
+   non-sensitive, config hybrid). On the live stack, verify the two RC1
+   denials (wrong step key, PII on the general entry) before the matrix.
+3. **The 200-document matrix and direct baselines are done (2026-11-11).**
    The quoted through-stack record is §3.3 / FINDINGS §15.11
    (`runs/rosa-200-2026-11-11-praxis-routes`); the 2026-11-10 matrix is the
    previous record. Re-run (`DOCS=200 scripts/cluster/arms.sh` plus the
    direct baselines) only after a routing, model or pool change; give it a
    new run directory and do not overwrite the quoted one.
-3. **Contract-step taxonomy eval** once a stack is up
+4. **Contract-step taxonomy eval** once a stack is up
    (`hybrid-eval-contract-steps`; pass = same-document control 4/4, §5),
    then the CUAD test-split specialist through-stack rerun at lower
    concurrency (FINDINGS §9). `--check` runs locally without a stack.
-4. **Local, no cluster needed:** the Presidio A/B on a labelled sample and
+5. **Local, no cluster needed:** the Presidio A/B on a labelled sample and
    the docling-offsets A/B on the D11 regression set (§4.6's open list),
    and the embedder-tier call (FINDINGS §9/§11).
-5. **MCP facade and agent trigger** (§3.5, no re-measurement required). The
+6. **MCP facade and agent trigger** (§3.5, no re-measurement required). The
    facade is scaffolded (`hybrid-mcp`, `src/hybrid_demo/mcp/server.py`, root
    launcher `mcp/contract_review_server.py`) with `contract://`, the full
    review and the stage tools. Remaining: wire OpenClaw to it, add
@@ -1170,7 +1223,7 @@ regression tests — §2.7 and §7 record them.)
    scripted and agent-driven. Keep the agent path labelled **functional, not
    measured** until it has its own run record; the measured reference path is
    unchanged.
-6. **Decision-model experiment (Jev/Laya-style): implemented, opt-in, not
+7. **Decision-model experiment (Jev/Laya-style): implemented, opt-in, not
    adopted.** The best fit is the PII screen (no CUAD PII labels, which is
    exactly the zero-shot case), with the cause-language trigger as a second
    candidate. `pii.py` has `jev` (local Laya or `HYBRID_JEV_URL`), `screen`

@@ -156,9 +156,9 @@ filter_chains:
             value: application/json
         body: >-
           {"object":"list","data":[{"id":"Semantic-Qwen","object":"model","created":0,"owned_by":"praxis"}]}
-      # PPE policy layer: per-step API-key identity and a fail-closed
-      # authentication gate. Attribution and audit only - pool choice is the
-      # router table below.
+      # PPE policy layer: per-step API-key identity, key-to-step binding,
+      # the general-entry PII gate, and audit. Pool choice is still the
+      # router table below; the policy does not steer pools.
       - filter: policy
         config_path: /etc/praxis/policy.yaml
         body_access: read_only
@@ -248,9 +248,11 @@ filter_chains:
 
   # Control-plane chain for the pre-entry PII screen. There is no failover:
   # an unavailable screen is a hard error and the pipeline fails closed to
-  # the sensitive review entry. The policy is the same authentication/audit
-  # policy as the general entry; the body carries the served model name only
-  # so the model-scoped policy route matches.
+  # the sensitive review entry. The policy uses the observe-only scanner
+  # (policy-screen.yaml) because the document is the thing being screened;
+  # the body carries the served model name only so the model-scoped policy
+  # route matches. The screen key must name screen:pii or decide:cause; no
+  # stepless caller is admitted here.
   - name: screen-routing
     filters:
       - filter: request_id
@@ -266,8 +268,10 @@ filter_chains:
             value: application/json
         body: >-
           {"object":"list","data":[{"id":"Semantic-Qwen","object":"model","created":0,"owned_by":"praxis"}]}
+      # The screen listener must see the document, so it uses the
+      # observe-only scanner. The enforcing gate is on policy.yaml.
       - filter: policy
-        config_path: /etc/praxis/policy.yaml
+        config_path: /etc/praxis/policy-screen.yaml
         body_access: read_only
         llm:
           max_request_bytes: 4194304
@@ -287,8 +291,9 @@ filter_chains:
                   - path_prefix: "/"
                     headers: {X-Demo-Step: "decide:cause"}
                     cluster: jev-cpu
-                  # This listener is screen-only; an unlabelled request still
-                  # reaches the CPU decision model, never a review pool.
+                  # Defensive default: the policy admits only screen:pii or
+                  # decide:cause on this listener, so this route is not the
+                  # path for a review step.
                   - path_prefix: "/"
                     cluster: jev-cpu
               - filter: load_balancer
