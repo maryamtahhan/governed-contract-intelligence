@@ -254,7 +254,7 @@ def format_summary(result: dict) -> str:
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
-        description="gateway shadow PII screen vs the pipeline's screen")
+        description="gateway PII scanner (observe + gate) vs the pipeline's screen")
     parser.add_argument("--run", required=True,
                         help="pipeline run directory (contains results.json)")
     parser.add_argument("--logs", required=True,

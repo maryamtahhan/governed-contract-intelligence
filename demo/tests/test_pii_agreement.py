@@ -1,4 +1,4 @@
-"""hybrid-pii-agreement: joining the gateway's shadow PII screen to a run.
+"""hybrid-pii-agreement: joining the gateway's PII scanner lines to a run.
 
 The scanner emits compact serde_json lines wrapped in whatever the host's
 log formatter adds; the parser must survive that wrapping, and the report

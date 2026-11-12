@@ -21,10 +21,10 @@ services:
     # Custom build with the llm_d_sc filter and the PPE policy host
     # plugins (audit sink, PII observe/gate scanners, step-key binding;
     # Praxis 0.7.5 / ai-gateway 0.9.0), published by the publish-images
-    # workflow; rebuild path is deploy/images/praxis-llm-d-sc/. The tree targets
-    # v0.9.2 for the RC1 gate and step-key plugins; that tag is not published
-    # yet, so the measured v0.9.1 image carries audit + observe-only PII. The
-    # llm_d_sc filter is unused
+    # workflow; rebuild path is deploy/images/praxis-llm-d-sc/. v0.9.2 is the
+    # published RC1 image with the gate and step-key plugins; the measured
+    # 2026-11-11 image is v0.9.1 (audit + observe-only PII). The llm_d_sc
+    # filter is unused
     # by the shipped configs (no classifier in the request path) but stays
     # in the image for the contract-step experiment. The policy filter and
     # its documents (policy*.yaml, api-keys.yaml in this directory) are
@@ -49,7 +49,9 @@ services:
       - trace-ui
 
   trace-ui:
-    build: ../../demo
+    build:
+      context: ../../demo
+      dockerfile: src/docker/Dockerfile
     command: ["hybrid-traceui"]
     environment:
       TRACE_DB_PATH: /data/traces.db
@@ -87,35 +89,45 @@ services:
   # ---- simulated backends: OpenAI-compatible, deterministic tiered error
   # ---- rates, device-time headers. For CI and CPU-only hosts.
   fake-specialist:
-    build: ../../demo
+    build:
+      context: ../../demo
+      dockerfile: src/docker/Dockerfile
     profiles: ["fake"]
     command: ["hybrid-pool", "--pool", "cuad-specialist", "--model", "cuad-specialist",
               "--host", "0.0.0.0", "--port", "8000",
               "--prefill-ms-per-ktok", "20", "--decode-ms-per-tok", "5", "--concurrency", "4",
               "--error-rates", "simple=0.0,complex=0.0,reasoning=0.0"]
   fake-cpu:
-    build: ../../demo
+    build:
+      context: ../../demo
+      dockerfile: src/docker/Dockerfile
     profiles: ["fake"]
     command: ["hybrid-pool", "--pool", "vllm-cpu", "--model", "Semantic-Qwen",
               "--host", "0.0.0.0", "--port", "8000",
               "--prefill-ms-per-ktok", "700", "--decode-ms-per-tok", "24", "--concurrency", "8",
               "--error-rates", "simple=0.10,complex=0.18,reasoning=0.55"]
   fake-gpu:
-    build: ../../demo
+    build:
+      context: ../../demo
+      dockerfile: src/docker/Dockerfile
     profiles: ["fake"]
     command: ["hybrid-pool", "--pool", "vllm-gpu", "--model", "Semantic-Qwen",
               "--host", "0.0.0.0", "--port", "8000",
               "--prefill-ms-per-ktok", "40", "--decode-ms-per-tok", "12", "--concurrency", "12",
               "--error-rates", "simple=0.01,complex=0.04,reasoning=0.03"]
   fake-approved:
-    build: ../../demo
+    build:
+      context: ../../demo
+      dockerfile: src/docker/Dockerfile
     profiles: ["fake"]
     command: ["hybrid-pool", "--pool", "vllm-gpu-approved", "--model", "Semantic-Qwen",
               "--host", "0.0.0.0", "--port", "8000",
               "--prefill-ms-per-ktok", "40", "--decode-ms-per-tok", "12", "--concurrency", "12",
               "--error-rates", "simple=0.01,complex=0.04,reasoning=0.03"]
   fake-gpu-small:
-    build: ../../demo
+    build:
+      context: ../../demo
+      dockerfile: src/docker/Dockerfile
     profiles: ["fake"]
     command: ["hybrid-pool", "--pool", "vllm-gpu-small", "--model", "Semantic-Qwen",
               "--host", "0.0.0.0", "--port", "8000",
@@ -124,7 +136,9 @@ services:
   # Deterministic stand-in for the Jev pool, so the screen:pii path runs on a
   # CPU-only host without downloading Laya. It is not a measurement.
   fake-jev:
-    build: ../../demo
+    build:
+      context: ../../demo
+      dockerfile: src/docker/Dockerfile
     profiles: ["fake"]
     command: ["hybrid-jev", "--host", "0.0.0.0", "--port", "8000", "--fake"]
 
@@ -180,7 +194,7 @@ services:
   jev-cpu-real:
     build:
       context: ../../demo
-      dockerfile: Dockerfile.jev
+      dockerfile: src/docker/Dockerfile.jev
     profiles: ["real"]
     cpus: 4
 

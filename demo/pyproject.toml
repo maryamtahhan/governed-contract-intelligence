@@ -13,7 +13,7 @@ dependencies = [
 [project.optional-dependencies]
 # The base install intentionally excludes torch/transformers: the demo's
 # simulated stack and tests run without them. The specialist pool and the
-# CUAD validators need this extra (or Dockerfile.specialist).
+# CUAD validators need this extra (or src/docker/Dockerfile.specialist).
 specialist = [
     "torch>=2.2,<3",
     "transformers>=4.40,<6",

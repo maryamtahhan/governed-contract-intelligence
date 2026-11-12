@@ -10,7 +10,7 @@
 # scripts/cluster/cpu-topology.sh after a node change.
 #
 # The image is built in-cluster (BuildConfig hybrid-jev in this namespace)
-# from demo/Dockerfile.jev; the English checkpoint is baked into the image.
+# from demo/src/docker/Dockerfile.jev; the English checkpoint is baked into the image.
 apiVersion: apps/v1
 kind: Deployment
 metadata:

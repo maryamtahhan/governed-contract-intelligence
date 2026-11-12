@@ -3,8 +3,8 @@ kind: Kustomization
 
 # The all-pools-simulated variant: the cluster twin of the compose fake
 # profile (deploy/linux/docker-compose.yml --profile fake). Everything from
-# the base (praxis v0.9.2, the RC1 rebuild target, with the PPE policy layer,
-# trace-ui, netpols)
+# the base (praxis v0.9.2, the published RC1 image, with the PPE policy
+# layer, trace-ui, netpols)
 # with ALL FIVE routes running as hybrid-pool containers — deterministic
 # tiered error rates, device-time headers, no model downloads, no GPUs, no
 # KServe. This is the functional-test environment for CPU-only clusters:
@@ -12,8 +12,8 @@ kind: Kustomization
 # the PII scanner (gate on general, observe on sensitive) all exercise
 # end-to-end; only model quality is not real, and no number from here
 # belongs in a measured row. The measured v0.9.1 image predates the RC1
-# gate/step-key plugins; v0.9.2 is the rebuild target and is not published
-# yet, so build and push it before this overlay loads.
+# gate/step-key plugins; v0.9.2 is published and carries them. This overlay
+# passed the 27/27 live policy smoke on ROSA on 2026-11-12.
 #
 # Distinguished from deploy/openshift/fake-gpu/, which keeps the CPU pool
 # a real vLLM InferenceService (and therefore needs KServe and the model
@@ -22,6 +22,8 @@ kind: Kustomization
 #
 # The image is built into the internal registry with a binary build:
 #   oc -n openshell-demo new-build --binary --strategy docker --name hybrid-demo
+#   oc -n openshell-demo patch bc hybrid-demo --type merge \
+#     -p '{"spec":{"strategy":{"dockerStrategy":{"dockerfilePath":"src/docker/Dockerfile"}}}}'
 #   oc -n openshell-demo start-build hybrid-demo --from-dir=demo --follow
 namespace: openshell-demo
 

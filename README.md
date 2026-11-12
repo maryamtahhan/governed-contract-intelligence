@@ -179,23 +179,23 @@ restore one.
 ├── README.md                     this runbook
 ├── FINDINGS.md                   the measurement record — read before quoting numbers
 ├── demo/                         Python package, tests and experiment tools
-│   ├── src/hybrid_demo/
-│   │   ├── pipeline/           generator, review pipeline, direct runner, batch, CUAD converter, risk, schemas
-│   │   ├── specialist/         CUAD RoBERTa QA server, questions, semantic cache
-│   │   ├── retrieval/          chunking, docling adapter, index, retrieval eval + e2e
-│   │   ├── evalkit/            scorer, span/stats/rag checks, cost, live sampler, contract-step + PII-agreement evals
-│   │   ├── fakepool/           simulated backends + llm-d-inference-sim adapter
-│   │   ├── traceui/            recording relays, dashboard backend, audit, OTel export
-│   │   ├── ui/                 stage dashboard (replay + live modes)
-│   │   ├── mcp/                MCP facade: review + stage tools, ingress only
-│   │   ├── jev/                System One endpoint for the opt-in jev-cpu pool
-│   │   ├── pii.py              pluggable PII detectors (regex default)
-│   │   ├── configs.json        single source of routing-config metadata
-│   │   └── common.py, routes.py, bench.py, classifier.py
+│   ├── src/
+│   │   ├── hybrid_demo/
+│   │   │   ├── pipeline/       generator, review pipeline, direct runner, batch, CUAD converter, risk, schemas
+│   │   │   ├── specialist/     CUAD RoBERTa QA server, questions, semantic cache
+│   │   │   ├── retrieval/      chunking, docling adapter, index, retrieval eval + e2e
+│   │   │   ├── evalkit/        scorer, span/stats/rag checks, cost, live sampler, contract-step + PII-agreement evals
+│   │   │   ├── fakepool/       simulated backends + llm-d-inference-sim adapter
+│   │   │   ├── traceui/        recording relays, dashboard backend, audit, OTel export
+│   │   │   ├── ui/             stage dashboard (replay + live modes)
+│   │   │   ├── mcp/            MCP facade: review + stage tools, ingress only
+│   │   │   ├── jev/            System One endpoint for the opt-in jev-cpu pool
+│   │   │   ├── pii.py          pluggable PII detectors (regex default)
+│   │   │   ├── configs.json    single source of routing-config metadata
+│   │   │   └── common.py, routes.py, bench.py, classifier.py
+│   │   └── docker/             Dockerfile, Dockerfile.jev, Dockerfile.specialist
 │   ├── tests/                    248-test suite, incl. e2e against a praxis stub
-│   ├── tools/                    probes, validators, paired significance, PII compare, bench helpers
-│   ├── Dockerfile                trace-ui / package image
-│   └── Dockerfile.specialist     specialist image (bakes the CUAD checkpoint)
+│   └── tools/                    probes, validators, paired significance, PII compare, bench helpers
 ├── manifests/
 │   ├── base/                     non-KServe platform: praxis, trace-ui, traffic-gen, netpols
 │   │   └── praxis/               the four routing configs + PPE policies + API-key digests
@@ -218,6 +218,7 @@ restore one.
 │   ├── pipeline-through-stack.svg    one request, six stops
 │   ├── stage-runbook.md              one-page stage script
 │   ├── stage-review-walkthrough.html presenter guide
+│   ├── demo-deck.html                19-slide demo + findings deck (arrow keys, N notes, P print)
 │   └── octo-demo-v0.3.md             business case / OCTO framing
 ├── mcp/                          root launcher for the MCP facade
 ├── classifiers/                  contract-step taxonomy + evaluation anchors (candidate)
@@ -237,6 +238,7 @@ Where to look for what:
 | run or extend the test suite | [Tests and checks](#tests-and-checks) |
 | reproduce a measurement | [Experiments and measurements](#experiments-and-measurements), [design §4.4](docs/design.md) |
 | give the stage demo | [`docs/stage-runbook.md`](docs/stage-runbook.md), [`docs/stage-review-walkthrough.html`](docs/stage-review-walkthrough.html) |
+| present the demo and findings | [`docs/demo-deck.html`](docs/demo-deck.html) (open in a browser; `P` prints 19 pages) |
 | understand a run directory or config name | [`runs/README.md`](runs/README.md), [design §2](docs/design.md) |
 
 ## The naming model in one minute
@@ -373,12 +375,13 @@ functional policy evidence, not a new model-quality measurement. The policy
 declarations grant `read_roles` to the step-key and audit plugins because
 `read_subject` alone exposes only the subject id. The optional
 complexity-routing filter remains in the image for the contract-step
-experiment but is not in the request path. The classifier
-(`quay.io/mtahhan/gci-llm-d-sc:main-e660fff`) and its mirrored modelcar were
-published once (2026-11-05) and stay in the registry for that experiment;
-nothing in the default stack deploys them. The llm-d-sc Deployment and the
-classifier-routed arm B config are preserved in git history (commit
-`aa080e9`).
+experiment but is not in the request path.
+
+The first revision tried model-labelled complexity routing. Every
+contract-analysis step came back MEDIUM and went to the same pool, so the
+classifier was removed; routing now uses the declarative step-to-pool table
+(FINDINGS §15.5). The old
+deployment and classifier-routed config remain in git history (`aa080e9`).
 
 Then:
 
@@ -629,8 +632,8 @@ compares:
   expert annotations), risk accuracy (vs majority-class baseline), report
   accuracy, documents fully correct.
 - **Classifier (historical)**: the recorded arms carry predicted labels vs
-  step types (real llm-d-sc labels labelled all contract-analysis steps
-  MEDIUM, the cross-doc report REASONING — reported honestly, FINDINGS §4,
+  step types (the original classifier labelled all contract-analysis steps
+  MEDIUM and the cross-doc report REASONING — reported honestly, FINDINGS §4,
   §15.5). New runs have no classifier and no label column.
 - **Routing and governance**: CPU-served share; sensitive steps on approved
   pools; violations. Target for the hybrid config: **zero**, verified from the
