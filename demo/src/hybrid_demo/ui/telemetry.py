@@ -166,22 +166,39 @@ class LivePools:
             snap["avg_e2e_ms"] = round(e2e / e2e_n * 1000, 1)
 
 
+def _run_label(path: Path, runs_dir: Path) -> str:
+    """A stable label for one run directory.
+
+    Matrix runs are nested (``runs/<batch>/<config>``), so the directory leaf
+    is not unique across archived runs. Use the path relative to the scan root
+    for nested runs, and the leaf name for a single run directory.
+    """
+    try:
+        rel = path.resolve().relative_to(runs_dir.resolve())
+    except ValueError:
+        return path.name
+    return rel.name if len(rel.parts) == 1 else rel.as_posix()
+
+
 def run_artifacts(runs_dir: Path, focus: list[Path]) -> dict:
     """What the recorded runs spent, plus the sweep beside them.
 
     ``focus`` names the runs the stage page is showing; they come first so the
-    telemetry page describes the demo on screen before the archive.
+    telemetry page describes the demo on screen before the archive. The scan is
+    recursive because matrix runs live one level below the batch directory.
     """
     runs: list[dict] = []
-    seen: set[str] = set()
-    order = [p for p in focus if p.is_dir()] + sorted(
-        (p.parent for p in runs_dir.glob("*/metrics.json")),
+    seen: set[Path] = set()
+    discovered = sorted(
+        (p.parent for p in runs_dir.rglob("metrics.json")),
         key=lambda p: p.stat().st_mtime, reverse=True)
+    order = [p for p in focus if p.is_dir()] + discovered
     for path in order:
-        name = path.name
-        if name in seen:
+        resolved = path.resolve()
+        if resolved in seen:
             continue
-        seen.add(name)
+        seen.add(resolved)
+        name = _run_label(path, runs_dir)
         pools = _pool_load(path)
         if not pools:
             continue

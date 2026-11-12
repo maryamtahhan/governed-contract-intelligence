@@ -192,6 +192,17 @@ def test_run_artifacts_puts_the_focused_runs_first(tmp_path):
     assert list(rest) == sorted(rest, key=mtimes.__getitem__, reverse=True)
 
 
+def test_run_artifacts_discovers_nested_matrix_runs(tmp_path):
+    focus = _write_run(tmp_path, "batch/hybrid", POOL_METRICS,
+                       {"arm": "D", "wall_s": 12.0, "docs": 8})
+    _write_run(tmp_path, "batch/one-pool", POOL_METRICS,
+               {"arm": "A", "wall_s": 6.0, "docs": 8})
+    out = run_artifacts(tmp_path, [focus])
+    names = [r["run"] for r in out["runs"]]
+    assert names[0] == "batch/hybrid"
+    assert "batch/one-pool" in names
+
+
 def test_run_artifacts_reads_the_sweep_beside_the_runs(tmp_path):
     perf = tmp_path / "perf"
     perf.mkdir()
