@@ -128,7 +128,8 @@ echo " done"
 gateway_post() { # url step prompt max_tokens
   local key
   key=$(key_for_step "$2")
-  curl -sf -D /tmp/h -o /tmp/b "$1/v1/chat/completions" \
+  # No -f: the fail-closed assertions below expect a non-2xx and inspect it.
+  curl -s -D /tmp/h -o /tmp/b "$1/v1/chat/completions" \
     -H 'Content-Type: application/json' -H "X-API-Key: $key" \
     -H "X-Session-Id: smoke-test" -H "X-Demo-Step: $2" \
     -d "{\"model\":\"Semantic-Qwen\",\"messages\":[{\"role\":\"user\",\"content\":\"$3\"}],\"max_tokens\":$4}"

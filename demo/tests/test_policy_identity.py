@@ -107,6 +107,9 @@ def test_general_policy_runs_the_step_binding_and_pii_gate():
     assert plugins["step-key"]["kind"] == "validator/gci-step-key"
     assert plugins["step-key"]["mode"] == "sequential"
     assert plugins["step-key"]["config"]["stepless_roles"] == ["eval"]
+    # read_subject only projects id/type; the step gate compares roles, so
+    # the capability must be present or every keyed request denies.
+    assert "read_roles" in plugins["step-key"]["capabilities"]
     assert plugins["pii-gate"]["kind"] == "validator/gci-pii-gate"
     assert plugins["pii-gate"]["mode"] == "sequential"
     runs = _runs(POLICY_FILE)
@@ -127,6 +130,7 @@ def test_sensitive_and_screen_entries_keep_observe_only_pii():
         # Only the general entry admits the step-less eval caller; a review
         # stage must be named on both the sensitive and screen entries.
         assert plugins["step-key"]["config"]["stepless_roles"] == []
+        assert "read_roles" in plugins["step-key"]["capabilities"]
         assert "run(step-key)" in _runs(path)
         assert "run(pii-observe)" in _runs(path)
     # The sensitive entry still taints the session; the screen entry has no

@@ -67,7 +67,7 @@ pipeline, the measurement harness and the OpenShell sandbox.
 | Trace UI (waterfall, arms panel, dashboard, audit) | **built** |
 | Test suite | **248 tests green** (`cd demo && uv run pytest`) |
 | Contract-step taxonomy + evaluation harness | **candidate, not measured** — evaluate before routing ([design §5](docs/design.md)) |
-| Gateway image `v0.9.2` (Praxis 0.7.5 / ai-gateway 0.9.0 + PPE host plugins) | **RC1 rebuild target, not yet published** — the tree, manifests and compose stack name `v0.9.2`; the measured image is `v0.9.1`, which carries audit + observe-only PII. Build and push `v0.9.2` before the current policies load ([docs](deploy/images/praxis-llm-d-sc/README.md)) |
+| Gateway image `v0.9.2` (Praxis 0.7.5 / ai-gateway 0.9.0 + PPE host plugins) | **published RC1 image** — digest `sha256:3140a8dad2626ef71504546fa7901f53d9ec68ac49ed20e39919ae0af71c77c6`; passed the 27/27 live policy smoke on ROSA (fake pools, 2026-11-12). The measured 2026-11-11 stack remains `v0.9.1` ([docs](deploy/images/praxis-llm-d-sc/README.md)) |
 | Retrieval evaluation (chunking + recall@k/MRR vs annotation spans) | **run, both regimes — ordering inverts within-doc, restores cross-doc (FINDINGS §11)** |
 | OSS adapters (Presidio, Jev/Laya, nervaluate, ranx, docling, RedisVL, OTel, RAGAS, llm-d sim/batch/bench) | **built as opt-in swaps, default path unchanged** ([design §4](docs/design.md)) |
 | docling ingestion + PII screen at ingest | adapter built; default remains builtin/regex, not yet measured on the corpus (FINDINGS §16) |
@@ -351,25 +351,28 @@ with `taskset` instead and documents why in
 [`deploy/openshift/rosa/kustomization.yaml`](deploy/openshift/rosa/kustomization.yaml).
 On any new node, read `lscpu` first and regenerate the core lists.
 
-The gateway image is published by this repo: upstream `ai` has no
-`llm_d_sc` filter and no PPE policy host, so the repo publishes its own
-build via the `publish-images` workflow
-([deploy/images/praxis-llm-d-sc/](deploy/images/praxis-llm-d-sc/README.md)).
-The current tree, manifests, compose stack and CI target
-`quay.io/mtahhan/gci-praxis:v0.9.2`, the RC1 rebuild (Praxis 0.7.5 /
-ai-gateway 0.9.0, PPE 0.4.1 host plugins); **that tag is not published yet**.
-The measured 2026-11-11 stack ran `v0.9.1` (digest
-`sha256:9def8e14befedeef75a088266630386dc4506004dd43fd6962212dcb122f375a`).
-The `llm_d_sc` filter is unused by the shipped configs (no classifier in the
-request path) but stays in the image for the contract-step taxonomy
-experiment. The policy layer is used by every entry: per-step API keys bound
-to their `X-Demo-Step` stage, request records, and the PII scanner — enforcing
-on the general entry, observe-only on the screen and sensitive entries. **The
-measured `v0.9.1` digest predates the RC1 plugins**: it carries the audit
-observer and the observe-only scanner, not `validator/gci-step-key` or
-`validator/gci-pii-gate`. Build and push `v0.9.2` before applying the current
-`manifests/base/praxis` policies, or the gateway's validation step will reject
-the unregistered plugin kinds. The classifier
+The gateway image is published by this repo because upstream `ai` has neither
+the optional routing filter nor the PPE policy host; the `publish-images`
+workflow builds it from
+[deploy/images/praxis-llm-d-sc/](deploy/images/praxis-llm-d-sc/README.md).
+
+The measured 2026-11-11 stack ran `v0.9.1` (Praxis 0.7.5 / ai-gateway 0.9.0,
+PPE 0.4.1 host plugins; digest
+`sha256:d17410449aec2f30a8d07819503ad00badaab398a4f18a1d4692961026c91c56`).
+The tree, manifests, compose stack and CI now target the published `v0.9.2`
+RC1 image (digest
+`sha256:3140a8dad2626ef71504546fa7901f53d9ec68ac49ed20e39919ae0af71c77c6`).
+The policy layer runs on every entry: per-step API keys bound to
+`X-Demo-Step`, request records, and the PII scanner — enforcing on the general
+entry, observe-only on the screen and sensitive entries. `v0.9.1` predates
+RC1: it carries the audit observer and observe-only scanner, not
+`validator/gci-step-key` or `validator/gci-pii-gate`. The RC1 policies passed
+a 27/27 live smoke on ROSA using the fake-all overlay (2026-11-12); that is
+functional policy evidence, not a new model-quality measurement. The policy
+declarations grant `read_roles` to the step-key and audit plugins because
+`read_subject` alone exposes only the subject id. The optional
+complexity-routing filter remains in the image for the contract-step
+experiment but is not in the request path. The classifier
 (`quay.io/mtahhan/gci-llm-d-sc:main-e660fff`) and its mirrored modelcar were
 published once (2026-11-05) and stay in the registry for that experiment;
 nothing in the default stack deploys them. The llm-d-sc Deployment and the
@@ -495,8 +498,8 @@ the real image and validates every praxis config:
 
 ```bash
 # What CI runs for each of config.yaml / arm-a / arm-b / arm-c.
-# v0.9.2 is the RC1 rebuild target; until it is published this job fails by
-# design, because the current policies name plugins that v0.9.1 does not have.
+# v0.9.2 is the published RC1 image; it registers the gate and step-key
+# plugins named by the current policies.
 podman run --rm -v "$PWD/manifests/base/praxis:/etc/praxis:ro" \
   quay.io/mtahhan/gci-praxis:v0.9.2 --validate -c /etc/praxis/config.yaml
 ```
@@ -770,8 +773,10 @@ recorded run directories.
   sensitive entries keep the observe-only scanner for the V19 comparison.
   The key-to-step gate binds each valid key to its `step:<stage>` grant, so
   a review key cannot claim another step's route; the eval key is step-less
-  and cannot name a review stage. Both changes are implemented with negative
-  tests but still need live validation on a rebuilt ROSA stack. Moving the
+  and cannot name a review stage. Both changes passed the negative tests and
+  a 27/27 live policy smoke on ROSA using the fake pools (2026-11-12); a
+  real-pool rebuild and a fresh 200-document measurement were not run, so the
+  quoted record remains 2026-11-11. Moving the
   sensitive/general decision fully into the gateway — llm-d-sc's sensitivity
   taxonomy over gRPC, two-label routing in one praxis chain, or a promoted
   PPE rule — remains a measured upgrade (V19); the scanner's agreement

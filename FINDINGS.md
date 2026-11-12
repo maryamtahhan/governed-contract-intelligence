@@ -1813,15 +1813,15 @@ option for now.
 
 ## 18. RC1 gateway hardening: PII gate and step-key binding
 
-This section records source and local-test evidence, not a new ROSA
-measurement. The quoted 200-document record remains §15.11 until a rebuilt
-stack passes the negative smoke and a fresh run is recorded in a new run
-directory.
+This section records the RC1 implementation, local tests, and functional
+live policy evidence. It is not a new ROSA measurement. The quoted
+200-document record remains §15.11 until a real-pool rebuild passes the
+negative smoke and a fresh matrix is recorded in a new run directory.
 
-Two PPE plugins were added to the policy host in the RC1 source tree. The
-measured `v0.9.1` image predates them; the tree targets `v0.9.2`, which is
-not published yet. Build and push it, then record the new digest before
-deployment:
+Two PPE plugins were added to the policy host in RC1. Image `v0.9.2`
+(published 2026-11-12, run `43203547413`, digest
+`sha256:3140a8dad2626ef71504546fa7901f53d9ec68ac49ed20e39919ae0af71c77c6`)
+registers both; the measured `v0.9.1` image predates them.
 
 - `validator/gci-step-key` (`mode: sequential`) reads the authenticated
   subject and `X-Demo-Step` and requires a `step:<stage>` role matching the
@@ -1840,24 +1840,33 @@ Policy shape: the general route runs `step-key`, then `pii-gate`, then
 `audit`; the sensitive route runs `step-key`, taints the session, then
 `pii-observe` and `audit`; the screen route runs `step-key`, then
 `pii-observe` and `audit`. `validate-policy.yaml` names all four registered
-kinds so an image missing one fails its build-time validation.
+kinds so an image missing one fails its build-time validation. The
+`step-key` and `audit` plugins must declare `read_roles` in addition to
+`read_subject`: the filter projects only the subject id for `read_subject`,
+so without `read_roles` the gate sees an empty role set and denies every
+keyed request (`step_key_mismatch`).
 
-Local evidence:
+Local and live evidence:
 
 - `cd demo && uv run pytest -q` -> **248 passed**, including structural
   tests that pin the policy runs, the screen listener's policy path, the
-  key digests, and each key's step grants.
+  key digests, each key's step grants, and the `read_roles` capability.
 - `bash -n scripts/linux/smoke.sh scripts/cluster/smoke.sh` -> clean. Both
-  smoke tests now send the per-step key and add live assertions: a classify
-  key claiming risk is denied, a PII-positive general request is denied with
-  403, the sensitive entry still accepts the matching key, the step-less
-  eval identity is accepted, and the logs contain both observe and gate
-  scanner lines plus a gate denial.
-- The image build must still be run: `validate-policy.yaml` names all four
-  kinds, so `praxis-ai --validate` fails the build if any registration is
-  missing. That is a source-level guard, not evidence that a published image
-  contains them.
+  smoke tests send the per-step key and assert: a classify key claiming
+  risk is denied, a PII-positive general request is denied with 403, the
+  sensitive entry still accepts the matching key, the step-less eval
+  identity is accepted, and the logs contain both observe and gate scanner
+  lines plus a gate denial. The cluster smoke's POST helper deliberately
+  does not use `curl -f`, so a fail-closed 4xx/5xx reaches the assertion.
+- Published `v0.9.2` passed build-time `praxis-ai --validate` with all four
+  plugin kinds. On ROSA, `deploy/openshift/fake-all` (five simulated pools)
+  ran `scripts/cluster/smoke.sh`: **27/27 checks passed** (2026-11-12,
+  `runs/rosa-policy-2026-11-12`). This includes the wrong-step denial, the
+  PII gate, sensitive-pool containment, fail-closed pool loss, and the
+  step-less eval request. No model-quality or cost number comes from this
+  fake-pool stack.
 
-Open verification: run the rebuilt image on ROSA, execute
-`scripts/cluster/smoke.sh` (or the Linux twin), then run the 200-document
-matrix in a **new** run directory; do not overwrite `2026-11-11`.
+Open verification: rebuild the **real-pool** ROSA stack with a renewed OCM
+login and GPU/x8i capacity, execute `scripts/cluster/smoke.sh` (or the Linux
+twin), then run the 200-document matrix in a **new** run directory; do not
+overwrite `2026-11-11`. The quoted measurement is still `v0.9.1`.

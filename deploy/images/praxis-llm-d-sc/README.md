@@ -1,10 +1,11 @@
 # praxis-ai with the llm_d_sc filter and the PPE policy host
 
-**Image name:** `quay.io/mtahhan/gci-praxis:v0.9.2` — the RC1 rebuild target.
-It is **not published yet** (2026-11-12); `build.sh`, the publish workflow,
-base manifests and compose all name it. The measured image is
-`quay.io/mtahhan/gci-praxis:v0.9.1` (2026-11-06, digest
-`sha256:9def8e14befedeef75a088266630386dc4506004dd43fd6962212dcb122f375a`);
+**Image name:** `quay.io/mtahhan/gci-praxis:v0.9.2` (RC1, published
+2026-11-12 in run `43203547413`, digest
+`sha256:3140a8dad2626ef71504546fa7901f53d9ec68ac49ed20e39919ae0af71c77c6`).
+`build.sh`, the publish workflow, base manifests and compose all name it.
+The measured image is `quay.io/mtahhan/gci-praxis:v0.9.1` (2026-11-06,
+digest `sha256:d17410449aec2f30a8d07819503ad00badaab398a4f18a1d4692961026c91c56`);
 the previous build was `v0.9.0` (2026-11-05, digest
 `sha256:2187ab818efab9a8f3d1f911190d47fad960888bada7d3db8a973d3ad70ac992`),
 which the v0.9.0-era configs ran.
@@ -14,21 +15,25 @@ image does not have:
 
 - the [`llm_d_sc` filter][filter] (semantic-classification routing), and
 - since v0.9.1, the **PPE policy host plugins**: the reference
-  `audit/logger` sink vendored from praxis-proxy/policy's v0.5.0 tag,
-  `validator/gci-pii-observe` (observe-only comparison scanner),
-  `validator/gci-pii-gate` (enforcing scanner for the general entry), and
-  `validator/gci-step-key` (binds an authenticated key to its
-  `X-Demo-Step` stage). The PII pattern catalog mirrors
-  `demo/src/hybrid_demo/pii.py`. All register through
-  [`policy-host/`](policy-host/) via the same build-time discovery as the
-  filter. Updating the base image alone would silently remove them.
+  `audit/logger` sink vendored from praxis-proxy/policy's v0.5.0 tag and
+  `validator/gci-pii-observe` (observe-only comparison scanner);
+- since v0.9.2, the RC1 plugins: `validator/gci-pii-gate` (enforcing scanner
+  for the general entry) and `validator/gci-step-key` (binds an authenticated
+  key to its `X-Demo-Step` stage).
 
-> **Source state (2026-11-12):** the RC1 plugins (`gci-pii-gate`,
-> `gci-step-key`) are in this tree, but the **`v0.9.2` rebuild is not
-> published yet**. The measured `v0.9.1` digest listed below carries the audit
-> observer and the observe-only scanner only. Build and push `v0.9.2` before
-> applying the current `manifests/base/praxis` policies; otherwise the gateway
-> correctly rejects the unregistered plugin kinds at load.
+The PII pattern catalog mirrors `demo/src/hybrid_demo/pii.py`. All register
+through [`policy-host/`](policy-host/) via the same build-time discovery as
+the filter. Updating the base image alone would silently remove them.
+
+> **Live validation (2026-11-12):** the published image passed
+> `--validate` with all four plugin kinds at build time, then a fresh ROSA
+> fake-pool stack ran `scripts/cluster/smoke.sh` with **27/27 checks**,
+> including the step-key and PII-gate negative cases. The policy declarations
+> must grant `read_roles` to the step-key and audit plugins: `read_subject`
+> alone projects only the subject id, so the step gate would see an empty role
+> set and deny every keyed request. This is a policy configuration contract,
+> not an image-tag issue. No 200-document or model-quality measurement was
+> rerun; the quoted record remains the 2026-11-11 `v0.9.1` matrix.
 
 The previous published build before this lineage was
 `quay.io/rmalone/praxis-ai-llm-d-sc:v0.7.0` (Praxis 0.7.0).
@@ -158,20 +163,20 @@ not main's 0.5.0 — and the RPITIT trait shape; see the build-commit messages):
 
 | Image | Digest | Consumed by the default stack |
 | --- | --- | --- |
-| `quay.io/mtahhan/gci-praxis:v0.9.2` | — (**not published**) | target of the current tree — registers the RC1 gate and step-key plugins; build and push before applying the current policies |
-| `quay.io/mtahhan/gci-praxis:v0.9.1` | `sha256:9def8e14befedeef75a088266630386dc4506004dd43fd6962212dcb122f375a` | yes for the 2026-11-11 record — adds the PPE policy host (audit observer + observe-only PII scanner); **predates the RC1 gate and step-key plugins** |
+| `quay.io/mtahhan/gci-praxis:v0.9.2` | `sha256:3140a8dad2626ef71504546fa7901f53d9ec68ac49ed20e39919ae0af71c77c6` | current base manifests and Linux compose — registers the RC1 gate and step-key plugins; passed the 27/27 live policy smoke on 2026-11-12 |
+| `quay.io/mtahhan/gci-praxis:v0.9.1` | `sha256:d17410449aec2f30a8d07819503ad00badaab398a4f18a1d4692961026c91c56` | the 2026-11-11 measured record — audit observer + observe-only PII scanner; predates the RC1 gate and step-key plugins |
 
 ## Switching the manifests
 
-The base manifests and the Linux compose stack now point at `v0.9.2`, the
-RC1 rebuild target; the measured stack ran `v0.9.1`. Until `v0.9.2` is
-pushed, `praxis-ai --validate` rejects the current policies because they name
-plugins that `v0.9.1` does not register — that is the intended fail-closed
-behavior, not a config bug. The opt-in `deploy/openshift/praxis-0.9.0/`
-overlay is retired — base is the 0.9.1 stack now. A live cluster still
-running the v0.7.0 pair rolls with `oc apply -k manifests` (or its own
-overlay); since the classifier removal that apply also drops the llm-d-sc
-Deployment. To move only the gateway (after the push):
+The base manifests and the Linux compose stack point at `v0.9.2`, the
+published RC1 image; the measured stack ran `v0.9.1`. Applying the current
+policies against an older image fails gateway validation because the policy
+names plugin kinds that image does not register — that is the intended
+fail-closed behavior, not a config bug. The opt-in
+`deploy/openshift/praxis-0.9.0/` overlay is retired — base is the current
+stack. A live cluster still running the v0.7.0 pair rolls with
+`oc apply -k manifests` (or its own overlay); since the classifier removal
+that apply also drops the llm-d-sc Deployment. To move only the gateway:
 
 ```bash
 oc -n openshell-demo set image deploy/praxis \

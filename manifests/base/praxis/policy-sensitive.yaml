@@ -50,6 +50,7 @@ plugins:
     hooks: [cmf.llm_input]
     capabilities:
       - read_subject
+      - read_roles
       - read_client
       - read_labels
     config:
@@ -66,16 +67,17 @@ plugins:
     capabilities:
       - read_headers
       - read_subject
+      - read_roles
     config:
       header: X-Demo-Step
       role_prefix: "step:"
       stepless_roles: []
 
-  # Shadow PII screen (V19 measurement): same observe-only scanner as the
-  # general policy. The sensitive entry must allow the document through, so
-  # this scanner never denies. Its lines usually agree with the screen that
-  # routed the document here — disagreement is exactly what the agreement
-  # report exists to surface.
+  # Observe-only comparison screen (V19 measurement): same pattern catalog as
+  # the general policy, but wired to allow. The sensitive entry must let the
+  # document through, so this scanner never denies. Its lines usually agree
+  # with the screen that routed the document here — disagreement is exactly
+  # what the agreement report exists to surface.
   - name: pii-observe
     kind: validator/gci-pii-observe
     mode: audit

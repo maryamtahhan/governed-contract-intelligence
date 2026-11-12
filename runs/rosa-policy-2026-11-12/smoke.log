@@ -1,0 +1,52 @@
+waiting for model pools ok
+warming pools specialist cpu gpu approved done
+== 1. gateway up
+ok 1 - gateway serves /v1/models (keyed probe; keyless fails closed)
+== 2. general entry: classify stays on the CPU pool
+ok 2 - general classify -> vllm-cpu
+== 3. general entry: CUAD extraction routes to the specialist
+ok 3 - extract:termination -> cuad-specialist
+== 4. general entry: data-protection extraction routes to the CPU MoE
+ok 4 - extract:data_protection -> vllm-cpu
+== 5. general entry: judgment routes to the GPU pool
+ok 5 - general risk -> vllm-gpu
+== 6. sensitive entry: CPU work stays approved
+ok 6 - sensitive classify -> vllm-cpu
+== 7. sensitive entry: judgment routes to the approved GPU pool
+ok 7 - sensitive risk -> vllm-gpu-approved
+== 8. pull the plug on the CPU pool: general degrades visibly
+ok 8 - general classify degraded to vllm-gpu (trace: failed CPU hop, fell-back badge)
+ok 9 - risk traffic unaffected by the CPU outage
+== 9. recovery
+waiting for the CPU pool to reload. up
+ok 10 - classify back on vllm-cpu, fallback cleared
+== 10. kill the approved pool: sensitive judgment fails closed
+ok 11 - sensitive risk failed closed (status 502, never spilled)
+ok 12 - general risk unaffected (pool isolation)
+ok 13 - sensitive CPU work unaffected (approved pool only needed when CPU is down)
+== 11. governance: sensitive-entry traces never left the approved set
+    7 sensitive-entry traces, all on approved pools
+ok 14 - governance claim verified from the trace UI's own records
+== 12. audit export
+    33 traces exported as JSONL
+ok 15 - audit.jsonl exports one JSON object per trace
+== 13. policy layer: the gateway fails closed without a valid key
+ok 16 - keyless request denied (status 401)
+ok 17 - unknown key denied (status 401)
+ok 18 - known key still served
+== 13b. policy layer: a valid key cannot claim another step
+ok 19 - classify key claiming risk denied (status 403)
+ok 20 - sensitive entry still accepts the matching step key
+== 13c. policy layer: the general entry denies PII
+ok 21 - PII-positive general request denied with 403
+ok 22 - clean general request still served
+== 13d. policy layer: the eval key may omit the step
+ok 23 - step-less eval identity accepted (no review-stage claim)
+== 14. policy layer: request records and the PII scanner
+ok 24 - 28 policy-layer request records emitted
+ok 25 - 8 observe + 21 gate scanner lines emitted
+ok 26 - PII gate recorded the general-entry denial
+ok 27 - scanner observed PII content in the sensitive prompts
+
+ALL 27 CHECKS PASSED
+dashboard: oc -n openshell-demo port-forward svc/trace-ui 8080:8080 -> http://127.0.0.1:8080

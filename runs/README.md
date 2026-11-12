@@ -36,6 +36,16 @@ scored extract F1 1.000, risk 1.000 and report 0.750; its one-pool control
 had 11 transport timeouts. Do not edit or reinterpret a recorded run; create a
 new directory for the next measurement.
 
+## Functional policy smoke
+
+| directory | stack | what it is |
+|---|---|---|
+| `rosa-policy-2026-11-12/` | ROSA `fake-all`, image `v0.9.2` | RC1 policy smoke, 27/27 checks: key-to-step binding, general-entry PII gate, sensitive containment, fail-closed routing. **Functional only — not a 200-doc or model-quality row.** |
+
+The quoted measurement remains `rosa-200-2026-11-11-praxis-routes/hybrid`.
+The fake pools have no real model quality, and no number from the policy
+smoke belongs in a measured row.
+
 ## Removed historical runs
 
 These directories were pruned from the working tree to keep the checkout

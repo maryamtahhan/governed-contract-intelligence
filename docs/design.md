@@ -307,10 +307,13 @@ authenticated subject to carry a `step:<stage>` role for the header's stage.
 The runner's per-step keys hold exactly their own grant (the screen key also
 holds `screen` and `decide`); the eval key is deliberately step-less and may
 not name a review stage. A valid extract key therefore cannot ask for
-classify, risk, report, or another step's pool. The step is still task
-metadata for the router — the key grants the stage, the router table chooses
-the pool — and the keys remain fixed demo credentials, so this is scope
-binding, not secrecy or general access control.
+classify, risk, report, or another step's pool. The step-key and audit
+plugins must declare `read_roles`: `read_subject` alone filters the subject
+down to its id, so a gate that reads roles would otherwise see an empty set
+and deny every keyed request. The step is still task metadata for the router
+— the key grants the stage, the router table chooses the pool — and the keys
+remain fixed demo credentials, so this is scope binding, not secrecy or
+general access control.
 
 Praxis reaches the pools only through the trace-ui relays (per-pool recording
 hops), and SQLite behind them is the audit trail, exported as
@@ -338,8 +341,9 @@ the label; any future rule on it is a measured decision.
 Since image v0.9.1 the policy layer emits **request records** (from PPE's
 reference `audit/logger`, which the image host-registers because the engine
 deliberately does not bundle it) and runs an observe-only PII scanner over
-`cmf.llm_input`; the RC1 image adds the enforcing mode. The scanner's pattern
-catalog mirrors `pii.py` regex-for-regex. Two registered kinds share it:
+`cmf.llm_input`; the published `v0.9.2` RC1 image adds the enforcing mode.
+The scanner's pattern catalog mirrors `pii.py` regex-for-regex. Two
+registered kinds share it:
 `validator/gci-pii-observe` on the sensitive and screen entries (never
 denies, never rewrites; the V19 comparison instrument) and
 `validator/gci-pii-gate` on the general review entry (denies a match with a
@@ -1020,11 +1024,12 @@ contract-step are needed, run two instances, not one multi-signal instance.
 The measured gateway is `quay.io/mtahhan/gci-praxis:v0.9.1` (Praxis 0.7.5 /
 ai-gateway 0.9.0, PPE 0.4.1 host plugins), a custom build carrying the
 out-of-tree `llm_d_sc` filter and the PPE policy host that upstream `ai`
-does not have. The tree and manifests now target `v0.9.2`, the RC1 rebuild
-(gate + step-key plugins); that tag is not published yet. The filter is
-unused by the default configs but stays in the image for this experiment;
-the policy host is used by every entry. The rebuild path is
-`deploy/images/praxis-llm-d-sc/`.
+does not have. The tree and manifests now target the published `v0.9.2`
+RC1 image (gate + step-key plugins), which passed a 27/27 live policy smoke
+on ROSA fake pools (2026-11-12). The measured 2026-11-11 record remains
+`v0.9.1`. The filter is unused by the default configs but stays in the image
+for this experiment; the policy host is used by every entry. The rebuild path
+is `deploy/images/praxis-llm-d-sc/`.
 
 ### 5.6 Claim boundary
 
@@ -1041,33 +1046,33 @@ runners because the dev machines are arm64):
 
 | Image | Published | Digest | Consumed by the default stack |
 | --- | --- | --- | --- |
-| `quay.io/mtahhan/gci-praxis:v0.9.2` | **not published** (RC1 rebuild target, 2026-11-12) | — | **target of the current tree** — build.sh, the publish workflow, base manifests and compose now name it; it registers `validator/gci-step-key` and `validator/gci-pii-gate`. Publish and record the digest before applying the current policies |
-| `quay.io/mtahhan/gci-praxis:v0.9.1` | 2026-11-06, run `42202721911` | `sha256:9def8e14befedeef75a088266630386dc4506004dd43fd6962212dcb122f375a` | **yes for the measured 2026-11-11 run** — gateway + PPE host (audit observer + observe-only PII scanner). **Predates RC1**: it does not register `validator/gci-step-key` or `validator/gci-pii-gate` |
+| `quay.io/mtahhan/gci-praxis:v0.9.2` | 2026-11-12, run `43203547413` | `sha256:3140a8dad2626ef71504546fa7901f53d9ec68ac49ed20e39919ae0af71c77c6` | current base manifests and Linux compose — registers `validator/gci-step-key` and `validator/gci-pii-gate`; passed the 27/27 live policy smoke on ROSA fake pools |
+| `quay.io/mtahhan/gci-praxis:v0.9.1` | 2026-11-06, run `42202721911` | `sha256:d17410449aec2f30a8d07819503ad00badaab398a4f18a1d4692961026c91c56` | **yes for the measured 2026-11-11 run** — gateway + PPE host (audit observer + observe-only PII scanner). **Predates RC1**: it does not register `validator/gci-step-key` or `validator/gci-pii-gate` |
 | `quay.io/mtahhan/gci-praxis:v0.9.0` | 2026-11-05, run `42043729532` | `sha256:2187ab818efab9a8f3d1f911190d47fad960888bada7d3db8a973d3ad70ac992` | superseded by v0.9.1 |
 | `quay.io/mtahhan/gci-llm-d-sc:main-e660fff` | 2026-11-05 | `sha256:d94c1f7226bfbaeb5a300f0efdbab0e8a8988fc16af7fd80cff0e008a11fa3e1` | no — §5 experiment only |
 | `quay.io/mtahhan/gci-llm-d-sc-modelcar:complexity` | 2026-11-05 | `sha256:299874af83c565d8435c8e061b87da1754cdd918ca15e977a7fecbf3aa17f491` (mirror, byte-identical) | no — §5 experiment only |
 
 The digests are the reproducibility boundary for measured runs; record the
-digest, not the tag. The base manifests and the Linux compose stack now point
-at `v0.9.2`, the RC1 rebuild target; the measured stack ran `v0.9.1`. Until
-`v0.9.2` is pushed, applying the current manifests fails gateway validation
-by design. The opt-in praxis-0.9.0 overlay is retired — base is the 0.9.1
-stack now. `oc apply -k manifests` on a live cluster lands the image switch
+digest, not the tag. The base manifests and the Linux compose stack point at
+`v0.9.2`, the published RC1 image; the measured stack ran `v0.9.1`. Applying
+the current policies against an older image fails gateway validation by
+design. The opt-in praxis-0.9.0 overlay is retired — base is the current
+stack. `oc apply -k manifests` on a live cluster lands the image switch
 together with the classifier removal and the PPE policy documents. Treat the
 rebuilt stack as new and re-run the measurement arms (FINDINGS §12). What is
 real vs simulated per environment is tabulated in README ("What is measured
 vs simulated"); quote test-split numbers only (FINDINGS §3, §13).
 
-**RC1 is source-complete, not image-complete.** The 2026-11-12 working tree
-adds `validator/gci-step-key` and `validator/gci-pii-gate` to
-`deploy/images/praxis-llm-d-sc/policy-host/`, and the shipped policies now
-name them. The tree tags the rebuild `v0.9.2`; that image is **not in the
-registry yet**. The measured `v0.9.1` digest above was built before that
-change, so it registers only the audit observer and the observe-only scanner.
-Deploying the current policy files against `v0.9.1` fails the gateway's
-`--validate` load, correctly: a plugin named in a policy must be registered
-in the binary. Build and publish `v0.9.2` (then record the new digest) before
-claiming the RC1 behavior on any stack.
+**RC1 is image-complete and policy-smoke validated, but not yet measured on
+real pools.** The 2026-11-12 tree adds `validator/gci-step-key` and
+`validator/gci-pii-gate` to `deploy/images/praxis-llm-d-sc/policy-host/`, and
+the shipped policies name them. The published `v0.9.2` digest above carries
+both. A live ROSA `fake-all` stack passed 27/27 smoke checks, including the
+wrong-step, PII-gate, sensitive-containment and step-less-eval cases
+(`runs/rosa-policy-2026-11-12`). Those pools are simulated, so this is
+functional evidence only. The quoted 2026-11-11 measurement remains
+`v0.9.1`; a real-pool rebuild and a fresh 200-document matrix are still
+required before quoting RC1 numbers.
 
 ## 7. Design history
 
@@ -1125,8 +1130,12 @@ CPU-model test plan in §9.
   match), while the screen listener moves to `policy-screen.yaml` and keeps
   the observe-only scanner so it can still see the document; the sensitive
   entry remains observe-only. Negative tests pin the policy shape and the
-  key grants. This entry records implementation and local test evidence, not
-  a new ROSA measurement.
+  key grants. Image `v0.9.2` (run `43203547413`) published both plugins, and
+  a live ROSA fake-pool smoke passed 27/27 checks. Granting `read_roles` in
+  the policy declarations is required: `read_subject` alone exposes only the
+  subject id, which made the step gate deny every keyed request. This entry
+  records implementation, local tests and functional live policy evidence,
+  not a new ROSA measurement.
 - **2026-11-09 — the classifier-free policy is measured, twice.** The
   200-document ROSA matrix was re-run without the classifier and with the
   conditional CPU termination follow-up (§3.3). The first measurement scored
@@ -1187,27 +1196,25 @@ regression tests — §2.7 and §7 record them.)
 
 ### 8.2 Next actions, in order
 
-1. **Rebuild and publish the RC1 gateway image.** The current policies name
-   `validator/gci-step-key` and `validator/gci-pii-gate`; the measured
-   `v0.9.1` digest predates both, and the `v0.9.2` target is not in the
-   registry. Run `deploy/images/praxis-llm-d-sc/build.sh --push`, record the
-   new digest in `docs/design.md` §6 and the image README, then run the
-   fake-stack smoke
-   (below) so the negative cases prove the gate and the step binding before a
-   cluster is involved.
-2. **Rebuild ROSA** from `deploy/openshift/rosa/README.md`: g5 capacity
-   probe, both machine pools in one AZ, GPU operator,
-   `scripts/cluster/cpu-topology.sh` bind lists into `pools-cpu.yaml`,
-   storage + seeders, `oc apply -k deploy/openshift/rosa`, specialist
-   image rebuild, then the 2-document smoke run (1 sensitive + 1
-   non-sensitive, config hybrid). On the live stack, verify the two RC1
-   denials (wrong step key, PII on the general entry) before the matrix.
-3. **The 200-document matrix and direct baselines are done (2026-11-11).**
-   The quoted through-stack record is §3.3 / FINDINGS §15.11
+1. **Rebuild the real-pool ROSA stack for the RC1 measurement.** The RC1
+   image is published (`v0.9.2`) and the fake-pool policy smoke passed
+   27/27; what remains is the real GPU/x8i stack. Follow
+   `deploy/openshift/rosa/README.md`: g5 capacity probe, both machine pools
+   in one AZ, GPU operator, `scripts/cluster/cpu-topology.sh` bind lists
+   into `pools-cpu.yaml`, storage + seeders, `oc apply -k
+   deploy/openshift/rosa`, and the specialist image rebuild. Renew the
+   `rosa` OCM login first.
+2. **Run the 2-document smoke on that stack.** Use one sensitive and one
+   non-sensitive document (config hybrid) and verify the two RC1 denials
+   (wrong step key, PII on the general entry) plus the step-less eval path
+   before starting the matrix. The fake-pool equivalent is already recorded
+   in `runs/rosa-policy-2026-11-12`.
+3. **Run the 200-document matrix on the RC1 stack, in a new directory.**
+   The quoted 2026-11-11 record is §3.3 / FINDINGS §15.11
    (`runs/rosa-200-2026-11-11-praxis-routes`); the 2026-11-10 matrix is the
-   previous record. Re-run (`DOCS=200 scripts/cluster/arms.sh` plus the
-   direct baselines) only after a routing, model or pool change; give it a
-   new run directory and do not overwrite the quoted one.
+   previous record. Do not overwrite either. Re-run
+   (`DOCS=200 scripts/cluster/arms.sh` plus the direct baselines) only after
+   the real-pool RC1 stack passes the smoke.
 4. **Contract-step taxonomy eval** once a stack is up
    (`hybrid-eval-contract-steps`; pass = same-document control 4/4, §5),
    then the CUAD test-split specialist through-stack rerun at lower

@@ -59,6 +59,7 @@ plugins:
     hooks: [cmf.llm_input]
     capabilities:
       - read_subject
+      - read_roles
       - read_client
       - read_labels
     config:
@@ -77,6 +78,7 @@ plugins:
     capabilities:
       - read_headers
       - read_subject
+      - read_roles
     config:
       header: X-Demo-Step
       role_prefix: "step:"
