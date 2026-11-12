@@ -22,9 +22,13 @@ The first run exposed a policy-configuration bug: `read_subject` projects
 only the subject id, so the step-key gate saw an empty role set and denied
 every keyed request with `step_key_mismatch`. The fix is to grant
 `read_roles` to the step-key and audit plugins in all three policy documents;
-it is now pinned by `demo/tests/test_policy_identity.py`. No image rebuild
-was required. The live stack was reloaded from the corrected manifests and
-the full smoke then passed.
+it is now pinned by `demo/tests/test_policy_identity.py`. The image itself
+does not contain the policy documents, so no image rebuild or new tag was
+required. The live stack was reloaded from the corrected manifests and the
+full smoke then passed.
+
+The `openshell-demo` fake-all workloads, build objects and PVC were deleted
+after the log was captured.
 
 The 2026-11-11 `hybrid` matrix remains the current quoted measurement
 (`runs/rosa-200-2026-11-11-praxis-routes`). A real-pool rebuild and a fresh
