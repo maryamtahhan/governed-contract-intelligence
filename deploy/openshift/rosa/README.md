@@ -100,9 +100,9 @@ model caches, digest-pinned vLLM image).
      -p '{"spec":{"strategy":{"dockerStrategy":{"dockerfilePath":"Dockerfile.specialist"}}}}'
    # stage only what the Dockerfile needs (--from-dir=demo uploads the
    # 950MB .venv and sits in git-clone: 40+ min measured 2026-11-04)
-   STAGE=$(mktemp -d)
-   cp demo/Dockerfile.specialist demo/pyproject.toml "$STAGE/"
-   cp -R demo/src "$STAGE/src"
+   STAGE=$(mktemp -d); mkdir -p "$STAGE/src"
+   cp demo/src/docker/Dockerfile.specialist demo/pyproject.toml "$STAGE/"
+   cp -R demo/src/hybrid_demo "$STAGE/src/hybrid_demo"
    oc -n <redacted-namespace> start-build hybrid-specialist --from-dir="$STAGE" --follow
    ```
 
@@ -121,9 +121,9 @@ model caches, digest-pinned vLLM image).
    oc -n <redacted-namespace> new-build --binary --strategy docker --name hybrid-jev
    oc -n <redacted-namespace> patch bc hybrid-jev --type merge \
      -p '{"spec":{"strategy":{"dockerStrategy":{"dockerfilePath":"Dockerfile.jev"}}}}'
-   STAGE=$(mktemp -d)
-   cp demo/Dockerfile.jev demo/pyproject.toml "$STAGE/"
-   cp -R demo/src "$STAGE/src"
+   STAGE=$(mktemp -d); mkdir -p "$STAGE/src"
+   cp demo/src/docker/Dockerfile.jev demo/pyproject.toml "$STAGE/"
+   cp -R demo/src/hybrid_demo "$STAGE/src/hybrid_demo"
    oc -n <redacted-namespace> start-build hybrid-jev --from-dir="$STAGE" --follow
    ```
 

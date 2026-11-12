@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Governed Contract Intelligence — demo &amp; findings</title>
+<style>
+  :root {
+    --bg: #f3f5f1;
+    --surface: #ffffff;
+    --surface-2: #eaeee8;
+    --ink: #141915;
+    --muted: #59645c;
+    --faint: #7d8880;
+    --line: #d4dad3;
+    --accent: #1b6b47;
+    --accent-ink: #124b31;
+    --accent-soft: #e2eee7;
+    --ok: #1b6b47;
+    --bad: #a3352b;
+    --bad-soft: #f7e6e3;
+    --warn: #8a5a12;
+    --warn-soft: #f6edd9;
+    --shadow: 0 10px 30px rgba(20, 25, 21, .10);
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --serif: "IBM Plex Serif", ui-serif, Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; overflow: hidden; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 18px; line-height: 1.45;
+    display: grid; place-items: center;
+  }
+  .stage {
+    position: absolute; left: 50%; top: 50%;
+    width: 1280px; height: 720px; transform-origin: center center;
+    background: var(--bg); box-shadow: var(--shadow); overflow: hidden;
+  }
+  .slide {
+    position: absolute; inset: 0; display: none; flex-direction: column;
+    padding: 54px 68px 54px; background: var(--bg);
+  }
+  .slide.active { display: flex; animation: fade .18s ease-out; }
+  @keyframes fade { from { opacity: .35; } to { opacity: 1; } }
+  .slide.dark { background: #10251a; color: #eef5ef; }
+  .slide.dark .eyebrow { color: #9ee0bd; }
+  .slide.dark .muted, .slide.dark .footer { color: #a9b8ad; }
+  .slide.dark .card { background: #173322; border-color: #2a4b36; }
+  .slide.dark .card p, .slide.dark .card li { color: #c7d5ca; }
+  .slide.dark .metric { background: #173322; border-color: #2a4b36; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--accent-ink); margin: 0 0 10px;
+  }
+  h1, h2, h3, p { margin-top: 0; }
+  h1 { font-family: var(--serif); font-size: 66px; line-height: 1.04; letter-spacing: -.02em; margin-bottom: 22px; }
+  h2 { font-family: var(--serif); font-size: 38px; line-height: 1.12; letter-spacing: -.015em; margin-bottom: 18px; }
+  h3 { font-size: 20px; margin-bottom: 8px; }
+  .lede { font-size: 23px; line-height: 1.4; color: var(--muted); max-width: 980px; }
+  .slide.dark .lede { color: #c7d5ca; }
+  .small { font-size: 14px; color: var(--muted); }
+  .mono { font-family: var(--mono); font-size: .88em; }
+  .accent { color: var(--accent); }
+  .bad { color: var(--bad); }
+  .warn { color: var(--warn); }
+  .footer {
+    margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--mono); font-size: 11.5px; color: var(--faint);
+  }
+  .slide.dark .footer { border-color: #2a4b36; }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .cards.two { grid-template-columns: repeat(2, 1fr); }
+  .cards.four { grid-template-columns: repeat(4, 1fr); }
+  .cards.five { grid-template-columns: repeat(5, 1fr); }
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: stretch; }
+  .route { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 22px 24px; }
+  .route h3 { font-size: 22px; margin-bottom: 4px; }
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 18px 0 14px; }
+  .node { font-family: var(--mono); font-size: 10.5px; line-height: 1.2; border: 1px solid var(--line); background: var(--bg); padding: 7px 8px; border-radius: 6px; white-space: nowrap; }
+  .node.gate { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+  .arrow { color: var(--faint); font-size: 14px; }
+  .route p { margin-bottom: 0; color: var(--muted); font-size: 15.5px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 12px; padding: 20px 22px;
+  }
+  .card h3 { font-size: 18px; }
+  .card p { margin-bottom: 0; color: var(--muted); font-size: 15.5px; }
+  .metric {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .metric .n { font-family: var(--serif); font-size: 40px; line-height: 1; margin-bottom: 8px; }
+  .metric .k { font-size: 13px; color: var(--muted); }
+  .metric.bad .n { color: var(--bad); }
+  .metric.ok .n { color: var(--ok); }
+  .metric.warn .n { color: var(--warn); }
+  .cols { display: grid; grid-template-columns: 1.05fr .95fr; gap: 28px; align-items: start; }
+  .cols.wide-left { grid-template-columns: 1.35fr .65fr; }
+  .cols.wide-right { grid-template-columns: .7fr 1.3fr; }
+  ul { margin: 0; padding-left: 20px; }
+  li { margin-bottom: 8px; }
+  li::marker { color: var(--accent); }
+  .table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .table th, .table td { padding: 8px 9px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  .table th { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 500; }
+  .table td.num, .table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .table tr:last-child td { border-bottom: none; }
+  .table .hero td { background: var(--accent-soft); font-weight: 600; }
+  .table .badrow td { color: var(--muted); }
+  .table .badnum { color: var(--bad); font-weight: 600; }
+  .table .oknum { color: var(--ok); font-weight: 600; }
+  .diagram {
+    width: 100%; flex: 1 1 auto; min-height: 0; object-fit: contain;
+    background: #fff; border: 1px solid var(--line); border-radius: 10px;
+  }
+  .callout {
+    border-left: 4px solid var(--accent); background: var(--accent-soft);
+    padding: 14px 18px; border-radius: 0 8px 8px 0; font-size: 15.5px;
+  }
+  .callout.bad { border-color: var(--bad); background: var(--bad-soft); }
+  .callout.warn { border-color: var(--warn); background: var(--warn-soft); }
+  .callout p:last-child { margin-bottom: 0; }
+  .pill {
+    display: inline-block; font-family: var(--mono); font-size: 11px;
+    padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--surface); color: var(--muted); margin-right: 6px;
+  }
+  .pill.ok { color: var(--ok); border-color: #b9d9c6; background: var(--accent-soft); }
+  .pill.bad { color: var(--bad); border-color: #e5c4bf; background: var(--bad-soft); }
+  .pill.warn { color: var(--warn); border-color: #e5d3b2; background: var(--warn-soft); }
+  .bar-row { display: grid; grid-template-columns: 190px 1fr 78px; gap: 12px; align-items: center; margin-bottom: 10px; }
+  .bar-label { font-size: 14px; }
+  .bar-track { height: 18px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 999px; background: var(--accent); }
+  .bar-fill.bad { background: var(--bad); }
+  .bar-fill.warn { background: var(--warn); }
+  .bar-val { text-align: right; font-family: var(--mono); font-size: 12px; white-space: nowrap; }
+  .quote {
+    font-family: var(--serif); font-size: 30px; line-height: 1.25;
+    max-width: 1040px; letter-spacing: -.01em;
+  }
+  .quote .accent { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+  .notes {
+    display: none; position: absolute; left: 34px; right: 34px; bottom: 24px;
+    background: #101915; color: #eaf2ec; padding: 14px 18px; border-radius: 10px;
+    font-size: 14px; line-height: 1.45; z-index: 5; box-shadow: var(--shadow);
+  }
+  .stage.show-notes .slide.active .notes { display: block; }
+  .notes b { color: #9ee0bd; }
+  .nav {
+    position: fixed; right: 18px; bottom: 16px; display: flex; gap: 8px; z-index: 20;
+  }
+  .nav button {
+    width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line);
+    background: rgba(255,255,255,.9); color: var(--ink); cursor: pointer; font-size: 18px;
+  }
+  .nav button:hover { border-color: var(--accent); color: var(--accent); }
+  .progress { position: fixed; left: 0; top: 0; height: 3px; background: var(--accent); z-index: 30; transition: width .15s ease; }
+  .counter { position: fixed; left: 18px; bottom: 18px; font-family: var(--mono); font-size: 11px; color: var(--faint); z-index: 20; }
+  .help { position: fixed; right: 18px; top: 12px; font-family: var(--mono); font-size: 10.5px; color: var(--faint); z-index: 20; }
+  .kbd { border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; background: #fff; }
+  .title-meta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 24px; }
+  .slide.dark .pill { background: #173322; border-color: #2a4b36; color: #c7d5ca; }
+  .slide.dark .pill.ok { color: #9ee0bd; border-color: #2a4b36; }
+  .big { font-family: var(--serif); font-size: 84px; line-height: .95; letter-spacing: -.03em; }
+  .big.bad { color: var(--bad); }
+  .big.ok { color: var(--ok); }
+  .two-big { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: center; }
+  .two-big .metric { padding: 20px 24px; }
+  .two-big .metric .n { font-size: 56px; }
+  .stack-label { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .tight p { margin-bottom: 8px; }
+  .source { font-size: 12px; color: var(--faint); margin-top: 10px; }
+  .source a { color: var(--faint); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .slide.active { animation: none; }
+  }
+
+  @media print {
+    body { display: block; overflow: visible; background: #fff; }
+    .stage {
+      position: static; width: 1280px; height: auto; overflow: visible;
+      transform: none !important; box-shadow: none;
+    }
+    .slide {
+      position: static; inset: auto; display: flex !important;
+      width: 1280px; height: 720px;
+      page-break-after: always; break-after: page; animation: none;
+    }
+    .slide:last-child { page-break-after: auto; }
+    .nav, .progress, .counter, .help, .notes { display: none !important; }
+    @page { size: 1280px 720px; margin: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="help"><span class="kbd">←</span> <span class="kbd">→</span> navigate · <span class="kbd">N</span> notes · <span class="kbd">F</span> fullscreen · <span class="kbd">P</span> print</div>
+<div class="stage" id="stage">
+
+  <!-- 1 -->
+  <section class="slide dark active">
+    <p class="eyebrow">Governed contract intelligence · demo &amp; findings</p>
+    <h1>Private contract review,<br>measured end to end.</h1>
+    <p class="lede">A legal-ops demo on hybrid CPU + GPU inference: sensitive documents are routed only to pools cleared for sensitive data, clause extraction runs on a CPU specialist, judgment escalates to a 35B MoE, and every request is routed and audited by Praxis.</p>
+    <div class="title-meta">
+      <span class="pill ok">200-document ROSA record</span>
+      <span class="pill ok">0 sensitive violations</span>
+      <span class="pill ok">200/200 fully correct</span>
+      <span class="pill">2026-11-11 · quoted four-arm run</span>
+      <span class="pill ok">RC1 measured 2026-11-12</span>
+    </div>
+    <div class="footer"><span>governed-contract-intelligence</span><span>Use ← → to advance · N for speaker notes</span></div>
+    <aside class="notes"><b>Opening.</b> This is not a model demo with a gateway bolted on. The product claim is that privacy and routing are the architecture: the same measured path decides where work may run, records the decision, and fails closed. The headline is containment first, economics second, quality third. The quoted four-arm comparison is the 2026-11-11 run of the two-entry graph: general and sensitive entries, routed by the step table, re-measured after the sandbox egress fix. RC1 was measured separately on 2026-11-12; do not blend the two records.</aside>
+  </section>
+
+  <!-- 2 -->
+  <section class="slide">
+    <p class="eyebrow">The problem</p>
+    <h2>Contract review has three different problems.</h2>
+    <div class="cards">
+      <div class="card"><h3>Volume</h3><p>Hundreds of agreements, many clauses per document. Most of the work is recall and quoting, not reasoning.</p></div>
+      <div class="card"><h3>Sensitivity</h3><p>Personal data, employee identifiers and commercial terms. The question is not only “can the model answer?” but “where may this text run?”</p></div>
+      <div class="card"><h3>Judgment</h3><p>Risk isn’t just finding the right sentence; it means applying a rulebook. The summary across all contracts builds on earlier clause and risk decisions, so mistakes carry forward. A confident answer can still be wrong.</p></div>
+    </div>
+    <p class="quote" style="margin-top:30px">Design rule: <span class="accent">sensitivity is a constraint</span>;<br><span class="accent">high-volume work starts on CPU because it can wait</span>.</p>
+    <p class="lede">Sensitivity decides which pools may serve. High-volume work starts on CPU; GPU time is reserved for judgment — risk and report — and fallback is visible.</p>
+    <div class="footer"><span>Why a governance-first demo · docs/design.md</span><span>2</span></div>
+    <aside class="notes"><b>Frame the problem.</b> Volume argues for CPU economics. Sensitivity argues for containment, not just accuracy. Judgment is where generation earns its cost.<br><br><b>Judgment, in plain terms:</b><br>• <b>Risk is a rubric decision, not recall.</b> Deciding whether a contract is high, medium, or low risk is not a quoting or memory task. You have to apply a scoring rule to the facts. A model can produce a smooth answer while ignoring the rule.<br>• <b>Cross-document synthesis compounds upstream errors.</b> The final summary across all contracts is built from earlier clause extraction and risk decisions. If a clause was missed or a risk call was wrong, the summary repeats or amplifies that mistake.<br>• <b>Fluent answers can still be wrong.</b> Good grammar and a confident tone are not evidence of correctness.<br><br><b>Design rule provenance.</b> The two rules are our design thesis (docs/design.md), not an external standard: sensitivity constrains which pools may serve and fails closed; CPU-first is a scheduling default, not a quality claim. <b>What CPU-first means.</b> Batch means no one is waiting on a token, so high-volume work starts on CPU while GPU time is reserved for judgment. It is not CPU-only: extraction and classify run on CPU; risk and report are pinned to the GPU; a general CPU failure may degrade visibly to the general GPU, while sensitive failover stays on the approved GPU or closes. <b>Why CPU is defensible.</b> The same 35B measured at quality parity on CPU and GPU; CPU was ~10× slower, which batch absorbs. <b>Measured evidence.</b> The 1.5B was at or below the risk majority baseline, and cross-document report accuracy was 0.2–0.6 because errors propagate (FINDINGS.md).</aside>
+  </section>
+
+  <!-- 3 -->
+  <section class="slide">
+    <p class="eyebrow">What it does</p>
+    <h2>Five jobs from contract to portfolio.</h2>
+    <div class="cards five">
+      <div class="card"><h3>Ingest</h3><p>Parse PDF/DOCX on CPU; keep section and character offsets so answers point back to the source. Adapter built; corpus measurement open.</p></div>
+      <div class="card"><h3>Classify</h3><p>Record contract type and initial term on CPU.</p></div>
+      <div class="card"><h3>Retrieve</h3><p>Pull passages for a named clause (e.g. termination) or portfolio question (e.g. highest risk) — within one contract or across the set.</p></div>
+      <div class="card"><h3>Extract</h3><p>RoBERTa returns the exact source span; it copies, so it cannot invent a clause.</p></div>
+      <div class="card"><h3>Judge &amp; report</h3><p>Apply the risk rubric to extracted clauses; write the portfolio summary from those results.</p></div>
+    </div>
+    <div class="callout" style="margin-top:22px"><p><b>The governance plane is not a pipeline step.</b> Every call that reaches a model pool crosses trace-ui relays, Praxis authentication and policy, the work-to-pool table, and the audit store. The pipeline chooses only general or sensitive; Praxis owns the pool decision.</p></div>
+    <div class="footer"><span>Product direction · retrieval is opt-in; local retrieve-then-extract F1 0.800 (FINDINGS.md)</span><span>3</span></div>
+    <aside class="notes"><b>Five jobs.</b> Ingest parses the file; classify records contract type and initial term; retrieve selects the evidence; extract quotes the clause; judge and report produce the risk call and portfolio summary. Retrieve answers a concrete query: for a named clause, it selects passages likely to contain that clause; for a portfolio question, it selects relevant passages across the set. Extract is extractive — RoBERTa returns a span, so it cannot invent a clause. “Synthesis” just means combining the extracted clauses into the risk judgment and the portfolio summary; it does not create new clauses. Classify is a measured CPU call, but its output is recorded rather than used to drive routing or the review. The measured 200-document run sent full contracts to the extractor; retrieval is opt-in, and the 0.800 retrieve-then-extract result is a local direct run, not through the stack (FINDINGS.md).</aside>
+  </section>
+
+  <!-- 4 -->
+  <section class="slide">
+    <p class="eyebrow">Two run shapes</p>
+    <h2>One runner, two paths: direct and through-stack.</h2>
+    <p class="lede" style="font-size:20px; margin-bottom:20px">Same documents, prompts and scorer. Direct isolates the model; through-stack adds the governed path.</p>
+    <div class="compare">
+      <div class="route">
+        <h3>Direct</h3>
+        <div class="flow">
+          <span class="node">CLI</span><span class="arrow">→</span><span class="node">one model endpoint</span>
+        </div>
+        <p><b>Measures model quality only.</b> No relay, Praxis, step label, pool choice or trace.</p>
+      </div>
+      <div class="route">
+        <h3>Through-stack</h3>
+        <div class="flow">
+          <span class="node">CLI</span><span class="arrow">→</span><span class="node">ingress relay</span><span class="arrow">→</span><span class="node gate">Praxis</span><span class="arrow">→</span><span class="node">pool relay</span><span class="arrow">→</span><span class="node">pool / model</span>
+        </div>
+        <p><b>Measures routing, governance, audit and cost.</b> Same prompts; the path adds policy and records.</p>
+      </div>
+    </div>
+    <div class="footer"><span>Direct vs through-stack · docs/design.md</span><span>4</span></div>
+    <aside class="notes"><b>Disambiguate early.</b> Both shapes send the same prompts and use the same runner. Direct goes from the batch runner straight to one model endpoint; it measures model quality and nothing else. Through-stack adds the ingress relay, Praxis, the pool relay, the pool and the model, so it measures routing, governance, audit and cost. The default dashboard compares two through-stack runs: hybrid versus the same-run one-pool control. That isolates policy, not gateway versus direct. Every stage is still a separate request from the runner; the path is repeated for each one. <b>Never quote governance from a direct run.</b> It has no entry, label, pool or trace record. “One-pool” is still through-stack.</aside>
+  </section>
+
+  <!-- 5 -->
+  <section class="slide">
+    <p class="eyebrow">As built</p>
+    <h2>The through-stack: one policy gate, one audit trail.</h2>
+    <img class="diagram" src="architecture-as-built.svg" alt="As-built architecture: the review pipeline and sandbox enter through trace-ui recorders, Praxis policy gate, per-pool relays, and model pools; the approved set is highlighted.">
+    <div class="footer"><span>docs/architecture-as-built.svg · green boundary = approved set</span><span>5</span></div>
+    <aside class="notes"><b>Read the diagram left to right.</b> Both callers — the review pipeline and the OpenShell sandbox — enter through trace-ui. Praxis authenticates each step, binds the X-Demo-Step claim to the key's step grant, runs the PII scanner, and matches the step table to a pool. The per-pool relays record the model call. Only the model stop runs inference. The sandbox cannot reach Praxis or a pool directly.</aside>
+  </section>
+
+  <!-- 6 -->
+  <section class="slide">
+    <p class="eyebrow">One request</p>
+    <h2>Six stops, three kinds of work.</h2>
+    <img class="diagram" src="pipeline-through-stack.svg" alt="Through-stack run: batch runner, trace-ui ingress relay, Praxis policy gate, pool relay, pool and model; the sensitive lane stays on approved pools.">
+    <div class="footer"><span>CLI builds and scores · relays record · Praxis decides · only the model answers</span><span>6</span></div>
+    <aside class="notes"><b>The measured path.</b> The batch runner is CPU-side orchestration. The two trace-ui relay layers write the ingress and per-pool audit rows. Praxis is the only component that decides which pool may serve the request. The response carries entry, route and trace id; SQLite behind trace-ui is the audit trail, exported as audit.jsonl. <b>One stage per request.</b> The batch runner sends classify, waits for the response, then sends each clause extraction, then risk; after all documents it sends one report call. Every stage repeats the full batch runner → ingress relay → Praxis → pool relay → pool path, and the response returns along the same hops. Praxis does not call back or orchestrate the next stage; the runner does. The per-document session id keeps the sensitivity taint across those separate requests.</aside>
+  </section>
+
+  <!-- 7 -->
+  <section class="slide">
+    <p class="eyebrow">The direct stack</p>
+    <h2>The direct stack: one endpoint, no governance record.</h2>
+    <p class="lede" style="font-size:19px; margin-bottom:10px">The batch runner calls one model endpoint. No relay, Praxis, step label, pool choice or trace — a model-quality reference, not a governance run.</p>
+    <img class="diagram" src="pipeline-direct.svg" style="width:auto; height:410px; flex:0 0 auto; align-self:center" alt="Direct run: the batch runner calls one vLLM endpoint; no relay, gateway, step label, pool choice or trace.">
+    <div class="footer"><span>Direct run · docs/design.md · model-quality reference only</span><span>7</span></div>
+    <aside class="notes"><b>The direct stack.</b> The batch runner calls one model endpoint for the whole run. There is no ingress relay, no Praxis, no per-step label, no pool choice and no audit row. That is why it is useful as a model-quality reference and useless for a governance claim. Use the through-stack runs for routing, containment, audit and cost. The direct CPU/GPU parity baselines are in <span class="mono">runs/rosa-200-2026-11-11-direct</span>.</aside>
+  </section>
+
+  <!-- 8 -->
+  <section class="slide">
+    <p class="eyebrow">Routing design</p>
+    <h2>The application names sensitivity. Praxis owns the work-to-pool table.</h2>
+    <div class="cols wide-right">
+      <div>
+        <p class="lede" style="font-size:18px">Inside each review entry, the router matches a declarative <span class="mono">X-Demo-Step</span> header. The specialist is a model endpoint, not a router; a misroute is visible, not silently forwarded.</p>
+        <div class="callout" style="margin-top:14px"><p><b>No classifier in the request path.</b> The measured classifier labelled 1,200 of 1,201 steps MEDIUM. It was removed; the table encodes the routing that actually happened.</p></div>
+      </div>
+      <table class="table">
+        <thead><tr><th>Step</th><th>General entry</th><th>Sensitive entry</th></tr></thead>
+        <tbody>
+          <tr><td><span class="mono">classify</span></td><td><span class="mono">vllm-cpu</span></td><td><span class="mono">vllm-cpu</span></td></tr>
+          <tr><td><span class="mono">extract:termination</span><br><span class="mono">:governing_law</span><br><span class="mono">:liability_cap</span></td><td><span class="mono">cuad-specialist</span></td><td><span class="mono">cuad-specialist</span></td></tr>
+          <tr><td><span class="mono">extract:data_protection</span></td><td><span class="mono">vllm-cpu</span></td><td><span class="mono">vllm-cpu</span></td></tr>
+          <tr><td><span class="mono">risk</span>, <span class="mono">report</span></td><td><span class="mono">vllm-gpu</span></td><td><span class="mono">vllm-gpu-approved</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="footer"><span>manifests/base/praxis/config.yaml · docs/design.md</span><span>8</span></div>
+    <aside class="notes"><b>Why the table matters.</b> The pipeline knows what stage it is running, so asking a classifier to guess was extra machinery with a measured failure mode. Sensitivity still chooses the entry. The general entry may degrade to the general GPU; the sensitive entry's failover set contains only the approved GPU, so it fails closed rather than spills.</aside>
+  </section>
+
+  <!-- 9 -->
+  <section class="slide">
+    <p class="eyebrow">RC1 · measured 2026-11-12</p>
+    <h2>Two gateway checks: bind the key, gate the PII.</h2>
+    <div class="cards two">
+      <div class="card">
+        <h3>Key-to-step binding</h3>
+        <p><span class="mono">validator/gci-step-key</span> requires the authenticated subject to hold <span class="mono">step:&lt;stage&gt;</span> for the header's stage. A valid extract key cannot claim risk, report or another stage. The eval key is step-less and cannot name a review stage.</p>
+      </div>
+      <div class="card">
+        <h3>General-entry PII gate</h3>
+        <p><span class="mono">validator/gci-pii-gate</span> is the general entry's backstop. It reuses the client screen's pattern catalog; on a match it returns <b>403</b> <span class="mono">pii_detected</span> before the request reaches the router or model. The sensitive and screen listeners stay observe-only because both must read the document.</p>
+      </div>
+    </div>
+    <table class="table" style="margin-top:18px">
+        <thead><tr><th>Listener</th><th>Policy</th><th>PII scanner</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td>general <span class="mono">:8080</span></td><td><span class="mono">policy.yaml</span></td><td class="oknum">gate (403)</td><td>Blocks PII before routing; backstop for a document sent to the wrong entry.</td></tr>
+          <tr><td>sensitive <span class="mono">:8083</span></td><td><span class="mono">policy-sensitive.yaml</span></td><td>observe</td><td>Allows; records findings; marks the session sensitive.</td></tr>
+          <tr><td>screen <span class="mono">:8086</span></td><td><span class="mono">policy-screen.yaml</span></td><td>observe</td><td>Allows; records findings; must read the document to decide.</td></tr>
+        </tbody>
+      </table>
+    <div class="route" style="margin-top:16px">
+      <h3>Screen is a helper, not a third review entry</h3>
+      <div class="flow">
+        <span class="node">client</span><span class="arrow">→</span><span class="node">screen:pii :8086</span><span class="arrow">→</span><span class="node">Praxis</span><span class="arrow">→</span><span class="node">jev-cpu</span><span class="arrow">→</span><span class="node">PII probability</span><span class="arrow">→</span><span class="node">client chooses entry</span>
+      </div>
+      <p><b>It offloads the detection work, not the decision.</b> The client calls <span class="mono">screen:pii</span>, reads the returned PII probability, then submits the review to general or sensitive. The screen has its own key, audit row and <span class="mono">jev-cpu</span> pool. It cannot run classify, extract, risk or report, and it is not part of the review run.</p>
+    </div>
+    <div class="footer"><span>RC1 v0.9.2 · 27/27 policy · 28/28 real-pool · 248 tests</span><span>9</span></div>
+    <aside class="notes"><b>Be precise about status.</b> These controls close two real gaps: any valid key could previously claim another step, and the entry choice was the client's alone. RC1 is published as <span class="mono">v0.9.2</span> and measured on 2026-11-12: 27/27 fake-pool policy smoke, 28/28 real-pool resilience, and the 200-document hybrid with 199/200 fully correct and 0 violations. The quoted four-arm matrix and its controls are still the 2026-11-11 <span class="mono">v0.9.1</span> record; do not blend the two. <b>Screen is not a third entry.</b> It is an optional pre-entry call that returns a PII probability; the client still chooses general or sensitive, and the screen route cannot run classify, extract, risk or report.</aside>
+  </section>
+
+  <!-- 10 -->
+  <section class="slide">
+    <p class="eyebrow">Measurement design</p>
+    <h2>Same documents, same replay, same scoring. One variable at a time.</h2>
+    <div class="cards four">
+      <div class="metric"><div class="n">200</div><div class="k">synthetic contracts in the ROSA matrix</div></div>
+      <div class="metric"><div class="n">41</div><div class="k">sensitive documents · 247 sensitive steps</div></div>
+      <div class="metric"><div class="n">1,201</div><div class="k">pipeline steps per config</div></div>
+      <div class="metric"><div class="n">4</div><div class="k">routing configs on the same corpus</div></div>
+    </div>
+    <div class="cols" style="margin-top:22px">
+      <div class="tight">
+        <h3>What is scored</h3>
+        <ul>
+          <li><b>Quality:</b> extraction P/R/F1 vs expert annotations, risk accuracy, report accuracy, fully correct documents.</li>
+          <li><b>Routing:</b> route counts, CPU-served share, sensitive steps on approved pools, violations.</li>
+          <li><b>Cost:</b> measured device time, CPU core-seconds, priced as a utilisation sweep — never one dollar figure.</li>
+        </ul>
+      </div>
+      <div class="callout"><p><b>Quality ground truth is CUAD</b> — the Contract Understanding Atticus Dataset: 510 real commercial contracts with expert annotations for 41 clause categories. We score our held-out CUAD test subset (19 unique contracts). <b>Sensitivity truth is the synthetic dataset's own label</b> (41 sensitive / 159 not), never the pipeline's screen — that would be circular.</p></div>
+    </div>
+    <div class="footer"><span>ROSA <redacted-cluster> · 2026-11-11 · concurrency 12 · regex screen 41/0/159/0</span><span>10</span></div>
+    <aside class="notes"><b>Protocol.</b> The matrix is a controlled comparison: the same 200 documents, prompts, parser and scorer, with one routing policy changed. The CUAD held-out split is the quality reference, not the synthetic matrix. Sensitivity for the split comes from the dataset label, not the pipeline, so the containment result is not circular.</aside>
+  </section>
+
+  <!-- 11 -->
+  <section class="slide">
+    <p class="eyebrow">Finding 1 of 5 · governance</p>
+    <h2>The hybrid keeps every sensitive step on approved pools. Every control leaks.</h2>
+    <div class="two-big">
+      <div>
+        <div class="bar-row"><div class="bar-label">hybrid</div><div class="bar-track"><div class="bar-fill" style="width:0%"></div></div><div class="bar-val">0</div></div>
+        <div class="bar-row"><div class="bar-label">round-robin</div><div class="bar-track"><div class="bar-fill warn" style="width:44.5%"></div></div><div class="bar-val">110</div></div>
+        <div class="bar-row"><div class="bar-label">one-pool</div><div class="bar-track"><div class="bar-fill bad" style="width:100%"></div></div><div class="bar-val">247</div></div>
+        <p class="source">Sensitive steps on unapproved pools, 200-document ROSA run. 247 = every sensitive step.</p>
+        <p class="source">Hybrid: general + sensitive entries. Approved set: <span class="mono">cuad-specialist</span> · <span class="mono">vllm-cpu</span> · <span class="mono">vllm-gpu-approved</span>.</p>
+        <p class="source">Controls: one-pool = all general GPU · round-robin = alternate CPU/GPU.</p>
+      </div>
+      <div class="metric ok"><div class="n">247/247</div><div class="k">sensitive steps stayed on the approved set</div><div class="source" style="margin-top:14px">0 errors · 0 fallbacks · 200/200 fully correct</div></div>
+    </div>
+    <div class="callout" style="margin-top:20px"><p><b>It is a containment result, not a PII ground-truth result.</b> “Sensitive” means the pipeline's screen said so. CUAD ships no PII labels. The count proves no request the screen called sensitive reached an unapproved pool — verified from the gateway's records, independently of the pipeline.</p></div>
+    <div class="footer"><span>FINDINGS.md · runs/rosa-200-2026-11-11-praxis-routes</span><span>11</span></div>
+    <aside class="notes"><b>Lead with this.</b> The controls are not straw men: one-pool sends every request to the general GPU, round-robin alternates CPU and GPU. The hybrid is the only one that sends sensitive work through the sensitive entry and limits its failover to the approved set. The number is containment, not a claim that CUAD contains no PII.</aside>
+  </section>
+
+  <!-- 12 -->
+  <section class="slide">
+    <p class="eyebrow">Finding 2 of 5 · quality by tier</p>
+    <h2>A model that always answers is the worst failure shape for legal work.</h2>
+    <div class="cols wide-right">
+      <div class="tight">
+        <p class="lede" style="font-size:18px">19 unique real CUAD contracts the specialist never saw in training. A quote counts only if it contains the passage an expert marked.</p>
+        <div class="callout bad" style="margin-top:14px"><p><b>The 1.5B:</b> recall 1.0, precision ~0.15, F1 <b>0.242</b>. It finds something for every clause and is usually wrong. Risk accuracy falls to <b>0.395</b>.</p></div>
+        <div class="callout" style="margin-top:10px"><p><b>The 35B-A3B MoE:</b> extraction F1 <b>0.690</b>, risk <b>0.632</b> with real discrimination, identical on CPU and 4×A10G because the weights are the same.</p></div>
+      </div>
+      <div>
+        <table class="table">
+          <thead><tr><th>Model</th><th class="num">Extract F1</th><th class="num">Risk</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr class="badrow"><td>Qwen2.5-1.5B</td><td class="num badnum">0.242</td><td class="num badnum">0.395</td><td>small-first control</td></tr>
+            <tr><td>Qwen3.5-35B-A3B</td><td class="num">0.690</td><td class="num">0.632</td><td>judgment + synthesis</td></tr>
+            <tr><td>CUAD RoBERTa-large + MoE</td><td class="num">0.780 <span class="small">(full-doc)</span></td><td class="num oknum">0.737</td><td>specialist extraction + MoE judgment</td></tr>
+            <tr><td>Majority baseline</td><td class="num">—</td><td class="num">0.684</td><td>always “high”</td></tr>
+          </tbody>
+        </table>
+        <p class="source">Specialist+MoE risk: 0.737 measured, 0.789 on a same-input GPU replay. Extraction is 0.780 full-document; top-5 retrieval reaches 0.800. Both are local direct runs, not through-stack.</p>
+      </div>
+    </div>
+    <div class="cards two" style="margin-top:18px">
+      <div class="card">
+        <h3>What the specialist is</h3>
+        <p>A CUAD-fine-tuned <b>RoBERTa-large QA</b> checkpoint served by <b>FastAPI/uvicorn</b> as an OpenAI-compatible endpoint on the 2-core CPU pool. One encoder pass returns a span copied from the contract, so it cannot invent a quote. It is a model endpoint, not a router.</p>
+      </div>
+      <div class="card">
+        <h3>What “majority baseline” means</h3>
+        <p>Computed from the dataset's ground-truth risk labels: always predict the most common. Here 13 of 19 are truth-high, so always “high” scores <b>13/19 = 0.684</b>. It is a floor, not a trained model.</p>
+      </div>
+    </div>
+    <div class="footer"><span>FINDINGS.md · CUAD test split</span><span>12</span></div>
+    <aside class="notes"><b>Quality is not the headline, but it is not optional.</b> The 1.5B is a routing control: it shows why “CPU-first” cannot mean “small model for everything”. The MoE is a real judgment model. The specialist is the extractive component; it beats the MoE at quoting clauses. <b>The specialist:</b> CUAD-fine-tuned RoBERTa-large QA, served by FastAPI/uvicorn on CPU, returning a span copied from the contract. <b>The baseline:</b> computed from the dataset's ground-truth risk labels by always predicting the most common; on this set 13/19 are high, so a constant “high” scores 0.684. A model below that is worse than a constant answer.</aside>
+  </section>
+
+  <!-- 13 -->
+  <section class="slide">
+    <p class="eyebrow">Finding 3 of 5 · the risk gap</p>
+    <h2>The risk mistakes came from extraction, not judgment.</h2>
+    <div class="cols">
+      <div>
+        <div class="metric ok" style="margin-bottom:14px"><div class="n">19/19</div><div class="k">documents in the two direct MoE runs where applying the rubric to the run's own clauses reproduces the model's risk answer</div></div>
+        <p>The MoE follows the rubric perfectly. Every risk miss starts with a missing or wrong clause. So the fix is better extraction, not a better prompt.</p>
+        <p class="callout" style="margin-top:14px"><b>With the CUAD-trained specialist extracting, same MoE judging:</b> risk rises to <b>0.737</b> measured, above the 0.684 majority baseline. A GPU re-run on the same inputs scores 0.789.</p>
+      </div>
+      <div>
+        <h3>Where the specialist is still weak</h3>
+        <div class="bar-row"><div class="bar-label">governing law</div><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div><div class="bar-val">perfect</div></div>
+        <div class="bar-row"><div class="bar-label">audit rights</div><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div><div class="bar-val">perfect</div></div>
+        <div class="bar-row"><div class="bar-label">caps on liability</div><div class="bar-track"><div class="bar-fill warn" style="width:31%"></div></div><div class="bar-val">0.308</div></div>
+        <p class="source">CUAD test-set F1. Next step, not yet measured: send easy clause types to the specialist and liability caps to the MoE.</p>
+      </div>
+    </div>
+    <div class="footer"><span>FINDINGS.md · direct MoE + specialist runs</span><span>13</span></div>
+    <aside class="notes"><b>This is the most useful debugging finding.</b> It would be easy to blame the model or the rubric. In both direct MoE runs, applying the rubric to the clauses the run extracted reproduces the model's answer in all 19 documents, so the model is fine; the extraction fed it the wrong evidence. With the specialist extracting and the same MoE judging, risk rises from 12/19 to 14/19. The remaining weakness is concentrated in CUAD's hardest clause category, which suggests routing by clause type rather than using a bigger model.</aside>
+  </section>
+
+  <!-- 14 -->
+  <section class="slide">
+    <p class="eyebrow">Finding 4 of 5 · direct parity</p>
+    <h2>CPU is a latency choice, not a quality compromise.</h2>
+    <div class="two-big">
+      <div class="metric"><div class="n">301.6 s</div><div class="k">35B-A3B direct, 4×A10G · extract 1.000 · risk 1.000 · report 0.760</div></div>
+      <div class="metric"><div class="n">2,949.5 s</div><div class="k">35B-A3B direct, CPU · extract 1.000 · risk 1.000 · report 0.746</div></div>
+    </div>
+    <p class="lede" style="margin-top:22px">Same weights, same answers, <b>9.8× slower</b> on CPU. That is the trade the policy makes deliberately: batch volume on CPU, judgment and interactive work on GPU.</p>
+    <div class="cols" style="margin-top:16px">
+      <div class="callout"><p><b>CPU is not a free pass on judgment.</b> The 1.5B CPU baseline extracts well (F1 1.0) but scores 0.395 on risk and 0.212 on report. The capable 35B-A3B on CPU gets the quality — at 9.8× the GPU time.</p></div>
+      <div class="callout warn"><p><b>These direct runs skip governance.</b> All 247 sensitive steps go straight to one endpoint — no gateway, PII check, or sensitive-pool routing. They compare CPU and GPU quality, not whether sensitive work stayed on approved pools.</p></div>
+    </div>
+    <div class="footer"><span>ROSA 2026-11-11 direct baselines · runs/rosa-200-2026-11-11-direct</span><span>14</span></div>
+    <aside class="notes"><b>Parity is the cleanest argument for hybrid.</b> If CPU changed the answer, hybrid would be a quality compromise. It does not. The cost is time, which is acceptable for batch review and unacceptable for interactive drill-down. The 1.5B control shows that “CPU” alone is not a strategy; the model class still matters.</aside>
+  </section>
+
+  <!-- 15 -->
+  <section class="slide">
+    <p class="eyebrow">Finding 5 of 5 · GPU economics</p>
+    <h2>Judgment is worth a GPU. Extraction work is not.</h2>
+    <div class="cards two">
+      <div class="metric ok"><div class="n">0.265</div><div class="k">GPU-s/doc · hybrid</div><div class="source">judgment only on GPU · 806.59 s wall · 0 violations</div></div>
+      <div class="metric warn"><div class="n">0.981</div><div class="k">GPU-s/doc · one-pool</div><div class="source">all steps on GPU · 201.89 s wall · 247 violations</div></div>
+    </div>
+    <p class="source" style="margin-top:10px">These are total GPU costs for two configurations, not a judgment-vs-extraction split. 0.265 GPU-s/doc covers the hybrid's 201 judgment steps; 0.981 covers one-pool's 1,201 steps. The 0.716 difference is the extraction/classify work moved to CPU.</p>
+    <div class="cols" style="margin-top:20px">
+      <div class="callout"><p><b>The governed hybrid uses ~3.7× less total GPU time than the all-GPU control</b> while keeping 200/200 quality. It also records <b>32.555 CPU core-s/doc</b>.</p></div>
+      <div class="callout warn"><p><b>Read cost as a sweep, not a single bill.</b> GPU-seconds and CPU core-seconds are measured; the dollar figure depends on cloud list vs owned hardware and utilisation.</p></div>
+    </div>
+    <div class="footer"><span>FINDINGS.md · device time measured per pool</span><span>15</span></div>
+    <aside class="notes"><b>The economics claim.</b> Hybrid is slower in wall-clock than one-pool because CPU inference is slow, but it moves the high-volume extraction off the GPU. The all-GPU control is faster and ungoverned. The honest claim is “less GPU time for the same quality, with containment”, not “faster than all-GPU”.</aside>
+  </section>
+
+  <!-- 16 -->
+  <section class="slide">
+    <p class="eyebrow">The demo</p>
+    <h2>Three beats: containment, failure, economics.</h2>
+    <div class="cards three">
+      <div class="card"><h3>1 · Containment</h3><p>Replay the ROSA hybrid run. Point at <b>247/247</b> sensitive steps on approved pools and <b>0</b> violations. Do not switch to the one-pool control for this beat.</p></div>
+      <div class="card"><h3>2 · Pull the plug</h3><p>Kill the GPU pool mid-run. The general entry degrades visibly; the sensitive entry returns an explicit failure and never spills. Use the recording if the cluster is down.</p></div>
+      <div class="card"><h3>3 · Economics</h3><p>Stay on the hybrid replay. Show <b><span style="white-space:nowrap">0.265 GPU-s/doc</span></b> vs <b>0.981</b> for one-pool, with <b>200/200</b> quality and <b><span style="white-space:nowrap">83.3% CPU-served</span></b>.</p></div>
+    </div>
+    <div class="callout" style="margin-top:24px"><p><b>Say what the page is.</b> A replay is a recording, not live governance. “This is what the measured run recorded.” The live outage is a separate beat. The CUAD appendix is model-quality evidence; its view A is direct and has no governance.</p></div>
+    <p class="source">Commands and the full script: docs/stage-runbook.md · dashboard: <span class="mono">cd demo &amp;&amp; make dashboard-up</span> → 127.0.0.1:8099</p>
+    <div class="footer"><span>docs/stage-runbook.md</span><span>16</span></div>
+    <aside class="notes"><b>Run the room.</b> Beat one is the argument. Beat two is the proof that fail-closed is real, not a diagram. Beat three is why anyone would pay for the architecture. If the cluster is down, say so and use the recording; do not improvise a live claim.</aside>
+  </section>
+
+  <!-- 17 -->
+  <section class="slide">
+    <p class="eyebrow">Claim boundaries</p>
+    <h2>What is measured, and what is newer than the quoted run.</h2>
+    <table class="table">
+      <thead><tr><th>Component</th><th>OpenShift / ROSA</th></tr></thead>
+      <tbody>
+        <tr><td>Praxis routing, failover, health checks</td><td>real</td></tr>
+        <tr><td>trace UI / audit trail</td><td>real</td></tr>
+        <tr><td>Model pools</td><td>real vLLM</td></tr>
+        <tr><td>Quality, device time, dollars</td><td>measured (dollars = rate sweep)</td></tr>
+        <tr><td>Gateway hardening (RC1)</td><td>measured on <span class="mono">v0.9.2</span></td></tr>
+      </tbody>
+    </table>
+    <p class="source" style="margin-top:14px">Quoted four-arm numbers: <span class="mono">v0.9.1</span>. RC1 checks: <span class="mono">v0.9.2</span>.</p>
+    <div class="footer"><span>README · FINDINGS.md</span><span>17</span></div>
+    <aside class="notes"><b>This is the slide that keeps the demo honest.</b> The ROSA matrix is measured, but it uses synthetic contracts. CUAD is real contracts and expert annotations, but its through-stack path was timeout-bound. RC1 is measured on <span class="mono">v0.9.2</span>, but the quoted four-arm matrix and its controls are the earlier <span class="mono">v0.9.1</span> record. Do not blend the two.</aside>
+  </section>
+
+  <!-- 18 -->
+  <section class="slide dark">
+    <p class="eyebrow">Takeaways</p>
+    <h2>Four sentences to leave in the room.</h2>
+    <div class="cards two" style="margin-top:8px">
+      <div class="card"><h3>1 · Containment is an architecture property.</h3><p>Two entries, approved-only failover, and a gateway-owned audit trail — not a prompt instruction.</p></div>
+      <div class="card"><h3>2 · CPU is for volume; GPU is for judgment.</h3><p>The same 35B weights score identically on both; CPU is 9.8× slower. Hybrid keeps quality and cuts measured GPU time.</p></div>
+      <div class="card"><h3>3 · Extraction quality decides risk quality.</h3><p>The rubric is followed 19/19. Every miss traces to the clauses the model was given.</p></div>
+      <div class="card"><h3>4 · The economics win is GPU time, not speed.</h3><p>Hybrid uses 0.265 GPU-s/doc vs 0.981 for one-pool, but it is slower in wall-clock. The measured claim is less GPU for the same quality, with containment.</p></div>
+    </div>
+    <div class="footer"><span>governed-contract-intelligence · quoted run 2026-11-11 · RC1 measured 2026-11-12</span><span>18</span></div>
+    <aside class="notes"><b>Land the four.</b> If the audience remembers one thing, make it the first: the sensitive entry cannot spill. The other three explain why the architecture is economical and where the quality work goes next.</aside>
+  </section>
+
+  <!-- 19 -->
+  <section class="slide">
+    <p class="eyebrow">Appendix · where to look</p>
+    <h2>Everything quoted is reproducible from the checkout.</h2>
+    <div class="cols">
+      <div class="tight">
+        <h3>Records</h3>
+        <ul>
+          <li><span class="mono">FINDINGS.md</span> — the measurement record; read before quoting a number.</li>
+          <li><span class="mono">runs/rosa-200-2026-11-11-praxis-routes/</span> — current matrix.</li>
+          <li><span class="mono">runs/rosa-200-2026-11-11-direct/</span> — CPU/GPU parity baselines.</li>
+        </ul>
+      </div>
+      <div class="tight">
+        <h3>Design and runbooks</h3>
+        <ul>
+          <li><span class="mono">docs/design.md</span> — system map, routing, governance, open items.</li>
+          <li><span class="mono">docs/stage-runbook.md</span> — the three-beat stage script.</li>
+          <li><span class="mono">deploy/openshift/rosa/README.md</span> — rebuild the measured stack.</li>
+          <li><span class="mono">docs/stage-review-walkthrough.html</span> — presenter guide for the dashboard.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:20px"><p><b>Start here:</b> <span class="mono">make dashboard-up</span> in <span class="mono">demo/</span>, then open <span class="mono">127.0.0.1:8099</span>. The default A/B is the governed hybrid versus the same-run one-pool control.</p></div>
+    <div class="footer"><span>Questions · Q&amp;A</span><span>19</span></div>
+    <aside class="notes"><b>Hand off.</b> The deck is deliberately traceable: each claim points at a run directory or a design section. If someone asks for a number, open the record rather than re-deriving it from this deck.</aside>
+  </section>
+
+</div>
+
+<div class="counter" id="counter">1 / 19</div>
+<div class="nav">
+  <button id="prev" aria-label="Previous slide">←</button>
+  <button id="next" aria-label="Next slide">→</button>
+</div>
+
+<script>
+(() => {
+  const stage = document.getElementById('stage');
+  const slides = [...document.querySelectorAll('.slide')];
+  const progress = document.getElementById('progress');
+  const counter = document.getElementById('counter');
+  let index = 0;
+
+  const notesOn = () => stage.classList.toggle('show-notes');
+
+  function show(n, push = true) {
+    index = (n + slides.length) % slides.length;
+    slides.forEach((s, i) => s.classList.toggle('active', i === index));
+    progress.style.width = `${((index + 1) / slides.length) * 100}%`;
+    counter.textContent = `${index + 1} / ${slides.length}`;
+    if (push) history.replaceState(null, '', `#${index + 1}`);
+    fit();
+  }
+
+  function fit() {
+    const scale = Math.min(innerWidth / 1280, innerHeight / 720);
+    stage.style.transform = `translate(-50%, -50%) scale(${scale})`;
+  }
+
+  addEventListener('resize', fit);
+  addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown' || event.key === ' ' || event.key === 'PageDown') {
+      event.preventDefault(); show(index + 1);
+    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp' || event.key === 'PageUp') {
+      event.preventDefault(); show(index - 1);
+    } else if (event.key === 'Home') {
+      event.preventDefault(); show(0);
+    } else if (event.key === 'End') {
+      event.preventDefault(); show(slides.length - 1);
+    } else if (event.key.toLowerCase() === 'n') {
+      notesOn();
+    } else if (event.key.toLowerCase() === 'f') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+      else document.exitFullscreen?.();
+    } else if (event.key.toLowerCase() === 'p') {
+      event.preventDefault(); window.print();
+    }
+  });
+
+  document.getElementById('prev').addEventListener('click', () => show(index - 1));
+  document.getElementById('next').addEventListener('click', () => show(index + 1));
+
+  const start = Number(location.hash.replace('#', '')) || 1;
+  fit();
+  show(start - 1, false);
+})();
+</script>
+</body>
+</html>

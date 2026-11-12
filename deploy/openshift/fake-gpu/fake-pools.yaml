@@ -9,6 +9,8 @@
 #
 # The image is built into the internal registry with a binary build:
 #   oc -n openshell-demo new-build --binary --strategy docker --name hybrid-demo
+#   oc -n openshell-demo patch bc hybrid-demo --type merge \
+#     -p '{"spec":{"strategy":{"dockerStrategy":{"dockerfilePath":"src/docker/Dockerfile"}}}}'
 #   oc -n openshell-demo start-build hybrid-demo --from-dir=demo --follow
 apiVersion: apps/v1
 kind: Deployment

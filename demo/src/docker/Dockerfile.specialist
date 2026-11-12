@@ -6,8 +6,10 @@
 # `--from-dir=demo` uploads the 950MB .venv and the build then sits in
 # git-clone (measured 40+ min, 2026-11-04).
 #   oc -n openshell-demo new-build --binary --strategy docker --name hybrid-specialist
-#   STAGE=$(mktemp -d); cp demo/pyproject.toml demo/Dockerfile.specialist "$STAGE"
-#   cp -R demo/src "$STAGE/src"; tar -C "$STAGE" -czf /tmp/specialist-src.tgz .
+#   STAGE=$(mktemp -d); mkdir -p "$STAGE/src"
+#   cp demo/pyproject.toml demo/src/docker/Dockerfile.specialist "$STAGE/"
+#   cp -R demo/src/hybrid_demo "$STAGE/src/hybrid_demo"
+#   tar -C "$STAGE" -czf /tmp/specialist-src.tgz .
 #   oc -n openshell-demo start-build hybrid-specialist \
 #       --from-file=/tmp/specialist-src.tgz --follow
 FROM python:3.12-slim
@@ -27,7 +29,7 @@ RUN mkdir -p /opt/cuad-model \
 
 WORKDIR /app
 COPY pyproject.toml ./
-COPY src ./src
+COPY src/hybrid_demo ./src/hybrid_demo
 RUN pip install --no-cache-dir .
 
 ENV CUAD_MODEL_DIR=/opt/cuad-model/roberta-large

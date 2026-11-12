@@ -6,7 +6,7 @@ kind: Kustomization
 # specialist. Build the image first:
 #   oc -n openshell-demo new-build --binary --strategy docker --name hybrid-specialist
 #   oc -n openshell-demo start-build hybrid-specialist --from-dir=demo \
-#       --dockerfile Dockerfile.specialist --follow
+#       --dockerfile src/docker/Dockerfile.specialist --follow
 namespace: openshell-demo
 
 resources:

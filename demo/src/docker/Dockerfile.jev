@@ -9,8 +9,9 @@
 #   oc -n openshell-demo new-build --binary --strategy docker --name hybrid-jev
 #   oc -n openshell-demo patch bc hybrid-jev --type merge \
 #     -p '{"spec":{"strategy":{"dockerStrategy":{"dockerfilePath":"Dockerfile.jev"}}}}'
-#   STAGE=$(mktemp -d); cp demo/pyproject.toml demo/Dockerfile.jev "$STAGE"
-#   cp -R demo/src "$STAGE/src"
+#   STAGE=$(mktemp -d); mkdir -p "$STAGE/src"
+#   cp demo/pyproject.toml demo/src/docker/Dockerfile.jev "$STAGE/"
+#   cp -R demo/src/hybrid_demo "$STAGE/src/hybrid_demo"
 #   oc -n openshell-demo start-build hybrid-jev --from-dir="$STAGE" --follow
 FROM python:3.12-slim
 
@@ -20,7 +21,7 @@ RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/wh
 
 WORKDIR /app
 COPY pyproject.toml ./
-COPY src ./src
+COPY src/hybrid_demo ./src/hybrid_demo
 RUN pip install --no-cache-dir .
 
 # Bake the English checkpoint. HF_HOME is kept outside the app directory so

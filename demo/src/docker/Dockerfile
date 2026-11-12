@@ -2,7 +2,7 @@ FROM python:3.12-slim
 
 WORKDIR /app
 COPY pyproject.toml ./
-COPY src ./src
+COPY src/hybrid_demo ./src/hybrid_demo
 RUN pip install --no-cache-dir .
 
 RUN mkdir /data && chown 1001:0 /data
