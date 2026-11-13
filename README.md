@@ -34,6 +34,8 @@ pipeline, the measurement harness and the OpenShell sandbox.
 > **Read [What is measured vs simulated](#what-is-measured-vs-simulated)
 > before quoting any number.**
 
+**Slides:** [View the published 19-slide demo deck](https://maryamtahhan.github.io/governed-contract-intelligence/) · [docs index](docs/README.md)
+
 ## Contents
 
 - [Status: built vs designed](#status-built-vs-designed)
@@ -212,19 +214,20 @@ restore one.
 │   └── data/                     CUAD fetch
 ├── runs/                         current evidence (quoted record, guide appendix); archive map: runs/README.md
 ├── docs/
+│   ├── README.md                     docs index
 │   ├── design.md                     the design document (system map, decisions, open items)
 │   ├── architecture-as-built.svg     through-stack architecture
 │   ├── pipeline-direct.svg           direct-run shape
 │   ├── pipeline-through-stack.svg    one request, six stops
 │   ├── stage-runbook.md              one-page stage script
 │   ├── stage-review-walkthrough.html presenter guide
-│   ├── demo-deck.html                19-slide demo + findings deck (arrow keys, N notes, P print)
+│   ├── demo-deck.html                19-slide deck (published via GitHub Pages; arrow keys, N notes, P print)
 │   └── octo-demo-v0.3.md             business case / OCTO framing
 ├── mcp/                          root launcher for the MCP facade
 ├── classifiers/                  contract-step taxonomy + evaluation anchors (candidate)
 ├── sandbox/policy.yaml           OpenShell sandbox egress policy (trace-ui ingress + GitHub read-only)
 ├── values/                       OpenShift Helm overrides
-└── .github/workflows/            CI + gateway image publish
+└── .github/workflows/            CI + gateway image publish + Pages
 ```
 
 Where to look for what:
@@ -238,7 +241,7 @@ Where to look for what:
 | run or extend the test suite | [Tests and checks](#tests-and-checks) |
 | reproduce a measurement | [Experiments and measurements](#experiments-and-measurements), [design §4.4](docs/design.md) |
 | give the stage demo | [`docs/stage-runbook.md`](docs/stage-runbook.md), [`docs/stage-review-walkthrough.html`](docs/stage-review-walkthrough.html) |
-| present the demo and findings | [`docs/demo-deck.html`](docs/demo-deck.html) (open in a browser; `P` prints 19 pages) |
+| present the demo and findings | [published deck](https://maryamtahhan.github.io/governed-contract-intelligence/) or [`docs/demo-deck.html`](docs/demo-deck.html) (open in a browser; `P` prints 19 pages) |
 | understand a run directory or config name | [`runs/README.md`](runs/README.md), [design §2](docs/design.md) |
 
 ## The naming model in one minute

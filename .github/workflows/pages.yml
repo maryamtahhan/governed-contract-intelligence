@@ -1,0 +1,45 @@
+name: pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/demo-deck.html"
+      - "docs/*.svg"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assemble Pages artifact
+        run: |
+          mkdir -p _site
+          cp docs/demo-deck.html _site/index.html
+          cp docs/architecture-as-built.svg _site/
+          cp docs/pipeline-direct.svg _site/
+          cp docs/pipeline-through-stack.svg _site/
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
