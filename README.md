@@ -94,7 +94,7 @@ Qwen3.5-35B-A3B synthesis: risk judgment, cross-doc report        [built]
 Every hop goes through the same governed request path — the part that is
 built, governed and measured end-to-end today:
 
-![As-built architecture: both clients (review pipeline and OpenShell sandbox) enter through trace-ui ingress recorders → the Praxis policy gate → one relay per pool → pools; the green dashed boundary marks the approved set where sensitive data may run](docs/architecture-as-built.svg)
+![As-built architecture: both clients (review pipeline and OpenShell sandbox) enter through trace-ui ingress recorders → the Praxis policy gate → one relay per pool → pools; the green dashed boundary marks the approved set where sensitive data may run](docs/diagrams/architecture-as-built.svg)
 
 The two run shapes are deliberately different, and the diagrams make the
 difference explicit:
@@ -102,13 +102,13 @@ difference explicit:
 - **Direct run** — one endpoint for the whole run, no relay, gateway, label,
   pool choice or trace. It measures model quality only.
 
-  ![Direct run: the batch runner does CPU-side orchestration; one endpoint runs every model call](docs/pipeline-direct.svg)
+  ![Direct run: the batch runner does CPU-side orchestration; one endpoint runs every model call](docs/diagrams/pipeline-direct.svg)
 
 - **Through-stack run** — batch runner → ingress relay → Praxis (PPE policy
   gate + pinned routing) → pool relay → pool → model. It measures routing,
   governance, audit and cost.
 
-  ![Through-stack run: one request, six stops — two trace-ui relays, the Praxis policy/step-route gate, the pool and the model](docs/pipeline-through-stack.svg)
+  ![Through-stack run: one request, six stops — two trace-ui relays, the Praxis policy/step-route gate, the pool and the model](docs/diagrams/pipeline-through-stack.svg)
 
   The six stops are three kinds of work: the CLI builds and scores, the two
   trace-ui relays record, and Praxis decides. Only the last stop runs a model.
@@ -216,13 +216,14 @@ restore one.
 ├── docs/
 │   ├── README.md                     docs index
 │   ├── design.md                     the design document (system map, decisions, open items)
-│   ├── architecture-as-built.svg     through-stack architecture
-│   ├── pipeline-direct.svg           direct-run shape
-│   ├── pipeline-through-stack.svg    one request, six stops
 │   ├── stage-runbook.md              one-page stage script
-│   ├── stage-review-walkthrough.html presenter guide
-│   ├── demo-deck.html                19-slide deck (published via GitHub Pages; arrow keys, N notes, P print)
-│   └── octo-demo-v0.3.md             business case / OCTO framing
+│   ├── deck/
+│   │   ├── demo-deck.html            19-slide deck (published via GitHub Pages; arrow keys, N notes, P print)
+│   │   └── stage-review-walkthrough.html presenter guide
+│   └── diagrams/
+│       ├── architecture-as-built.svg through-stack architecture
+│       ├── pipeline-direct.svg       direct-run shape
+│       └── pipeline-through-stack.svg one request, six stops
 ├── mcp/                          root launcher for the MCP facade
 ├── classifiers/                  contract-step taxonomy + evaluation anchors (candidate)
 ├── sandbox/policy.yaml           OpenShell sandbox egress policy (trace-ui ingress + GitHub read-only)
@@ -241,8 +242,8 @@ Where to look for what:
 | see what was measured, and how | [`FINDINGS.md`](FINDINGS.md), [`runs/README.md`](runs/README.md) |
 | run or extend the test suite | [Tests and checks](#tests-and-checks) |
 | reproduce a measurement | [Experiments and measurements](#experiments-and-measurements), [design §4.4](docs/design.md) |
-| give the stage demo | [`docs/stage-runbook.md`](docs/stage-runbook.md), [`docs/stage-review-walkthrough.html`](docs/stage-review-walkthrough.html) |
-| present the demo and findings | [published deck](https://maryamtahhan.github.io/governed-contract-intelligence/) or [`docs/demo-deck.html`](docs/demo-deck.html) (open in a browser; `P` prints 19 pages) |
+| give the stage demo | [`docs/stage-runbook.md`](docs/stage-runbook.md), [`docs/deck/stage-review-walkthrough.html`](docs/deck/stage-review-walkthrough.html) |
+| present the demo and findings | [published deck](https://maryamtahhan.github.io/governed-contract-intelligence/) or [`docs/deck/demo-deck.html`](docs/deck/demo-deck.html) (open in a browser; `P` prints 19 pages) |
 | understand a run directory or config name | [`runs/README.md`](runs/README.md), [design §2](docs/design.md) |
 
 ## The naming model in one minute
@@ -521,8 +522,8 @@ cd .. && for f in scripts/configs.sh scripts/linux/set_arm.sh \
          scripts/linux/set_config.sh scripts/linux/arms.sh \
          scripts/linux/demo.sh scripts/cluster/arms.sh \
          scripts/cluster/model-comparison.sh; do bash -n "$f" || exit 1; done
-xmllint --noout docs/pipeline-direct.svg docs/pipeline-through-stack.svg \
-                 docs/architecture-as-built.svg
+xmllint --noout docs/diagrams/pipeline-direct.svg docs/diagrams/pipeline-through-stack.svg \
+                 docs/diagrams/architecture-as-built.svg
 ```
 
 ## Experiments and measurements

@@ -153,7 +153,7 @@ the ROSA all-CPU variant (`deploy/openshift/rosa/pools-cpu.yaml`); the
 Linux/g5 real profile (`deploy/linux/docker-compose.yml`,
 `profiles: ["real"]`); FINDINGS §1 for the SNO; the fake/simulated profile
 has no real hardware at all. The presenter guide
-(`docs/stage-review-walkthrough.html`) carries the on-screen version of this
+(`docs/deck/stage-review-walkthrough.html`) carries the on-screen version of this
 warning in its "Pool vs hardware" row.
 
 **Do not write a sentence like "one-pool uses a GPU" without naming the
@@ -1289,6 +1289,6 @@ cd .. && for f in scripts/configs.sh scripts/linux/set_arm.sh \
          scripts/linux/set_config.sh scripts/linux/arms.sh \
          scripts/linux/demo.sh scripts/cluster/arms.sh \
          scripts/cluster/model-comparison.sh; do bash -n "$f" || exit 1; done
-xmllint --noout docs/pipeline-direct.svg docs/pipeline-through-stack.svg \
-                 docs/architecture-as-built.svg
+xmllint --noout docs/diagrams/pipeline-direct.svg docs/diagrams/pipeline-through-stack.svg \
+                 docs/diagrams/architecture-as-built.svg
 ```

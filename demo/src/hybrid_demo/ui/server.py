@@ -110,7 +110,7 @@ def _default_guide() -> Path | None:
     """
     candidates = (
         Path(__file__).with_name("walkthrough.html"),
-        Path(__file__).resolve().parents[4] / "docs" / "stage-review-walkthrough.html",
+        Path(__file__).resolve().parents[4] / "docs" / "deck" / "stage-review-walkthrough.html",
     )
     return next((p for p in candidates if p.exists()), None)
 
@@ -464,7 +464,7 @@ def main() -> None:
                              "the port can then drive the endpoint")
     parser.add_argument("--guide", default=None,
                         help="HTML presenter's guide served at /guide "
-                             "(default: docs/stage-review-walkthrough.html)")
+                             "(default: docs/deck/stage-review-walkthrough.html)")
     parser.add_argument("--compare", default=None,
                         help="a second run directory of the same documents; the "
                              "page offers an A/B switch between the two")

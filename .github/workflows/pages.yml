@@ -4,8 +4,8 @@ on:
   push:
     branches: [main]
     paths:
-      - "docs/demo-deck.html"
-      - "docs/*.svg"
+      - "docs/deck/demo-deck.html"
+      - "docs/diagrams/*.svg"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -29,11 +29,19 @@ jobs:
 
       - name: Assemble Pages artifact
         run: |
-          mkdir -p _site
-          cp docs/demo-deck.html _site/index.html
-          cp docs/architecture-as-built.svg _site/
-          cp docs/pipeline-direct.svg _site/
-          cp docs/pipeline-through-stack.svg _site/
+          # Keep the source layout: the deck references ../diagrams/*.svg, so it
+          # must stay one level below the diagrams on the published site too.
+          mkdir -p _site/deck _site/diagrams
+          cp docs/deck/demo-deck.html _site/deck/
+          cp docs/diagrams/*.svg _site/diagrams/
+          printf '%s\n' \
+            '<!doctype html>' \
+            '<meta charset="utf-8">' \
+            '<meta http-equiv="refresh" content="0; url=deck/demo-deck.html">' \
+            '<link rel="canonical" href="deck/demo-deck.html">' \
+            '<title>Governed contract intelligence - demo deck</title>' \
+            '<a href="deck/demo-deck.html">Open the demo deck</a>' \
+            > _site/index.html
 
       - uses: actions/configure-pages@v5
 

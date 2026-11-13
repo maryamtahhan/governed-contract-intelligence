@@ -279,8 +279,8 @@
   <section class="slide">
     <p class="eyebrow">As built</p>
     <h2>The through-stack: one policy gate, one audit trail.</h2>
-    <img class="diagram" src="architecture-as-built.svg" alt="As-built architecture: the review pipeline and sandbox enter through trace-ui recorders, Praxis policy gate, per-pool relays, and model pools; the approved set is highlighted.">
-    <div class="footer"><span>docs/architecture-as-built.svg · green boundary = approved set</span><span>5</span></div>
+    <img class="diagram" src="../diagrams/architecture-as-built.svg" alt="As-built architecture: the review pipeline and sandbox enter through trace-ui recorders, Praxis policy gate, per-pool relays, and model pools; the approved set is highlighted.">
+    <div class="footer"><span>docs/diagrams/architecture-as-built.svg · green boundary = approved set</span><span>5</span></div>
     <aside class="notes"><b>Read the diagram left to right.</b> Both callers — the review pipeline and the OpenShell sandbox — enter through trace-ui. Praxis authenticates each step, binds the X-Demo-Step claim to the key's step grant, runs the PII scanner, and matches the step table to a pool. The per-pool relays record the model call. Only the model stop runs inference. The sandbox cannot reach Praxis or a pool directly.</aside>
   </section>
 
@@ -288,7 +288,7 @@
   <section class="slide">
     <p class="eyebrow">One request</p>
     <h2>Six stops, three kinds of work.</h2>
-    <img class="diagram" src="pipeline-through-stack.svg" alt="Through-stack run: batch runner, trace-ui ingress relay, Praxis policy gate, pool relay, pool and model; the sensitive lane stays on approved pools.">
+    <img class="diagram" src="../diagrams/pipeline-through-stack.svg" alt="Through-stack run: batch runner, trace-ui ingress relay, Praxis policy gate, pool relay, pool and model; the sensitive lane stays on approved pools.">
     <div class="footer"><span>CLI builds and scores · relays record · Praxis decides · only the model answers</span><span>6</span></div>
     <aside class="notes"><b>The measured path.</b> The batch runner is CPU-side orchestration. The two trace-ui relay layers write the ingress and per-pool audit rows. Praxis is the only component that decides which pool may serve the request. The response carries entry, route and trace id; SQLite behind trace-ui is the audit trail, exported as audit.jsonl. <b>One stage per request.</b> The batch runner sends classify, waits for the response, then sends each clause extraction, then risk; after all documents it sends one report call. Every stage repeats the full batch runner → ingress relay → Praxis → pool relay → pool path, and the response returns along the same hops. Praxis does not call back or orchestrate the next stage; the runner does. The per-document session id keeps the sensitivity taint across those separate requests.</aside>
   </section>
@@ -298,7 +298,7 @@
     <p class="eyebrow">The direct stack</p>
     <h2>The direct stack: one endpoint, no governance record.</h2>
     <p class="lede" style="font-size:19px; margin-bottom:10px">The batch runner calls one model endpoint. No relay, Praxis, step label, pool choice or trace — a model-quality reference, not a governance run.</p>
-    <img class="diagram" src="pipeline-direct.svg" style="width:auto; height:410px; flex:0 0 auto; align-self:center" alt="Direct run: the batch runner calls one vLLM endpoint; no relay, gateway, step label, pool choice or trace.">
+    <img class="diagram" src="../diagrams/pipeline-direct.svg" style="width:auto; height:410px; flex:0 0 auto; align-self:center" alt="Direct run: the batch runner calls one vLLM endpoint; no relay, gateway, step label, pool choice or trace.">
     <div class="footer"><span>Direct run · docs/design.md · model-quality reference only</span><span>7</span></div>
     <aside class="notes"><b>The direct stack.</b> The batch runner calls one model endpoint for the whole run. There is no ingress relay, no Praxis, no per-step label, no pool choice and no audit row. That is why it is useful as a model-quality reference and useless for a governance claim. Use the through-stack runs for routing, containment, audit and cost. The direct CPU/GPU parity baselines are in <span class="mono">runs/rosa-200-2026-11-11-direct</span>.</aside>
   </section>
@@ -564,7 +564,7 @@
           <li><span class="mono">docs/design.md</span> — system map, routing, governance, open items.</li>
           <li><span class="mono">docs/stage-runbook.md</span> — the three-beat stage script.</li>
           <li><span class="mono">deploy/openshift/rosa/README.md</span> — rebuild the measured stack.</li>
-          <li><span class="mono">docs/stage-review-walkthrough.html</span> — presenter guide for the dashboard.</li>
+          <li><span class="mono">docs/deck/stage-review-walkthrough.html</span> — presenter guide for the dashboard.</li>
         </ul>
       </div>
     </div>
