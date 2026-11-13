@@ -1,0 +1,24 @@
+[package]
+name = "gci-screen-filter"
+version = "0.1.0"
+edition = "2021"
+description = "Praxis HTTP filter that decides request sensitivity in-gateway and exposes it as a routing header"
+license = "MIT"
+publish = false
+
+# Marker consumed by the Praxis server's build-time filter discovery
+# (`server/build.rs` walks `cargo metadata` looking for this key).
+[package.metadata.praxis-filters]
+
+[dependencies]
+async-trait = "0.1.92"
+bytes = "1.12.1"
+http = "1.5.0"
+praxis-filter = { version = "0.7.5", package = "praxis-proxy-filter", default-features = false }
+regex = "1.11"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+# NOTE: matches the Praxis workspace pin exactly; `export_filters!` expands to
+# `serde_yaml::Value`, so this must resolve to the same crate the server uses.
+serde_yaml = { package = "yaml_serde", version = "0.10.7" }
+tracing = "0.1.44"

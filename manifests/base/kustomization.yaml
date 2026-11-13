@@ -42,4 +42,9 @@ configMapGenerator:
       - policy.yaml=praxis/policy.yaml
       - policy-sensitive.yaml=praxis/policy-sensitive.yaml
       - policy-screen.yaml=praxis/policy-screen.yaml
+      # V19 single-entry experiment (2026-11-13): the sensitivity decision
+      # inside one gateway chain, via the gci_screen filter (image v0.9.3+).
+      # Not a default policy.
+      - policy-single.yaml=praxis/policy-single.yaml
+      - single-entry.yaml=praxis/single-entry.yaml
       - api-keys.yaml=praxis/api-keys.yaml

@@ -15,6 +15,12 @@
 # gate. They register through gci-praxis-policy-host, discovered by the same
 # build-time mechanism as the filter.
 #
+# Since v0.9.3 it also vendors gci-screen-filter (checked in at
+# gci-screen-filter/): the V19 HTTP filter that scans request bodies with
+# the shared PII pattern catalog and sets X-Demo-Screen for the router.
+# Unlike the policy plugins it is an HTTP filter, discovered through
+# [package.metadata.praxis-filters] exactly like llm_d_sc.
+#
 # Versions are pinned by commit, not by branch. Bump them deliberately:
 #
 #   AI_GATEWAY_REF  praxis-proxy/ai origin/main at 2026-11-05
@@ -59,7 +65,7 @@ PPE_REPO="${PPE_REPO:-https://github.com/praxis-proxy/policy}"
 AI_GATEWAY_REF="${AI_GATEWAY_REF:-a716baaef1a027ff02a00bf4fc692de54c366cee}"
 FILTER_REF="${FILTER_REF:-b84acfb840c7232fcba2680e46fd023ac8c7e02c}"
 PPE_REF="${PPE_REF:-a178f14cb156aecef59d3e16de3cf7fe65c691db}"
-IMAGE="${IMAGE:-quay.io/mtahhan/gci-praxis:v0.9.2}"
+IMAGE="${IMAGE:-quay.io/mtahhan/gci-praxis:v0.9.3}"
 PLATFORM="${PLATFORM:-linux/amd64}"
 PUSH=0
 KEEP=0
@@ -147,6 +153,10 @@ cp -R "$WORK/ppe-export/reference/plugins/audit-logger/src" \
 cp "$HERE/audit-logger.Cargo.toml" \
   "$CTX/ai-gateway/vendor/praxis-policy-plugin-audit-logger/Cargo.toml"
 cp -R "$HERE/policy-host" "$CTX/ai-gateway/vendor/gci-praxis-policy-host"
+# The V19 in-gateway screen filter: an HTTP filter (unlike the policy
+# plugins above) that sets X-Demo-Screen from a body scan. Checked in at
+# gci-screen-filter/, same discovery path as the llm_d_sc filter.
+cp -R "$HERE/gci-screen-filter" "$CTX/ai-gateway/vendor/gci-screen-filter"
 
 # The filter was written against Praxis 0.5.2. ai-gateway 0.9.0 pins Praxis
 # 0.7.5, so the filter must resolve the same packages or Cargo creates two
@@ -168,9 +178,10 @@ marker = "[dependencies]\n"
 if marker not in text:
     raise SystemExit(f"FATAL: no [dependencies] table in {server}")
 # Two external crates, both discovered through [package.metadata.
-# praxis-filters]: the llm_d_sc HTTP filter, and the policy host whose
-# register_filters() registers the PPE plugin factories.
-for dep in ("llm-d-sc-praxis-filter", "gci-praxis-policy-host"):
+# praxis-filters]: the llm_d_sc HTTP filter, the gci_screen HTTP filter,
+# and the policy host whose register_filters() registers the PPE plugin
+# factories.
+for dep in ("llm-d-sc-praxis-filter", "gci-screen-filter", "gci-praxis-policy-host"):
     if dep not in text:
         text = text.replace(
             marker,
@@ -185,7 +196,7 @@ server.write_text(text)
 # dependencies they remain visible to `cargo metadata` (which is how Praxis
 # discovers filters) and to the server's dependency graph.
 text = root.read_text()
-excludes = 'exclude = ["vendor/llm-d-sc-praxis-filter", "vendor/gci-praxis-policy-host", "vendor/praxis-policy-plugin-audit-logger"]'
+excludes = 'exclude = ["vendor/llm-d-sc-praxis-filter", "vendor/gci-screen-filter", "vendor/gci-praxis-policy-host", "vendor/praxis-policy-plugin-audit-logger"]'
 if excludes not in text:
     marker = "[workspace]\n"
     if marker not in text:
@@ -199,6 +210,11 @@ grep -q 'praxis-core = { version = "0.7.5"' \
     echo "FATAL: filter is not pinned to praxis 0.7.5" >&2
     exit 1
   }
+grep -q 'praxis-filter = { version = "0.7.5"' \
+  "$CTX/ai-gateway/vendor/gci-screen-filter/Cargo.toml" || {
+      echo "FATAL: gci-screen-filter is not pinned to praxis-filter 0.7.5" >&2
+      exit 1
+    }
 grep -q 'praxis-core = { version = "0.7.5"' "$CTX/ai-gateway/Cargo.toml" || {
   # ai-gateway may format the pin differently; make the operator check it.
   echo "WARNING: could not confirm praxis 0.7.5 in ai-gateway Cargo.toml" >&2

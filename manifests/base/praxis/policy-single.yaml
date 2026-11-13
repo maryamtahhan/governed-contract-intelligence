@@ -1,0 +1,99 @@
+# PPE policy document for the single review entry of the V19 single-entry
+# routing manifest (single-entry.yaml, listener :8080).
+#
+# Same contract as policy.yaml - per-step API-key identity, key-to-step
+# binding, audit - with one deliberate difference: the PII scanner runs in
+# OBSERVE mode, because this entry serves sensitive documents too.
+#
+# Containment is not the gate here; it is the router. The gci_screen HTTP
+# filter (image v0.9.3+) scans every request body with the same pattern
+# catalog and sets X-Demo-Screen, and the router table in single-entry.yaml
+# sends screen=sensitive judgment work to vllm-gpu-approved only, with an
+# approved-only failover set that fails closed. The gate's deny behavior is
+# not dropped, it is moved upstream of the pool choice: a sensitive request
+# can no longer be ROUTED to a general pool, which is a stronger invariant
+# than a 403 after the fact. The observe lines this policy emits remain the
+# agreement instrument's comparison point against the pipeline's screen.
+#
+# What this policy deliberately does NOT do:
+#   - pool steering: PPE's restrict effect is not consumed by the praxis
+#     router; which pool may serve a request stays expressed by the
+#     router's X-Demo-Step x X-Demo-Screen table in single-entry.yaml.
+#   - sensitivity taint: the two-entry sensitive listener (:8083, still
+#     present in single-entry.yaml for compatibility) keeps the taint; the
+#     single entry's gateway-owned sensitivity fact is the X-Demo-Screen
+#     header the gci_screen filter sets from its own scan.
+plugins:
+  - name: api-keys
+    kind: identity/api-key
+    hooks: [identity.resolve]
+    on_error: fail
+    config:
+      credential:
+        kind: header
+        name: X-API-Key
+      provider:
+        kind: file
+        path: /etc/praxis/api-keys.yaml
+        refresh_secs: 30
+        max_staleness_secs: 300
+      record_map:
+        subject:
+          id: user
+          roles: groups
+
+  # Decision records, same observer mode as the other entries.
+  - name: audit
+    kind: audit/logger
+    mode: audit
+    hooks: [cmf.llm_input]
+    capabilities:
+      - read_subject
+      - read_roles
+      - read_client
+      - read_labels
+    config:
+      destination: stderr
+      source: gci-gateway
+
+  # RC1 key-to-step binding, same grants as the general entry.
+  - name: step-key
+    kind: validator/gci-step-key
+    mode: sequential
+    hooks: [cmf.llm_input]
+    capabilities:
+      - read_headers
+      - read_subject
+      - read_roles
+    config:
+      header: X-Demo-Step
+      role_prefix: "step:"
+      stepless_roles: [eval]
+
+  # Observe-only scanner: same pattern catalog as the gci_screen filter and
+  # the pipeline screen, so the three decisions can be joined per request.
+  # It never denies here - a sensitive document is allowed to arrive; the
+  # router is what keeps it on approved pools.
+  - name: pii-observe
+    kind: validator/gci-pii-observe
+    mode: audit
+    hooks: [cmf.llm_input]
+    capabilities:
+      - read_agent
+      - read_headers
+      - read_subject
+
+global:
+  authentication: [api-keys]
+  authorization:
+    pre_invocation:
+      - "require(authenticated)"
+
+routes:
+  - llm: Semantic-Qwen
+    authorization:
+      pre_invocation:
+        - "require(authenticated)"
+        - "run(step-key)"
+        - "run(pii-observe)"
+        - "run(audit)"
