@@ -2027,3 +2027,115 @@ and one content miss per run reached a non-approved route. That is the
 boundary the hybrid's sensitive entry exists to enforce; the 2026-11-11
 `v0.9.1` matrix remains the last comparable four-arm routing measurement.
 The earlier fake-all smoke remains functional evidence only.
+
+## 19. V19 measured: the sensitivity decision inside one gateway chain (2026-11-13)
+
+Config F (`single-entry.yaml`), image `v0.9.3` (internal-registry digest
+`sha256:d69493b7…` — the quay publish of v0.9.3 is pending a fresh quay
+token; v0.9.2 cannot load this config, correctly). One review listener
+(:8080) serves every document; the `gci_screen` HTTP filter
+(`deploy/images/praxis-llm-d-sc/gci-screen-filter/`, unit-tested 8/8
+against praxis-filter 0.7.5) scans each request body with the shared
+thirteen-pattern PII catalog, strips any client-supplied
+`X-Demo-Screen`, and sets the verdict itself — fail closed on an
+unparseable body. A plain `router` + `load_balancer` pair in the same
+chain matches `X-Demo-Step` × `X-Demo-Screen`; sensitive judgment work
+pins to `vllm-gpu-approved`.
+
+### 19.1 Three engine constraints found the hard way
+
+1. **The iterative_request_router cannot consume an outer-chain filter's
+   header.** The IRR builds each step's sub-request from the headers as
+   received (`original_request` in the IRR source), so a pending header
+   set by a chain-level filter never reaches the nested router: the
+   screen-constrained routes silently fell through to the plain
+   `X-Demo-Step` routes. In one chain the router's `PendingRouteHeaders`
+   overlay sees the filter's set — that is the mechanism's documented
+   purpose, and the single-entry chain uses it.
+2. **A body-access filter inside an IRR step hangs the step executor**
+   before any filter logs (gci_screen in the route step; requests
+   deadlocked with zero log lines).
+3. **At chain level the router and load balancer must be paired**, as the
+   IRR steps pair them: the router alone resolves the cluster and the
+   proxy fails with "no upstream selected …; is a load_balancer
+   configured?".
+
+Stated trade-off: without the IRR there are no failover steps. A failed
+pool fails the request outright — fail closed, never a spill — where the
+two-entry graph degrades general work onto `vllm-gpu` and fails sensitive
+work closed onto the approved pool. The single-entry config therefore has
+different resilience characteristics from the RC1 record; its governance
+and quality are what it exists to measure.
+
+### 19.2 The forge test
+
+A risk-step request with a PII body and a **client-forged**
+`X-Demo-Screen: general` routes to `vllm-gpu-approved` (the gateway's own
+scan overrides the forgery); a clean risk step routes to `vllm-gpu`; an
+eval key claiming a review step is denied 403 by the step-key binding. A
+client can no longer put personal data on a general pool by lying — the
+pre-RC1 trust model ("the pipeline's screen picks the entry") is replaced
+by a decision the client cannot influence.
+
+### 19.3 The 200-document measurement
+
+`runs/rosa-200-2026-11-13-single-entry/single-entry` vs the RC1 record
+(`runs/rosa-200-2026-11-12-praxis-routes/hybrid`), same stack, same
+corpus, concurrency 12:
+
+| | single-entry (V19) | two-entry (RC1 record) |
+|---|---|---|
+| wall | 809.88 s | 818.87 s |
+| errors / fallback | 0 / 0 | 0 / 0 |
+| screen tp/fp/tn/fn | 41/0/159/0 | 41/0/159/0 |
+| extract F1 / risk / report | 1.000 / 1.000 / 1.000, **200/200** | 1.000 / 0.995 / 0.998, 199/200 |
+| risk routes | 159 `vllm-gpu` + 41 approved | 159 + 41 (identical) |
+| sensitive steps approved | **246/247, 1 violation** | 247/247, 0 |
+| judgment on GPU | 201/201 | 201/201 |
+| GPU-s/doc · CPU core-s/doc | 0.258 · 32.533 | 0.259 · 33.006 |
+
+Quality is at-or-above the record within temperature-0 variance (this
+run's judgment stage had no flips). The risk-route split is **exactly**
+the two-entry split: on every per-document step the gateway's body-level
+screen and the pipeline's document-level screen agree.
+
+### 19.4 The one disagreement is the finding
+
+The single violation is the **report step**: the pipeline's flag-based
+counting calls it sensitive (some document screened sensitive), but the
+report's aggregated body matches **zero of the thirteen PII patterns**
+(verified against the recorded request body: the report lines carry refs,
+types, risk labels, jurisdictions and booleans, not clause text), so the
+body-level screen routes it to the shared pool. **No PII text leaves the
+approved set** — the "violation" is definitional. V19 moves containment
+from *document-level flags* to *request-body content*, and the two
+definitions disagree exactly on the aggregation step whose prompt is
+redacted by construction. The violation counter keeps its flag-based
+meaning (comparability with every recorded run); the honest reading of a
+single-entry run is: zero content leaks, one flag-level disagreement on
+the report.
+
+### 19.5 Posture
+
+Config F stays a measured experiment, not the default policy: the
+two-entry graph remains the RC1 record and the resilience posture
+(failover steps, sensitive fail-closed). What V19 proves is that the
+decision *can* live entirely in the gateway chain — client-unforgeable,
+auditable per request (one `gci_screen` log line joins the policy
+scanner's observe lines and the pipeline's screen) — at identical
+quality, routing, and cost, with the report-step definitional shift on
+the record. Adopting it as the default is a policy decision for a future
+date, alongside the quay publish of `v0.9.3`.
+
+Operational notes from the bring-up, for whoever repeats this: the praxis
+Service needed its `:8086` screen port declared (§16.7.1); `oc apply -k`
+resets both the deployment image and `PRAXIS_CONFIG` to the manifest
+defaults, so experiment configs must be re-pinned after every apply and
+verified from the pod's watcher log line before measuring; and the
+v0.9.3 image must be built from a context whose `Cargo.lock` already
+contains the vendored crates — an in-container re-lock dropped
+`gci-screen-filter` from the build-time filter discovery, producing a
+healthy-looking binary with no `gci_screen` registration (zero name
+strings in the binary; `llm_d_sc` and the policy host registered fine).
+`build.sh` should pre-update the lock at stage time before the next
+publish.
