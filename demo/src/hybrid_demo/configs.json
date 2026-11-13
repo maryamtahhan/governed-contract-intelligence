@@ -66,7 +66,7 @@
    "name": "cap-split",
    "mode": "matrix",
    "aliases": [],
-   "behavior": "The hybrid policy with one route changed: liability-cap extraction goes to the CPU MoE (vllm-cpu) instead of the CUAD specialist, which stays on termination, governing law and audit rights. Measured variant for the CUAD liability-cap experiment (FINDINGS 17.2); not the default policy.",
+   "behavior": "The hybrid policy with one route changed: liability-cap extraction goes to the CPU MoE (vllm-cpu) instead of the CUAD specialist, which stays on termination, governing law and audit rights. Measured 2026-11-13 and rejected: cap F1 improves 0.308 to 0.400 (precision-only) but risk drops 0.737 to 0.684, the majority baseline (FINDINGS 17.5). Kept as the recorded alternative; not the default policy.",
    "routes": [
     "vllm-cpu",
     "cuad-specialist",

@@ -47,6 +47,9 @@ spec:
             - name: sensitive
               containerPort: 8083
               protocol: TCP
+            - name: screen
+              containerPort: 8086
+              protocol: TCP
             - name: admin
               containerPort: 9901
               protocol: TCP
@@ -111,6 +114,15 @@ spec:
     - name: sensitive
       port: 8083
       targetPort: sensitive
+      protocol: TCP
+    # The pre-entry screen listener. The trace-ui screen ingress relay
+    # (SCREEN_UPSTREAM) targets praxis:8086; without this Service port the
+    # relay's connections hang and the pipeline's screen fails closed
+    # (found 2026-11-13 when the first screen:pii serving run timed out:
+    # the listener existed but was never called on the real stack).
+    - name: screen
+      port: 8086
+      targetPort: screen
       protocol: TCP
     - name: metrics
       port: 9902

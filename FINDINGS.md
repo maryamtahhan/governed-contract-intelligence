@@ -1822,8 +1822,8 @@ specialist had filed under liability_cap). The rubric asks for text reading
 Direct-vs-hybrid per stage: the MoE is the better *cap* extractor on CUAD and
 the specialist is the better termination/governing-law/audit extractor; risk
 quality follows whichever inputs each stage receives. A clause-level split
-(caps to the MoE, the rest to the specialist) is the obvious next experiment;
-it is not measured today.
+(caps to the MoE, the rest to the specialist) was the obvious next
+experiment; §17.5 measures it and rejects it.
 
 ### 17.3 The through-stack CUAD path is timeout-bound (finding)
 
@@ -1869,6 +1869,47 @@ category — which changes the CUAD manifest shape and breaks comparability
 with every recorded run — or documenting the gap. That is the same choice the
 data-protection category already faced, and documenting it is the honest
 option for now.
+
+### 17.5 The clause-level cap split, measured and rejected (2026-11-13)
+
+The §17.2 follow-up, run through the stack on the rebuilt graph
+(`runs/cuad-2026-11-13/`, RC1 `v0.9.2`, same session, serial arms,
+concurrency 4, 20 manifest entries / 19 unique documents). Config E
+(`cap-split.yaml`) routes `extract:liability_cap` to `vllm-cpu` in both
+review listeners; everything else is the hybrid policy.
+
+The stacked hybrid baseline is now **valid** — the §17.3 timeout problem is
+fixed by the 600 s step deadline: 875.7 s, 0 errors, 0 fallbacks, 0
+violations, all 80 extraction steps on `cuad-specialist`, judgment 21/21 on
+GPU. Its quality replicates the direct-specialist run of §17.2 exactly
+(termination 0.714, governing law and audit rights 1.000, caps 0.308, risk
+14/19 = 0.737, the same five misses): **the gateway adds no quality loss on
+CUAD.**
+
+The split:
+
+| | hybrid (specialist caps) | cap-split (MoE caps) |
+|---|---:|---:|
+| wall | 875.7 s | 665.98 s |
+| liability_cap P / R / F1 | 0.333 / 0.286 / 0.308 | 0.667 / 0.286 / **0.400** |
+| risk accuracy | **14/19 = 0.737** | 13/19 = 0.684 |
+| errors / fallbacks / violations | 0 / 0 / 0 | 0 / 0 / 0 |
+
+**Rejected.** The cap F1 gain is precision-only — recall is 2 TP / 5 FN on
+both routes, because the MoE misses the same annotated caps it missed in the
+direct arm — and a precision-only gain does not convert to risk accuracy at
+this corpus size (7 of 19 documents have an annotated cap). At the document
+level the split recovers Xinhua (the specialist's cap false positive there
+disappears) but loses MSCIINC and HPILHOLDING (the MoE's cap misses flip
+them to high): net −1, landing exactly on the majority-class baseline. In
+both arms the model's risk answers equal a rubric replay over its own
+extractions on every wrong document — the judgment stage stayed perfectly
+faithful; the losses are pure extraction. The 24 % wall-time saving is real
+(the 16-core MoE answers caps faster than the 2-core specialist) but quality
+rules, and on the synthetic corpus the specialist's caps are perfect (F1
+1.000 in every recorded 200-document matrix), so the split buys nothing
+there either. `config.yaml` stays the hybrid policy; config E remains in the
+catalog as the recorded alternative.
 
 ## 18. RC1 gateway hardening: PII gate and step-key binding
 
