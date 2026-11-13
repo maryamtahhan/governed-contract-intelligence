@@ -1,0 +1,117 @@
+{
+ "arm": "D",
+ "config": "hybrid",
+ "mode": "matrix",
+ "governance": true,
+ "docs": 20,
+ "model": null,
+ "concurrency": 4,
+ "timeout_s": 600.0,
+ "started_at": "2026-11-13T11:58:22Z",
+ "wall_s": 875.7,
+ "judgment_split": true,
+ "sensitive_judgment_split": true,
+ "steps": 121,
+ "routes": {
+  "vllm-cpu": 20,
+  "cuad-specialist": 80,
+  "vllm-gpu": 15,
+  "vllm-gpu-approved": 6
+ },
+ "labels": {},
+ "entries": {
+  "sensitive": 31,
+  "general": 90
+ },
+ "models": {
+  "Semantic-Qwen": 41,
+  "cuad-specialist": 80
+ },
+ "stage_models": {
+  "classify": {
+   "Semantic-Qwen": 20
+  },
+  "extract": {
+   "cuad-specialist": 80
+  },
+  "risk": {
+   "Semantic-Qwen": 20
+  },
+  "report": {
+   "Semantic-Qwen": 1
+  }
+ },
+ "stage_routes": {
+  "classify": {
+   "vllm-cpu": 20
+  },
+  "extract": {
+   "cuad-specialist": 80
+  },
+  "risk": {
+   "vllm-gpu": 15,
+   "vllm-gpu-approved": 5
+  },
+  "report": {
+   "vllm-gpu-approved": 1
+  }
+ },
+ "judgment_steps": 21,
+ "judgment_on_gpu": 21,
+ "fallback": 0,
+ "errors": 0,
+ "screen": {
+  "tp": 0,
+  "fp": 0,
+  "tn": 0,
+  "fn": 0
+ },
+ "sensitive_steps": 31,
+ "sensitive_on_approved": 31,
+ "sensitive_violations": 0,
+ "classifier_latency_us_avg": null,
+ "gpu_busy_ms": 0,
+ "cpu_busy_ms": 0,
+ "latency_ms_avg": 137622,
+ "latency_ms_p95": 212103,
+ "environment": "rosa",
+ "cluster": "models-arch-ocp",
+ "git_sha": "1dcc633aac8f11f415a111ef5624e5c731bccb83",
+ "git_dirty": true,
+ "pools": {
+  "vllm-cpu": {
+   "model": "Qwen/Qwen3.5-35B-A3B",
+   "hardware": "cpu (ROSA x8i.24xlarge, Granite Rapids, 16 pinned cores, OMP-bind, no static CPU manager)",
+   "deployment": "cpureal-vllm-cpu"
+  },
+  "vllm-gpu": {
+   "model": "Qwen/Qwen3.5-35B-A3B",
+   "hardware": "4x A10G (ROSA g5.12xlarge, TP=4)",
+   "deployment": "gpumoe-vllm"
+  },
+  "vllm-gpu-approved": {
+   "model": "Qwen/Qwen3.5-35B-A3B",
+   "hardware": "4x A10G (ROSA g5.12xlarge, TP=4, shared with vllm-gpu)",
+   "deployment": "gpumoe-vllm (shared with vllm-gpu)",
+   "shared_with": "vllm-gpu"
+  },
+  "vllm-gpu-small": {
+   "model": "Qwen/Qwen2.5-1.5B-Instruct",
+   "hardware": "cpu (ROSA x8i.24xlarge, 12 pinned cores, OMP-bind)",
+   "deployment": "cpureal-vllm-gpu-small"
+  },
+  "cuad-specialist": {
+   "model": "CUAD RoBERTa-large QA (fine-tuned 2021 checkpoint)",
+   "hardware": "cpu (ROSA x8i.24xlarge, 2 cores, taskset-pinned; model endpoint only)",
+   "deployment": "cpureal-specialist"
+  },
+  "jev-cpu": {
+   "model": "Laya English checkpoint (Jev-compatible System One decision service)",
+   "hardware": "cpu (ROSA x8i.24xlarge, 2 cores, taskset-pinned; pre-entry screen only)",
+   "deployment": "jev-cpu"
+  }
+ },
+ "run_kind": "batch",
+ "gpu_device_active_s": 34.26,
+ "gpu_s_per_doc": 1.713
+}
