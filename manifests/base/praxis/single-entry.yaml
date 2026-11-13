@@ -232,6 +232,20 @@ filter_chains:
           # rather than silently reaching the specialist.
           - path_prefix: "/"
             cluster: vllm-cpu
+      # The endpoint table. The router names the cluster; the load
+      # balancer selects the endpoint within it - at chain level, exactly
+      # as the IRR steps pair them ("no upstream selected ...; is a
+      # load_balancer configured?" is the failure without this).
+      - filter: load_balancer
+        clusters:
+          - name: cuad-specialist
+            endpoints: ["trace-ui:8088"]
+          - name: vllm-cpu
+            endpoints: ["trace-ui:8081"]
+          - name: vllm-gpu
+            endpoints: ["trace-ui:8082"]
+          - name: vllm-gpu-approved
+            endpoints: ["trace-ui:8084"]
 
   # Control-plane chain for the pre-entry PII screen (unchanged from
   # config.yaml; used when the runner runs HYBRID_PII_DETECTOR=screen).
