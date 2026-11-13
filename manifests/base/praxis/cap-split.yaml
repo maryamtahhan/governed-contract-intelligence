@@ -1,0 +1,428 @@
+# Cap-split experiment manifest (2026-11-13) - NOT the default hybrid policy.
+#
+# Identical to config.yaml except one route, in BOTH review listeners:
+#   extract:liability_cap -> vllm-cpu (the Qwen MoE) instead of
+#   cuad-specialist.
+#
+# Why: on the 19-document CUAD test split the specialist's Cap On Liability
+# F1 is 0.308 (runs/cuad-test/arm-direct-specialist-rosa) against the direct
+# MoE's 0.400 (runs/cuad-test/arm-direct-cpu-moe-v2) - CUAD's hardest
+# category is the specialist's weakest and the MoE's strongest. Termination,
+# governing law and audit rights stay on the specialist. This manifest
+# exists to measure that split through the stack; adopt it into config.yaml
+# only if the measured result wins (FINDINGS 17.2, HANDOFF 2026-11-12 3.2).
+#
+# Swap in with:
+#   oc -n openshell-demo set env deploy/praxis \
+#     PRAXIS_CONFIG=/etc/praxis/cap-split.yaml
+#   oc -n openshell-demo rollout status deploy/praxis
+# Arm D - the full hybrid stack (default config).
+#
+# Two *review* listeners, and every pool decision below them is made here,
+# not in the pipeline. The pipeline declares what it is doing with two
+# request headers:
+#   X-Demo-Step   classify | extract:<clause> | risk | report
+#   X-API-Key     the per-step identity the policy layer authenticates
+# and chooses a review listener only to state the data classification:
+#   - general (:8080):   non-sensitive documents.
+#   - sensitive (:8083): the pipeline's PII screen flagged personal data.
+#                        The policy layer also taints the session.
+#
+# A third, control-plane listener (:8086) exists because the PII screen runs
+# *before* the pipeline can choose either review entry:
+#   - screen (:8086):    screen:pii (and the optional decide:cause trigger)
+#                        -> jev-cpu only. It is not a review entry; the
+#                        response is a probability, and the pipeline then
+#                        chooses general or sensitive as usual.
+#
+# Within each listener the router matches X-Demo-Step and picks the pool:
+#   - CUAD clause extraction (termination, governing law, liability cap,
+#     audit rights) -> cuad-specialist, a RoBERTa QA service that answers
+#     extractively. It is a model endpoint, not a router: it has no
+#     forward-to branch and returns 400 for anything it cannot answer.
+#   - data-protection extraction and classify -> vllm-cpu, the Qwen MoE on
+#     the CPU node (CUAD has no data-protection category).
+#   - risk and report -> vllm-gpu. The sensitive listener uses
+#     vllm-gpu-approved, a second route to the same deployment kept separate
+#     so sensitive traffic can fail closed without a non-approved pool in its
+#     fallback set.
+#
+# This is the visible routing capability the demo is about: adding a pool or
+# changing which work it serves is a change to this file, not app code.
+#
+# Structure follows the proven config in RMalone8/llm-d-sc-demo: Praxis
+# reaches the predictors only through the trace-ui relays (per-pool
+# recording hops) and health checks are per cluster. The gateway image is
+# the fork that carries the llm_d_sc filter (deploy/images/praxis-llm-d-sc/)
+# - the filter is unused by this config but stays in the image for the
+# contract-step taxonomy experiment (docs/design.md).
+insecure_options:
+  allow_private_upstreams: true
+
+admin:
+  address: "127.0.0.1:9901"
+  metrics_address: "0.0.0.0:9902"
+
+clusters:
+  - name: cuad-specialist
+    endpoints: ["trace-ui:8088"]
+    health_check:
+      type: http
+      path: /health
+      expected_status: 200
+      interval_ms: 5000
+      timeout_ms: 2000
+      healthy_threshold: 2
+      unhealthy_threshold: 2
+  - name: vllm-cpu
+    endpoints: ["trace-ui:8081"]
+    health_check:
+      type: http
+      path: /health
+      expected_status: 200
+      interval_ms: 5000
+      timeout_ms: 2000
+      healthy_threshold: 2
+      unhealthy_threshold: 2
+  - name: vllm-gpu
+    endpoints: ["trace-ui:8082"]
+    health_check:
+      type: http
+      path: /health
+      expected_status: 200
+      interval_ms: 5000
+      timeout_ms: 2000
+      healthy_threshold: 2
+      unhealthy_threshold: 2
+  - name: vllm-gpu-approved
+    endpoints: ["trace-ui:8084"]
+    health_check:
+      type: http
+      path: /health
+      expected_status: 200
+      interval_ms: 5000
+      timeout_ms: 2000
+      healthy_threshold: 2
+      unhealthy_threshold: 2
+  - name: vllm-gpu-small
+    endpoints: ["trace-ui:8085"]
+    health_check:
+      type: http
+      path: /health
+      expected_status: 200
+      interval_ms: 5000
+      timeout_ms: 2000
+      healthy_threshold: 2
+      unhealthy_threshold: 2
+  # The pre-entry decision model. It is deliberately a single, CPU-only
+  # cluster with no failover: if the screen cannot run, the pipeline fails
+  # closed to the sensitive entry rather than guessing.
+  - name: jev-cpu
+    endpoints: ["trace-ui:8089"]
+    health_check:
+      type: http
+      path: /health
+      expected_status: 200
+      interval_ms: 5000
+      timeout_ms: 2000
+      healthy_threshold: 2
+      unhealthy_threshold: 2
+  - name: vllm-any
+    endpoints: ["trace-ui:8081", "trace-ui:8082"]
+    health_check:
+      type: http
+      path: /health
+      expected_status: 200
+      interval_ms: 5000
+      timeout_ms: 2000
+      healthy_threshold: 2
+      unhealthy_threshold: 2
+
+runtime:
+  subrequest_circuit_breaker:
+    consecutive_failures: 3
+    recovery_window_secs: 30
+    half_open_timeout_secs: 15
+
+listeners:
+  - name: ai-gateway
+    address: "0.0.0.0:8080"
+    filter_chains:
+      - inference-routing
+  - name: sensitive-gateway
+    address: "0.0.0.0:8083"
+    filter_chains:
+      - sensitive-routing
+  - name: screen-gateway
+    address: "0.0.0.0:8086"
+    filter_chains:
+      - screen-routing
+
+filter_chains:
+  - name: inference-routing
+    filters:
+      - filter: request_id
+      - filter: access_log
+      - filter: static_response
+        conditions:
+          - when:
+              path: "/v1/models"
+              methods: ["GET"]
+        status: 200
+        headers:
+          - name: Content-Type
+            value: application/json
+        body: >-
+          {"object":"list","data":[{"id":"Semantic-Qwen","object":"model","created":0,"owned_by":"praxis"}]}
+      # PPE policy layer: per-step API-key identity, key-to-step binding,
+      # the general-entry PII gate, and audit. Pool choice is still the
+      # router table below; the policy does not steer pools.
+      - filter: policy
+        config_path: /etc/praxis/policy.yaml
+        body_access: read_only
+        llm:
+          max_request_bytes: 4194304
+      - filter: iterative_request_router
+        initial_step: route
+        max_iterations: 3
+        # Long CUAD contracts can take 19-295 s in the specialist. The old
+        # 120 s step cap caused avoidable failovers and a misleading summary;
+        # keep the gateway deadline at the pipeline's 600 s client budget.
+        timeout_ms: 600000
+        step_timeout_ms: 600000
+        steps:
+          - name: route
+            filters:
+              # The pool table. More header constraints win over the bare
+              # path prefix, so the catch-all is evaluated last.
+              - filter: router
+                routes:
+                  - path_prefix: "/"
+                    headers: {X-Demo-Step: "extract:termination"}
+                    cluster: cuad-specialist
+                  - path_prefix: "/"
+                    headers: {X-Demo-Step: "extract:governing_law"}
+                    cluster: cuad-specialist
+                  - path_prefix: "/"
+                    headers: {X-Demo-Step: "extract:liability_cap"}
+                    cluster: vllm-cpu
+                  - path_prefix: "/"
+                    headers: {X-Demo-Step: "extract:audit_rights"}
+                    cluster: cuad-specialist
+                  - path_prefix: "/"
+                    headers: {X-Demo-Step: "extract:data_protection"}
+                    cluster: vllm-cpu
+                  - path_prefix: "/"
+                    headers: {X-Demo-Step: classify}
+                    cluster: vllm-cpu
+                  - path_prefix: "/"
+                    headers: {X-Demo-Step: risk}
+                    cluster: vllm-gpu
+                  - path_prefix: "/"
+                    headers: {X-Demo-Step: report}
+                    cluster: vllm-gpu
+                  # Unknown or unlabelled work stays on the general CPU pool
+                  # rather than silently reaching the specialist.
+                  - path_prefix: "/"
+                    cluster: vllm-cpu
+              - filter: load_balancer
+                clusters:
+                  - name: cuad-specialist
+                    endpoints: ["trace-ui:8088"]
+                  - name: vllm-cpu
+                    endpoints: ["trace-ui:8081"]
+                  - name: vllm-gpu
+                    endpoints: ["trace-ui:8082"]
+            on_result:
+              - origin: transport
+                next: failover
+              - status: [429, 500, 502, 503, 504]
+                next: failover
+              - default: true
+                done: true
+          # General work may degrade onto the general GPU. A judgment request
+          # that was already on vllm-gpu retries the same cluster and then
+          # fails; it never silently lands on the CPU.
+          - name: failover
+            filters:
+              - filter: headers
+                request_set:
+                  - name: Content-Type
+                    value: application/json
+                response_add:
+                  - name: X-Praxis-Fallback
+                    value: "true"
+              - filter: router
+                routes:
+                  - path_prefix: "/"
+                    cluster: vllm-gpu
+              - filter: load_balancer
+                clusters:
+                  - name: vllm-gpu
+                    endpoints: ["trace-ui:8082"]
+            on_result:
+              - default: true
+                done: true
+
+  # Control-plane chain for the pre-entry PII screen. There is no failover:
+  # an unavailable screen is a hard error and the pipeline fails closed to
+  # the sensitive review entry. The policy uses the observe-only scanner
+  # (policy-screen.yaml) because the document is the thing being screened;
+  # the body carries the served model name only so the model-scoped policy
+  # route matches. The screen key must name screen:pii or decide:cause; no
+  # stepless caller is admitted here.
+  - name: screen-routing
+    filters:
+      - filter: request_id
+      - filter: access_log
+      - filter: static_response
+        conditions:
+          - when:
+              path: "/v1/models"
+              methods: ["GET"]
+        status: 200
+        headers:
+          - name: Content-Type
+            value: application/json
+        body: >-
+          {"object":"list","data":[{"id":"Semantic-Qwen","object":"model","created":0,"owned_by":"praxis"}]}
+      # The screen listener must see the document, so it uses the
+      # observe-only scanner. The enforcing gate is on policy.yaml.
+      - filter: policy
+        config_path: /etc/praxis/policy-screen.yaml
+        body_access: read_only
+        llm:
+          max_request_bytes: 4194304
+      - filter: iterative_request_router
+        initial_step: route
+        max_iterations: 2
+        timeout_ms: 60000
+        step_timeout_ms: 60000
+        steps:
+          - name: route
+            filters:
+              - filter: router
+                routes:
+                  - path_prefix: "/"
+                    headers: {X-Demo-Step: "screen:pii"}
+                    cluster: jev-cpu
+                  - path_prefix: "/"
+                    headers: {X-Demo-Step: "decide:cause"}
+                    cluster: jev-cpu
+                  # Defensive default: the policy admits only screen:pii or
+                  # decide:cause on this listener, so this route is not the
+                  # path for a review step.
+                  - path_prefix: "/"
+                    cluster: jev-cpu
+              - filter: load_balancer
+                clusters:
+                  - name: jev-cpu
+                    endpoints: ["trace-ui:8089"]
+            on_result:
+              - default: true
+                done: true
+
+  - name: sensitive-routing
+    filters:
+      - filter: request_id
+      - filter: access_log
+      - filter: static_response
+        conditions:
+          - when:
+              path: "/v1/models"
+              methods: ["GET"]
+        status: 200
+        headers:
+          - name: Content-Type
+            value: application/json
+        body: >-
+          {"object":"list","data":[{"id":"Semantic-Qwen","object":"model","created":0,"owned_by":"praxis"}]}
+      # Sensitive entries load the policy variant that also taints the
+      # session with the `sensitive` label. Arrival here still means the
+      # pipeline's PII screen flagged the document; the fact now lives in
+      # gateway-owned state.
+      - filter: policy
+        config_path: /etc/praxis/policy-sensitive.yaml
+        body_access: read_only
+        llm:
+          max_request_bytes: 4194304
+      - filter: iterative_request_router
+        initial_step: route
+        max_iterations: 3
+        # Long CUAD contracts can take 19-295 s in the specialist. The old
+        # 120 s step cap caused avoidable failovers and a misleading summary;
+        # keep the gateway deadline at the pipeline's 600 s client budget.
+        timeout_ms: 600000
+        step_timeout_ms: 600000
+        steps:
+          - name: route
+            filters:
+              # Same work-to-pool table as the general entry, except that
+              # judgment work is pinned to the approved GPU route.
+              - filter: router
+                routes:
+                  - path_prefix: "/"
+                    headers: {X-Demo-Step: "extract:termination"}
+                    cluster: cuad-specialist
+                  - path_prefix: "/"
+                    headers: {X-Demo-Step: "extract:governing_law"}
+                    cluster: cuad-specialist
+                  - path_prefix: "/"
+                    headers: {X-Demo-Step: "extract:liability_cap"}
+                    cluster: vllm-cpu
+                  - path_prefix: "/"
+                    headers: {X-Demo-Step: "extract:audit_rights"}
+                    cluster: cuad-specialist
+                  - path_prefix: "/"
+                    headers: {X-Demo-Step: "extract:data_protection"}
+                    cluster: vllm-cpu
+                  - path_prefix: "/"
+                    headers: {X-Demo-Step: classify}
+                    cluster: vllm-cpu
+                  - path_prefix: "/"
+                    headers: {X-Demo-Step: risk}
+                    cluster: vllm-gpu-approved
+                  - path_prefix: "/"
+                    headers: {X-Demo-Step: report}
+                    cluster: vllm-gpu-approved
+                  - path_prefix: "/"
+                    cluster: vllm-cpu
+              - filter: load_balancer
+                clusters:
+                  - name: cuad-specialist
+                    endpoints: ["trace-ui:8088"]
+                  - name: vllm-cpu
+                    endpoints: ["trace-ui:8081"]
+                  - name: vllm-gpu-approved
+                    endpoints: ["trace-ui:8084"]
+            on_result:
+              - origin: transport
+                next: failover
+              - status: [429, 500, 502, 503, 504]
+                next: failover
+              - default: true
+                done: true
+          # Failover for the sensitive entry is restricted to the approved
+          # GPU pool on purpose: a request fails closed when that pool is
+          # down rather than degrading onto a pool not approved for personal
+          # data. CPU work that was already on vllm-cpu may land there too.
+          - name: failover
+            filters:
+              - filter: headers
+                request_set:
+                  - name: Content-Type
+                    value: application/json
+                response_add:
+                  - name: X-Praxis-Fallback
+                    value: "true"
+              - filter: router
+                routes:
+                  - path_prefix: "/"
+                    cluster: vllm-gpu-approved
+              - filter: load_balancer
+                clusters:
+                  - name: vllm-gpu-approved
+                    endpoints: ["trace-ui:8084"]
+            on_result:
+              - default: true
+                done: true
