@@ -1667,7 +1667,46 @@ Jev is deliberately not included, because selecting it may download and load
 a checkpoint. The served `jev-cpu` pool and the `screen:pii` route are
 implemented and exercised on the fake stack (§16.9); they are opt-in and have
 not been measured as a serving arm, so this section does not change any
-recorded number.
+recorded number. **Measured as a serving arm on 2026-11-13: see 16.7.1.**
+
+### 16.7.1 The Jev screen as a serving arm (2026-11-13) **[measured]**
+
+`runs/rosa-200-2026-11-13-jev-screen/hybrid`: the 200-document synthetic
+matrix with `HYBRID_PII_DETECTOR=screen` and
+`HYBRID_JEV_THRESHOLD=0.4`, so the pipeline's per-document screen call runs
+through the authenticated `:8086` listener, praxis, the `jev-cpu` relay and
+the Laya service - an audited, routed hop instead of a client-side regex
+(RC1 `v0.9.2` stack, real pools, concurrency 12, `SAMPLE_JEV=1`).
+
+| | jev screen (serving) | regex (RC1 record) |
+|---|---|---|
+| screen tp/fp/tn/fn | **41/0/159/0** | 41/0/159/0 |
+| sensitive approved / violations | 247/247, 0 | 247/247, 0 |
+| judgment on GPU | 201/201 | 201/201 |
+| extract F1 / risk / report | 1.000 / 1.000 / 1.000, **200/200** | 1.000 / 0.995 / 0.998, 199/200 |
+| wall | 981.33 s | 818.87 s |
+| screen device time | 157.5 s `jev-cpu` active (123.1 s request time) | - |
+
+- **The offline sweep held in serving exactly**: at threshold 0.4 the served
+  decisions are 41/0/159/0, identical to the regex screen and to 16.7's
+  local Laya run. The default 0.5 would have missed one document (16.7);
+  the sweep is why the run set 0.4.
+- **Governance and quality are unchanged** - 0 violations, identical route
+  counts, and quality at-or-above the RC1 record within temperature-0
+  variance (this run's judgment stage had no flips; the RC1 run had one).
+- **The cost is measured, not guessed**: +162 s wall (~20%) and ~0.79 s of
+  `jev-cpu` device time per screened document, plus one more pool to run.
+  The regex screen is free and client-side.
+- **Adoption stays opt-in.** Regex wins on the only labelled corpus (both
+  are perfect there, and regex costs nothing); the Jev screen's claim
+  remains the no-labels case - real contracts and CUAD have no PII
+  annotations - and it is now a *serving-viable* option for that case with
+  its cost on record. The default detector does not change.
+- Bring-up gotcha, fixed the same day: the praxis Service did not expose
+  the `:8086` listener port, so the trace-ui screen relay hung and the
+  pipeline's screen failed closed (every document sensitive). The listener
+  worked on the fake stack but had never been called on ROSA. The Service
+  and container now declare the `screen` port (commit `9d2d4bc`).
 
 ### 16.8 The cause-language trigger: Jev fails the CUAD guardrail (2026-11-11) **[measured offline only]**
 
