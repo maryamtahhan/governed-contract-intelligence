@@ -1,0 +1,26 @@
+# Teardown evidence — 2026-11-13 (post cap-split / Jev-screen / V19 session)
+
+Measurements copied to runs/ and pushed before anything was removed:
+  runs/cuad-2026-11-13/  runs/rosa-200-2026-11-13-jev-screen/  runs/rosa-200-2026-11-13-single-entry/
+  runs/rosa-smoke-2026-11-13/  runs/rosa-smoke-single-2026-11-13/
+
+Deleted: all demo Deployments, Jobs, Pods and PVCs (model-cache-cpu,
+model-cache-gpu, trace-ui-data). Services, Routes, ConfigMaps,
+BuildConfigs (hybrid-specialist, hybrid-jev, gci-praxis), secrets and
+the namespace were left in place.
+
+Cache EBS volumes: aws ec2 describe-volumes (cluster-tag=owned) returns
+zero non-deleted volumes after PVC deletion:
+(empty = none remain)
+
+Machine pools deleted (rosa delete machinepool, us-east-1):
+0
+0 mtahhan pools remain
+
+Instances: both demo-labeled nodes reached terminated; describe-instances
+for tag-key demo.openshell.ai/node returns no non-terminated instances:
+(empty = none remain). The morning capacity-probe instance
+(i-03149aa83afe13a46) was terminated at creation time.
+
+Cluster nodes after teardown: 12 (tenant nodes; the shared cluster and
+its other pools were not touched).

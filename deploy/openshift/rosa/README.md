@@ -334,6 +334,13 @@ Rebuild from this README before any new cluster measurement; the 2026-11-12
 runs are in git and are the current quoted record. Teardown evidence:
 `runs/rosa-resilience-2026-11-12/teardown.txt`.
 
+- 2026-11-13 (teardown after the cap-split / Jev-screen / single-entry
+  session): same shape, evidence in
+  `runs/teardown-2026-11-13/teardown.txt`. The pools were recreated for the
+  session and deleted the same day; the 2026-11-12 RC1 record stands. The
+  `gci-praxis` BuildConfig (v0.9.3, internal-registry digest
+  `sha256:d69493b7…`) remains in the namespace for the next bring-up.
+
 Measurements were copied to `runs/` before anything was removed. Then:
 
 - The demo Deployments, Jobs, Pods and PVCs were deleted; the Services,
