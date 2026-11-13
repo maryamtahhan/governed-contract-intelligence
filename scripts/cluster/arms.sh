@@ -90,8 +90,14 @@ if [ "$USE_ROUTES" = "1" ]; then
   }
   ensure_route trace-ui-general 8080
   ensure_route trace-ui-sensitive 8083
+  # The pre-entry screen listener: only used when the runner runs
+  # HYBRID_PII_DETECTOR=screen, but the route is cheap and idempotent.
+  ensure_route trace-ui-screen 8086
   GATEWAY="http://$(oc -n "$NS" get route trace-ui-general -o jsonpath='{.spec.host}')"
   SENSITIVE="http://$(oc -n "$NS" get route trace-ui-sensitive -o jsonpath='{.spec.host}')"
+  # Point the screen detector at the listener's System One path unless the
+  # caller already set one. Ignored by every other detector.
+  [ -n "${HYBRID_PII_SCREEN_URL:-}" ] || export HYBRID_PII_SCREEN_URL="http://$(oc -n "$NS" get route trace-ui-screen -o jsonpath='{.spec.host}')/v1/systemone"
 else
   oc -n "$NS" port-forward svc/trace-ui "$LOCAL_PORT:8080" "$SENSITIVE_PORT:8083" >/dev/null &
   PF=$!
@@ -100,8 +106,16 @@ else
   SENSITIVE="http://127.0.0.1:$SENSITIVE_PORT"
 fi
 # Relay ports, for live metrics sampling during the runs (port-forwards by
-# design: a sampler failure loses a metric, never a request).
-oc -n "$NS" port-forward svc/trace-ui 18088:8088 18081:8081 18082:8082 18084:8084 18085:8085 >/dev/null &
+# design: a sampler failure loses a metric, never a request). SAMPLE_JEV=1
+# also forwards the jev-cpu relay (trace-ui:8089) for the screen-path runs.
+PF_PORTS="18088:8088 18081:8081 18082:8082 18084:8084 18085:8085"
+SAMPLERS="cuad-specialist=http://127.0.0.1:18088,vllm-cpu=http://127.0.0.1:18081,vllm-gpu=http://127.0.0.1:18082,vllm-gpu-approved=http://127.0.0.1:18084,vllm-gpu-small=http://127.0.0.1:18085"
+if [ "${SAMPLE_JEV:-0}" = "1" ]; then
+  PF_PORTS="$PF_PORTS 18089:8089"
+  SAMPLERS="$SAMPLERS,jev-cpu=http://127.0.0.1:18089"
+fi
+# shellcheck disable=SC2086
+oc -n "$NS" port-forward svc/trace-ui $PF_PORTS >/dev/null &
 PF3=$!
 trap 'kill ${PF:-} ${PF2:-} $PF3 2>/dev/null' EXIT
 for i in $(seq 1 30); do curl -sf "$GATEWAY/_trace/healthz" >/dev/null 2>&1 && break; sleep 1; done
@@ -122,7 +136,7 @@ for requested in $CONFIGS; do
     --data "$DATA" --out "../$out" --config "$config" \
     "${doc_args[@]}" --concurrency "$CONCURRENCY" \
     "${prov_args[@]}" \
-    --sample-metrics cuad-specialist=http://127.0.0.1:18088,vllm-cpu=http://127.0.0.1:18081,vllm-gpu=http://127.0.0.1:18082,vllm-gpu-approved=http://127.0.0.1:18084,vllm-gpu-small=http://127.0.0.1:18085)
+    --sample-metrics "$SAMPLERS")
 done
 
 set_config hybrid
