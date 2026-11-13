@@ -17,6 +17,7 @@ from hybrid_demo.ui.payload import build_payload
     ("C", "C"), ("c", "C"), ("round-robin", "C"),
     ("D", "D"), ("d", "D"), ("hybrid", "D"), ("matrix", "D"),
     ("E", "E"), ("e", "E"), ("cap-split", "E"),
+    ("F", "F"), ("f", "F"), ("single-entry", "F"),
 ])
 def test_every_name_alias_and_letter_resolves(value, key):
     assert configs.resolve_config(value) == key
@@ -30,14 +31,16 @@ def test_unknown_config_names_the_choices():
 
 def test_catalog_keys_and_recorded_arm_values_are_unchanged():
     catalog = configs.catalog()
-    # E (cap-split) is the measured liability-cap routing variant; its key
-    # is recorded evidence the same way A-D are.
-    assert [c["key"] for c in catalog] == ["A", "B", "C", "D", "E"]
+    # E (cap-split) is the measured-and-rejected liability-cap routing
+    # variant; F (single-entry) is the V19 in-gateway screen. Their keys are
+    # recorded evidence the same way A-D are.
+    assert [c["key"] for c in catalog] == ["A", "B", "C", "D", "E", "F"]
     assert [c["name"] for c in catalog] == [
-        "one-pool", "small-first", "round-robin", "hybrid", "cap-split"]
+        "one-pool", "small-first", "round-robin", "hybrid", "cap-split",
+        "single-entry"]
     # The old recorded mode strings are still the modes in configs.json.
     assert [c["mode"] for c in catalog] == [
-        "all-gpu", "gpu-split", "round-robin", "matrix", "matrix"]
+        "all-gpu", "gpu-split", "round-robin", "matrix", "matrix", "matrix"]
 
 
 def test_legacy_arm_flag_still_dispatches(monkeypatch):
@@ -77,7 +80,8 @@ def test_old_run_with_only_arm_gets_its_config_name(tmp_path):
 def test_payload_exposes_the_canonical_catalog_once(tmp_path):
     payload = _payload(tmp_path, {"arm": "A", "mode": "all-gpu", "docs": 0})
     assert [c["name"] for c in payload["configs"]] == [
-        "one-pool", "small-first", "round-robin", "hybrid", "cap-split"]
+        "one-pool", "small-first", "round-robin", "hybrid", "cap-split",
+        "single-entry"]
 
 
 def test_historical_config_name_is_presented_canonically(tmp_path):

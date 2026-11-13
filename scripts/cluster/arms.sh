@@ -95,6 +95,10 @@ if [ "$USE_ROUTES" = "1" ]; then
   ensure_route trace-ui-screen 8086
   GATEWAY="http://$(oc -n "$NS" get route trace-ui-general -o jsonpath='{.spec.host}')"
   SENSITIVE="http://$(oc -n "$NS" get route trace-ui-sensitive -o jsonpath='{.spec.host}')"
+  # SINGLE_ENTRY=1 (config F): the pipeline sends both entry URLs to the
+  # single :8080 listener; the gci_screen filter makes the sensitivity
+  # decision in-gateway and the router consumes it.
+  [ "${SINGLE_ENTRY:-0}" = "1" ] && SENSITIVE="$GATEWAY"
   # Point the screen detector at the listener's System One path unless the
   # caller already set one. Ignored by every other detector.
   [ -n "${HYBRID_PII_SCREEN_URL:-}" ] || export HYBRID_PII_SCREEN_URL="http://$(oc -n "$NS" get route trace-ui-screen -o jsonpath='{.spec.host}')/v1/systemone"

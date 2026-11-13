@@ -75,6 +75,21 @@
    ],
    "manifest": "manifests/base/praxis/cap-split.yaml",
    "governance": true
+  },
+  {
+   "key": "F",
+   "name": "single-entry",
+   "mode": "matrix",
+   "aliases": [],
+   "behavior": "V19: the sensitivity decision inside one gateway chain. One review listener; the gci_screen HTTP filter scans every request body and sets X-Demo-Screen, and the router pins sensitive judgment work to the approved GPU with an approved-only failover. Requires image v0.9.3+. Run with SINGLE_ENTRY=1 so the pipeline sends both entry URLs to :8080.",
+   "routes": [
+    "vllm-cpu",
+    "cuad-specialist",
+    "vllm-gpu",
+    "vllm-gpu-approved"
+   ],
+   "manifest": "manifests/base/praxis/single-entry.yaml",
+   "governance": true
   }
  ]
 }
