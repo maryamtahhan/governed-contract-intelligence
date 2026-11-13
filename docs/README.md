@@ -1,5 +1,7 @@
 # Documentation
 
+[← Back to the repo README](../README.md)
+
 This directory holds the durable design, the stage material, and the demo deck.
 Start with [design.md](design.md); use [stage-runbook.md](stage-runbook.md) to
 run the demo; use [FINDINGS.md](../FINDINGS.md) for measurements.

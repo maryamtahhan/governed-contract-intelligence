@@ -234,6 +234,7 @@ Where to look for what:
 
 | I want to… | Read / run |
 |---|---|
+| browse all documentation | [`docs/README.md`](docs/README.md) |
 | understand why the system is built this way | [`docs/design.md`](docs/design.md) |
 | run the demo locally | [Linux runbook](#linux-runbook) |
 | run it on OpenShift / rebuild ROSA | [OpenShift runbook](#openshift-runbook), [`deploy/openshift/rosa/README.md`](deploy/openshift/rosa/README.md) |
