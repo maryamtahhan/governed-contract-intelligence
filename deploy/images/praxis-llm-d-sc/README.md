@@ -158,7 +158,7 @@ modelcar were published once (2026-11-05) but are **not consumed by the
 default stack** — llm-d-sc was removed from the request path the same day
 (FINDINGS §15.5). The images stay in the registry for the contract-step
 taxonomy experiment (`docs/design.md` §5); the workflow jobs are
-gone, and a rebuild means restoring them from git history (commit `2b44747`).
+gone, and a rebuild means restoring them from git history (commit `98dc861`).
 
 Published 2026-11-05 (run 42043729532):
 

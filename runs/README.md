@@ -66,7 +66,7 @@ backend is down; it does not claim an isolated approved-only outage.
 
 These directories were pruned from the working tree to keep the checkout
 focused on the current record. They are still recoverable from git history at
-commit `ba50b1d` (the commit immediately before the earlier cleanup):
+commit `ea80dfb` (the commit immediately before the earlier cleanup):
 
 - `runs/rosa-200/`
 - `runs/direct/`
@@ -81,7 +81,7 @@ commit `ba50b1d` (the commit immediately before the earlier cleanup):
 - `runs/flightpath-functional/`
 
 The pre-rebuild 2026-11-09 matrix and its rerun were pruned in the 2026-11-11
-cleanup; they are recoverable at commit `be3db42`:
+cleanup; they are recoverable at commit `d551c7b`:
 
 - `runs/rosa-200-2026-11-09/`
 - `runs/rosa-200-2026-11-09-cpu-term-rerun/`
@@ -89,6 +89,6 @@ cleanup; they are recoverable at commit `be3db42`:
 Recover one directory with:
 
 ```bash
-git checkout be3db42 -- runs/rosa-200-2026-11-09
-git checkout ba50b1d -- runs/rosa-200-2026-11-09-gpu-term
+git checkout d551c7b -- runs/rosa-200-2026-11-09
+git checkout ea80dfb -- runs/rosa-200-2026-11-09-gpu-term
 ```
