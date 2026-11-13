@@ -6,8 +6,8 @@ this way, the rules it follows, and where it is going. It consolidates
 `HANDOFF.md` (names, routes, models, hardware), `docs/OPENSOURCE-REUSE.md`
 (the upstream-composition policy) and `docs/contract-step-routing.md` (the
 semantic-routing path); those files are preserved in git history at commit
-`47e69b1`, and the older decision log they absorbed lives at commit
-`8f556b2` (`DECISIONS.md`). A later, dated handoff may exist at the repo root;
+`7514c49`, and the older decision log they absorbed lives at commit
+`17b06b1` (`DECISIONS.md`). A later, dated handoff may exist at the repo root;
 this document is the durable design, not a handoff.
 
 The companions: [README.md](../README.md) is the runbook (how to run it),
@@ -51,7 +51,7 @@ different things**, and the same word can appear in more than one layer.
 3. **`one-pool` is not a direct run.** It still goes through trace-ui and
    praxis. Direct means one bare endpoint with no relay, praxis, label, pool
    choice, or trace. Direct GPU is `runs/direct/gpu-moe` (archived at
-   `235311b`; recover with `git checkout 235311b -- runs/direct/gpu-moe`).
+   `ba50b1d`; recover with `git checkout ba50b1d -- runs/direct/gpu-moe`).
 4. **Always read the pool map for hardware.** For a run, that is
    `results.json` → `summary.pools`; for ROSA deploy metadata, that is
    `deploy/openshift/rosa/pools.json`. Do not infer hardware from a route
@@ -64,7 +64,7 @@ different things**, and the same word can appear in more than one layer.
    last comparable four-arm routing measurement. The 2026-11-10 matrix is
    the earlier measured record. The pre-rebuild 2026-11-09 record and its
    controls measured the composite `vllm-cpu` route and were pruned from the
-   working tree; recover them at commit `a0fa8ec`.
+   working tree; recover them at commit `be3db42`.
 
 ### 2.2 Five layers that look like names
 
@@ -109,7 +109,7 @@ the regex screen and does not include that hop (see §3.1 and FINDINGS §16.9).
 sensitive documents on the sensitive entry. The 2026-11-11 `v0.9.1` matrix
 remains the last comparable four-arm routing measurement; the 2026-11-10
 matrix is the earlier record. The pre-rebuild 2026-11-09 record was pruned
-and is recoverable at `a0fa8ec`, where `vllm-cpu: 1000` was 600 RoBERTa
+and is recoverable at `be3db42`, where `vllm-cpu: 1000` was 600 RoBERTa
 passes plus 400 forwarded Qwen calls. Each record stays valid for the
 routing that produced it. Evidence per run is `summary.stage_routes` and
 `summary.stage_models`; the specialist `/health` reports only
@@ -168,7 +168,7 @@ name, not a separate config.
 (`--endpoint http://host:port/v1`). The batch runner does the CPU-side work
 (reads documents, screens PII, builds prompts, sends HTTP, parses, scores);
 the endpoint does all model inference. No relay, praxis, label, pool choice
-or trace id. Archived direct runs (recover from `235311b`): `runs/direct/gpu-moe`
+or trace id. Archived direct runs (recover from `ba50b1d`): `runs/direct/gpu-moe`
 (35B-A3B, 4×A10G), `runs/direct/cpu-moe` (35B-A3B, CPU), `runs/direct/cpu-small`
 (1.5B, CPU).
 The direct path is one endpoint per run, not "one hardware target" in the
@@ -201,17 +201,17 @@ through-stack.
 | `runs/rosa-200-2026-11-10-praxis-routes/all-gpu` | previous same-run `one-pool` control (run dir keeps old `all-gpu`), 200 docs (11 transport timeouts) |
 | `runs/rosa-200-2026-11-10-praxis-routes/gpu-small` | previous same-run `small-first` matrix row (run dir keeps old `gpu-small`) |
 | `runs/rosa-200-2026-11-10-praxis-routes/round-robin` | previous same-run `round-robin` matrix row |
-| `runs/rosa-200-2026-11-09-cpu-term/hybrid` | archived at `235311b` — same policy, first measurement (198/200; two risk flips documented as serving variance) |
-| `runs/rosa-200-2026-11-09-gpu-term/hybrid` | archived at `235311b` — measured GPU-termination alternative, 200 docs (not the current policy) |
-| `runs/direct/gpu-moe` | archived at `235311b` — direct, one GPU endpoint, 35B-A3B |
-| `runs/direct/cpu-moe` | archived at `235311b` — direct, one CPU endpoint, 35B-A3B |
-| `runs/direct/cpu-small` | archived at `235311b` — direct, one CPU endpoint, 1.5B |
+| `runs/rosa-200-2026-11-09-cpu-term/hybrid` | archived at `ba50b1d` — same policy, first measurement (198/200; two risk flips documented as serving variance) |
+| `runs/rosa-200-2026-11-09-gpu-term/hybrid` | archived at `ba50b1d` — measured GPU-termination alternative, 200 docs (not the current policy) |
+| `runs/direct/gpu-moe` | archived at `ba50b1d` — direct, one GPU endpoint, 35B-A3B |
+| `runs/direct/cpu-moe` | archived at `ba50b1d` — direct, one CPU endpoint, 35B-A3B |
+| `runs/direct/cpu-small` | archived at `ba50b1d` — direct, one CPU endpoint, 1.5B |
 | `runs/cuad-test/arm-*` | CUAD appendix evidence; ids preserved |
 
 Archived paths are not in the working tree; recover one with
-`git checkout 235311b -- <path>`. The 2026-11-09 matrix and rerun were
+`git checkout ba50b1d -- <path>`. The 2026-11-09 matrix and rerun were
 pruned in the 2026-11-11 cleanup; recover them with
-`git checkout a0fa8ec -- runs/rosa-200-2026-11-09`.
+`git checkout be3db42 -- runs/rosa-200-2026-11-09`.
 
 See `runs/README.md` for the short version.
 
@@ -404,12 +404,12 @@ The removal was **built and tested**; the 2026-11-09 classifier-free matrix
 in §3.3 is its re-measurement. Every §15 number before §15.8 came from the
 classifier-in-path config. The classifier Deployment, its arm-B label-routed
 config and the workflow jobs that published its image are preserved in git
-history at commit `4ac0551`; the published image and mirrored modelcar stay
+history at commit `2b44747`; the published image and mirrored modelcar stay
 in the registry for §5's experiment.
 
 ### 3.3 The measured justification (ROSA 200-document matrix)
 
-From `runs/rosa-200/report.json` (archived at `235311b`; classifier-in-path;
+From `runs/rosa-200/report.json` (archived at `ba50b1d`; classifier-in-path;
 historical — FINDINGS §15 has the full analysis):
 
 | Config | Calls by route | Extract F1 | Risk acc | Wall s | Recorded GPU-s/doc | Note |
@@ -500,7 +500,7 @@ the group instead of summing it. In the 2026-11-10 record the rebuilt hybrid
 arm's device time is **`n/a`**, not zero: the per-pool relays did not expose
 vLLM's in-flight gauges. The pre-rebuild 2026-11-09 table (0.22 GPU-s/doc
 hybrid vs 1.013 one-pool, recorded as `all-gpu`) remains valid for that graph
-only; those run directories are recoverable at `a0fa8ec`. Judgment steps:
+only; those run directories are recoverable at `be3db42`. Judgment steps:
 201/201 on GPU (159 `vllm-gpu`, 42 approved). Termination extraction (200
 steps) is on `cuad-specialist`; classify and data-protection stay on
 `vllm-cpu`, so the route split is visible in `summary.stage_routes` without a
@@ -511,10 +511,10 @@ record; it is not a clean latency baseline.
 
 - Do **not** change `summary.arm` values (A/B/C/D); they are recorded evidence.
 - Do not rename historical run directories under `runs/cuad-test`, or any
-  archived path restored from `235311b`.
+  archived path restored from `ba50b1d`.
 - Do not infer hardware from `vllm-gpu`, `vllm-gpu-small`, or `one-pool`.
 - Do not call `one-pool` a direct run. Direct runs are a separate mode; their
-  archived examples live under `runs/direct` at `235311b`.
+  archived examples live under `runs/direct` at `ba50b1d`.
 - Keep `--arm`, letter aliases, `all-gpu`, `gpu-small`, `gpu-split`, and
   `matrix` working.
 - Keep `set_arm.sh` working even if `set_config.sh` is the documented name.
@@ -1038,7 +1038,7 @@ The deployment is intentionally not switched, and note that llm-d-sc is no
 longer in the base stack (§3.2) — re-adding it is the first step:
 
 1. Restore an llm-d-sc Deployment + Service (git history:
-   `manifests/base/llm-d-sc.yaml` at commit `4ac0551`) and mount
+   `manifests/base/llm-d-sc.yaml` at commit `2b44747`) and mount
    `classifiers/contract-step.json` into the pod (a ConfigMap volume is
    enough; the taxonomy is data, not new weights).
 2. Set `LLM_D_SC_CLASSIFIER` to the mounted path instead of `complexity`.
@@ -1113,7 +1113,7 @@ measurement.
 ## 7. Design history
 
 Older records: the decision log through 2026-11-05 morning is `DECISIONS.md`
-at commit `8f556b2`; the full dated analyses it folded are
+at commit `17b06b1`; the full dated analyses it folded are
 `docs/handoff-2026-11-04-{rosa-routing,cpu-model-recipes}.md` at the same
 commit. The durable content of the last decisions lives in FINDINGS: the
 routing-claims scoping and its surviving warnings in §15.5/§15.6, the
@@ -1135,7 +1135,7 @@ CPU-model test plan in §9.
   modes (`dashboard-up`, `dashboard-live`, `dashboard-live HOST=... LIVE_TOKEN=...`).
 - **2026-11-05, afternoon — published images; the classifier leaves the
   request path.** The `publish-images` workflow published the gateway,
-  classifier and mirrored modelcar (digests in §6); commit `99c3666`
+  classifier and mirrored modelcar (digests in §6); commit `2d2cc32`
   switched the base manifests and Linux compose to them and retired the
   praxis-0.9.0 overlay. `CorpusError` started carrying its status code
   (413 for size caps, 400 for unreadable/binary/empty) so reworded
@@ -1143,7 +1143,7 @@ CPU-model test plan in §9.
   the default stack (§3.2): llm-d-sc dropped from manifests and compose,
   `config.yaml` rewritten as pinned CPU-first routing, `arm-b.yaml`
   rewritten as the gpu-small pin (its label-routed predecessor and the
-  llm-d-sc Deployment are in git history at `4ac0551`), the praxis stub
+  llm-d-sc Deployment are in git history at `2b44747`), the praxis stub
   parses pin+failover chains without inventing labels, the e2e fallback
   tests assert the new contract, and the publish workflow lost the
   classifier/modelcar jobs. Built and tested — **not measured**; every
@@ -1184,8 +1184,8 @@ CPU-model test plan in §9.
   not reproduce — temperature-0 serving variance, not a routing regression
   (FINDINGS §15.9). The GPU-termination alternative is measured but is not
   the policy. Historical runs from the classifier-in-path and earlier
-  stacks are archived at commit `235311b`; the 2026-11-09 matrix and rerun
-  were pruned in the 2026-11-11 cleanup and are recoverable at `a0fa8ec`.
+  stacks are archived at commit `ba50b1d`; the 2026-11-09 matrix and rerun
+  were pruned in the 2026-11-11 cleanup and are recoverable at `be3db42`.
   The working tree keeps the current 2026-11-12 record, the previous
   2026-11-11 four-arm matrix, the earlier 2026-11-10 record and the guide
   evidence (`runs/README.md`).

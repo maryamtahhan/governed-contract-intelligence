@@ -222,7 +222,7 @@ documents into "non-sensitive".
   correct, 99.9% CPU-served, 247/247 sensitive steps on approved pools,
   0 violations, 0.036 GPU-s/doc; A (all-GPU) 202.2 s and 1.974 GPU-s/doc,
   247 violations; C (round-robin) 612.9 s, 122 violations. Full tables:
-  `runs/rosa-200/report.md` (archived at `235311b`) and plan §6.2. Arm D's extraction was 600/800
+  `runs/rosa-200/report.md` (archived at `ba50b1d`) and plan §6.2. Arm D's extraction was 600/800
   `cuad-specialist`-labelled responses (data protection stayed on the MoE),
   so the specialist route — then still a composite pod — did most of the
   extraction work. The 2026-11-10 rebuild separates the two routes.
@@ -251,7 +251,7 @@ documents into "non-sensitive".
   slower than D; the only quality loss in D is the specialist (F1 0.982),
   not the device; `cpu-small` fails exactly like arm B, so judgment quality
   follows the model. Direct device time was not sampled (`n/a`). Report:
-  `runs/rosa-direct-vs-stacked/report.md` (archived at `235311b`); plan §6.3;
+  `runs/rosa-direct-vs-stacked/report.md` (archived at `ba50b1d`); plan §6.3;
   FINDINGS §15.7.
 
   Three instrumentation/scoring fixes came out of the run:
@@ -280,7 +280,7 @@ documents into "non-sensitive".
   cross-document -> GPU. No exposed setting changes that (the server
   exposes only the taxonomy name; praxis `min_score` cannot separate
   0.3-0.99 margins), and it is the boundary the policy needs. Evidence:
-  `runs/rosa-200/classifier-replay-2026-11-04.txt` (archived at `235311b`).
+  `runs/rosa-200/classifier-replay-2026-11-04.txt` (archived at `ba50b1d`).
 
   Rebuilding the specialist: `oc start-build --from-dir=demo` uploads the
   950MB `.venv` and sat in git-clone for 40+ minutes. Build from a staging
